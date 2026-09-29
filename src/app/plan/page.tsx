@@ -41,7 +41,7 @@ export default function PlanPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
-      <div className="mb-8 flex items-center gap-2">
+      <div className="mb-8 flex items-start gap-2">
         {STEPS.map((label, i) => (
           <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
             <div
