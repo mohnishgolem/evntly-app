@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import type { PlanDraft } from "@/lib/actions/events";
 
-const STEPS = ["Event type", "When & where", "Vendors needed", "Budget"] as const;
+const STEPS = ["Event type", "When & where", "Vendors", "Budget"] as const;
 
 export default function PlanPage() {
   const router = useRouter();
