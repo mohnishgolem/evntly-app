@@ -22,7 +22,7 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
           </div>
         )}
         {vendor.available && (
-          <div className="absolute top-3 left-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold shadow-sm">
+          <div className="absolute top-3 left-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-900 shadow-sm">
             Available
           </div>
         )}
