@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Great_Vibes } from "next/font/google";
+import { Pacifico } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 
-// The Evntly wordmark uses this cursive script — matches the brand logo.
+// The Evntly wordmark uses this bold rounded script — matches the brand logo.
 // Body/UI text uses the system font stack (see globals.css --font-sans) for
 // an authentically Apple-inspired feel: SF Pro on Apple devices, with no
 // download needed.
-export const greatVibes = Great_Vibes({
+export const logoFont = Pacifico({
   variable: "--font-logo",
   weight: "400",
   subsets: ["latin"],
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${greatVibes.variable} h-full antialiased`}>
+    <html lang="en" className={`${logoFont.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>
