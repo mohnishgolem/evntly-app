@@ -52,11 +52,11 @@ RECOLOR = {
         "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 5.8, 0, 6, 3, 20, 40],
     },
     "highway_motorway_inner": {
-        "line-color": ["interpolate", ["linear"], ["zoom"], 5.8, "hsla(0,0%,60%,0.5)", 6, "#c7c7cc"],
+        "line-color": "#5a5a5e",
         "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 4, 2, 6, 1.3, 20, 30],
     },
     "highway_motorway_subtle": {
-        "line-color": "#4a4a4e",
+        "line-color": "#3f3f43",
         "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 4, 2, 6, 1.3],
     },
     "highway_name_other": {
@@ -66,7 +66,7 @@ RECOLOR = {
         "text-halo-width": 1,
         "text-translate": [0, 0],
     },
-    "highway_name_motorway": {"text-color": "#c7c7cc", "text-translate": [0, 2]},
+    "highway_name_motorway": {"text-color": "#9a9aa0", "text-translate": [0, 2]},
     "place_other": {"text-color": "#8e8e93", "text-halo-blur": 1, "text-halo-color": "rgba(0,0,0,0.7)", "text-halo-width": 1},
     "place_suburb": {"text-color": "#9a9aa0", "text-halo-blur": 1, "text-halo-color": "rgba(0,0,0,0.7)", "text-halo-width": 1},
     "place_village": {"icon-opacity": 0.7, "text-color": "#a8a8ae", "text-halo-blur": 1, "text-halo-color": "rgba(0,0,0,0.7)", "text-halo-width": 1},
