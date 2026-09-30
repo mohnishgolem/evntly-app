@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
@@ -89,6 +90,26 @@ export async function login(
   }
 
   redirect("/dashboard");
+}
+
+// role is only forced on brand-new sign-ups (from the signup form's
+// customer/vendor toggle) — the login form omits it so a returning vendor's
+// role is never stomped back to "customer" by the callback route.
+export async function signInWithOAuth(provider: "google" | "apple", role?: "customer" | "vendor") {
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin");
+  const callback = new URL(`${origin}/auth/callback`);
+  if (role) callback.searchParams.set("role", role);
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: callback.toString() },
+  });
+
+  if (error || !data.url) {
+    redirect(`/login?error=${encodeURIComponent(error?.message ?? "Could not start sign-in.")}`);
+  }
+  redirect(data.url);
 }
 
 export async function logout() {

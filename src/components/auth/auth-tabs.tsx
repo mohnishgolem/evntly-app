@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { login, signup, type AuthFormState } from "@/lib/actions/auth";
+import { login, signup, signInWithOAuth, type AuthFormState } from "@/lib/actions/auth";
+import { GoogleIcon, AppleIcon } from "@/components/auth/social-icons";
 
 const initialState: AuthFormState = null;
 
@@ -47,6 +48,32 @@ export function AuthTabs({
   );
 }
 
+// Shown on both the signup and login forms — the call's ask was social
+// sign-in "on all form variations", not just one.
+function SocialButtons({ role }: { role?: "customer" | "vendor" }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <form action={signInWithOAuth.bind(null, "google", role)} className="flex-1">
+          <Button type="submit" variant="outline" className="w-full gap-2">
+            <GoogleIcon /> Google
+          </Button>
+        </form>
+        <form action={signInWithOAuth.bind(null, "apple", role)} className="flex-1">
+          <Button type="submit" variant="outline" className="w-full gap-2">
+            <AppleIcon /> Apple
+          </Button>
+        </form>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or continue with email</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+    </div>
+  );
+}
+
 function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
   const [state, formAction, pending] = useActionState(signup, initialState);
   const [role, setRole] = useState(defaultRole);
@@ -63,9 +90,7 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
   }
 
   return (
-    <form action={formAction} className="space-y-4">
-      <input type="hidden" name="role" value={role} />
-
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
@@ -86,6 +111,11 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
           I&apos;m a vendor
         </button>
       </div>
+
+      <SocialButtons role={role} />
+
+      <form action={formAction} className="space-y-4">
+      <input type="hidden" name="role" value={role} />
 
       <div className="space-y-1.5">
         <Label htmlFor="fullName">Full name</Label>
@@ -133,7 +163,8 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Creating account…" : "Sign up"}
       </Button>
-    </form>
+      </form>
+    </div>
   );
 }
 
@@ -141,24 +172,27 @@ function LoginForm() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="login-email">Email</Label>
-        <Input id="login-email" name="email" type="email" placeholder="you@example.com" required />
-        {state?.fieldErrors?.email && (
-          <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
-        )}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="login-password">Password</Label>
-        <Input id="login-password" name="password" type="password" required />
-      </div>
+    <div className="space-y-4">
+      <SocialButtons />
+      <form action={formAction} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="login-email">Email</Label>
+          <Input id="login-email" name="email" type="email" placeholder="you@example.com" required />
+          {state?.fieldErrors?.email && (
+            <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="login-password">Password</Label>
+          <Input id="login-password" name="password" type="password" required />
+        </div>
 
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+        {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Logging in…" : "Log in"}
-      </Button>
-    </form>
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "Logging in…" : "Log in"}
+        </Button>
+      </form>
+    </div>
   );
 }
