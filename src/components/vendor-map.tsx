@@ -14,7 +14,7 @@ type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
 type LocatedVendor = Vendor & { latitude: number; longitude: number };
 
 // A recolored fork of OpenFreeMap's "dark" vector style (Apple Maps Dark
-// Mode inspired: navy water, muted green parks, amber motorways) — served
+// Mode inspired: navy water, muted green parks, plain gray/white roads) — served
 // from /public since it's a static, pre-transformed style document; tiles,
 // fonts and sprites still load from OpenFreeMap's CDN via the "sources"
 // entries inside it. Regenerate with `python3 scripts/generate-map-style.py`
