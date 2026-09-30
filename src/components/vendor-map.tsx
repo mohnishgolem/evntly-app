@@ -39,6 +39,7 @@ const HIDDEN_LAYERS = [
   "railway_transit_dashline",
   "road_pier",
   "road_area_pier",
+  "highway_name_motorway",
 ];
 
 function hideClutterLayers(map: maplibregl.Map) {
