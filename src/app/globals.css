@@ -82,8 +82,8 @@
   --card-foreground: #ffffff;
   --popover: #1b1c22;
   --popover-foreground: #ffffff;
-  --primary: #2563eb;
-  --primary-hover: #3b74f0;
+  --primary: #c9932a;
+  --primary-hover: #e0a83d;
   --primary-foreground: #ffffff;
   --secondary: #1b1c22;
   --secondary-foreground: #ffffff;
@@ -102,7 +102,7 @@
   --warning: #f5b94d;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: rgba(37, 99, 235, 0.5);
+  --ring: rgba(201, 147, 42, 0.5);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -111,12 +111,12 @@
   --radius: 1.375rem;
   --sidebar: #1b1c22;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #2563eb;
+  --sidebar-primary: #c9932a;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #17171b;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: rgba(37, 99, 235, 0.5);
+  --sidebar-ring: rgba(201, 147, 42, 0.5);
 
   --glass-bg: rgba(16, 16, 20, 0.72);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -124,7 +124,7 @@
   /* Feature-card gradients — applied to prominent surfaces (primary CTAs,
      hero/feature cards), not blanket-applied to every card. Plain content
      cards use the flat --card color above. */
-  --gradient-primary: linear-gradient(135deg, #24105f 0%, #123f9b 55%, #2563eb 100%);
+  --gradient-primary: linear-gradient(135deg, #5c3d0a 0%, #b8860b 55%, #e8b84b 100%);
   --gradient-secondary: linear-gradient(135deg, #5b0b14 0%, #c9182b 100%);
   --gradient-light-card: linear-gradient(135deg, #dce5f5 0%, #b9d7f5 100%);
 }
