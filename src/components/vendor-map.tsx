@@ -13,8 +13,13 @@ import type { Database } from "@/lib/supabase/database.types";
 type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
 type LocatedVendor = Vendor & { latitude: number; longitude: number };
 
-// Clean, modern vector basemap (OpenMapTiles "Positron" style) — free, no API key.
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+// A recolored fork of OpenFreeMap's "dark" vector style (Apple Maps Dark
+// Mode inspired: navy water, muted green parks, amber motorways) — served
+// from /public since it's a static, pre-transformed style document; tiles,
+// fonts and sprites still load from OpenFreeMap's CDN via the "sources"
+// entries inside it. Regenerate with `python3 scripts/generate-map-style.py`
+// (not run at build time) if OpenFreeMap changes their base "dark" style.
+const MAP_STYLE = "/map-style-evntly-dark.json";
 const SYDNEY: [number, number] = [151.2093, -33.8688];
 
 // Turbopack can't resolve MapLibre's ES-module worker, so we serve it from /public
@@ -26,17 +31,14 @@ maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 // levels this map is used at.
 const HIDDEN_LAYERS = [
   "highway_path",
-  "highway-name-path",
   "railway",
   "railway_dashline",
-  "railway_service",
-  "railway_service_dashline",
+  "railway_minor",
+  "railway_minor_dashline",
   "railway_transit",
   "railway_transit_dashline",
   "road_pier",
   "road_area_pier",
-  "boundary_3",
-  "boundary_disputed",
 ];
 
 function hideClutterLayers(map: maplibregl.Map) {

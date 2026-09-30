@@ -212,19 +212,13 @@
   outline: none;
 }
 
-/* The vector basemap only ships a light style. The app is dark by default
-   now, so invert it unconditionally — a standard technique that keeps
-   roads and labels legible against the dark shell. The `.light` escape
-   hatch resets it back to the unmodified (light) tiles. */
+/* The basemap (public/map-style-evntly-dark.json) is a natively dark
+   style, not a light one being inverted — so only the built-in control
+   icons (zoom/compass, dark SVGs by default) need inverting to read as
+   white against the dark control background. */
 :root {
   --map-ctrl-icon-filter: invert(1);
 }
-.maplibregl-map .maplibregl-canvas-container canvas {
-  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95);
-}
 .light {
   --map-ctrl-icon-filter: none;
-}
-.light .maplibregl-map .maplibregl-canvas-container canvas {
-  filter: none;
 }
