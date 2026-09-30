@@ -47,7 +47,7 @@ export default function PlanPage() {
             <div
               className={cn(
                 "h-1.5 w-full rounded-full transition-colors",
-                i <= step ? "bg-coral" : "bg-muted"
+                i <= step ? "bg-highlight" : "bg-muted"
               )}
             />
             <span className="text-[11px] text-muted-foreground">{label}</span>
@@ -65,7 +65,7 @@ export default function PlanPage() {
                 className={cn(
                   "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                   draft.eventType === t
-                    ? "border-coral bg-coral-light text-coral"
+                    ? "border-highlight bg-highlight-light text-highlight"
                     : "border-border text-muted-foreground hover:border-foreground/30"
                 )}
               >
@@ -129,7 +129,7 @@ export default function PlanPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                     selected
-                      ? "border-coral bg-coral-light text-coral"
+                      ? "border-highlight bg-highlight-light text-highlight"
                       : "border-border text-muted-foreground hover:border-foreground/30"
                   )}
                 >

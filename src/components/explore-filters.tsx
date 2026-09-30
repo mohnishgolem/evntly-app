@@ -73,8 +73,8 @@ export function ExploreFilters() {
           className={cn(
             "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all",
             !event
-              ? "border-coral bg-coral-light text-coral"
-              : "border-border text-muted-foreground hover:border-coral/40"
+              ? "border-highlight bg-highlight-light text-highlight"
+              : "border-border text-muted-foreground hover:border-highlight/40"
           )}
         >
           Any event
@@ -86,8 +86,8 @@ export function ExploreFilters() {
             className={cn(
               "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all",
               event === ev
-                ? "border-coral bg-coral-light text-coral"
-                : "border-border text-muted-foreground hover:border-coral/40"
+                ? "border-highlight bg-highlight-light text-highlight"
+                : "border-border text-muted-foreground hover:border-highlight/40"
             )}
           >
             {ev}

@@ -96,7 +96,7 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
           type="button"
           onClick={() => setRole("customer")}
           className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-            role === "customer" ? "border-coral bg-coral-light text-coral" : "border-border text-muted-foreground"
+            role === "customer" ? "border-highlight bg-highlight-light text-highlight" : "border-border text-muted-foreground"
           }`}
         >
           I&apos;m planning an event
@@ -105,7 +105,7 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
           type="button"
           onClick={() => setRole("vendor")}
           className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-            role === "vendor" ? "border-coral bg-coral-light text-coral" : "border-border text-muted-foreground"
+            role === "vendor" ? "border-highlight bg-highlight-light text-highlight" : "border-border text-muted-foreground"
           }`}
         >
           I&apos;m a vendor

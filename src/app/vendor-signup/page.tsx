@@ -126,7 +126,7 @@ export default function VendorSignupPage() {
                 className={cn(
                   "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                   draft.serviceType === c.value
-                    ? "border-coral bg-coral-light text-coral"
+                    ? "border-highlight bg-highlight-light text-highlight"
                     : "border-border text-muted-foreground hover:border-foreground/30"
                 )}
               >
@@ -152,7 +152,7 @@ export default function VendorSignupPage() {
                   className={cn(
                     "rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
                     selected
-                      ? "border-coral bg-coral-light text-coral"
+                      ? "border-highlight bg-highlight-light text-highlight"
                       : "border-border text-muted-foreground hover:border-foreground/30"
                   )}
                 >
