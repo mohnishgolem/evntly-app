@@ -30,13 +30,13 @@ export default async function VendorDetailPage({
             <div>
               <div className="mb-1 flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{vendor.name}</h1>
-                {vendor.verified && <ShieldCheck className="h-5 w-5 text-blue-500" />}
+                {vendor.verified && <ShieldCheck className="h-5 w-5 text-primary" />}
               </div>
               <p className="text-muted-foreground">{categoryLabel(vendor.service_type)}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 {!!vendor.rating && vendor.rating > 0 && (
                   <span className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-foreground text-foreground" />
+                    <Star className="h-4 w-4 fill-champagne text-champagne" />
                     {vendor.rating.toFixed(1)} ({vendor.review_count ?? 0} reviews)
                   </span>
                 )}
@@ -94,7 +94,7 @@ export default async function VendorDetailPage({
                     <div className="mb-1 flex items-center gap-2">
                       <span className="text-sm font-medium">{r.reviewer_name ?? "Anonymous"}</span>
                       <span className="flex items-center gap-0.5 text-sm">
-                        <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+                        <Star className="h-3.5 w-3.5 fill-champagne text-champagne" />
                         {r.rating}
                       </span>
                     </div>
@@ -113,7 +113,7 @@ export default async function VendorDetailPage({
               <span className="text-base font-normal text-muted-foreground"> / hr</span>
             </p>
             {vendor.available ? (
-              <p className="mb-4 text-sm text-green-600">Available for bookings</p>
+              <p className="mb-4 text-sm text-success">Available for bookings</p>
             ) : (
               <p className="mb-4 text-sm text-muted-foreground">Currently unavailable</p>
             )}

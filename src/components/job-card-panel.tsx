@@ -89,7 +89,7 @@ export function JobCardPanel({
           </Button>
         )}
         {jobCard.status === "confirmed" && (
-          <span className="flex items-center gap-1 text-sm text-green-600">
+          <span className="flex items-center gap-1 text-sm text-success">
             <Check className="size-4" /> Confirmed
           </span>
         )}

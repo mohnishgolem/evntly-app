@@ -15,9 +15,9 @@ const NAV_ITEMS = [
 ];
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Waiting on vendor", className: "text-amber-600" },
+  pending: { label: "Waiting on vendor", className: "text-warning" },
   quoted: { label: "Quoted — review & accept", className: "text-primary" },
-  accepted: { label: "Accepted", className: "text-green-600" },
+  accepted: { label: "Accepted", className: "text-success" },
   declined: { label: "Declined", className: "text-destructive" },
   cancelled: { label: "Cancelled", className: "text-muted-foreground" },
 };

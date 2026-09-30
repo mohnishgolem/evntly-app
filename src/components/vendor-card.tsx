@@ -22,13 +22,14 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
           </div>
         )}
         {vendor.available && (
-          <div className="absolute top-3 left-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-900 shadow-sm">
+          <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-success shadow-sm">
+            <span className="size-1.5 rounded-full bg-success" />
             Available
           </div>
         )}
         {vendor.verified && (
           <div className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
-            <ShieldCheck className="h-4 w-4 text-blue-500" />
+            <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
         )}
       </div>
@@ -37,7 +38,7 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
           <p className="truncate text-sm leading-snug font-semibold">{vendor.name}</p>
           {!!vendor.rating && vendor.rating > 0 && (
             <div className="flex shrink-0 items-center gap-0.5">
-              <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+              <Star className="h-3.5 w-3.5 fill-champagne text-champagne" />
               <span className="text-sm font-medium">{vendor.rating.toFixed(1)}</span>
             </div>
           )}

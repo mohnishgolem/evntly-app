@@ -62,7 +62,7 @@ export function ExploreResults({ vendors }: { vendors: Vendor[] }) {
           ))}
         </div>
       ) : (
-        <div className="h-[72vh] min-h-[480px] overflow-hidden rounded-3xl border border-neutral-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+        <div className="h-[72vh] min-h-[480px] overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
           <VendorMapLoader vendors={vendors} />
         </div>
       )}

@@ -57,7 +57,7 @@ export function LeaveReview({
                 <Star
                   className={cn(
                     "h-8 w-8",
-                    n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                    n <= rating ? "fill-champagne text-champagne" : "text-muted-foreground"
                   )}
                 />
               </button>

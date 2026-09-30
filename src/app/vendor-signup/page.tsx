@@ -57,7 +57,7 @@ export default function VendorSignupPage() {
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <Clock className="mx-auto mb-4 h-12 w-12 text-amber-500" />
+        <Clock className="mx-auto mb-4 h-12 w-12 text-warning" />
         <h1 className="mb-2 text-2xl font-bold">Profile submitted for review</h1>
         <p className="text-muted-foreground">
           Thanks for signing up! We review new listings within 24–48 hours — you&apos;ll appear in
@@ -126,7 +126,7 @@ export default function VendorSignupPage() {
                 className={cn(
                   "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                   draft.serviceType === c.value
-                    ? "border-primary bg-primary/5 text-primary"
+                    ? "border-coral bg-coral-light text-coral"
                     : "border-border text-muted-foreground hover:border-foreground/30"
                 )}
               >
@@ -152,7 +152,7 @@ export default function VendorSignupPage() {
                   className={cn(
                     "rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
                     selected
-                      ? "border-primary bg-primary/5 text-primary"
+                      ? "border-coral bg-coral-light text-coral"
                       : "border-border text-muted-foreground hover:border-foreground/30"
                   )}
                 >

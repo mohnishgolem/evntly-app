@@ -19,7 +19,7 @@ export default async function HomePage() {
       {/* Hero — one clear message, one primary CTA, one secondary. No sign-up wall. */}
       <section className="border-b border-border/40 bg-gradient-to-b from-primary/5 to-background px-4 py-16 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-sm font-semibold tracking-wide text-primary uppercase">
+          <p className="mb-4 text-sm font-semibold tracking-wide text-coral uppercase">
             For {launchCity} event planners
           </p>
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-balance md:text-6xl">
@@ -51,7 +51,7 @@ export default async function HomePage() {
             <Link
               key={c.value}
               href={`/explore?category=${c.value}`}
-              className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:border-primary/40 hover:text-primary"
+              className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:border-coral/40 hover:text-coral"
             >
               <span>{c.icon}</span>
               {c.label}
@@ -75,7 +75,7 @@ export default async function HomePage() {
             <p className="mb-4 text-sm text-muted-foreground">
               Discover event vendors available in your area
             </p>
-            <div className="relative h-72 overflow-hidden rounded-3xl border border-neutral-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+            <div className="relative h-72 overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
               <VendorMapLoader vendors={vendors} embedded />
               <Link
                 href="/explore?view=map"

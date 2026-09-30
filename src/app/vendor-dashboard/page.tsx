@@ -17,8 +17,8 @@ const NAV_ITEMS = [
 ];
 
 const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: string }> = {
-  pending_review: { icon: Clock, label: "Under review", color: "text-amber-600" },
-  approved: { icon: ShieldCheck, label: "Live", color: "text-green-600" },
+  pending_review: { icon: Clock, label: "Under review", color: "text-warning" },
+  approved: { icon: ShieldCheck, label: "Live", color: "text-success" },
   rejected: { icon: XCircle, label: "Not approved", color: "text-destructive" },
   suspended: { icon: PauseCircle, label: "Suspended", color: "text-muted-foreground" },
 };

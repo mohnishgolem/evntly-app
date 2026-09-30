@@ -127,7 +127,7 @@ function SelectedCard({ vendor, onClose }: { vendor: LocatedVendor; onClose: () 
             </span>
             {!!vendor.rating && vendor.rating > 0 && (
               <span className="flex items-center gap-1 text-muted-foreground">
-                <Star className="size-3 fill-amber-400 text-amber-400" />
+                <Star className="size-3 fill-champagne text-champagne" />
                 {vendor.rating.toFixed(1)}
                 {!!vendor.review_count && <span>({vendor.review_count})</span>}
               </span>

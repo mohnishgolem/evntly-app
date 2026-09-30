@@ -28,18 +28,32 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
+  /* Tailwind's structural "accent" utilities (bg-accent, etc.) are used
+     throughout shadcn primitives as a neutral hover surface — kept mapped
+     to --muted so they don't flood every menu/tab hover with brand coral.
+     The brand's coral itself is exposed separately as `coral` below. */
+  --color-accent-foreground: var(--foreground);
+  --color-accent: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Brand tokens — the design system given for Evntly's premium event
+     marketplace identity. Coral is exposed as `coral` (bg-coral,
+     text-coral, fill-coral, …) to keep it distinct from the neutral
+     `accent` slot above; it's meant to be used sparingly. */
+  --color-coral: var(--accent);
+  --color-coral-light: var(--accent-light);
+  --color-champagne: var(--champagne);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   /* Apple's radius scale (8 / 12 / 16 / 22 / pill) falls out of --radius: 1rem */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -50,113 +64,134 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Apple-inspired semantic tokens. Light is the default; dark follows the
-   system automatically via prefers-color-scheme, with a `.dark` class
-   override available if a manual toggle is added later. The brand's own
-   terracotta stays the accent — this follows Apple's *system* (materials,
-   semantic color roles, type, radii) rather than recoloring everything
-   iOS blue. */
+/* Evntly brand tokens — deep plum + coral + champagne, warm off-white
+   surfaces. Light is the default; dark is a derived variant in the same
+   spirit (the brand spec only gave light values) that follows the system
+   automatically via prefers-color-scheme, with a `.dark` class override
+   available if a manual toggle is added later. */
 :root {
   color-scheme: light dark;
 
-  --background: #ffffff;
-  --foreground: #1d1d1f;
+  --background: #fcfaf7;
+  --foreground: #211f23;
   --card: #ffffff;
-  --card-foreground: #1d1d1f;
+  --card-foreground: #211f23;
   --popover: #ffffff;
-  --popover-foreground: #1d1d1f;
-  --primary: oklch(0.58 0.15 40);
+  --popover-foreground: #211f23;
+  --primary: #24142f;
+  --primary-hover: #321b40;
   --primary-foreground: #ffffff;
-  --secondary: #f2f2f7;
-  --secondary-foreground: #1d1d1f;
-  --muted: #f2f2f7;
-  --muted-foreground: rgba(60, 60, 67, 0.68);
-  --accent: #f2f2f7;
-  --accent-foreground: #1d1d1f;
-  --destructive: #ff3b30;
-  --border: rgba(60, 60, 67, 0.22);
-  --input: rgba(60, 60, 67, 0.22);
-  --ring: oklch(0.58 0.15 40 / 40%);
+  --secondary: #f5f1ee;
+  --secondary-foreground: #211f23;
+  --muted: #f5f1ee;
+  --muted-foreground: #716d73;
+  --text-muted: #9a959b;
+  /* Brand accent — coral, used sparingly for selected states, promo and
+     key emphasis (never the default neutral hover, see --color-accent above). */
+  --accent: #e86a5b;
+  --accent-light: #fce8e5;
+  --accent-foreground: #24142f;
+  --champagne: #d9b77a;
+  --destructive: #c94a4a;
+  --success: #2f8f68;
+  --warning: #d9a441;
+  --border: #e9e4e7;
+  --input: #e9e4e7;
+  --ring: rgba(36, 20, 47, 0.35);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 1rem;
-  --sidebar: #f2f2f7;
-  --sidebar-foreground: #1d1d1f;
-  --sidebar-primary: #1d1d1f;
+  --sidebar: #f5f1ee;
+  --sidebar-foreground: #211f23;
+  --sidebar-primary: #24142f;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #1d1d1f;
-  --sidebar-border: rgba(60, 60, 67, 0.22);
-  --sidebar-ring: oklch(0.58 0.15 40 / 40%);
+  --sidebar-accent-foreground: #211f23;
+  --sidebar-border: #e9e4e7;
+  --sidebar-ring: rgba(36, 20, 47, 0.35);
 
-  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg: rgba(255, 253, 250, 0.72);
   --glass-border: rgba(255, 255, 255, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #000000;
-    --foreground: #f5f5f7;
-    --card: #1c1c1e;
-    --card-foreground: #f5f5f7;
-    --popover: #1c1c1e;
-    --popover-foreground: #f5f5f7;
-    --primary: oklch(0.66 0.15 40);
-    --primary-foreground: #0d0d0f;
-    --secondary: #1c1c1e;
-    --secondary-foreground: #f5f5f7;
-    --muted: #1c1c1e;
-    --muted-foreground: rgba(235, 235, 245, 0.68);
-    --accent: #1c1c1e;
-    --accent-foreground: #f5f5f7;
-    --destructive: #ff453a;
-    --border: rgba(84, 84, 88, 0.62);
-    --input: rgba(255, 255, 255, 0.15);
-    --ring: oklch(0.66 0.15 40 / 40%);
-    --sidebar: #1c1c1e;
-    --sidebar-foreground: #f5f5f7;
-    --sidebar-primary: #f5f5f7;
-    --sidebar-primary-foreground: #0d0d0f;
-    --sidebar-accent: #000000;
-    --sidebar-accent-foreground: #f5f5f7;
-    --sidebar-border: rgba(84, 84, 88, 0.62);
+    --background: #17101c;
+    --foreground: #f3ede9;
+    --card: #241a29;
+    --card-foreground: #f3ede9;
+    --popover: #241a29;
+    --popover-foreground: #f3ede9;
+    --primary: #4e2f63;
+    --primary-hover: #5e3a76;
+    --primary-foreground: #ffffff;
+    --secondary: #241a29;
+    --secondary-foreground: #f3ede9;
+    --muted: #241a29;
+    --muted-foreground: #c9c0c6;
+    --text-muted: #9a8fa0;
+    --accent: #e86a5b;
+    --accent-light: rgba(232, 106, 91, 0.16);
+    --accent-foreground: #ffffff;
+    --champagne: #d9b77a;
+    --destructive: #e05c5c;
+    --success: #3fae82;
+    --warning: #e6b860;
+    --border: #3a2c42;
+    --input: rgba(255, 255, 255, 0.14);
+    --ring: rgba(78, 47, 99, 0.45);
+    --sidebar: #241a29;
+    --sidebar-foreground: #f3ede9;
+    --sidebar-primary: #f3ede9;
+    --sidebar-primary-foreground: #17101c;
+    --sidebar-accent: #17101c;
+    --sidebar-accent-foreground: #f3ede9;
+    --sidebar-border: #3a2c42;
+    --sidebar-ring: rgba(78, 47, 99, 0.45);
 
-    --glass-bg: rgba(28, 28, 30, 0.68);
+    --glass-bg: rgba(36, 26, 41, 0.7);
     --glass-border: rgba(255, 255, 255, 0.14);
   }
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #f5f5f7;
-  --card: #1c1c1e;
-  --card-foreground: #f5f5f7;
-  --popover: #1c1c1e;
-  --popover-foreground: #f5f5f7;
-  --primary: oklch(0.66 0.15 40);
-  --primary-foreground: #0d0d0f;
-  --secondary: #1c1c1e;
-  --secondary-foreground: #f5f5f7;
-  --muted: #1c1c1e;
-  --muted-foreground: rgba(235, 235, 245, 0.68);
-  --accent: #1c1c1e;
-  --accent-foreground: #f5f5f7;
-  --destructive: #ff453a;
-  --border: rgba(84, 84, 88, 0.62);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: oklch(0.66 0.15 40 / 40%);
-  --sidebar: #1c1c1e;
-  --sidebar-foreground: #f5f5f7;
-  --sidebar-primary: #f5f5f7;
-  --sidebar-primary-foreground: #0d0d0f;
-  --sidebar-accent: #000000;
-  --sidebar-accent-foreground: #f5f5f7;
-  --sidebar-border: rgba(84, 84, 88, 0.62);
+  --background: #17101c;
+  --foreground: #f3ede9;
+  --card: #241a29;
+  --card-foreground: #f3ede9;
+  --popover: #241a29;
+  --popover-foreground: #f3ede9;
+  --primary: #4e2f63;
+  --primary-hover: #5e3a76;
+  --primary-foreground: #ffffff;
+  --secondary: #241a29;
+  --secondary-foreground: #f3ede9;
+  --muted: #241a29;
+  --muted-foreground: #c9c0c6;
+  --text-muted: #9a8fa0;
+  --accent: #e86a5b;
+  --accent-light: rgba(232, 106, 91, 0.16);
+  --accent-foreground: #ffffff;
+  --champagne: #d9b77a;
+  --destructive: #e05c5c;
+  --success: #3fae82;
+  --warning: #e6b860;
+  --border: #3a2c42;
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: rgba(78, 47, 99, 0.45);
+  --sidebar: #241a29;
+  --sidebar-foreground: #f3ede9;
+  --sidebar-primary: #f3ede9;
+  --sidebar-primary-foreground: #17101c;
+  --sidebar-accent: #17101c;
+  --sidebar-accent-foreground: #f3ede9;
+  --sidebar-border: #3a2c42;
+  --sidebar-ring: rgba(78, 47, 99, 0.45);
 
-  --glass-bg: rgba(28, 28, 30, 0.68);
+  --glass-bg: rgba(36, 26, 41, 0.7);
   --glass-border: rgba(255, 255, 255, 0.14);
 }
 

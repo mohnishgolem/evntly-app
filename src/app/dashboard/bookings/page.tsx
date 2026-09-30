@@ -18,9 +18,9 @@ const NAV_ITEMS = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: "text-amber-600",
+  pending: "text-warning",
   confirmed: "text-primary",
-  completed: "text-green-600",
+  completed: "text-success",
   cancelled: "text-muted-foreground",
 };
 

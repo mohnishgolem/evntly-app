@@ -23,7 +23,7 @@ export default async function AdminPage() {
 
       <section className="mb-10">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-          <ShieldAlert className="h-5 w-5 text-amber-500" /> Pending review ({pending.length})
+          <ShieldAlert className="h-5 w-5 text-warning" /> Pending review ({pending.length})
         </h2>
         {pending.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing waiting on you. 🎉</p>
