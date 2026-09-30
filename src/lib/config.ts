@@ -54,5 +54,5 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function categoryColor(value: string) {
-  return CATEGORY_COLORS[value] ?? "#dc5b52";
+  return CATEGORY_COLORS[value] ?? "#c1552c";
 }
