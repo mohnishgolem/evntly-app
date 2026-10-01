@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/site/user-menu";
 import { MobileNav } from "@/components/site/mobile-nav";
 import { Logo } from "@/components/site/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Global top-level nav is identical for every visitor (Home/Explore), always
 // visible, never swapped by role. Only the right-hand side changes based on
@@ -51,6 +52,7 @@ export async function SiteHeader() {
               <Button nativeButton={false} render={<Link href="/signup">Sign up</Link>} />
             </div>
           )}
+          <ThemeToggle />
           <MobileNav isAuthenticated={!!session} profile={session?.profile ?? null} />
         </div>
       </div>

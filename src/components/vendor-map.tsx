@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Star, X } from "lucide-react";
 import { categoryColor, categoryIcon, categoryLabel } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import { THEME_CHANGE_EVENT } from "@/components/theme-toggle";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
@@ -19,8 +20,16 @@ type LocatedVendor = Vendor & { latitude: number; longitude: number };
 // fonts and sprites still load from OpenFreeMap's CDN via the "sources"
 // entries inside it. Regenerate with `python3 scripts/generate-map-style.py`
 // (not run at build time) if OpenFreeMap changes their base "dark" style.
-const MAP_STYLE = "/map-style-evntly-dark.json";
+// Light mode uses OpenFreeMap's stock "positron" style directly — no
+// custom recolor needed, it's already a clean minimal light basemap.
+const DARK_MAP_STYLE = "/map-style-evntly-dark.json";
+const LIGHT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const SYDNEY: [number, number] = [151.2093, -33.8688];
+
+function getCurrentTheme(): "light" | "dark" {
+  if (typeof document === "undefined") return "dark";
+  return document.documentElement.classList.contains("light") ? "light" : "dark";
+}
 
 // Turbopack can't resolve MapLibre's ES-module worker, so we serve it from /public
 // (copied by the `copy-maplibre-worker` script before dev/build).
@@ -31,14 +40,19 @@ maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 // levels this map is used at.
 const HIDDEN_LAYERS = [
   "highway_path",
+  "highway-name-path",
   "railway",
   "railway_dashline",
   "railway_minor",
   "railway_minor_dashline",
+  "railway_service",
+  "railway_service_dashline",
   "railway_transit",
   "railway_transit_dashline",
   "road_pier",
   "road_area_pier",
+  "boundary_3",
+  "boundary_disputed",
   "highway_name_motorway",
 ];
 
@@ -158,6 +172,32 @@ export function VendorMap({
   const mapRef = useRef<MapRef>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  // Lazy-initialized from the DOM, not synced in an effect: VendorMap is
+  // loaded with `ssr: false` (see vendor-map-loader.tsx), so it only ever
+  // mounts client-side — the initializer already sees the real theme.
+  const [theme, setTheme] = useState<"light" | "dark">(getCurrentTheme);
+
+  useEffect(() => {
+    function handleThemeChange(e: Event) {
+      setTheme((e as CustomEvent<"light" | "dark">).detail);
+    }
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    return () => window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+  }, []);
+
+  // Re-apply the declutter pass every time a style finishes loading —
+  // covers both the first load and switching basemaps on theme change
+  // (changing the `mapStyle` prop makes MapLibre reload the whole style,
+  // which fires style.load again but not the one-shot onLoad prop below).
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    const onStyleLoad = () => hideClutterLayers(map);
+    map.on("style.load", onStyleLoad);
+    return () => {
+      map.off("style.load", onStyleLoad);
+    };
+  }, [theme]);
 
   const located = useMemo(
     () =>
@@ -226,7 +266,7 @@ export function VendorMap({
         ref={mapRef}
         mapLib={maplibregl}
         initialViewState={{ longitude: SYDNEY[0], latitude: SYDNEY[1], zoom: 10.5 }}
-        mapStyle={MAP_STYLE}
+        mapStyle={theme === "light" ? LIGHT_MAP_STYLE : DARK_MAP_STYLE}
         style={{ width: "100%", height: "100%" }}
         attributionControl={{ compact: true }}
         cooperativeGestures={embedded}

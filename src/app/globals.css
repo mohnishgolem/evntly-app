@@ -67,27 +67,84 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Evntly brand tokens — dark app shell, blue/purple gradient CTAs, warm
-   gold for ratings. Dark is the primary/default look (per brand spec,
-   which leads with "dark app background" and gives no light variant), so
-   these live directly on :root rather than behind a prefers-color-scheme
-   check. A `.light` class is kept as a structural escape hatch (native
-   form-control chrome only) in case a manual light toggle is added later. */
+/* Evntly brand tokens. One accent color (coral) carries across both
+   modes for brand consistency — Apple HIG discipline is a single
+   confident tint rather than several competing ones. A small bootstrap
+   script in layout.tsx sets `.light` or `.dark` on <html> before paint
+   (resolved from localStorage, falling back to system preference), so
+   :root below only needs to hold the light baseline as a progressive-
+   enhancement fallback for when JS is unavailable. */
 :root {
+  color-scheme: light;
+
+  --background: #f2f1ed;
+  --foreground: #16161a;
+  /* "Material" — a translucent wash over the page rather than a flat
+     opaque box, so cards read as frosted glass sitting on the shell
+     (paired with backdrop-blur on the components that use it) instead
+     of another solid rectangle. */
+  --card: rgba(255, 255, 255, 0.7);
+  --card-foreground: #16161a;
+  --popover: #ffffff;
+  --popover-foreground: #16161a;
+  --primary: #e8604a;
+  --primary-hover: #d4523c;
+  --primary-foreground: #ffffff;
+  --secondary: #eae9e4;
+  --secondary-foreground: #16161a;
+  --muted: #eae9e4;
+  --muted-foreground: #68666a;
+  --text-muted: #9c9a96;
+  --highlight: #e8604a;
+  --highlight-light: rgba(232, 96, 74, 0.1);
+  --highlight-foreground: #ffffff;
+  --champagne: #c99a3f;
+  --destructive: #c9182b;
+  --success: #16915f;
+  --warning: #a66a0a;
+  --border: rgba(22, 22, 26, 0.1);
+  --input: rgba(22, 22, 26, 0.14);
+  --ring: rgba(232, 96, 74, 0.4);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 1.375rem;
+  --sidebar: #eae9e4;
+  --sidebar-foreground: #16161a;
+  --sidebar-primary: #e8604a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #16161a;
+  --sidebar-border: rgba(22, 22, 26, 0.1);
+  --sidebar-ring: rgba(232, 96, 74, 0.4);
+
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(22, 22, 26, 0.08);
+
+  /* Feature-card gradients — applied to prominent surfaces (primary CTAs,
+     hero/feature cards), not blanket-applied to every card. Plain content
+     cards use the flat --card color above. Mode-agnostic: defined once on
+     :root so both .light and .dark inherit the same values. */
+  --gradient-primary: linear-gradient(135deg, #5c3d0a 0%, #b8860b 55%, #e8b84b 100%);
+  --gradient-secondary: linear-gradient(135deg, #5b0b14 0%, #c9182b 100%);
+  --gradient-light-card: linear-gradient(135deg, #dce5f5 0%, #b9d7f5 100%);
+}
+
+.light {
+  color-scheme: light;
+}
+
+.dark {
   color-scheme: dark;
 
   --background: #101014;
   --foreground: #ffffff;
-  /* "Material" — a translucent wash over the page rather than a flat
-     opaque box, so cards read as frosted glass sitting on the black
-     shell (paired with backdrop-blur on the components that use it)
-     instead of another solid dark rectangle. */
   --card: rgba(255, 255, 255, 0.05);
   --card-foreground: #ffffff;
   --popover: #1b1c22;
   --popover-foreground: #ffffff;
-  /* One accent, used everywhere an accent is used — Apple HIG discipline
-     is a single confident brand tint rather than several competing ones. */
   --primary: #e8604a;
   --primary-hover: #f0785f;
   --primary-foreground: #ffffff;
@@ -106,12 +163,6 @@
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.14);
   --ring: rgba(232, 96, 74, 0.5);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 1.375rem;
   --sidebar: #1b1c22;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #e8604a;
@@ -123,21 +174,6 @@
 
   --glass-bg: rgba(16, 16, 20, 0.72);
   --glass-border: rgba(255, 255, 255, 0.08);
-
-  /* Feature-card gradients — applied to prominent surfaces (primary CTAs,
-     hero/feature cards), not blanket-applied to every card. Plain content
-     cards use the flat --card color above. */
-  --gradient-primary: linear-gradient(135deg, #5c3d0a 0%, #b8860b 55%, #e8b84b 100%);
-  --gradient-secondary: linear-gradient(135deg, #5b0b14 0%, #c9182b 100%);
-  --gradient-light-card: linear-gradient(135deg, #dce5f5 0%, #b9d7f5 100%);
-}
-
-.dark {
-  color-scheme: dark;
-}
-
-.light {
-  color-scheme: light;
 }
 
 @layer base {
@@ -215,13 +251,13 @@
   outline: none;
 }
 
-/* The basemap (public/map-style-evntly-dark.json) is a natively dark
-   style, not a light one being inverted — so only the built-in control
-   icons (zoom/compass, dark SVGs by default) need inverting to read as
-   white against the dark control background. */
+/* The built-in control icons (zoom/compass) are dark SVGs by default —
+   fine against the light control background in light mode, but need
+   inverting to read as white against the dark control background used
+   in dark mode (public/map-style-evntly-dark.json). */
 :root {
-  --map-ctrl-icon-filter: invert(1);
-}
-.light {
   --map-ctrl-icon-filter: none;
+}
+.dark {
+  --map-ctrl-icon-filter: invert(1);
 }
