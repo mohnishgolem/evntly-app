@@ -107,7 +107,7 @@ export default async function VendorDetailPage({
         </div>
 
         <div>
-          <div className="sticky top-24 rounded-2xl border border-border p-5">
+          <div className="sticky top-24 rounded-2xl border border-border bg-card p-5 backdrop-blur-xl">
             <p className="mb-1 text-2xl font-bold">
               ${vendor.hourly_rate}
               <span className="text-base font-normal text-muted-foreground"> / hr</span>

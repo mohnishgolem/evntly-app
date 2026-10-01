@@ -7,8 +7,11 @@ type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
 
 export function VendorCard({ vendor }: { vendor: Vendor }) {
   return (
-    <Link href={`/vendor/${vendor.id}`} className="group block">
-      <div className="relative mb-3 aspect-4/3 overflow-hidden rounded-2xl bg-muted">
+    <Link
+      href={`/vendor/${vendor.id}`}
+      className="group block overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-xl"
+    >
+      <div className="relative aspect-4/3 overflow-hidden bg-muted">
         {vendor.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -33,7 +36,7 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
           </div>
         )}
       </div>
-      <div>
+      <div className="p-3">
         <div className="flex items-start justify-between gap-1">
           <p className="truncate text-sm leading-snug font-semibold">{vendor.name}</p>
           {!!vendor.rating && vendor.rating > 0 && (

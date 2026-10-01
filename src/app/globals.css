@@ -78,31 +78,34 @@
 
   --background: #101014;
   --foreground: #ffffff;
-  --card: #1b1c22;
+  /* "Material" — a translucent wash over the page rather than a flat
+     opaque box, so cards read as frosted glass sitting on the black
+     shell (paired with backdrop-blur on the components that use it)
+     instead of another solid dark rectangle. */
+  --card: rgba(255, 255, 255, 0.05);
   --card-foreground: #ffffff;
   --popover: #1b1c22;
   --popover-foreground: #ffffff;
-  --primary: #c9932a;
-  --primary-hover: #e0a83d;
+  /* One accent, used everywhere an accent is used — Apple HIG discipline
+     is a single confident brand tint rather than several competing ones. */
+  --primary: #e8604a;
+  --primary-hover: #f0785f;
   --primary-foreground: #ffffff;
   --secondary: #1b1c22;
   --secondary-foreground: #ffffff;
   --muted: #17171b;
   --muted-foreground: #a5a7b2;
   --text-muted: #6b6d78;
-  /* Brand emphasis — vivid blue, used sparingly for selected states and
-     key visual emphasis (never the default neutral hover, see
-     --color-accent above). */
-  --highlight: #2563eb;
-  --highlight-light: rgba(37, 99, 235, 0.14);
+  --highlight: #e8604a;
+  --highlight-light: rgba(232, 96, 74, 0.14);
   --highlight-foreground: #ffffff;
   --champagne: #d9b77a;
   --destructive: #c9182b;
   --success: #34d399;
   --warning: #f5b94d;
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: rgba(201, 147, 42, 0.5);
+  --ring: rgba(232, 96, 74, 0.5);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -111,12 +114,12 @@
   --radius: 1.375rem;
   --sidebar: #1b1c22;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #c9932a;
+  --sidebar-primary: #e8604a;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #17171b;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: rgba(201, 147, 42, 0.5);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgba(232, 96, 74, 0.5);
 
   --glass-bg: rgba(16, 16, 20, 0.72);
   --glass-border: rgba(255, 255, 255, 0.08);
