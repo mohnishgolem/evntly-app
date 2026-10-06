@@ -14,7 +14,8 @@ export default async function MessageThreadPage({
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/messages");
 
-  const { conversationId } = await params;
+  const { conversationId: rawConversationId } = await params;
+  const conversationId = decodeURIComponent(rawConversationId);
   const email = session.user.email as string;
   const supabase = await createClient();
 
