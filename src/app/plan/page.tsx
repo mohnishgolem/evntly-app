@@ -145,7 +145,9 @@ export default function PlanPage() {
         <StepCard title="What's your budget?">
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="budget">Total budget (AUD)</Label>
+              <Label htmlFor="budget">
+                Total budget (AUD) <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="budget"
                 type="number"
@@ -154,6 +156,9 @@ export default function PlanPage() {
                 value={draft.budgetTotal || ""}
                 onChange={(e) => setDraft((d) => ({ ...d, budgetTotal: Number(e.target.value) }))}
               />
+              {draft.budgetTotal <= 0 && (
+                <p className="text-xs text-muted-foreground">Enter a budget to continue.</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="notes">Anything else? (optional)</Label>

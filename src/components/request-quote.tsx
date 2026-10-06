@@ -189,7 +189,9 @@ function QuoteForm({
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="qr-budget">Budget range</Label>
+        <Label htmlFor="qr-budget">
+          Budget range <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="qr-budget"
           placeholder="e.g. $500-1000"
