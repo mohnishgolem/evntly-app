@@ -78,7 +78,9 @@ export function CreateBundleForm() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="bundle-my-price">Your price ($)</Label>
+          <Label htmlFor="bundle-my-price">
+            Your price ($) <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="bundle-my-price"
             type="number"
