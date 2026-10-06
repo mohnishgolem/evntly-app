@@ -168,7 +168,9 @@ export default function VendorSignupPage() {
         <div className="space-y-3">
           <h1 className="mb-4 text-xl font-bold">Set your rate</h1>
           <div className="space-y-1.5">
-            <Label htmlFor="hourlyRate">Hourly rate (AUD)</Label>
+            <Label htmlFor="hourlyRate">
+              Hourly rate (AUD) <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="hourlyRate"
               type="number"
@@ -176,6 +178,9 @@ export default function VendorSignupPage() {
               value={draft.hourlyRate || ""}
               onChange={(e) => setDraft((d) => ({ ...d, hourlyRate: Number(e.target.value) }))}
             />
+            {draft.hourlyRate <= 0 && (
+              <p className="text-xs text-muted-foreground">Enter a rate to continue.</p>
+            )}
           </div>
         </div>
       )}
