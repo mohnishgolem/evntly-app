@@ -52,7 +52,7 @@ export default async function MessagesPage() {
             return (
               <Link
                 key={m.conversation_id}
-                href={`/messages/${m.conversation_id}`}
+                href={`/messages/${encodeURIComponent(m.conversation_id)}`}
                 className="block px-4 py-3 transition-colors hover:bg-muted"
               >
                 <div className="flex items-center justify-between">
