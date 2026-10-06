@@ -84,14 +84,22 @@ export default async function VendorDashboardPage() {
                   <Icon className="h-4 w-4" /> {meta.label}
                 </span>
               </div>
-              {listing.status === "approved" && (
+              <div className="mt-3 flex gap-4">
                 <Link
-                  href={`/vendor/${listing.id}`}
-                  className="mt-3 inline-block text-sm underline underline-offset-2"
+                  href={`/vendor-dashboard/edit/${listing.id}`}
+                  className="text-sm underline underline-offset-2"
                 >
-                  View public listing
+                  Edit listing
                 </Link>
-              )}
+                {listing.status === "approved" && (
+                  <Link
+                    href={`/vendor/${listing.id}`}
+                    className="text-sm underline underline-offset-2"
+                  >
+                    View public listing
+                  </Link>
+                )}
+              </div>
             </div>
           );
         })}

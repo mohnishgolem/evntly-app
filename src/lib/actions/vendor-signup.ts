@@ -47,3 +47,36 @@ export async function submitVendorListing(
 
   redirect("/vendor-dashboard");
 }
+
+export async function updateVendorListing(
+  listingId: string,
+  draft: VendorSignupDraft
+): Promise<VendorSignupState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "You need to be logged in to edit a listing." };
+  }
+
+  const { error } = await supabase
+    .from("service_providers")
+    .update({
+      name: draft.businessName,
+      bio: draft.bio || null,
+      service_type: draft.serviceType,
+      hourly_rate: draft.hourlyRate,
+      city: draft.city || null,
+      locations_serviced: draft.locationsServiced,
+      event_types: draft.eventTypes,
+      phone: draft.phone || null,
+    })
+    .eq("id", listingId)
+    .eq("owner_email", user.email);
+
+  if (error) return { error: error.message };
+
+  redirect("/vendor-dashboard");
+}
