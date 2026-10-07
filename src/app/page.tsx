@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HeroVideo } from "@/components/hero-video";
 import { VendorCard } from "@/components/vendor-card";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { getFeaturedVendors, launchCity } from "@/lib/data/vendors";
@@ -32,9 +31,16 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        <HeroVideo
+        <video
           src="/videos/hero-celebrations.mp4"
           poster="/images/hero-celebrations-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
 
