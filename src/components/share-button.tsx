@@ -47,7 +47,7 @@ export function ShareButton({
       onClick={share}
       aria-label={copied ? "Link copied" : "Share"}
       className={cn(
-        "flex items-center justify-center rounded-full bg-white shadow-sm transition-transform active:scale-90",
+        "flex items-center justify-center rounded-full bg-background shadow-sm transition-transform active:scale-90",
         size === "sm" ? "h-7 w-7" : "h-10 w-10",
         className
       )}

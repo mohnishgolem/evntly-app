@@ -21,13 +21,26 @@ export default async function HomePage() {
     <div className="pb-16">
       {/* Hero — one clear message, one primary CTA, one secondary. No sign-up wall. */}
       <section className="relative overflow-hidden border-b border-border/40 px-4 py-20 md:py-28">
+        {/* Poster stays underneath: it's the LCP image, the loading fallback, and what
+            reduced-motion users see instead of the video. */}
         <Image
-          src="/images/hero-sydney.jpg"
-          alt="Fireworks over the Sydney Harbour Bridge and Opera House"
+          src="/images/hero-celebrations-poster.jpg"
+          alt="A couple sharing their first dance under a canopy of fairy lights"
           fill
           priority
           sizes="100vw"
           className="object-cover"
+        />
+        <video
+          src="/videos/hero-celebrations.mp4"
+          poster="/images/hero-celebrations-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
 
