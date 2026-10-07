@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { SITE_URL, LAUNCH_CITY } from "@/lib/config";
 
 // Resolves light/dark before first paint (localStorage, falling back to
 // system preference) and sets it as a class on <html> — avoids a flash of
@@ -22,10 +23,42 @@ export const logoFont = localFont({
   weight: "400",
 });
 
+const DEFAULT_DESCRIPTION =
+  `Book DJs, photographers, florists and caterers for your wedding, birthday or corporate event in ${LAUNCH_CITY}.`;
+
 export const metadata: Metadata = {
-  title: "Evntly — Find trusted event vendors",
-  description:
-    "Book DJs, photographers, florists and caterers for your wedding, birthday or corporate event in Sydney.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Evntly — Find trusted event vendors",
+    template: "%s | Evntly",
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: "Evntly",
+  keywords: [
+    "event vendors",
+    `${LAUNCH_CITY} wedding vendors`,
+    "DJ hire",
+    "wedding photographer",
+    "florist",
+    "caterer",
+    "event planning",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Evntly",
+    title: "Evntly — Find trusted event vendors",
+    description: DEFAULT_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Evntly — Find trusted event vendors",
+    description: DEFAULT_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

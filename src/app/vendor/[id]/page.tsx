@@ -1,13 +1,40 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Star, MapPin, ShieldCheck, Clock } from "lucide-react";
 import { getVendorById, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
-import { categoryLabel } from "@/lib/config";
+import { categoryLabel, LAUNCH_CITY, SITE_URL } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { RequestQuote } from "@/components/request-quote";
 import { SaveVendorButton } from "@/components/save-vendor-button";
+import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const vendor = await getVendorById(id);
+  if (!vendor) return {};
+
+  const city = vendor.city || LAUNCH_CITY;
+  const title = `${vendor.name} — ${categoryLabel(vendor.service_type)} in ${city}`;
+  const description =
+    vendor.bio ||
+    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}, from $${vendor.hourly_rate}/hr on Evntly.`;
+  const url = `${SITE_URL}/vendor/${id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, type: "profile" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function VendorDetailPage({
   params,
@@ -24,8 +51,35 @@ export default async function VendorDetailPage({
     getCurrentUser(),
   ]);
 
+  const vendorUrl = `${SITE_URL}/vendor/${vendor.id}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: vendor.name,
+    description: vendor.bio ?? undefined,
+    image: vendor.avatar_url ?? undefined,
+    url: vendorUrl,
+    priceRange: vendor.hourly_rate ? `$${vendor.hourly_rate}/hr` : undefined,
+    address: vendor.city
+      ? { "@type": "PostalAddress", addressLocality: vendor.city, addressCountry: "AU" }
+      : undefined,
+    ...(vendor.rating && vendor.rating > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: vendor.rating,
+            reviewCount: vendor.review_count ?? 0,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="grid gap-8 md:grid-cols-3">
         <div className="md:col-span-2">
           <div className="mb-4 flex items-start justify-between gap-4">
@@ -54,13 +108,22 @@ export default async function VendorDetailPage({
                 )}
               </div>
             </div>
-            <SaveVendorButton
-              vendorId={vendor.id}
-              initialSaved={(session?.profile?.saved_providers ?? []).includes(vendor.id)}
-              isAuthenticated={!!session}
-              size="lg"
-              className="border border-border"
-            />
+            <div className="flex shrink-0 items-center gap-2">
+              <ShareButton
+                url={vendorUrl}
+                title={vendor.name}
+                text={`${vendor.name} — ${categoryLabel(vendor.service_type)} on Evntly`}
+                size="lg"
+                className="border border-border"
+              />
+              <SaveVendorButton
+                vendorId={vendor.id}
+                initialSaved={(session?.profile?.saved_providers ?? []).includes(vendor.id)}
+                isAuthenticated={!!session}
+                size="lg"
+                className="border border-border"
+              />
+            </div>
           </div>
 
           <ReportVendor

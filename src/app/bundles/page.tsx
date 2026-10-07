@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { getActiveBundles } from "@/lib/data/bundles";
+
+export const metadata: Metadata = {
+  title: "Vendor bundles",
+  description:
+    "Browse discounted event vendor bundles — multiple vendors teamed up into one package.",
+};
 
 export default async function BundlesPage() {
   const bundles = await getActiveBundles();

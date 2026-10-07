@@ -23,6 +23,11 @@ export const LAUNCH_CATEGORIES: VendorCategory[] = [
 
 export const LAUNCH_CITY = "Sydney";
 
+// Canonical production origin — used for metadataBase, sitemap/robots URLs,
+// and anywhere an absolute link is required (OG tags, share links). Update
+// this if/when a custom domain is attached to the Vercel project.
+export const SITE_URL = "https://evntly-tau.vercel.app";
+
 export const EVENT_TYPES = [
   "Wedding",
   "Birthday",

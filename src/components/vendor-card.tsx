@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Star, ShieldCheck } from "lucide-react";
-import { categoryLabel, categoryIcon } from "@/lib/config";
+import { categoryLabel, categoryIcon, SITE_URL } from "@/lib/config";
 import { SaveVendorButton } from "@/components/save-vendor-button";
+import { ShareButton } from "@/components/share-button";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
@@ -42,6 +43,11 @@ export function VendorCard({
             initialSaved={saved}
             isAuthenticated={isAuthenticated}
           />
+          <ShareButton
+            url={`${SITE_URL}/vendor/${vendor.id}`}
+            title={vendor.name}
+            text={`${vendor.name} — ${categoryLabel(vendor.service_type)} on Evntly`}
+          />
           {vendor.verified && (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
               <ShieldCheck className="h-4 w-4 text-primary" />
@@ -55,7 +61,12 @@ export function VendorCard({
           {!!vendor.rating && vendor.rating > 0 && (
             <div className="flex shrink-0 items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
-              <span className="text-sm">{vendor.rating.toFixed(1)}</span>
+              <span className="text-sm">
+                {vendor.rating.toFixed(1)}
+                {!!vendor.review_count && (
+                  <span className="text-muted-foreground"> ({vendor.review_count})</span>
+                )}
+              </span>
             </div>
           )}
         </div>
