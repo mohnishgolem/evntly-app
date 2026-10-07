@@ -20,3 +20,29 @@ export async function setVendorStatus(
   revalidatePath("/admin");
   return { success: true };
 }
+
+export async function setUserRole(
+  userId: string,
+  role: "customer" | "vendor" | "admin"
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("users").update({ role }).eq("id", userId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function updateReportStatus(
+  reportId: string,
+  status: "reviewed" | "dismissed" | "actioned"
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("reports").update({ status }).eq("id", reportId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true };
+}

@@ -18,3 +18,31 @@ export async function getAllVendorsForAdmin() {
     .order("created_at", { ascending: false });
   return data ?? [];
 }
+
+export async function getAllUsersForAdmin() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getReportsForAdmin() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("reports")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getLeakageEventsForAdmin() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("leakage_events")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return data ?? [];
+}

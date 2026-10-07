@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { RequestQuote } from "@/components/request-quote";
 import { SaveVendorButton } from "@/components/save-vendor-button";
+import { ReportVendor } from "@/components/report-vendor";
 
 export default async function VendorDetailPage({
   params,
@@ -62,7 +63,15 @@ export default async function VendorDetailPage({
             />
           </div>
 
-          {vendor.bio && <p className="mb-6 leading-relaxed text-foreground/90">{vendor.bio}</p>}
+          <ReportVendor
+            isAuthenticated={!!session}
+            vendorId={vendor.id}
+            vendorEmail={vendor.owner_email}
+          />
+
+          {vendor.bio && (
+            <p className="mt-3 mb-6 leading-relaxed text-foreground/90">{vendor.bio}</p>
+          )}
 
           {!!vendor.event_types?.length && (
             <div className="mb-6 flex flex-wrap gap-2">
