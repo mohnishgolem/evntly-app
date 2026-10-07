@@ -202,6 +202,17 @@
   }
 }
 
+/* Hides the scrollbar on horizontally-scrollable rows (category tabs)
+   while keeping them scrollable — matches Airbnb's category nav, which
+   has no visible scrollbar chrome. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Glass material — for the header, floating controls, and modals only.
    Never used as a blanket background (per HIG: glass reads as chrome, not content). */
 .glass-material {

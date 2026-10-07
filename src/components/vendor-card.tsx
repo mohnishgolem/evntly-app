@@ -16,11 +16,8 @@ export function VendorCard({
   isAuthenticated?: boolean;
 }) {
   return (
-    <Link
-      href={`/vendor/${vendor.id}`}
-      className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-    >
-      <div className="relative aspect-4/3 overflow-hidden bg-muted">
+    <Link href={`/vendor/${vendor.id}`} className="group block">
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
         {vendor.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -52,19 +49,21 @@ export function VendorCard({
           )}
         </div>
       </div>
-      <div className="p-3">
+      <div className="pt-2.5">
         <div className="flex items-start justify-between gap-1">
           <p className="truncate text-sm leading-snug font-semibold">{vendor.name}</p>
           {!!vendor.rating && vendor.rating > 0 && (
-            <div className="flex shrink-0 items-center gap-0.5">
-              <Star className="h-3.5 w-3.5 fill-champagne text-champagne" />
-              <span className="text-sm font-medium">{vendor.rating.toFixed(1)}</span>
+            <div className="flex shrink-0 items-center gap-1">
+              <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+              <span className="text-sm">{vendor.rating.toFixed(1)}</span>
             </div>
           )}
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">{categoryLabel(vendor.service_type)}</p>
-        {vendor.city && <p className="text-sm text-muted-foreground">{vendor.city}</p>}
-        <p className="mt-1 text-sm">
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          {categoryLabel(vendor.service_type)}
+          {vendor.city ? ` · ${vendor.city}` : ""}
+        </p>
+        <p className="mt-1.5 text-sm">
           <span className="font-semibold">${vendor.hourly_rate}</span>
           <span className="text-muted-foreground"> / hr</span>
         </p>
