@@ -23,7 +23,7 @@ export function SiteFooter() {
           </nav>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sai Mohnish Golem (ABN 49 193 658 959), trading as Evntly · Sydney, Australia
+          ABN 49 193 658 959 · Sydney, Australia
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           © {new Date().getFullYear()} Evntly. All rights reserved.
