@@ -1,4 +1,5 @@
 import { searchVendors } from "@/lib/data/vendors";
+import { getCurrentUser } from "@/lib/data/user";
 import { ExploreFilters } from "@/components/explore-filters";
 import { ExploreResults } from "@/components/explore-results";
 
@@ -8,7 +9,10 @@ export default async function ExplorePage({
   searchParams: Promise<{ q?: string; category?: string; event?: string }>;
 }) {
   const { q, category, event } = await searchParams;
-  const vendors = await searchVendors({ q, category, eventType: event });
+  const [vendors, session] = await Promise.all([
+    searchVendors({ q, category, eventType: event }),
+    getCurrentUser(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -19,7 +23,11 @@ export default async function ExplorePage({
 
       <ExploreFilters />
 
-      <ExploreResults vendors={vendors} />
+      <ExploreResults
+        vendors={vendors}
+        savedVendorIds={session?.profile?.saved_providers ?? []}
+        isAuthenticated={!!session}
+      />
     </div>
   );
 }

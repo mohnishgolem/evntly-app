@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { Star, ShieldCheck } from "lucide-react";
 import { categoryLabel, categoryIcon } from "@/lib/config";
+import { SaveVendorButton } from "@/components/save-vendor-button";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
 
-export function VendorCard({ vendor }: { vendor: Vendor }) {
+export function VendorCard({
+  vendor,
+  saved = false,
+  isAuthenticated = false,
+}: {
+  vendor: Vendor;
+  saved?: boolean;
+  isAuthenticated?: boolean;
+}) {
   return (
     <Link
       href={`/vendor/${vendor.id}`}
@@ -30,11 +39,18 @@ export function VendorCard({ vendor }: { vendor: Vendor }) {
             Available
           </div>
         )}
-        {vendor.verified && (
-          <div className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-          </div>
-        )}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          <SaveVendorButton
+            vendorId={vendor.id}
+            initialSaved={saved}
+            isAuthenticated={isAuthenticated}
+          />
+          {vendor.verified && (
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-3">
         <div className="flex items-start justify-between gap-1">

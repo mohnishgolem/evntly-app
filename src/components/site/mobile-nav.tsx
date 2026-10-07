@@ -11,6 +11,7 @@ import {
   FileText,
   CalendarClock,
   ShieldAlert,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +70,13 @@ export function MobileNav({
 
           {isAuthenticated ? (
             <>
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-muted"
+              >
+                <UserRound className="size-4" /> Profile
+              </Link>
               <Link
                 href={isVendor ? "/vendor-dashboard" : "/dashboard"}
                 onClick={() => setOpen(false)}

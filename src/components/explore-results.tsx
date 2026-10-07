@@ -10,7 +10,15 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
 
-export function ExploreResults({ vendors }: { vendors: Vendor[] }) {
+export function ExploreResults({
+  vendors,
+  savedVendorIds = [],
+  isAuthenticated = false,
+}: {
+  vendors: Vendor[];
+  savedVendorIds?: string[];
+  isAuthenticated?: boolean;
+}) {
   const searchParams = useSearchParams();
   const [view, setView] = useState<"list" | "map">(
     searchParams.get("view") === "map" ? "map" : "list"
@@ -58,7 +66,12 @@ export function ExploreResults({ vendors }: { vendors: Vendor[] }) {
       {view === "list" ? (
         <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {vendors.map((v) => (
-            <VendorCard key={v.id} vendor={v} />
+            <VendorCard
+              key={v.id}
+              vendor={v}
+              saved={savedVendorIds.includes(v.id)}
+              isAuthenticated={isAuthenticated}
+            />
           ))}
         </div>
       ) : (

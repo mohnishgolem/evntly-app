@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Settings, LogOut, Store, FileText, CalendarClock, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, Store, FileText, CalendarClock, ShieldAlert, UserRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +44,13 @@ export function UserMenu({
         <DropdownMenuGroup>
           <DropdownMenuLabel className="truncate">{label}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            render={
+              <Link href="/profile">
+                <UserRound /> Profile
+              </Link>
+            }
+          />
           <DropdownMenuItem
             render={
               <Link href={isVendor ? "/vendor-dashboard" : "/dashboard"}>

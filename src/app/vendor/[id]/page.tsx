@@ -6,6 +6,7 @@ import { categoryLabel } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { RequestQuote } from "@/components/request-quote";
+import { SaveVendorButton } from "@/components/save-vendor-button";
 
 export default async function VendorDetailPage({
   params,
@@ -52,6 +53,13 @@ export default async function VendorDetailPage({
                 )}
               </div>
             </div>
+            <SaveVendorButton
+              vendorId={vendor.id}
+              initialSaved={(session?.profile?.saved_providers ?? []).includes(vendor.id)}
+              isAuthenticated={!!session}
+              size="lg"
+              className="border border-border"
+            />
           </div>
 
           {vendor.bio && <p className="mb-6 leading-relaxed text-foreground/90">{vendor.bio}</p>}

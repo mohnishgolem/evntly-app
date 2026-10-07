@@ -69,7 +69,12 @@ export default async function DashboardPage() {
             {shortlist && shortlist.length > 0 ? (
               <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
                 {shortlist.map((v) => (
-                  <VendorCard key={v.id} vendor={v} />
+                  <VendorCard
+                    key={v.id}
+                    vendor={v}
+                    saved={(session.profile?.saved_providers ?? []).includes(v.id)}
+                    isAuthenticated
+                  />
                 ))}
               </div>
             ) : (

@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { VendorCard } from "@/components/vendor-card";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { getFeaturedVendors, launchCity } from "@/lib/data/vendors";
+import { getCurrentUser } from "@/lib/data/user";
 import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 
 const HERO_SCENARIOS = ["Weddings", "Birthdays", "Corporate events", "Engagements"];
 
 export default async function HomePage() {
-  const vendors = await getFeaturedVendors(8);
+  const [vendors, session] = await Promise.all([getFeaturedVendors(8), getCurrentUser()]);
+  const savedVendorIds = session?.profile?.saved_providers ?? [];
   const launchVendorCategories = VENDOR_CATEGORIES.filter((c) =>
     LAUNCH_CATEGORIES.includes(c.value)
   );
@@ -100,7 +102,12 @@ export default async function HomePage() {
             </div>
             <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
               {vendors.map((v) => (
-                <VendorCard key={v.id} vendor={v} />
+                <VendorCard
+                  key={v.id}
+                  vendor={v}
+                  saved={savedVendorIds.includes(v.id)}
+                  isAuthenticated={!!session}
+                />
               ))}
             </div>
           </section>
