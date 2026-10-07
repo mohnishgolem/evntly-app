@@ -32,6 +32,21 @@ export const EVENT_TYPES = [
   "Party",
 ] as const;
 
+// Shared between the (client) explore filters UI and the (server) explore
+// page's query building — a "use client" module's non-component exports
+// aren't usable from server code, so this can't live in explore-filters.tsx.
+export const PRICE_BUCKETS: {
+  value: string;
+  label: string;
+  min?: number;
+  max?: number;
+}[] = [
+  { value: "under-50", label: "Under $50/hr", max: 50 },
+  { value: "50-100", label: "$50–100/hr", min: 50, max: 100 },
+  { value: "100-200", label: "$100–200/hr", min: 100, max: 200 },
+  { value: "200-plus", label: "$200+/hr", min: 200 },
+];
+
 export function categoryLabel(value: string) {
   return VENDOR_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 }

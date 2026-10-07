@@ -1,16 +1,28 @@
 import { searchVendors } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
+import { PRICE_BUCKETS } from "@/lib/config";
 import { ExploreFilters } from "@/components/explore-filters";
 import { ExploreResults } from "@/components/explore-results";
+
+function parsePriceBucket(price?: string): [number | undefined, number | undefined] {
+  const bucket = PRICE_BUCKETS.find((b) => b.value === price);
+  return bucket ? [bucket.min, bucket.max] : [undefined, undefined];
+}
 
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; event?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    category?: string;
+    event?: string;
+    price?: string;
+  }>;
 }) {
-  const { q, category, event } = await searchParams;
+  const { q, category, event, price } = await searchParams;
+  const [minPrice, maxPrice] = parsePriceBucket(price);
   const [vendors, session] = await Promise.all([
-    searchVendors({ q, category, eventType: event }),
+    searchVendors({ q, category, eventType: event, minPrice, maxPrice }),
     getCurrentUser(),
   ]);
 

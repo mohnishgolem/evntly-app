@@ -6,21 +6,20 @@ export default function PrivacyPolicyPage() {
         <p className="mt-1 text-muted-foreground">
           This is a working draft written to match the data Evntly actually collects and how it&apos;s
           actually used today. It has not been reviewed by a lawyer and should not be relied on as
-          your final policy until it has been. Bracketed items like{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">[Legal entity name]</code> need to
-          be filled in before publishing.
+          your final policy until it has been. One bracketed item in section 6 still needs a call
+          on cross-border transfer disclosure before publishing.
         </p>
       </div>
 
       <h1 className="mb-1 text-2xl font-bold">Privacy Policy</h1>
-      <p className="mb-8 text-sm text-muted-foreground">Last updated: [Date]</p>
+      <p className="mb-8 text-sm text-muted-foreground">Last updated: 7 October 2026</p>
 
       <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
         <section>
           <h2 className="mb-2 text-base font-semibold text-foreground">1. Who this applies to</h2>
           <p>
             This policy explains how{" "}
-            <strong className="text-foreground">[Legal entity name, e.g. Evntly Pty Ltd, ABN/ACN]</strong>{" "}
+            <strong className="text-foreground">Sai Mohnish Golem (ABN 49 193 658 959), trading as Evntly</strong>{" "}
             (&quot;Evntly&quot;, &quot;we&quot;) collects, uses and protects personal information when
             you use evntlyapp.com, whether you&apos;re browsing as a visitor, planning an event, or
             listing a business.
@@ -105,9 +104,11 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="mb-2 text-base font-semibold text-foreground">6. Where it&apos;s stored</h2>
           <p>
-            Data is hosted with our infrastructure providers (Supabase and Vercel), which may store
-            or process data outside Australia. <strong className="text-foreground">
-              [Confirm hosting regions and add any required cross-border transfer disclosure.]
+            Our database is hosted by Supabase in the Sydney (ap-southeast-2) region. Vercel, our
+            hosting and analytics provider, may serve and process some data from outside Australia
+            as part of its global infrastructure.{" "}
+            <strong className="text-foreground">
+              [Confirm whether this needs a formal cross-border transfer disclosure.]
             </strong>
           </p>
         </section>

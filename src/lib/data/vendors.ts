@@ -18,6 +18,8 @@ export type VendorFilters = {
   q?: string;
   category?: string;
   eventType?: string;
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 export async function searchVendors(filters: VendorFilters = {}) {
@@ -37,6 +39,12 @@ export async function searchVendors(filters: VendorFilters = {}) {
     query = query.or(
       `name.ilike.%${filters.q}%,description.ilike.%${filters.q}%,city.ilike.%${filters.q}%`
     );
+  }
+  if (filters.minPrice != null) {
+    query = query.gte("hourly_rate", filters.minPrice);
+  }
+  if (filters.maxPrice != null) {
+    query = query.lte("hourly_rate", filters.maxPrice);
   }
 
   const { data } = await query.order("rating", { ascending: false, nullsFirst: false });

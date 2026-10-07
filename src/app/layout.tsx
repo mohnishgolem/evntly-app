@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
 
 // Resolves light/dark before first paint (localStorage, falling back to
 // system preference) and sets it as a class on <html> — avoids a flash of
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Script>
         <SiteHeader />
         <main className="flex-1">{children}</main>
+        <SiteFooter />
         <Analytics />
       </body>
     </html>

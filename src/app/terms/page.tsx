@@ -6,21 +6,19 @@ export default function TermsPage() {
         <p className="mt-1 text-muted-foreground">
           This is a working draft written to match how Evntly actually operates today. It has not
           been reviewed by a lawyer and should not be relied on as your final terms until it has
-          been. Bracketed items like{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">[Legal entity name]</code> need
-          to be filled in before publishing.
+          been.
         </p>
       </div>
 
       <h1 className="mb-1 text-2xl font-bold">Terms &amp; Conditions</h1>
-      <p className="mb-8 text-sm text-muted-foreground">Last updated: [Date]</p>
+      <p className="mb-8 text-sm text-muted-foreground">Last updated: 7 October 2026</p>
 
       <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
         <section>
           <h2 className="mb-2 text-base font-semibold text-foreground">1. Who we are</h2>
           <p>
             Evntly (&quot;Evntly&quot;, &quot;we&quot;, &quot;us&quot;) is operated by{" "}
-            <strong className="text-foreground">[Legal entity name, e.g. Evntly Pty Ltd, ABN/ACN]</strong>.
+            <strong className="text-foreground">Sai Mohnish Golem (ABN 49 193 658 959), trading as Evntly</strong>.
             Evntly is an online marketplace that connects people planning events (&quot;Customers&quot;)
             with independent businesses offering event services such as DJs, photographers, florists
             and caterers (&quot;Vendors&quot;), currently serving the Sydney area. By creating an
@@ -128,8 +126,8 @@ export default function TermsPage() {
             disclaims liability for any loss arising from a Vendor&apos;s services, a dispute
             between a Customer and a Vendor, or from your use of the platform. Nothing in these
             Terms excludes a right or remedy you have under the{" "}
-            <strong className="text-foreground">[Australian Consumer Law / applicable law]</strong>{" "}
-            that cannot be excluded.
+            <strong className="text-foreground">Australian Consumer Law</strong> that cannot be
+            excluded.
           </p>
         </section>
 
@@ -153,7 +151,7 @@ export default function TermsPage() {
           <h2 className="mb-2 text-base font-semibold text-foreground">13. Governing law</h2>
           <p>
             These Terms are governed by the laws of{" "}
-            <strong className="text-foreground">[State/Territory, e.g. New South Wales, Australia]</strong>.
+            <strong className="text-foreground">New South Wales, Australia</strong>.
           </p>
         </section>
 

@@ -100,6 +100,26 @@ export default async function VendorDetailPage({
             </section>
           )}
 
+          {(!!vendor.languages?.length || !!vendor.equipment_list?.length) && (
+            <section className="mb-8 space-y-3">
+              {!!vendor.languages?.length && (
+                <p className="text-sm">
+                  <span className="font-semibold">Speaks:</span> {vendor.languages.join(", ")}
+                </p>
+              )}
+              {!!vendor.equipment_list?.length && (
+                <div>
+                  <h2 className="mb-2 text-sm font-semibold">Equipment</h2>
+                  <ul className="list-inside list-disc text-sm text-muted-foreground">
+                    {vendor.equipment_list.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
+
           <section>
             <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
             {reviews.length === 0 ? (

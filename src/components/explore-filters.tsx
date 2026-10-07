@@ -4,7 +4,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES, EVENT_TYPES } from "@/lib/config";
+import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES, EVENT_TYPES, PRICE_BUCKETS } from "@/lib/config";
 
 export function ExploreFilters() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export function ExploreFilters() {
   const category = searchParams.get("category") ?? "";
   const event = searchParams.get("event") ?? "";
   const q = searchParams.get("q") ?? "";
+  const price = searchParams.get("price") ?? "";
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -91,6 +92,34 @@ export function ExploreFilters() {
             )}
           >
             {ev}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setParam("price", "")}
+          className={cn(
+            "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all",
+            !price
+              ? "border-highlight bg-highlight-light text-highlight"
+              : "border-border text-muted-foreground hover:border-highlight/40"
+          )}
+        >
+          Any price
+        </button>
+        {PRICE_BUCKETS.map((b) => (
+          <button
+            key={b.value}
+            onClick={() => setParam("price", b.value)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all",
+              price === b.value
+                ? "border-highlight bg-highlight-light text-highlight"
+                : "border-border text-muted-foreground hover:border-highlight/40"
+            )}
+          >
+            {b.label}
           </button>
         ))}
       </div>
