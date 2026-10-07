@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VendorCard } from "@/components/vendor-card";
@@ -19,41 +20,51 @@ export default async function HomePage() {
   return (
     <div className="pb-16">
       {/* Hero — one clear message, one primary CTA, one secondary. No sign-up wall. */}
-      <section className="border-b border-border/40 bg-gradient-to-b from-primary/5 to-background px-4 py-16 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
+      <section className="relative overflow-hidden border-b border-border/40 px-4 py-20 md:py-28">
+        <Image
+          src="/images/hero-sydney.jpg"
+          alt="Fireworks over the Sydney Harbour Bridge and Opera House"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
+
+        <div className="relative mx-auto max-w-3xl text-center">
           <p className="mb-4 text-sm font-semibold tracking-wide text-highlight uppercase">
             For {launchCity} event planners
           </p>
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-balance md:text-6xl">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight text-balance text-white md:text-6xl">
             Find the right vendors for your next event
           </h1>
-          <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground text-balance">
+          <p className="mx-auto mb-8 max-w-xl text-lg text-balance text-white/85">
             Browse trusted {launchVendorCategories.map((c) => c.label.toLowerCase()).join(", ")}{" "}
             for your {HERO_SCENARIOS.join(", ").toLowerCase()} — no account needed to look around.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
               size="lg"
-              className="h-12 px-8 text-base"
+              className="h-12 px-8 text-base shadow-lg"
               nativeButton={false}
               render={<Link href="/plan">Start planning</Link>}
             />
             <Button
               size="lg"
               variant="outline"
-              className="h-12 px-8 text-base"
+              className="h-12 px-8 text-base shadow-lg"
               nativeButton={false}
               render={<Link href="/explore">Browse vendors</Link>}
             />
           </div>
         </div>
 
-        <div className="mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-3">
+        <div className="relative mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-3">
           {launchVendorCategories.map((c) => (
             <Link
               key={c.value}
               href={`/explore?category=${c.value}`}
-              className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:border-highlight/40 hover:text-highlight"
+              className="flex items-center gap-2 rounded-full border border-white/40 bg-white/90 px-4 py-2 text-sm font-medium shadow-sm backdrop-blur-sm transition-colors hover:border-highlight/40 hover:text-highlight"
             >
               <span>{c.icon}</span>
               {c.label}
