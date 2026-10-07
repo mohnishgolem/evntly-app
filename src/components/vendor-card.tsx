@@ -18,7 +18,7 @@ export function VendorCard({
   return (
     <Link
       href={`/vendor/${vendor.id}`}
-      className="group block overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-xl"
+      className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
     >
       <div className="relative aspect-4/3 overflow-hidden bg-muted">
         {vendor.avatar_url ? (

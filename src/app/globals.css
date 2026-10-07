@@ -73,28 +73,31 @@
    script in layout.tsx sets `.light` or `.dark` on <html> before paint
    (resolved from localStorage, falling back to system preference), so
    :root below only needs to hold the light baseline as a progressive-
-   enhancement fallback for when JS is unavailable. */
+   enhancement fallback for when JS is unavailable.
+
+   Light mode is genuinely white — Apple's own surfaces (apple.com, the
+   App Store, Settings) are crisp white content with --secondary/--muted
+   as the one neutral grey (#f5f5f7, their canonical "systemGroupedBackground"
+   grey) for grouped sections, not a translucent wash over an off-white
+   shell. Cards are flat opaque white; "glass" is reserved for the header
+   and modal overlays only (see .glass-material below). */
 :root {
   color-scheme: light;
 
-  --background: #f2f1ed;
-  --foreground: #16161a;
-  /* "Material" — a translucent wash over the page rather than a flat
-     opaque box, so cards read as frosted glass sitting on the shell
-     (paired with backdrop-blur on the components that use it) instead
-     of another solid rectangle. */
-  --card: rgba(255, 255, 255, 0.7);
-  --card-foreground: #16161a;
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
   --popover: #ffffff;
-  --popover-foreground: #16161a;
+  --popover-foreground: #1d1d1f;
   --primary: #e8604a;
   --primary-hover: #d4523c;
   --primary-foreground: #ffffff;
-  --secondary: #eae9e4;
-  --secondary-foreground: #16161a;
-  --muted: #eae9e4;
-  --muted-foreground: #68666a;
-  --text-muted: #9c9a96;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
+  --text-muted: #86868b;
   --highlight: #e8604a;
   --highlight-light: rgba(232, 96, 74, 0.1);
   --highlight-foreground: #ffffff;
@@ -102,8 +105,8 @@
   --destructive: #c9182b;
   --success: #16915f;
   --warning: #a66a0a;
-  --border: rgba(22, 22, 26, 0.1);
-  --input: rgba(22, 22, 26, 0.14);
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.12);
   --ring: rgba(232, 96, 74, 0.4);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -111,17 +114,17 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 1.375rem;
-  --sidebar: #eae9e4;
-  --sidebar-foreground: #16161a;
+  --sidebar: #f5f5f7;
+  --sidebar-foreground: #1d1d1f;
   --sidebar-primary: #e8604a;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #16161a;
-  --sidebar-border: rgba(22, 22, 26, 0.1);
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
   --sidebar-ring: rgba(232, 96, 74, 0.4);
 
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(22, 22, 26, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.06);
 
   /* Feature-card gradients — applied to prominent surfaces (primary CTAs,
      hero/feature cards), not blanket-applied to every card. Plain content
