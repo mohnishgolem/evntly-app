@@ -31,33 +31,37 @@ export function VendorCard({
             {categoryIcon(vendor.service_type)}
           </div>
         )}
-        {vendor.available && (
-          <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-success shadow-sm">
-            <span className="size-1.5 rounded-full bg-success" />
-            Available
+        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            {vendor.available && (
+              <div className="flex items-center gap-1 overflow-hidden rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-success shadow-sm">
+                <span className="size-1.5 shrink-0 rounded-full bg-success" />
+                <span className="hidden truncate sm:inline">Available</span>
+              </div>
+            )}
           </div>
-        )}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          <SaveVendorButton
-            vendorId={vendor.id}
-            initialSaved={saved}
-            isAuthenticated={isAuthenticated}
-          />
-          <ShareButton
-            url={`${SITE_URL}/vendor/${vendor.id}`}
-            title={vendor.name}
-            text={`${vendor.name} — ${categoryLabel(vendor.service_type)} on Evntly`}
-          />
-          {vendor.verified && (
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-1.5">
+            <SaveVendorButton
+              vendorId={vendor.id}
+              initialSaved={saved}
+              isAuthenticated={isAuthenticated}
+            />
+            <ShareButton
+              url={`${SITE_URL}/vendor/${vendor.id}`}
+              title={vendor.name}
+              text={`${vendor.name} — ${categoryLabel(vendor.service_type)} on Evntly`}
+            />
+          </div>
         </div>
       </div>
       <div className="pt-2.5">
         <div className="flex items-start justify-between gap-1">
-          <p className="truncate text-sm leading-snug font-semibold">{vendor.name}</p>
+          <p className="flex min-w-0 items-center gap-1 text-sm leading-snug font-semibold">
+            <span className="truncate">{vendor.name}</span>
+            {vendor.verified && (
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+            )}
+          </p>
           {!!vendor.rating && vendor.rating > 0 && (
             <div className="flex shrink-0 items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
