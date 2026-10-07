@@ -3,6 +3,7 @@ import { LayoutDashboard, Settings, LogOut, Store, FileText, CalendarClock, Shie
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -40,54 +41,56 @@ export function UserMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="truncate">{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          render={
-            <Link href={isVendor ? "/vendor-dashboard" : "/dashboard"}>
-              <LayoutDashboard /> Dashboard
-            </Link>
-          }
-        />
-        <DropdownMenuItem
-          render={
-            <Link href={isVendor ? "/vendor-dashboard/quotes" : "/dashboard/quotes"}>
-              <FileText /> Quotes
-            </Link>
-          }
-        />
-        <DropdownMenuItem
-          render={
-            <Link href={isVendor ? "/vendor-dashboard/bookings" : "/dashboard/bookings"}>
-              <CalendarClock /> Bookings
-            </Link>
-          }
-        />
-        {isVendor && (
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="truncate">{label}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             render={
-              <Link href="/vendor-signup">
-                <Store /> My listing
+              <Link href={isVendor ? "/vendor-dashboard" : "/dashboard"}>
+                <LayoutDashboard /> Dashboard
               </Link>
             }
           />
-        )}
-        {profile?.role === "admin" && (
           <DropdownMenuItem
             render={
-              <Link href="/admin">
-                <ShieldAlert /> Admin
+              <Link href={isVendor ? "/vendor-dashboard/quotes" : "/dashboard/quotes"}>
+                <FileText /> Quotes
               </Link>
             }
           />
-        )}
-        <DropdownMenuItem
-          render={
-            <Link href="/dashboard/settings">
-              <Settings /> Settings
-            </Link>
-          }
-        />
+          <DropdownMenuItem
+            render={
+              <Link href={isVendor ? "/vendor-dashboard/bookings" : "/dashboard/bookings"}>
+                <CalendarClock /> Bookings
+              </Link>
+            }
+          />
+          {isVendor && (
+            <DropdownMenuItem
+              render={
+                <Link href="/vendor-signup">
+                  <Store /> My listing
+                </Link>
+              }
+            />
+          )}
+          {profile?.role === "admin" && (
+            <DropdownMenuItem
+              render={
+                <Link href="/admin">
+                  <ShieldAlert /> Admin
+                </Link>
+              }
+            />
+          )}
+          <DropdownMenuItem
+            render={
+              <Link href="/dashboard/settings">
+                <Settings /> Settings
+              </Link>
+            }
+          />
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

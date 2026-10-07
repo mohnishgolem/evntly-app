@@ -45,6 +45,11 @@ export async function submitVendorListing(
 
   if (error) return { error: error.message };
 
+  // Keep nav routing in sync: a customer account that creates a listing
+  // (not just one that signed up as "I'm a vendor") still needs isVendor
+  // checks in the header to send them to /vendor-dashboard.
+  await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
+
   redirect("/vendor-dashboard");
 }
 
