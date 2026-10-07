@@ -52,7 +52,7 @@ export default async function HomePage() {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 px-8 text-base shadow-lg"
+              className="h-12 border-white/40 bg-white/90 px-8 text-base text-neutral-900 shadow-lg backdrop-blur-sm hover:bg-white hover:text-neutral-900 dark:border-white/40 dark:bg-white/90 dark:text-neutral-900 dark:hover:bg-white dark:hover:text-neutral-900"
               nativeButton={false}
               render={<Link href="/explore">Browse vendors</Link>}
             />
@@ -64,7 +64,7 @@ export default async function HomePage() {
             <Link
               key={c.value}
               href={`/explore?category=${c.value}`}
-              className="flex items-center gap-2 rounded-full border border-white/40 bg-white/90 px-4 py-2 text-sm font-medium shadow-sm backdrop-blur-sm transition-colors hover:border-highlight/40 hover:text-highlight"
+              className="flex items-center gap-2 rounded-full border border-white/40 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-900 shadow-sm backdrop-blur-sm transition-colors hover:border-highlight/40 hover:text-highlight"
             >
               <span>{c.icon}</span>
               {c.label}
