@@ -12,24 +12,29 @@ export function DashboardNav({
   const pathname = usePathname();
 
   return (
-    <div className="mb-6 flex gap-2 overflow-x-auto">
-      {items.map((item) => {
-        const active = pathname === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
-              active
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
-            )}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+    <div className="relative mb-6">
+      <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+        {items.map((item) => {
+          const active = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+      {/* Hints that the row scrolls further — on mobile the last couple of
+          tabs (Portfolio, Messages) were easy to miss with no affordance. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
     </div>
   );
 }

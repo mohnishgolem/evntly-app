@@ -28,6 +28,17 @@ export async function submitVendorListing(
     return { error: "You need to be logged in to list a business." };
   }
 
+  const { data: existing } = await supabase
+    .from("service_providers")
+    .select("id")
+    .eq("owner_email", user.email)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    redirect("/vendor-dashboard");
+  }
+
   const { error } = await supabase.from("service_providers").insert({
     owner_email: user.email,
     name: draft.businessName,

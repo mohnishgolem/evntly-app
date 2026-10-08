@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
-import type { PlanDraft } from "@/lib/actions/events";
+import { claimEventPlan, type PlanDraft } from "@/lib/actions/events";
 
 const STEPS = ["Event type", "When & where", "Vendors", "Budget"] as const;
 
 export default function PlanPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [pending, startTransition] = useTransition();
   const [draft, setDraft] = useState<PlanDraft>({
     eventType: "",
     eventDate: "",
@@ -35,8 +36,19 @@ export default function PlanPage() {
   ][step];
 
   function finish() {
-    localStorage.setItem("evntly_plan_draft", JSON.stringify(draft));
-    router.push("/signup?next=/dashboard");
+    startTransition(async () => {
+      // Already logged in? Save the event directly — no need to send them
+      // through signup. claimEventPlan returns {error: "Not logged in"}
+      // (without throwing) for anonymous visitors, so fall back to the
+      // localStorage-draft-then-signup flow in that case.
+      const res = await claimEventPlan(draft);
+      if (res.success) {
+        router.push("/dashboard");
+        return;
+      }
+      localStorage.setItem("evntly_plan_draft", JSON.stringify(draft));
+      router.push("/signup?next=/dashboard");
+    });
   }
 
   return (
@@ -184,8 +196,8 @@ export default function PlanPage() {
             Continue
           </Button>
         ) : (
-          <Button className="flex-1" disabled={!canAdvance} onClick={finish}>
-            Create my account &amp; see matches
+          <Button className="flex-1" disabled={!canAdvance || pending} onClick={finish}>
+            {pending ? "Saving…" : "See my matches"}
           </Button>
         )}
       </div>

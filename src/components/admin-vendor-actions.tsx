@@ -5,7 +5,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { setVendorStatus } from "@/lib/actions/admin";
 
-export function AdminVendorActions({ vendorId }: { vendorId: string }) {
+export function AdminVendorActions({
+  vendorId,
+  currentStatus,
+}: {
+  vendorId: string;
+  // Omitted for the pending-review queue (Approve/Reject). Passed for
+  // already-decided listings so the right follow-up action shows instead —
+  // previously there was no way to suspend an approved vendor at all.
+  currentStatus?: "approved" | "rejected" | "suspended";
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -14,6 +23,22 @@ export function AdminVendorActions({ vendorId }: { vendorId: string }) {
       await setVendorStatus(vendorId, status);
       router.refresh();
     });
+  }
+
+  if (currentStatus === "approved") {
+    return (
+      <Button size="sm" variant="outline" disabled={pending} onClick={() => act("suspended")}>
+        Suspend
+      </Button>
+    );
+  }
+
+  if (currentStatus === "suspended" || currentStatus === "rejected") {
+    return (
+      <Button size="sm" disabled={pending} onClick={() => act("approved")}>
+        Reactivate
+      </Button>
+    );
   }
 
   return (

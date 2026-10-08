@@ -117,7 +117,11 @@ export async function sendReply(
     );
   }
 
-  revalidatePath(`/messages/${conversationId}`);
+  // conversationId contains ":" and "@", which are percent-encoded in the
+  // actual route (see the thread page's decodeURIComponent) — revalidatePath
+  // needs the same encoded form to match the cached route, or this silently
+  // no-ops and the new message won't show until a manual reload.
+  revalidatePath(`/messages/${encodeURIComponent(conversationId)}`);
   revalidatePath("/messages");
   return { success: true };
 }

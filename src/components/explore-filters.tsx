@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,10 +17,22 @@ export function ExploreFilters() {
   const price = searchParams.get("price") ?? "";
   const [draftQ, setDraftQ] = useState(q);
 
+  // Neither the `searchParams` hook value nor `window.location.search` are
+  // guaranteed to reflect a router.push until that navigation has actually
+  // resolved, so two filter clicks in quick succession would otherwise race
+  // and the second one would drop the first's param. This ref is mutated
+  // synchronously on every call so each click always builds on the latest
+  // *intended* params, independent of how fast the navigation itself is.
+  const paramsRef = useRef(new URLSearchParams(searchParams.toString()));
+  useEffect(() => {
+    paramsRef.current = new URLSearchParams(searchParams.toString());
+  }, [searchParams]);
+
   function setParam(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(paramsRef.current.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    paramsRef.current = params;
     router.push(`${pathname}?${params.toString()}`);
   }
 

@@ -34,5 +34,6 @@ export async function toggleSavedVendor(vendorId: string): Promise<ActionState> 
   revalidatePath("/profile");
   revalidatePath("/explore");
   revalidatePath("/");
+  revalidatePath(`/vendor/${vendorId}`);
   return { saved: !isSaved };
 }

@@ -10,12 +10,12 @@ export default async function BundleDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ pkg, participants }, session] = await Promise.all([
+  const [{ pkg, participants, initiatingVendorApproved }, session] = await Promise.all([
     getBundleWithParticipants(id),
     getCurrentUser(),
   ]);
 
-  if (!pkg || pkg.status !== "active") notFound();
+  if (!pkg || pkg.status !== "active" || !initiatingVendorApproved) notFound();
 
   const price = (pkg.total_price ?? 0) - (pkg.bundle_discount_amount ?? 0);
 

@@ -61,17 +61,21 @@ export default async function AdminPage() {
       </div>
 
       <Tabs defaultValue="vendors">
-        <TabsList className="mb-6 w-full">
-          <TabsTrigger value="vendors">
+        {/* flex-1 on TabsTrigger can't shrink past its (icon + label) content
+            width without min-w-0, so on narrow viewports the row overflowed
+            and clipped the first tab off-screen. Let it scroll horizontally
+            instead of trying to force 4 full-width tabs into ~343px. */}
+        <TabsList className="scrollbar-hide mb-6 w-full justify-start overflow-x-auto">
+          <TabsTrigger value="vendors" className="shrink-0">
             <Store /> Vendor Approval
           </TabsTrigger>
-          <TabsTrigger value="roles">
+          <TabsTrigger value="roles" className="shrink-0">
             <Users /> User Roles
           </TabsTrigger>
-          <TabsTrigger value="reports">
+          <TabsTrigger value="reports" className="shrink-0">
             <Flag /> Reports
           </TabsTrigger>
-          <TabsTrigger value="leakage">
+          <TabsTrigger value="leakage" className="shrink-0">
             <AlertTriangle /> Leakage Log
           </TabsTrigger>
         </TabsList>
@@ -111,12 +115,20 @@ export default async function AdminPage() {
             <h2 className="mb-4 text-lg font-semibold">All other listings ({others.length})</h2>
             <div className="divide-y divide-border rounded-2xl border border-border">
               {others.map((v) => (
-                <div key={v.id} className="flex items-center justify-between px-4 py-3">
+                <div key={v.id} className="flex items-center justify-between gap-4 px-4 py-3">
                   <div>
                     <p className="text-sm font-medium">{v.name}</p>
                     <p className="text-xs text-muted-foreground">{v.owner_email}</p>
                   </div>
-                  <span className="text-sm capitalize text-muted-foreground">{v.status}</span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-sm capitalize text-muted-foreground">{v.status}</span>
+                    <AdminVendorActions
+                      vendorId={v.id}
+                      currentStatus={
+                        v.status as "approved" | "rejected" | "suspended" | undefined
+                      }
+                    />
+                  </div>
                 </div>
               ))}
             </div>

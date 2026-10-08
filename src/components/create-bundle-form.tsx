@@ -13,7 +13,7 @@ export function CreateBundleForm() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [myPrice, setMyPrice] = useState("");
-  const [discount, setDiscount] = useState("0");
+  const [discount, setDiscount] = useState("");
   const [participants, setParticipants] = useState<PackageParticipantDraft[]>([]);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +95,7 @@ export function CreateBundleForm() {
             id="bundle-discount"
             type="number"
             min={0}
+            placeholder="0"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
           />
