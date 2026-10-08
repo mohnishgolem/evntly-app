@@ -26,10 +26,15 @@ export function ShareButton({
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url });
-      } catch {
-        // User cancelled the native share sheet — not an error.
+        return; // Native share sheet handled it — its own UI is the feedback.
+      } catch (err) {
+        // AbortError means the user genuinely dismissed the native share
+        // sheet — nothing more to do. Any other rejection (blocked by the
+        // browser, no share target, automated/non-interactive contexts,
+        // etc.) means the native path never actually showed anything, so
+        // fall through to the clipboard copy instead of going silent.
+        if (err instanceof DOMException && err.name === "AbortError") return;
       }
-      return;
     }
 
     try {
