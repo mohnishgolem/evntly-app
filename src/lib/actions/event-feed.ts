@@ -156,7 +156,13 @@ export async function applyToEventListing(
     status: "pending",
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    // 23505 = unique_violation on (listing_id, vendor_id) — a defense-in-depth
+    // DB constraint catching a race the pre-check above could miss (e.g. a
+    // double-click), not just the normal "already applied" path above.
+    if (error.code === "23505") return { error: "You've already applied to this event." };
+    return { error: error.message };
+  }
 
   revalidatePath("/vendor-dashboard/event-feed");
   return { success: true };
