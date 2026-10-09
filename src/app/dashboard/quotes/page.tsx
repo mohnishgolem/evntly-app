@@ -8,6 +8,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/event-feed", label: "Event Feed" },
   { href: "/dashboard/quotes", label: "Quotes" },
   { href: "/dashboard/bookings", label: "Bookings" },
   { href: "/dashboard/bundles", label: "Bundles" },
@@ -37,7 +38,7 @@ export default async function CustomerQuotesPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Your quote requests</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Track quotes you've asked vendors for, and accept the ones you like.
+        Track quotes you&apos;ve asked vendors for, and accept the ones you like.
       </p>
 
       <DashboardNav items={NAV_ITEMS} />

@@ -7,6 +7,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/event-feed", label: "Event Feed" },
   { href: "/dashboard/quotes", label: "Quotes" },
   { href: "/dashboard/bookings", label: "Bookings" },
   { href: "/dashboard/bundles", label: "Bundles" },
@@ -34,7 +35,7 @@ export default async function CustomerBundlesPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Your bundle bookings</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Multi-vendor bundles you've booked, with a group chat for every vendor involved.
+        Multi-vendor bundles you&apos;ve booked, with a group chat for every vendor involved.
       </p>
 
       <DashboardNav items={NAV_ITEMS} />

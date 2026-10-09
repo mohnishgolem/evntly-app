@@ -7,6 +7,7 @@ import { PackageInviteActions } from "@/components/package-invite-actions";
 
 const NAV_ITEMS = [
   { href: "/vendor-dashboard", label: "Listings" },
+  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
   { href: "/vendor-dashboard/quotes", label: "Quotes" },
   { href: "/vendor-dashboard/bookings", label: "Bookings" },
   { href: "/vendor-dashboard/bundles", label: "Bundles" },

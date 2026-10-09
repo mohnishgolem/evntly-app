@@ -11,6 +11,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/event-feed", label: "Event Feed" },
   { href: "/dashboard/quotes", label: "Quotes" },
   { href: "/dashboard/bookings", label: "Bookings" },
   { href: "/dashboard/bundles", label: "Bundles" },
