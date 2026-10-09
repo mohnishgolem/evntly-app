@@ -17,7 +17,7 @@ export function EventStageTracker({ currentStage }: { currentStage: number }) {
         const stage = i + 1;
         const reached = stage <= currentStage;
         return (
-          <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
+          <div key={label} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
             <div
               className={cn(
                 "h-1.5 w-full rounded-full transition-colors",
