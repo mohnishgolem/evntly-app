@@ -12,7 +12,7 @@ const STAGES = [
 
 export function EventStageTracker({ currentStage }: { currentStage: number }) {
   return (
-    <div className="mb-6 flex items-center gap-1">
+    <div className="mb-6 flex items-start gap-1">
       {STAGES.map((label, i) => {
         const stage = i + 1;
         const reached = stage <= currentStage;
