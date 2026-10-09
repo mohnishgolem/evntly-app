@@ -3,27 +3,19 @@ import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { LeaveReview } from "@/components/leave-review";
-import { CancelBookingButton } from "@/components/cancel-booking-button";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { JobCardPanel } from "@/components/job-card-panel";
+import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/events", label: "My Events" },
   { href: "/dashboard/event-feed", label: "Event Feed" },
   { href: "/dashboard/quotes", label: "Quotes" },
   { href: "/dashboard/bookings", label: "Bookings" },
   { href: "/dashboard/bundles", label: "Bundles" },
   { href: "/messages", label: "Messages" },
 ];
-
-const STATUS_COLOR: Record<string, string> = {
-  pending: "text-warning",
-  confirmed: "text-primary",
-  completed: "text-success",
-  cancelled: "text-muted-foreground",
-};
 
 export default async function CustomerBookingsPage() {
   const session = await getCurrentUser();
@@ -40,7 +32,9 @@ export default async function CustomerBookingsPage() {
     supabase.from("reviews").select("booking_id").eq("reviewer_email", email),
   ]);
 
-  const reviewedBookingIds = new Set((myReviews ?? []).map((r) => r.booking_id));
+  const reviewedBookingIds = new Set(
+    (myReviews ?? []).map((r) => r.booking_id).filter((id): id is string => !!id)
+  );
 
   const jobCards = await Promise.all(
     (bookings ?? [])
@@ -70,52 +64,11 @@ export default async function CustomerBookingsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {bookings.map((b) => (
-            <div key={b.id} className="rounded-2xl border border-border p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <Link href={`/vendor/${b.provider_id}`} className="font-semibold hover:underline">
-                    {b.provider_name ?? "Vendor"}
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {b.event_date}
-                    {b.event_address ? ` · ${b.event_address}` : ""}
-                  </p>
-                  {!!b.total_price && (
-                    <p className="text-sm font-semibold">${b.total_price}</p>
-                  )}
-                </div>
-                <span className={`text-sm font-medium capitalize ${STATUS_COLOR[b.status] ?? ""}`}>
-                  {b.status}
-                </span>
-              </div>
-
-              <div className="mt-3 flex items-center gap-2">
-                {b.status !== "cancelled" && b.status !== "completed" && (
-                  <CancelBookingButton bookingId={b.id} />
-                )}
-                {b.status === "completed" && !reviewedBookingIds.has(b.id) && (
-                  <LeaveReview
-                    providerId={b.provider_id}
-                    bookingId={b.id}
-                    eventType={b.service_type}
-                  />
-                )}
-                {b.status === "completed" && reviewedBookingIds.has(b.id) && (
-                  <span className="text-sm text-muted-foreground">You reviewed this booking</span>
-                )}
-              </div>
-              {jobCardByBooking.get(b.id)?.jobCard && (
-                <JobCardPanel
-                  jobCard={jobCardByBooking.get(b.id)!.jobCard!}
-                  checklist={jobCardByBooking.get(b.id)!.checklist}
-                  viewer="organiser"
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        <BookingList
+          bookings={bookings}
+          jobCardByBooking={jobCardByBooking}
+          reviewedBookingIds={reviewedBookingIds}
+        />
       )}
     </div>
   );

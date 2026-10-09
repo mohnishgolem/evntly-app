@@ -23,20 +23,24 @@ export async function claimEventPlan(draft: PlanDraft) {
     return { error: "Not logged in" };
   }
 
-  const { error } = await supabase.from("events").insert({
-    organiser_email: user.email,
-    event_type: draft.eventType,
-    event_date: draft.eventDate,
-    suburb: draft.suburb,
-    guest_count: draft.guestCount,
-    budget_total: draft.budgetTotal,
-    required_services: draft.requiredServices,
-    notes: draft.notes || null,
-    status: "planning",
-  });
+  const { data: event, error } = await supabase
+    .from("events")
+    .insert({
+      organiser_email: user.email,
+      event_type: draft.eventType,
+      event_date: draft.eventDate,
+      suburb: draft.suburb,
+      guest_count: draft.guestCount,
+      budget_total: draft.budgetTotal,
+      required_services: draft.requiredServices,
+      notes: draft.notes || null,
+      status: "planning",
+    })
+    .select("id")
+    .single();
 
-  if (error) return { error: error.message };
+  if (error || !event) return { error: error?.message ?? "Could not save your event." };
 
   revalidatePath("/dashboard");
-  return { success: true };
+  return { success: true, eventId: event.id };
 }

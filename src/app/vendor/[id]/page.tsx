@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Star, MapPin, ShieldCheck, Clock } from "lucide-react";
 import { getVendorById, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
+import { createClient } from "@/lib/supabase/server";
 import { categoryLabel, LAUNCH_CITY, SITE_URL } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
@@ -50,6 +51,21 @@ export default async function VendorDetailPage({
     getVendorReviews(id),
     getCurrentUser(),
   ]);
+
+  // Auto-tag a quote request to the customer's most recent planned event, so
+  // it shows up on that event's board — no picker UI for multiple events yet.
+  let latestEventId: string | undefined;
+  if (session?.user.email) {
+    const supabase = await createClient();
+    const { data: latestEvent } = await supabase
+      .from("events")
+      .select("id")
+      .eq("organiser_email", session.user.email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    latestEventId = latestEvent?.id;
+  }
 
   const vendorUrl = `${SITE_URL}/vendor/${vendor.id}`;
   const jsonLd = {
@@ -230,6 +246,7 @@ export default async function VendorDetailPage({
                 vendorEmail={vendor.owner_email}
                 vendorName={vendor.name}
                 serviceType={vendor.service_type}
+                eventId={latestEventId}
               />
             </div>
           </div>

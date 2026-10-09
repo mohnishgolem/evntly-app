@@ -23,12 +23,14 @@ export function RequestQuote({
   vendorEmail,
   vendorName,
   serviceType,
+  eventId,
 }: {
   isAuthenticated: boolean;
   vendorId: string;
   vendorEmail: string | null;
   vendorName: string;
   serviceType: string;
+  eventId?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -62,6 +64,7 @@ export function RequestQuote({
           vendorEmail={vendorEmail ?? ""}
           vendorName={vendorName}
           serviceType={serviceType}
+          eventId={eventId}
           onSent={() => setOpen(false)}
         />
       </DialogContent>
@@ -74,12 +77,14 @@ function QuoteForm({
   vendorEmail,
   vendorName,
   serviceType,
+  eventId,
   onSent,
 }: {
   vendorId: string;
   vendorEmail: string;
   vendorName: string;
   serviceType: string;
+  eventId?: string;
   onSent: () => void;
 }) {
   const [pending, startTransition] = useTransition();
@@ -98,7 +103,7 @@ function QuoteForm({
   function submit() {
     setError(null);
     startTransition(async () => {
-      const res = await requestQuote(vendorId, vendorEmail, vendorName, serviceType, draft);
+      const res = await requestQuote(vendorId, vendorEmail, vendorName, serviceType, draft, eventId);
       if (res?.error) setError(res.error);
       else setSent(true);
     });

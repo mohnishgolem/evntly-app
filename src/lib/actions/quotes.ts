@@ -20,7 +20,8 @@ export async function requestQuote(
   vendorEmail: string,
   vendorName: string,
   serviceType: string,
-  draft: QuoteRequestDraft
+  draft: QuoteRequestDraft,
+  eventId?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const {
@@ -44,6 +45,7 @@ export async function requestQuote(
     details: draft.details || null,
     status: "pending",
     origin: "vendor_profile",
+    event_id: eventId ?? null,
   });
 
   if (error) return { error: error.message };

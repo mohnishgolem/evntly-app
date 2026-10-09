@@ -7,6 +7,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/events", label: "My Events" },
   { href: "/dashboard/event-feed", label: "Event Feed" },
   { href: "/dashboard/quotes", label: "Quotes" },
   { href: "/dashboard/bookings", label: "Bookings" },
