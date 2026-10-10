@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { scanForLeakage } from "@/lib/leakage";
 
 export type SendMessageState = { error?: string; success?: boolean } | null;
 
@@ -26,34 +25,16 @@ export async function sendVendorMessage(
 
   const conversationId = [vendorId, user.email].sort().join(":");
 
-  // Anti-leakage: strip contact info before it ever reaches the recipient,
-  // and log what was caught for admin review.
-  const { redacted, matches, hasLeakage } = scanForLeakage(content);
-
   const { error } = await supabase.from("messages").insert({
     conversation_id: conversationId,
     sender_email: user.email,
     recipient_email: vendorOwnerEmail,
     provider_id: vendorId,
-    content: redacted,
+    content,
     customer_initiated: true,
   });
 
   if (error) return { error: error.message };
-
-  if (hasLeakage) {
-    await supabase.from("leakage_events").insert(
-      matches.map((m) => ({
-        sender_id: user.id,
-        sender_email: user.email,
-        recipient_email: vendorOwnerEmail,
-        conversation_id: conversationId,
-        category: m.category,
-        original_snippet: m.snippet,
-        redacted_message: redacted,
-      }))
-    );
-  }
 
   revalidatePath("/messages");
   return { success: true };
@@ -90,32 +71,16 @@ export async function sendReply(
   const counterpart =
     existing.sender_email === user.email ? existing.recipient_email : existing.sender_email;
 
-  const { redacted, matches, hasLeakage } = scanForLeakage(trimmed);
-
   const { error } = await supabase.from("messages").insert({
     conversation_id: conversationId,
     sender_email: user.email,
     recipient_email: counterpart,
     provider_id: existing.provider_id,
-    content: redacted,
+    content: trimmed,
     customer_initiated: existing.customer_initiated,
   });
 
   if (error) return { error: error.message };
-
-  if (hasLeakage) {
-    await supabase.from("leakage_events").insert(
-      matches.map((m) => ({
-        sender_id: user.id,
-        sender_email: user.email,
-        recipient_email: counterpart,
-        conversation_id: conversationId,
-        category: m.category,
-        original_snippet: m.snippet,
-        redacted_message: redacted,
-      }))
-    );
-  }
 
   // conversationId contains ":" and "@", which are percent-encoded in the
   // actual route (see the thread page's decodeURIComponent) — revalidatePath

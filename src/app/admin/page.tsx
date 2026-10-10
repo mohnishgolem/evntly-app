@@ -1,12 +1,7 @@
 import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag, AlertTriangle } from "lucide-react";
+import { ShieldAlert, Store, Users, Flag } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
-import {
-  getAllVendorsForAdmin,
-  getAllUsersForAdmin,
-  getReportsForAdmin,
-  getLeakageEventsForAdmin,
-} from "@/lib/data/admin";
+import { getAllVendorsForAdmin, getAllUsersForAdmin, getReportsForAdmin } from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
 import { AdminUserRoles } from "@/components/admin-user-roles";
@@ -18,23 +13,15 @@ export default async function AdminPage() {
   if (!session) redirect("/login?next=/admin");
   if (session.profile?.role !== "admin") redirect("/");
 
-  const [vendors, users, reports, leakageEvents] = await Promise.all([
+  const [vendors, users, reports] = await Promise.all([
     getAllVendorsForAdmin(),
     getAllUsersForAdmin(),
     getReportsForAdmin(),
-    getLeakageEventsForAdmin(),
   ]);
 
   const pending = vendors.filter((v) => v.status === "pending_review");
   const others = vendors.filter((v) => v.status !== "pending_review");
   const pendingReportsCount = reports.filter((r) => (r.status ?? "pending") === "pending").length;
-
-  const leakageBySender = new Map<string, typeof leakageEvents>();
-  for (const e of leakageEvents) {
-    const key = e.sender_email ?? "Unknown";
-    leakageBySender.set(key, [...(leakageBySender.get(key) ?? []), e]);
-  }
-  const leakageGroups = [...leakageBySender.entries()].sort((a, b) => b[1].length - a[1].length);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -74,9 +61,6 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="reports" className="shrink-0">
             <Flag /> Reports
-          </TabsTrigger>
-          <TabsTrigger value="leakage" className="shrink-0">
-            <AlertTriangle /> Leakage Log
           </TabsTrigger>
         </TabsList>
 
@@ -141,53 +125,6 @@ export default async function AdminPage() {
 
         <TabsContent value="reports">
           <AdminReports reports={reports} />
-        </TabsContent>
-
-        <TabsContent value="leakage">
-          {leakageGroups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No leakage events logged.</p>
-          ) : (
-            <div className="space-y-6">
-              <p className="text-xs text-muted-foreground">
-                {leakageEvents.length} leakage event{leakageEvents.length === 1 ? "" : "s"}{" "}
-                logged · sorted by offender frequency · original content visible to admin only
-              </p>
-              {leakageGroups.map(([sender, events]) => (
-                <div key={sender} className="rounded-2xl border border-border p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold">{sender}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {events.length} event{events.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    {events.map((e) => (
-                      <div key={e.id} className="border-t border-border/60 pt-2 text-sm">
-                        <div className="mb-1 flex items-center gap-2">
-                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                            {e.category}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(e.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        {e.original_snippet && (
-                          <p className="text-muted-foreground">
-                            Matched: &quot;{e.original_snippet}&quot;
-                          </p>
-                        )}
-                        {e.redacted_message && (
-                          <p className="text-muted-foreground">
-                            Delivered: &quot;{e.redacted_message}&quot;
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </TabsContent>
       </Tabs>
     </div>

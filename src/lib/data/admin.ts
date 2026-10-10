@@ -36,13 +36,3 @@ export async function getReportsForAdmin() {
     .order("created_at", { ascending: false });
   return data ?? [];
 }
-
-export async function getLeakageEventsForAdmin() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("leakage_events")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  return data ?? [];
-}
