@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import { claimEventPlan, type PlanDraft } from "@/lib/actions/events";
@@ -188,23 +189,7 @@ export default function PlanPage() {
               Post this event to the vendor feed so approved vendors can send you quotes.
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={postToFeed}
-            onClick={() => setPostToFeed((v) => !v)}
-            className={cn(
-              "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-              postToFeed ? "bg-highlight" : "bg-muted"
-            )}
-          >
-            <span
-              className={cn(
-                "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
-                postToFeed ? "translate-x-5" : "translate-x-0.5"
-              )}
-            />
-          </button>
+          <Switch checked={postToFeed} onCheckedChange={setPostToFeed} />
         </div>
 
         <Button className="w-full" size="lg" disabled={!canSubmit || pending} onClick={finish}>
