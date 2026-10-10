@@ -86,7 +86,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         {vendors.length > 0 && (
           <section className="mt-12">
             <div className="mb-2 flex items-center justify-between">
@@ -124,7 +124,7 @@ export default async function HomePage() {
                 Show all <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {vendors.map((v) => (
                 <VendorCard
                   key={v.id}

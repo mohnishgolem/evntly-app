@@ -64,7 +64,7 @@ export function ExploreResults({
       </div>
 
       {view === "list" ? (
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {vendors.map((v) => (
             <VendorCard
               key={v.id}

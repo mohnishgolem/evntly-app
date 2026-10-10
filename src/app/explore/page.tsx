@@ -53,7 +53,7 @@ export default async function ExplorePage({
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Explore vendors</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Browse every approved vendor on Evntly — no account needed.
