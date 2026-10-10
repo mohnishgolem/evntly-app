@@ -11,6 +11,7 @@ import { RequestQuote } from "@/components/request-quote";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
+import { PortfolioGallery } from "@/components/portfolio-gallery";
 
 export async function generateMetadata({
   params,
@@ -165,17 +166,7 @@ export default async function VendorDetailPage({
           {portfolio.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold">Portfolio</h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {portfolio.map((item) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={item.id}
-                    src={item.thumbnail_url ?? item.media_url}
-                    alt={item.caption ?? vendor.name}
-                    className="aspect-square rounded-xl object-cover"
-                  />
-                ))}
-              </div>
+              <PortfolioGallery items={portfolio} vendorName={vendor.name} />
             </section>
           )}
 
