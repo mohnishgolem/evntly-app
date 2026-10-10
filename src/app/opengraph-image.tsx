@@ -7,7 +7,10 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OpengraphImage() {
-  const logoFont = await readFile(join(process.cwd(), "src/app/fonts/MagnoliaScript.otf"));
+  const [logoFont, subtitleFont] = await Promise.all([
+    readFile(join(process.cwd(), "src/app/fonts/MagnoliaScript.otf")),
+    readFile(join(process.cwd(), "src/app/fonts/Inter-Regular.woff")),
+  ]);
   const subtitle = `FIND TRUSTED EVENT VENDORS IN ${LAUNCH_CITY.toUpperCase()}`;
 
   return new ImageResponse(
@@ -37,6 +40,7 @@ export default async function OpengraphImage() {
         <div
           style={{
             display: "flex",
+            fontFamily: "Inter",
             fontSize: 32,
             color: "#a5a7b2",
             marginTop: 8,
@@ -49,7 +53,10 @@ export default async function OpengraphImage() {
     ),
     {
       ...size,
-      fonts: [{ name: "Magnolia Script", data: logoFont, style: "normal" }],
+      fonts: [
+        { name: "Magnolia Script", data: logoFont, style: "normal" },
+        { name: "Inter", data: subtitleFont, style: "normal", weight: 400 },
+      ],
     }
   );
 }
