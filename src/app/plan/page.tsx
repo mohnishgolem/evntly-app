@@ -122,7 +122,7 @@ export default function PlanPage() {
                       : "border-border text-muted-foreground hover:border-foreground/30"
                   )}
                 >
-                  <span>{c.icon}</span> {c.label}
+                  <c.icon className="size-4" /> {c.label}
                 </button>
               );
             })}

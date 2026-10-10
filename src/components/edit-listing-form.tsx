@@ -84,13 +84,13 @@ export function EditListingForm({
               type="button"
               onClick={() => setDraft((d) => ({ ...d, serviceType: c.value }))}
               className={cn(
-                "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
+                "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                 draft.serviceType === c.value
                   ? "border-highlight bg-highlight-light text-highlight"
                   : "border-border text-muted-foreground hover:border-foreground/30"
               )}
             >
-              {c.icon} {c.label}
+              <c.icon className="size-4" /> {c.label}
             </button>
           ))}
         </div>

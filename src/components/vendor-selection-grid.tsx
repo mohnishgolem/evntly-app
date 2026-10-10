@@ -40,6 +40,7 @@ export function VendorSelectionGrid({ eventId, vendors }: { eventId: string; ven
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {vendors.map((vendor) => {
           const isSelected = selected.has(vendor.id);
+          const CategoryIcon = categoryIcon(vendor.service_type);
           return (
             <button
               type="button"
@@ -59,8 +60,8 @@ export function VendorSelectionGrid({ eventId, vendors }: { eventId: string; ven
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 text-3xl">
-                    {categoryIcon(vendor.service_type)}
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <CategoryIcon className="size-8 text-primary" />
                   </div>
                 )}
                 {isSelected && (

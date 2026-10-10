@@ -16,6 +16,8 @@ export function VendorCard({
   saved?: boolean;
   isAuthenticated?: boolean;
 }) {
+  const CategoryIcon = categoryIcon(vendor.service_type);
+
   return (
     <Link href={`/vendor/${vendor.id}`} className="group block">
       <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
@@ -27,8 +29,9 @@ export function VendorCard({
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 text-4xl">
-            {categoryIcon(vendor.service_type)}
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            {/* eslint-disable-next-line react-hooks/static-components -- categoryIcon returns a stateless lucide icon, not a dynamically-defined component */}
+            <CategoryIcon className="size-9 text-primary" />
           </div>
         )}
         <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">

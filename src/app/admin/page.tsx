@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag } from "lucide-react";
+import { ShieldAlert, Store, Users, Flag, PartyPopper } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { getAllVendorsForAdmin, getAllUsersForAdmin, getReportsForAdmin } from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
@@ -68,7 +68,9 @@ export default async function AdminPage() {
           <section className="mb-10">
             <h2 className="mb-4 text-lg font-semibold">Pending review ({pending.length})</h2>
             {pending.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing waiting on you. 🎉</p>
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <PartyPopper className="size-4" /> Nothing waiting on you.
+              </p>
             ) : (
               <div className="space-y-4">
                 {pending.map((v) => (

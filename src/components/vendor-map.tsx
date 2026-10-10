@@ -76,6 +76,7 @@ function PricePin({
   onSelect: () => void;
 }) {
   const color = categoryColor(vendor.service_type);
+  const CategoryIcon = categoryIcon(vendor.service_type);
 
   return (
     <button
@@ -94,7 +95,8 @@ function PricePin({
         className="flex items-center gap-1.5 rounded-full border-[3px] bg-background px-3 py-1.5 text-[13px] leading-none font-extrabold whitespace-nowrap text-foreground shadow-[0_3px_10px_rgba(0,0,0,0.18)]"
         style={{ borderColor: color }}
       >
-        <span className="text-[13px] leading-none">{categoryIcon(vendor.service_type)}</span>
+        {/* eslint-disable-next-line react-hooks/static-components -- categoryIcon returns a stateless lucide icon, not a dynamically-defined component */}
+        <CategoryIcon className="size-3.5" style={{ color }} />
         {`$${Math.round(vendor.hourly_rate)}/hr`}
       </span>
       <span
@@ -107,6 +109,7 @@ function PricePin({
 
 function SelectedCard({ vendor, onClose }: { vendor: LocatedVendor; onClose: () => void }) {
   const color = categoryColor(vendor.service_type);
+  const CategoryIcon = categoryIcon(vendor.service_type);
   return (
     <div className="glass-material pointer-events-auto absolute inset-x-3 bottom-3 z-30 mx-auto max-w-md rounded-3xl border border-border p-3 shadow-[0_12px_40px_rgba(0,0,0,0.28)]">
       <button
@@ -126,7 +129,8 @@ function SelectedCard({ vendor, onClose }: { vendor: LocatedVendor; onClose: () 
             // eslint-disable-next-line @next/next/no-img-element
             <img src={vendor.avatar_url} alt="" className="size-full object-cover" />
           ) : (
-            <span className="text-2xl">{categoryIcon(vendor.service_type)}</span>
+            // eslint-disable-next-line react-hooks/static-components -- categoryIcon returns a stateless lucide icon, not a dynamically-defined component
+            <CategoryIcon className="size-6" />
           )}
         </span>
         <span className="min-w-0 flex-1">

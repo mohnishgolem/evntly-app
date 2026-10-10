@@ -79,7 +79,7 @@ export default async function HomePage() {
               href={`/explore?category=${c.value}`}
               className="flex items-center gap-2 rounded-full border border-white/40 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-900 shadow-sm backdrop-blur-sm transition-colors hover:border-highlight/40 hover:text-highlight"
             >
-              <span>{c.icon}</span>
+              <c.icon className="size-4" />
               {c.label}
             </Link>
           ))}

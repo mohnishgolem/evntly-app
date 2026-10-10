@@ -1,13 +1,27 @@
+import {
+  Music,
+  Camera,
+  Flower2,
+  UtensilsCrossed,
+  Video,
+  Palette,
+  Mic,
+  Sparkles,
+  ClipboardList,
+  PartyPopper,
+  type LucideIcon,
+} from "lucide-react";
+
 export const VENDOR_CATEGORIES = [
-  { value: "dj", label: "DJ", icon: "🎵" },
-  { value: "photographer", label: "Photographer", icon: "📷" },
-  { value: "florist", label: "Florist", icon: "💐" },
-  { value: "caterer", label: "Caterer", icon: "🍽️" },
-  { value: "videographer", label: "Videographer", icon: "🎥" },
-  { value: "decorator", label: "Decorator", icon: "🎨" },
-  { value: "mc", label: "MC", icon: "🎤" },
-  { value: "makeup_artist", label: "Makeup Artist", icon: "💄" },
-  { value: "event_planner", label: "Event Planner", icon: "📋" },
+  { value: "dj", label: "DJ", icon: Music },
+  { value: "photographer", label: "Photographer", icon: Camera },
+  { value: "florist", label: "Florist", icon: Flower2 },
+  { value: "caterer", label: "Caterer", icon: UtensilsCrossed },
+  { value: "videographer", label: "Videographer", icon: Video },
+  { value: "decorator", label: "Decorator", icon: Palette },
+  { value: "mc", label: "MC", icon: Mic },
+  { value: "makeup_artist", label: "Makeup Artist", icon: Sparkles },
+  { value: "event_planner", label: "Event Planner", icon: ClipboardList },
 ] as const;
 
 export type VendorCategory = (typeof VENDOR_CATEGORIES)[number]["value"];
@@ -56,8 +70,8 @@ export function categoryLabel(value: string) {
   return VENDOR_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 }
 
-export function categoryIcon(value: string) {
-  return VENDOR_CATEGORIES.find((c) => c.value === value)?.icon ?? "🎉";
+export function categoryIcon(value: string): LucideIcon {
+  return VENDOR_CATEGORIES.find((c) => c.value === value)?.icon ?? PartyPopper;
 }
 
 // One accent color per category, used for map marker outlines/dots.

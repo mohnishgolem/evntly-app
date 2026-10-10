@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, PartyPopper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES, EVENT_TYPES, PRICE_BUCKETS } from "@/lib/config";
 
@@ -75,7 +75,7 @@ export function ExploreFilters() {
               : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
-          <span className="text-2xl">🎉</span>
+          <PartyPopper className="size-6" />
           <span className="text-xs font-medium whitespace-nowrap">All</span>
         </button>
         {categories.map((c) => (
@@ -89,7 +89,7 @@ export function ExploreFilters() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            <span className="text-2xl">{c.icon}</span>
+            <c.icon className="size-6" />
             <span className="text-xs font-medium whitespace-nowrap">{c.label}</span>
           </button>
         ))}

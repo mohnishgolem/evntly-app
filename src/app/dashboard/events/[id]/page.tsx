@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, PartyPopper } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { categoryLabel } from "@/lib/config";
@@ -268,8 +268,8 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
       )}
 
       {stage === 7 && (
-        <div className="rounded-2xl border border-success/30 bg-success/5 p-5 text-center font-semibold text-success">
-          Event complete 🎉
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-success/30 bg-success/5 p-5 text-center font-semibold text-success">
+          <PartyPopper className="size-5" /> Event complete
         </div>
       )}
     </div>
