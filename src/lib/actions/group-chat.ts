@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-guard";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -21,6 +22,19 @@ export async function sendGroupMessage(threadId: string, content: string): Promi
     .eq("id", threadId)
     .single();
   if (!thread) return { error: "Conversation not found." };
+
+  const guard = scanForPaymentCircumvention(trimmed);
+  if (guard.blocked) {
+    await supabase.from("leakage_events").insert({
+      sender_id: user.id,
+      sender_email: user.email,
+      conversation_id: threadId,
+      category: guard.category,
+      original_snippet: guard.snippet,
+      redacted_message: null,
+    });
+    return { error: PAYMENT_GUARD_ERROR };
+  }
 
   const { error } = await supabase.from("group_chat_messages").insert({
     thread_id: threadId,

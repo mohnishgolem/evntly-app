@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { MessageThread } from "@/components/message-thread";
 import { counterpartDisplayName } from "@/lib/messages";
+import { maskContactInfo } from "@/lib/contact-reveal";
+import { hasBookingWithVendor } from "@/lib/data/messages";
 
 export default async function MessageThreadPage({
   params,
@@ -52,6 +54,15 @@ export default async function MessageThreadPage({
 
   const counterpartName = counterpartDisplayName(counterpartEmail, provider);
 
+  // Contact info stays masked until this vendor/customer pair has a real
+  // booking behind them — same stored message, it just renders unmasked
+  // once that's true, no need to touch anything already sent.
+  const customerEmail = counterpartEmail === provider?.owner_email ? email : counterpartEmail;
+  const booked = first.provider_id ? await hasBookingWithVendor(first.provider_id, customerEmail) : false;
+  const visibleMessages = booked
+    ? messages
+    : messages.map((m) => ({ ...m, content: maskContactInfo(m.content) }));
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <Link
@@ -61,9 +72,15 @@ export default async function MessageThreadPage({
         <ArrowLeft className="size-4" /> Messages
       </Link>
       <h1 className="mb-6 text-2xl font-bold">{counterpartName}</h1>
+      {!booked && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Phone numbers, emails, and social handles are hidden here until this booking is
+          confirmed.
+        </p>
+      )}
       <MessageThread
         conversationId={conversationId}
-        messages={messages}
+        messages={visibleMessages}
         selfEmail={email}
         counterpartName={counterpartName}
       />

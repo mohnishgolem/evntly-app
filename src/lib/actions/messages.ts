@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-guard";
 
 export type SendMessageState = { error?: string; success?: boolean } | null;
 
@@ -24,6 +25,20 @@ export async function sendVendorMessage(
   }
 
   const conversationId = [vendorId, user.email].sort().join(":");
+
+  const guard = scanForPaymentCircumvention(content);
+  if (guard.blocked) {
+    await supabase.from("leakage_events").insert({
+      sender_id: user.id,
+      sender_email: user.email,
+      recipient_email: vendorOwnerEmail,
+      conversation_id: conversationId,
+      category: guard.category,
+      original_snippet: guard.snippet,
+      redacted_message: null,
+    });
+    return { error: PAYMENT_GUARD_ERROR };
+  }
 
   const { error } = await supabase.from("messages").insert({
     conversation_id: conversationId,
@@ -70,6 +85,20 @@ export async function sendReply(
 
   const counterpart =
     existing.sender_email === user.email ? existing.recipient_email : existing.sender_email;
+
+  const guard = scanForPaymentCircumvention(trimmed);
+  if (guard.blocked) {
+    await supabase.from("leakage_events").insert({
+      sender_id: user.id,
+      sender_email: user.email,
+      recipient_email: counterpart,
+      conversation_id: conversationId,
+      category: guard.category,
+      original_snippet: guard.snippet,
+      redacted_message: null,
+    });
+    return { error: PAYMENT_GUARD_ERROR };
+  }
 
   const { error } = await supabase.from("messages").insert({
     conversation_id: conversationId,

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { counterpartDisplayName } from "@/lib/messages";
+import { maskContactInfo } from "@/lib/contact-reveal";
 import type { Database } from "@/lib/supabase/database.types";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
@@ -38,6 +39,18 @@ export default async function MessagesPage() {
     for (const p of data ?? []) providers.set(p.id, p);
   }
 
+  // Same masking rule as the thread page: contact info in the preview stays
+  // hidden until this vendor/customer pair has a real booking.
+  const bookedPairs = new Set<string>();
+  if (providerIds.length > 0) {
+    const { data: bookings } = await supabase
+      .from("bookings")
+      .select("provider_id, client_email")
+      .in("provider_id", providerIds)
+      .neq("status", "cancelled");
+    for (const b of bookings ?? []) bookedPairs.add(`${b.provider_id}:${b.client_email}`);
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Messages</h1>
@@ -49,6 +62,10 @@ export default async function MessagesPage() {
             const counterpart = m.sender_email === email ? m.recipient_email : m.sender_email;
             const provider = m.provider_id ? (providers.get(m.provider_id) ?? null) : null;
             const displayName = counterpartDisplayName(counterpart, provider);
+            const customerEmail = counterpart === provider?.owner_email ? email : counterpart;
+            const booked =
+              !!m.provider_id && bookedPairs.has(`${m.provider_id}:${customerEmail}`);
+            const preview = booked ? m.content : maskContactInfo(m.content);
             return (
               <Link
                 key={m.conversation_id}
@@ -61,7 +78,7 @@ export default async function MessagesPage() {
                     <span className="h-2 w-2 rounded-full bg-primary" />
                   )}
                 </div>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">{m.content}</p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{preview}</p>
               </Link>
             );
           })}

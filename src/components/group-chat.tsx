@@ -23,14 +23,20 @@ export function GroupChat({
   const router = useRouter();
   const [content, setContent] = useState("");
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   function submit() {
     if (!content.trim()) return;
+    setError(null);
     startTransition(async () => {
-      await sendGroupMessage(threadId, content);
-      setContent("");
-      router.refresh();
+      const res = await sendGroupMessage(threadId, content);
+      if (res?.error) {
+        setError(res.error);
+      } else {
+        setContent("");
+        router.refresh();
+      }
     });
   }
 
@@ -84,6 +90,7 @@ export function GroupChat({
           <Send className="size-4" />
         </Button>
       </form>
+      {error && <p className="px-3 pb-2 text-sm text-destructive">{error}</p>}
     </div>
   );
 }
