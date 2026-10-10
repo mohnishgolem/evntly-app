@@ -59,7 +59,7 @@ export default async function ProfilePage() {
   const initial = (label ?? "?").charAt(0).toUpperCase();
 
   return (
-    <div className="mx-auto max-w-md px-4 py-8">
+    <div className="mx-auto max-w-xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="mb-6 text-[28px] font-bold tracking-tight">Profile</h1>
 
       <div className="mb-6 flex flex-col items-center rounded-2xl bg-secondary px-4 py-8 text-center">
