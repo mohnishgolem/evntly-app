@@ -2,13 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/data/user";
 
 export type ActionState = { error?: string; success?: boolean } | null;
+
+// RLS is the real enforcement boundary for these tables, but every write
+// here is also gated in code so a logged-in non-admin gets a clean error
+// instead of a raw Postgres rejection if the policies ever change.
+async function requireAdmin() {
+  const session = await getCurrentUser();
+  if (session?.profile?.role !== "admin") return null;
+  return session;
+}
 
 export async function setVendorStatus(
   vendorId: string,
   status: "approved" | "rejected" | "suspended"
 ): Promise<ActionState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("service_providers")
@@ -25,6 +37,8 @@ export async function setUserRole(
   userId: string,
   role: "customer" | "vendor" | "admin"
 ): Promise<ActionState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+
   const supabase = await createClient();
   const { error } = await supabase.from("users").update({ role }).eq("id", userId);
 
@@ -38,6 +52,8 @@ export async function updateReportStatus(
   reportId: string,
   status: "reviewed" | "dismissed" | "actioned"
 ): Promise<ActionState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+
   const supabase = await createClient();
   const { error } = await supabase.from("reports").update({ status }).eq("id", reportId);
 
