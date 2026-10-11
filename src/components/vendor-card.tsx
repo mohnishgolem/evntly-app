@@ -3,9 +3,9 @@ import { Star, ShieldCheck } from "lucide-react";
 import { categoryLabel, categoryIcon, SITE_URL } from "@/lib/config";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 export function VendorCard({
   vendor,

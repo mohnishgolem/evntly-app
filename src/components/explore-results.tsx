@@ -6,9 +6,9 @@ import { List, MapIcon } from "lucide-react";
 import { VendorCard } from "@/components/vendor-card";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 export function ExploreResults({
   vendors,

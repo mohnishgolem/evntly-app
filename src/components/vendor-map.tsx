@@ -9,9 +9,9 @@ import { Star, X } from "lucide-react";
 import { categoryColor, categoryIcon, categoryLabel } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { THEME_CHANGE_EVENT } from "@/components/theme-toggle";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 type LocatedVendor = Vendor & { latitude: number; longitude: number };
 
 // A recolored fork of OpenFreeMap's "dark" vector style (Apple Maps Dark

@@ -2,9 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 // MapLibre needs WebGL + `window`, so it only loads on the client.
 const VendorMap = dynamic(

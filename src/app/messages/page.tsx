@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { counterpartDisplayName } from "@/lib/messages";
+import { counterpartDisplayName, conversationCustomerEmail } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -30,11 +30,11 @@ export default async function MessagesPage() {
       [...threads.values()].map((m) => m.provider_id).filter((id): id is string => !!id)
     ),
   ];
-  const providers = new Map<string, { name: string; owner_email: string | null }>();
+  const providers = new Map<string, { name: string }>();
   if (providerIds.length > 0) {
     const { data } = await supabase
       .from("service_providers")
-      .select("id, name, owner_email")
+      .select("id, name")
       .in("id", providerIds);
     for (const p of data ?? []) providers.set(p.id, p);
   }
@@ -61,8 +61,8 @@ export default async function MessagesPage() {
           {[...threads.values()].map((m) => {
             const counterpart = m.sender_email === email ? m.recipient_email : m.sender_email;
             const provider = m.provider_id ? (providers.get(m.provider_id) ?? null) : null;
-            const displayName = counterpartDisplayName(counterpart, provider);
-            const customerEmail = counterpart === provider?.owner_email ? email : counterpart;
+            const customerEmail = conversationCustomerEmail(m.conversation_id) ?? counterpart;
+            const displayName = counterpartDisplayName(counterpart, provider?.name ?? null, customerEmail);
             const booked =
               !!m.provider_id && bookedPairs.has(`${m.provider_id}:${customerEmail}`);
             const preview = booked ? m.content : maskContactInfo(m.content);

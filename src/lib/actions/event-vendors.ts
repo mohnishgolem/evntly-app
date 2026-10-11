@@ -40,7 +40,7 @@ export async function requestQuotesForEvent(
 
   const { data: vendors } = await supabase
     .from("service_providers")
-    .select("id, name, owner_email, service_type")
+    .select("id")
     .in("id", vendorIds);
 
   if (!vendors || vendors.length === 0) return { error: "No vendors found." };
@@ -56,7 +56,7 @@ export async function requestQuotesForEvent(
 
   const results = await Promise.all(
     vendors.map((v) =>
-      requestQuote(v.id, v.owner_email ?? "", v.name, v.service_type, draft, eventId)
+      requestQuote(v.id, draft, eventId)
     )
   );
 

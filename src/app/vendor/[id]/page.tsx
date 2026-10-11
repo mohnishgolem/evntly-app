@@ -146,7 +146,6 @@ export default async function VendorDetailPage({
           <ReportVendor
             isAuthenticated={!!session}
             vendorId={vendor.id}
-            vendorEmail={vendor.owner_email}
           />
 
           {vendor.bio && (
@@ -228,15 +227,12 @@ export default async function VendorDetailPage({
               <ContactVendor
                 isAuthenticated={!!session}
                 vendorId={vendor.id}
-                vendorOwnerEmail={vendor.owner_email}
                 vendorName={vendor.name}
               />
               <RequestQuote
                 isAuthenticated={!!session}
                 vendorId={vendor.id}
-                vendorEmail={vendor.owner_email}
                 vendorName={vendor.name}
-                serviceType={vendor.service_type}
                 eventId={latestEventId}
               />
             </div>

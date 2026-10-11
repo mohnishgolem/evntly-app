@@ -19,12 +19,10 @@ const initialState: SendMessageState = null;
 export function ContactVendor({
   isAuthenticated,
   vendorId,
-  vendorOwnerEmail,
   vendorName,
 }: {
   isAuthenticated: boolean;
   vendorId: string;
-  vendorOwnerEmail: string | null;
   vendorName: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -57,7 +55,6 @@ export function ContactVendor({
         </DialogHeader>
         <MessageForm
           vendorId={vendorId}
-          vendorOwnerEmail={vendorOwnerEmail ?? ""}
           onSent={() => setOpen(false)}
         />
       </DialogContent>
@@ -67,14 +64,12 @@ export function ContactVendor({
 
 function MessageForm({
   vendorId,
-  vendorOwnerEmail,
   onSent,
 }: {
   vendorId: string;
-  vendorOwnerEmail: string;
   onSent: () => void;
 }) {
-  const action = sendVendorMessage.bind(null, vendorId, vendorOwnerEmail);
+  const action = sendVendorMessage.bind(null, vendorId);
   const [state, formAction, pending] = useActionState(action, initialState);
 
   if (state?.success) {

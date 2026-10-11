@@ -50,7 +50,7 @@ export default async function ProfilePage() {
       .from("bookings")
       .select("id", { count: "exact", head: true })
       .eq("client_email", email),
-    supabase.from("service_providers").select("id").eq("owner_email", email).limit(1).maybeSingle(),
+    supabase.rpc("my_service_providers").select("id").limit(1).maybeSingle(),
   ]);
 
   const savedCount = session.profile?.saved_providers?.length ?? 0;

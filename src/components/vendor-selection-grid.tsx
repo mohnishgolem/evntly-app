@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { categoryLabel, categoryIcon } from "@/lib/config";
 import { requestQuotesForEvent } from "@/lib/actions/event-vendors";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 export function VendorSelectionGrid({ eventId, vendors }: { eventId: string; vendors: Vendor[] }) {
   const router = useRouter();

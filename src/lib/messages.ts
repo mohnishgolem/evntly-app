@@ -1,13 +1,20 @@
+// Direct-message conversation ids are "<vendorId>:<customerEmail>" (sorted),
+// so the customer is whichever part is an email address.
+export function conversationCustomerEmail(conversationId: string) {
+  return conversationId.split(":").find((part) => part.includes("@")) ?? null;
+}
+
 // Resolves a human-readable name for the other side of a 1:1 conversation.
-// Messages only store emails, so when the counterpart is a vendor we look up
-// their business name via provider_id; otherwise there's no name source for
-// a customer, so we fall back to a prettified version of their email.
+// Messages only store emails, so when the counterpart is the vendor (i.e. not
+// the customer) we use their business name via provider_id; otherwise there's
+// no name source for a customer, so we fall back to a prettified email.
 export function counterpartDisplayName(
   counterpartEmail: string,
-  provider: { name: string; owner_email: string | null } | null
+  providerName: string | null,
+  customerEmail: string | null
 ) {
-  if (provider && counterpartEmail === provider.owner_email) {
-    return provider.name;
+  if (providerName && counterpartEmail !== customerEmail) {
+    return providerName;
   }
   return prettifyEmail(counterpartEmail);
 }

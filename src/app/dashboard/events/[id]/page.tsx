@@ -12,6 +12,7 @@ import { BookingList } from "@/components/booking-list";
 import { VendorCard } from "@/components/vendor-card";
 import { DashboardNav } from "@/components/dashboard-nav";
 import type { Database } from "@/lib/supabase/database.types";
+import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -119,11 +120,11 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
   );
   const unfilledServices = event.required_services.filter((s) => !filledServices.has(s));
 
-  let suggestedVendors: Database["public"]["Tables"]["service_providers"]["Row"][] = [];
+  let suggestedVendors: PublicVendor[] = [];
   if (unfilledServices.length > 0) {
     const { data } = await supabase
       .from("service_providers")
-      .select("*")
+      .select(PUBLIC_VENDOR_COLUMNS)
       .eq("status", "approved")
       .in("service_type", unfilledServices)
       .order("rating", { ascending: false, nullsFirst: false })

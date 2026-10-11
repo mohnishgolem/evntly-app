@@ -888,7 +888,7 @@ export type Database = {
           id?: string
           provider_id?: string | null
           read?: boolean | null
-          recipient_email: string
+          recipient_email?: string
           sender_email: string
           updated_at?: string
         }
@@ -1018,7 +1018,7 @@ export type Database = {
           status: string
           stripe_session_id?: string | null
           updated_at?: string
-          vendor_email: string
+          vendor_email?: string
           vendor_id: string
           vendor_name?: string | null
           vendor_note?: string | null
@@ -1466,7 +1466,116 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_service_providers: {
+        Args: never
+        Returns: {
+          acceptance_rate: number | null
+          available: boolean | null
+          avatar_url: string | null
+          avg_response_hours: number | null
+          bio: string | null
+          cancellation_policy: string | null
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          equipment_list: string[] | null
+          event_types: string[] | null
+          experience_years: number | null
+          founding_vendor: boolean | null
+          hourly_rate: number
+          id: string
+          languages: string[] | null
+          latitude: number | null
+          locations_serviced: string[] | null
+          longitude: number | null
+          name: string
+          owner_email: string | null
+          packages: Json | null
+          phone: string | null
+          portfolio_urls: string[] | null
+          postcode: string | null
+          pricing_options: string[] | null
+          rating: number | null
+          rating_sum: number | null
+          review_count: number | null
+          service_address: string | null
+          service_radius_km: number | null
+          service_type: string
+          social_link: string | null
+          status: string | null
+          unavailable_dates: string[] | null
+          unit_number: string | null
+          updated_at: string
+          verified: boolean | null
+          weekly_unavailable_days: number[] | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "service_providers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      is_active_combined_package: { Args: { pkg_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      my_service_providers: {
+        Args: never
+        Returns: {
+          acceptance_rate: number | null
+          available: boolean | null
+          avatar_url: string | null
+          avg_response_hours: number | null
+          bio: string | null
+          cancellation_policy: string | null
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          equipment_list: string[] | null
+          event_types: string[] | null
+          experience_years: number | null
+          founding_vendor: boolean | null
+          hourly_rate: number
+          id: string
+          languages: string[] | null
+          latitude: number | null
+          locations_serviced: string[] | null
+          longitude: number | null
+          name: string
+          owner_email: string | null
+          packages: Json | null
+          phone: string | null
+          portfolio_urls: string[] | null
+          postcode: string | null
+          pricing_options: string[] | null
+          rating: number | null
+          rating_sum: number | null
+          review_count: number | null
+          service_address: string | null
+          service_radius_km: number | null
+          service_type: string
+          social_link: string | null
+          status: string | null
+          unavailable_dates: string[] | null
+          unit_number: string | null
+          updated_at: string
+          verified: boolean | null
+          weekly_unavailable_days: number[] | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "service_providers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      owns_service_provider: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

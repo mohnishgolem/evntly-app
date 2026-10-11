@@ -32,9 +32,8 @@ export async function createCombinedPackage(draft: CreatePackageDraft): Promise<
   if (!user?.email) return { error: "Not logged in." };
 
   const { data: listing } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("id, name")
-    .eq("owner_email", user.email)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

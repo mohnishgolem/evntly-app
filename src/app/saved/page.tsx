@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorCard } from "@/components/vendor-card";
+import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 
 export default async function SavedVendorsPage() {
   const session = await getCurrentUser();
@@ -12,7 +13,7 @@ export default async function SavedVendorsPage() {
   const supabase = await createClient();
   const { data: vendors } =
     savedIds.length > 0
-      ? await supabase.from("service_providers").select("*").in("id", savedIds)
+      ? await supabase.from("service_providers").select(PUBLIC_VENDOR_COLUMNS).in("id", savedIds)
       : { data: [] };
 
   return (

@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notify, formatEventDate, formatAmount } from "@/lib/email";
+import { categoryLabel } from "@/lib/config";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -14,6 +16,18 @@ function budgetBand(total: number | null): string | null {
   if (total < 6000) return "$3,000–6,000";
   if (total < 10000) return "$6,000–10,000";
   return "$10,000+";
+}
+
+function notifyApplicationDeclined(to: string | null, eventType: string | null, eventDate: string | null) {
+  notify({
+    to,
+    subject: `Update on your application: ${eventType ?? "event"} on ${formatEventDate(eventDate)}`,
+    heading: "The organiser went with another vendor",
+    lines: [
+      `The ${eventType?.toLowerCase() ?? "event"} on ${formatEventDate(eventDate)} has been filled. New events are posted to the feed all the time — keep an eye out for the next one.`,
+    ],
+    cta: { label: "Browse the Event Feed", path: "/vendor-dashboard/event-feed" },
+  });
 }
 
 export async function publishEventToFeed(eventId: string): Promise<ActionState> {
@@ -110,9 +124,8 @@ export async function applyToEventListing(
   if (!user?.email) return { error: "You need to be logged in to apply." };
 
   const { data: vendor } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("*")
-    .eq("owner_email", user.email)
     .maybeSingle();
 
   if (!vendor || vendor.status !== "approved") {
@@ -121,7 +134,7 @@ export async function applyToEventListing(
 
   const { data: listing } = await supabase
     .from("event_listings")
-    .select("id, status, source_event_id")
+    .select("id, status, source_event_id, event_type, event_date")
     .eq("id", listingId)
     .maybeSingle();
 
@@ -163,6 +176,17 @@ export async function applyToEventListing(
     if (error.code === "23505") return { error: "You've already applied to this event." };
     return { error: error.message };
   }
+
+  notify({
+    to: event?.organiser_email,
+    subject: `${vendor.name} applied to your ${listing.event_type ?? "event"}`,
+    heading: `${vendor.name} wants to work your event`,
+    lines: [
+      `${vendor.name} (${categoryLabel(vendor.service_type)}) applied to your ${listing.event_type?.toLowerCase() ?? "event"} on ${formatEventDate(listing.event_date)} with a quote of ${formatAmount(quotedAmount)}.`,
+    ],
+    quote: pitch,
+    cta: { label: "Review application", path: "/dashboard/event-feed" },
+  });
 
   revalidatePath("/vendor-dashboard/event-feed");
   return { success: true };
@@ -216,6 +240,8 @@ export async function respondToApplication(
 
     if (error) return { error: error.message };
 
+    notifyApplicationDeclined(application.vendor_email, listing.event_type, listing.event_date);
+
     revalidatePath("/dashboard/event-feed");
     return { success: true };
   }
@@ -254,13 +280,28 @@ export async function respondToApplication(
   // A listing can require multiple service types at once (e.g. photographer
   // AND DJ) — only auto-decline other pending applicants for the SAME role,
   // not every application on the listing.
-  await supabase
+  const { data: autoDeclined } = await supabase
     .from("event_applications")
     .update({ status: "declined" })
     .eq("listing_id", listing.id)
     .eq("service_type", application.service_type)
     .eq("status", "pending")
-    .neq("id", applicationId);
+    .neq("id", applicationId)
+    .select("vendor_email");
+
+  notify({
+    to: application.vendor_email,
+    subject: `You got the job: ${listing.event_type ?? "event"} on ${formatEventDate(listing.event_date)}`,
+    heading: "Your application was accepted",
+    lines: [
+      `The organiser accepted your ${formatAmount(application.quoted_amount)} quote for their ${listing.event_type?.toLowerCase() ?? "event"} on ${formatEventDate(listing.event_date)}${listing.suburb ? ` in ${listing.suburb}` : ""}.`,
+      "Confirm the booking to lock in the date.",
+    ],
+    cta: { label: "Confirm booking", path: "/vendor-dashboard/bookings" },
+  });
+  for (const other of autoDeclined ?? []) {
+    notifyApplicationDeclined(other.vendor_email, listing.event_type, listing.event_date);
+  }
 
   revalidatePath("/dashboard/event-feed");
   revalidatePath("/dashboard/bookings");

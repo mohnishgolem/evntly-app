@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { MessageThread } from "@/components/message-thread";
-import { counterpartDisplayName } from "@/lib/messages";
+import { counterpartDisplayName, conversationCustomerEmail } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import { hasBookingWithVendor } from "@/lib/data/messages";
 
@@ -35,11 +35,11 @@ export default async function MessageThreadPage({
   const counterpartEmail =
     first.sender_email === email ? first.recipient_email : first.sender_email;
 
-  let provider: { name: string; owner_email: string | null } | null = null;
+  let provider: { name: string } | null = null;
   if (first.provider_id) {
     const { data } = await supabase
       .from("service_providers")
-      .select("name, owner_email")
+      .select("name")
       .eq("id", first.provider_id)
       .maybeSingle();
     provider = data;
@@ -52,12 +52,12 @@ export default async function MessageThreadPage({
     await supabase.from("messages").update({ read: true }).in("id", unreadIds);
   }
 
-  const counterpartName = counterpartDisplayName(counterpartEmail, provider);
+  const customerEmail = conversationCustomerEmail(conversationId) ?? counterpartEmail;
+  const counterpartName = counterpartDisplayName(counterpartEmail, provider?.name ?? null, customerEmail);
 
   // Contact info stays masked until this vendor/customer pair has a real
   // booking behind them — same stored message, it just renders unmasked
   // once that's true, no need to touch anything already sent.
-  const customerEmail = counterpartEmail === provider?.owner_email ? email : counterpartEmail;
   const booked = first.provider_id ? await hasBookingWithVendor(first.provider_id, customerEmail) : false;
   const visibleMessages = booked
     ? messages

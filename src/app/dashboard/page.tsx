@@ -7,7 +7,7 @@ import { PlanClaimer } from "@/components/plan-claimer";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
-import type { Database } from "@/lib/supabase/database.types";
+import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { href: "/messages", label: "Messages" },
 ];
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 export default async function DashboardPage() {
   const session = await getCurrentUser();
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
   if (latestPlan?.required_services?.length) {
     const { data } = await supabase
       .from("service_providers")
-      .select("*")
+      .select(PUBLIC_VENDOR_COLUMNS)
       .eq("status", "approved")
       .in("service_type", latestPlan.required_services)
       .order("rating", { ascending: false, nullsFirst: false })

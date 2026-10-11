@@ -21,9 +21,8 @@ export default async function VendorPortfolioPage() {
 
   const supabase = await createClient();
   const { data: listing } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("id, name")
-    .eq("owner_email", session.user.email as string)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

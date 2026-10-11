@@ -24,9 +24,8 @@ export default async function VendorEventFeedPage() {
   const supabase = await createClient();
 
   const { data: vendor } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("*")
-    .eq("owner_email", email)
     .maybeSingle();
 
   if (!vendor) {

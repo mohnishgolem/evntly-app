@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { LAUNCH_CATEGORIES, LAUNCH_CITY } from "@/lib/config";
+import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 
 export async function getFeaturedVendors(limit = 8) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("service_providers")
-    .select("*")
+    .select(PUBLIC_VENDOR_COLUMNS)
     .eq("status", "approved")
     .in("service_type", LAUNCH_CATEGORIES)
     .order("rating", { ascending: false, nullsFirst: false })
@@ -26,7 +27,7 @@ export async function searchVendors(filters: VendorFilters = {}) {
   const supabase = await createClient();
   let query = supabase
     .from("service_providers")
-    .select("*")
+    .select(PUBLIC_VENDOR_COLUMNS)
     .eq("status", "approved");
 
   if (filters.category) {
@@ -55,7 +56,7 @@ export async function getVendorById(id: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("service_providers")
-    .select("*")
+    .select(PUBLIC_VENDOR_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 

@@ -20,16 +20,12 @@ import { EVENT_TYPES } from "@/lib/config";
 export function RequestQuote({
   isAuthenticated,
   vendorId,
-  vendorEmail,
   vendorName,
-  serviceType,
   eventId,
 }: {
   isAuthenticated: boolean;
   vendorId: string;
-  vendorEmail: string | null;
   vendorName: string;
-  serviceType: string;
   eventId?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -61,9 +57,7 @@ export function RequestQuote({
         </DialogHeader>
         <QuoteForm
           vendorId={vendorId}
-          vendorEmail={vendorEmail ?? ""}
           vendorName={vendorName}
-          serviceType={serviceType}
           eventId={eventId}
           onSent={() => setOpen(false)}
         />
@@ -74,16 +68,12 @@ export function RequestQuote({
 
 function QuoteForm({
   vendorId,
-  vendorEmail,
   vendorName,
-  serviceType,
   eventId,
   onSent,
 }: {
   vendorId: string;
-  vendorEmail: string;
   vendorName: string;
-  serviceType: string;
   eventId?: string;
   onSent: () => void;
 }) {
@@ -103,7 +93,7 @@ function QuoteForm({
   function submit() {
     setError(null);
     startTransition(async () => {
-      const res = await requestQuote(vendorId, vendorEmail, vendorName, serviceType, draft, eventId);
+      const res = await requestQuote(vendorId, draft, eventId);
       if (res?.error) setError(res.error);
       else setSent(true);
     });

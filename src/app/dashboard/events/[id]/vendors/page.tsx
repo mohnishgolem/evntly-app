@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorSelectionGrid } from "@/components/vendor-selection-grid";
-import type { Database } from "@/lib/supabase/database.types";
+import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
 
-type Vendor = Database["public"]["Tables"]["service_providers"]["Row"];
+type Vendor = PublicVendor;
 
 export default async function EventVendorSelectionPage({
   params,
@@ -31,7 +31,7 @@ export default async function EventVendorSelectionPage({
   if (event.required_services.length > 0) {
     const { data } = await supabase
       .from("service_providers")
-      .select("*")
+      .select(PUBLIC_VENDOR_COLUMNS)
       .eq("status", "approved")
       .in("service_type", event.required_services)
       .order("rating", { ascending: false, nullsFirst: false })

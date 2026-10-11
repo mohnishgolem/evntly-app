@@ -30,9 +30,8 @@ export default async function VendorDashboardPage() {
 
   const supabase = await createClient();
   const { data: listings } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("*")
-    .eq("owner_email", session.user.email as string)
     .order("created_at", { ascending: false });
 
   if (!listings || listings.length === 0) {

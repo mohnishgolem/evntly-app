@@ -16,10 +16,9 @@ export default async function EditListingPage({
   const supabase = await createClient();
 
   const { data: listing } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("*")
     .eq("id", id)
-    .eq("owner_email", email)
     .maybeSingle();
 
   if (!listing) notFound();

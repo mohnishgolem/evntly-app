@@ -29,9 +29,8 @@ export async function submitVendorListing(
   }
 
   const { data: existing } = await supabase
-    .from("service_providers")
+    .rpc("my_service_providers")
     .select("id")
-    .eq("owner_email", user.email)
     .limit(1)
     .maybeSingle();
 
@@ -89,8 +88,8 @@ export async function updateVendorListing(
       event_types: draft.eventTypes,
       phone: draft.phone || null,
     })
-    .eq("id", listingId)
-    .eq("owner_email", user.email);
+    // RLS (service_providers_update_own) limits this to the caller's own row.
+    .eq("id", listingId);
 
   if (error) return { error: error.message };
 

@@ -24,11 +24,9 @@ const REASONS = [
 export function ReportVendor({
   isAuthenticated,
   vendorId,
-  vendorEmail,
 }: {
   isAuthenticated: boolean;
   vendorId: string;
-  vendorEmail: string | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -50,7 +48,7 @@ export function ReportVendor({
         <DialogHeader>
           <DialogTitle>Report this vendor</DialogTitle>
         </DialogHeader>
-        <ReportForm vendorId={vendorId} vendorEmail={vendorEmail} onSent={() => setOpen(false)} />
+        <ReportForm vendorId={vendorId} onSent={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -58,11 +56,9 @@ export function ReportVendor({
 
 function ReportForm({
   vendorId,
-  vendorEmail,
   onSent,
 }: {
   vendorId: string;
-  vendorEmail: string | null;
   onSent: () => void;
 }) {
   const [reason, setReason] = useState("");
@@ -74,7 +70,7 @@ function ReportForm({
   function submit() {
     setError(null);
     startTransition(async () => {
-      const res = await reportVendor(vendorId, vendorEmail, reason, details);
+      const res = await reportVendor(vendorId, reason, details);
       if (res?.error) setError(res.error);
       else setSent(true);
     });
