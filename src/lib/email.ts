@@ -74,9 +74,14 @@ function renderText({ heading, lines, quote, cta }: Notification) {
   return [heading, "", ...lines, ...(quote ? ["", `"${truncate(quote)}"`] : []), "", `${cta.label}: ${SITE_URL}${cta.path}`].join("\n");
 }
 
+// Reserved, never-deliverable domains (RFC 2606/6761) used by seeded and test
+// accounts, e.g. the demo vendors on evntly.test. Sending to them can only
+// bounce, which hurts the sending domain's reputation with Resend.
+const UNDELIVERABLE_DOMAIN = /(\.(test|example|invalid|localhost)|@example\.(com|net|org))$/i;
+
 export function notify(notification: Notification) {
   const to = notification.to?.trim();
-  if (!to) return;
+  if (!to || UNDELIVERABLE_DOMAIN.test(to)) return;
 
   after(async () => {
     const resend = getClient();
