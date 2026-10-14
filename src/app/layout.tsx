@@ -5,8 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
-import { SITE_URL, LAUNCH_CITY } from "@/lib/config";
-import { BRAND_BACKGROUND, BRAND_THEME_LIGHT } from "@/lib/brand-icon";
+import { SITE_URL, LAUNCH_CITY, THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/lib/config";
 
 // Resolves light/dark before first paint (localStorage, falling back to
 // system preference) and sets it as a class on <html> — avoids a flash of
@@ -71,8 +70,8 @@ export const metadata: Metadata = {
 // Browser chrome / installed-app title bar follows the system theme.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: BRAND_BACKGROUND },
-    { media: "(prefers-color-scheme: light)", color: BRAND_THEME_LIGHT },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLOR_DARK },
+    { media: "(prefers-color-scheme: light)", color: THEME_COLOR_LIGHT },
   ],
 };
 
