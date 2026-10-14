@@ -1530,6 +1530,8 @@ export type Database = {
       conversation_messages: {
         Args: { p_conversation_id: string }
         Returns: {
+          attachment_file_uri: string
+          attachment_type: string
           content: string
           created_at: string
           customer_initiated: boolean
@@ -1547,6 +1549,10 @@ export type Database = {
       is_active_combined_package: { Args: { pkg_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_blocked_between: { Args: { a: string; b: string }; Returns: boolean }
+      is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
       my_blocks: {
         Args: never
         Returns: {
@@ -1563,6 +1569,7 @@ export type Database = {
           counterpart_name: string
           i_am_vendor: boolean
           last_at: string
+          last_attachment_type: string
           last_content: string
           provider_id: string
           unread_count: number

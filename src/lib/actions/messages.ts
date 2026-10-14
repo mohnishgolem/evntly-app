@@ -6,6 +6,12 @@ import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-
 import { notify } from "@/lib/email";
 import { conversationIdFor } from "@/lib/messages";
 import { messageRecipientEmail } from "@/lib/supabase/admin";
+import {
+  attachmentFolder,
+  attachmentLabel,
+  isAllowedAttachmentType,
+  type Attachment,
+} from "@/lib/attachments";
 import type { User } from "@supabase/supabase-js";
 
 export type SendMessageState = { error?: string; success?: boolean } | null;
@@ -123,12 +129,23 @@ export async function sendVendorMessage(
   return { success: true };
 }
 
+// `attachment` is a file the browser already uploaded to the conversation's
+// folder in storage (storage policies only let participants write there);
+// the fill_message_recipient trigger re-checks the path and type.
 export async function sendReply(
   conversationId: string,
-  content: string
+  content: string,
+  attachment?: Attachment
 ): Promise<SendMessageState> {
   const trimmed = content.trim();
-  if (!trimmed) return { error: "Write a message first." };
+  if (!trimmed && !attachment) return { error: "Write a message first." };
+  if (
+    attachment &&
+    (!attachment.path.startsWith(attachmentFolder(conversationId)) ||
+      !isAllowedAttachmentType(attachment.type))
+  ) {
+    return { error: "That attachment can't be sent." };
+  }
 
   const supabase = await createClient();
   const {
@@ -173,6 +190,8 @@ export async function sendReply(
       provider_id: existing.provider_id,
       content: trimmed,
       customer_initiated: existing.customer_initiated,
+      attachment_file_uri: attachment?.path ?? null,
+      attachment_type: attachment?.type ?? null,
     })
     .select("id")
     .single();
@@ -191,7 +210,12 @@ export async function sendReply(
         .maybeSingle();
       if (ownListing?.name) sender = ownListing.name;
     }
-    await notifyNewMessage(message.id, sender, trimmed, conversationId);
+    await notifyNewMessage(
+      message.id,
+      sender,
+      trimmed || `${attachmentLabel(attachment?.type)} attached`,
+      conversationId
+    );
   }
 
   // conversationId contains ":" and "@", which are percent-encoded in the

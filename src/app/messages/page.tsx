@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { maskContactInfo } from "@/lib/contact-reveal";
+import { attachmentLabel } from "@/lib/attachments";
 
 export default async function MessagesPage() {
   const session = await getCurrentUser();
@@ -24,7 +25,11 @@ export default async function MessagesPage() {
             // Same masking rule as the thread page: contact info in the
             // preview stays hidden until this vendor/customer pair has a
             // real booking.
-            const preview = t.booked ? t.last_content : maskContactInfo(t.last_content);
+            const preview = !t.last_content
+              ? attachmentLabel(t.last_attachment_type)
+              : t.booked
+                ? t.last_content
+                : maskContactInfo(t.last_content);
             return (
               <Link
                 key={t.conversation_id}

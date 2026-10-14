@@ -7,6 +7,7 @@ import { MessageThread } from "@/components/message-thread";
 import { conversationIdFor, isLegacyConversationId } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import { BlockUserButton, UnblockButton } from "@/components/block-user";
+import { ATTACHMENT_BUCKET } from "@/lib/attachments";
 
 export default async function MessageThreadPage({
   params,
@@ -52,9 +53,26 @@ export default async function MessageThreadPage({
   // once that's true, no need to touch anything already sent.
   const booked = thread.booked;
   const counterpartName = thread.counterpart_name;
-  const visibleMessages = booked
-    ? messages
-    : messages.map((m) => ({ ...m, content: maskContactInfo(m.content) }));
+  // Attachments are private: sign short-lived URLs as the viewer (the
+  // storage read policy only allows the conversation's participants).
+  const attachmentPaths = messages
+    .map((m) => m.attachment_file_uri)
+    .filter((p): p is string => !!p);
+  const signedUrls = new Map<string, string>();
+  if (attachmentPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from(ATTACHMENT_BUCKET)
+      .createSignedUrls(attachmentPaths, 60 * 60);
+    for (const s of signed ?? []) {
+      if (s.path && s.signedUrl) signedUrls.set(s.path, s.signedUrl);
+    }
+  }
+
+  const visibleMessages = messages.map((m) => ({
+    ...m,
+    content: booked ? m.content : maskContactInfo(m.content),
+    attachmentUrl: m.attachment_file_uri ? (signedUrls.get(m.attachment_file_uri) ?? null) : null,
+  }));
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
