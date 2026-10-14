@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
+import { BOOKING_COLUMNS } from "@/lib/public-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -21,13 +22,12 @@ export default async function CustomerBookingsPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/bookings");
 
-  const email = session.user.email as string;
   const supabase = await createClient();
   const [{ data: bookings }, { data: myReviews }] = await Promise.all([
     supabase
       .from("bookings")
-      .select("*")
-      .eq("client_email", email)
+      .select(BOOKING_COLUMNS)
+      .eq("client_user_id", session.user.id)
       .order("event_date", { ascending: false }),
     supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
   ]);

@@ -52,21 +52,27 @@ export async function calendarFeedForToken(token: string) {
     .maybeSingle();
   if (!feed) return null;
 
-  const { data: userData } = await admin.auth.admin.getUserById(feed.user_id);
-  const email = userData?.user?.email;
-  if (!email) return null;
-
   // A year of history plus everything ahead keeps the feed small.
   const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const { data: bookings } = await admin
     .from("bookings")
     .select(
-      "id, updated_at, event_date, event_time, duration_hours, status, client_name, client_email, provider_name, event_address"
+      "id, updated_at, event_date, event_time, duration_hours, status, client_label, provider_name, event_address"
     )
-    .eq("provider_owner_email", email)
+    .eq("provider_owner_user_id", feed.user_id)
     .in("status", ["pending", "confirmed", "completed"])
     .gte("event_date", since)
     .order("event_date", { ascending: true });
 
   return { bookings: bookings ?? [] };
+}
+
+export async function bookingParticipantEmail(
+  bookingId: string,
+  who: "client_email" | "provider_owner_email"
+): Promise<string | null> {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data } = await admin.from("bookings").select(who).eq("id", bookingId).maybeSingle();
+  return (data as Record<string, string | null> | null)?.[who] ?? null;
 }

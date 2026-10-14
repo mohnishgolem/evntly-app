@@ -6,6 +6,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
+import { BOOKING_COLUMNS } from "@/lib/public-columns";
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning",
@@ -21,8 +22,8 @@ export default async function VendorBookingsPage() {
   const supabase = await createClient();
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("*")
-    .eq("provider_owner_email", session.user.email as string)
+    .select(BOOKING_COLUMNS)
+    .eq("provider_owner_user_id", session.user.id)
     .order("event_date", { ascending: false });
 
   const jobCards = await Promise.all(
@@ -49,7 +50,7 @@ export default async function VendorBookingsPage() {
             <div key={b.id} className="rounded-2xl border border-border p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-semibold">{b.client_name ?? b.client_email}</p>
+                  <p className="font-semibold">{b.client_label ?? "Customer"}</p>
                   <p className="text-sm text-muted-foreground">
                     {b.event_date}
                     {b.event_address ? ` · ${b.event_address}` : ""}

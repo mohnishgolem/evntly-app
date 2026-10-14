@@ -14,6 +14,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
+import { BOOKING_COLUMNS, type ParticipantBooking } from "@/lib/public-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -26,7 +27,7 @@ const NAV_ITEMS = [
 ];
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
-type Booking = Database["public"]["Tables"]["bookings"]["Row"];
+type Booking = ParticipantBooking;
 
 // Every stage is derived from existing data at render time rather than a
 // stored events.status — avoids a second status machine drifting out of
@@ -87,9 +88,9 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
       supabase.rpc("my_quote_requests", { as_role: "client" }).eq("event_id", id),
       supabase
         .from("bookings")
-        .select("*")
+        .select(BOOKING_COLUMNS)
         .eq("event_id", id)
-        .eq("client_email", email)
+        .eq("client_user_id", session.user.id)
         .order("event_date", { ascending: false }),
       supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
     ]);

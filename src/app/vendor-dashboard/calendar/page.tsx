@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { VendorCalendar } from "@/components/vendor-calendar";
-import { personDisplayName } from "@/lib/messages";
 import { CalendarSync } from "@/components/calendar-sync";
 import { SITE_URL } from "@/lib/config";
 
@@ -18,8 +17,8 @@ export default async function VendorCalendarPage() {
       .order("created_at", { ascending: true }),
     supabase
       .from("bookings")
-      .select("id, provider_id, event_date, event_time, status, client_name, client_email, total_price")
-      .eq("provider_owner_email", session.user.email as string)
+      .select("id, provider_id, event_date, event_time, status, client_label, total_price")
+      .eq("provider_owner_user_id", session.user.id)
       .neq("status", "cancelled"),
     // Created on first visit; see calendar_feed_tokens.
     supabase.rpc("my_calendar_feed_token"),
@@ -48,7 +47,7 @@ export default async function VendorCalendarPage() {
             event_time: b.event_time,
             status: b.status,
             total_price: b.total_price,
-            client_label: personDisplayName(b.client_name, b.client_email),
+            client_label: b.client_label ?? "Customer",
           }))}
         />
       )}

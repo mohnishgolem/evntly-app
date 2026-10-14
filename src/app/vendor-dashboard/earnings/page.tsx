@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { EarningsChart, type EarningsMonth } from "@/components/earnings-chart";
-import { personDisplayName } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const aud = (n: number) =>
@@ -27,8 +26,8 @@ export default async function VendorEarningsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("bookings")
-    .select("id, event_date, status, total_price, client_name, client_email, provider_name")
-    .eq("provider_owner_email", session.user.email as string)
+    .select("id, event_date, status, total_price, client_label, provider_name")
+    .eq("provider_owner_user_id", session.user.id)
     .neq("status", "cancelled")
     .order("event_date", { ascending: false });
   const bookings = data ?? [];
@@ -134,7 +133,7 @@ export default async function VendorEarningsPage() {
                           {format(parseISO(b.event_date), "d MMM yyyy")}
                         </td>
                         <td className="max-w-40 truncate px-4 py-2.5">
-                          {personDisplayName(b.client_name, b.client_email)}
+                          {b.client_label ?? "Customer"}
                           <span className={cn("block text-xs sm:hidden", meta?.className)}>
                             {meta?.label ?? b.status}
                           </span>

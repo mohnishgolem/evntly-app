@@ -50,7 +50,7 @@ export default async function ProfilePage() {
     supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
-      .eq("client_email", email),
+      .eq("client_user_id", session.user.id),
     supabase.rpc("my_service_providers").select("id").limit(1).maybeSingle(),
   ]);
 

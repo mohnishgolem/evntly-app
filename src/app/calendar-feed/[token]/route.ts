@@ -1,6 +1,5 @@
 import { calendarFeedForToken } from "@/lib/supabase/admin";
 import { buildCalendar, parseEventTime, type IcsEvent } from "@/lib/ics";
-import { personDisplayName } from "@/lib/messages";
 import { SITE_URL } from "@/lib/config";
 
 // Subscribed calendar for a vendor's bookings — Apple Calendar, Google
@@ -25,7 +24,7 @@ export async function GET(
 
   const manageUrl = `${SITE_URL}/vendor-dashboard/bookings`;
   const events: IcsEvent[] = feed.bookings.map((b) => {
-    const customer = personDisplayName(b.client_name, b.client_email);
+    const customer = b.client_label ?? "Customer";
     const awaiting = b.status === "pending";
     return {
       uid: `booking-${b.id}@evntly`,

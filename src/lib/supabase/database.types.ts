@@ -50,6 +50,7 @@ export type Database = {
       bookings: {
         Row: {
           client_email: string | null
+          client_label: string | null
           client_name: string | null
           client_user_id: string | null
           commission_percent: number | null
@@ -78,6 +79,7 @@ export type Database = {
         }
         Insert: {
           client_email?: string | null
+          client_label?: string | null
           client_name?: string | null
           client_user_id?: string | null
           commission_percent?: number | null
@@ -106,6 +108,7 @@ export type Database = {
         }
         Update: {
           client_email?: string | null
+          client_label?: string | null
           client_name?: string | null
           client_user_id?: string | null
           commission_percent?: number | null
@@ -1463,12 +1466,12 @@ export type Database = {
           job_card_id: string
           label: string
           order?: number | null
-          organiser_email: string
+          organiser_email?: string
           organiser_user_id?: string | null
           owner_role: string
           status: string
           updated_at?: string
-          vendor_email: string
+          vendor_email?: string
           vendor_user_id?: string | null
         }
         Update: {

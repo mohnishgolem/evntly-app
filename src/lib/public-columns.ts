@@ -36,3 +36,27 @@ export type PublicParticipant = Omit<
   | "proposed_by_user_id"
   | "created_by"
 >;
+
+// Participant tables: both sides can read the row, but not each other's
+// email. Own rows are found by the *_user_id columns; the customer is shown
+// to vendors as client_label ("Jane D.").
+export const BOOKING_COLUMNS =
+  "id, created_at, updated_at, provider_id, provider_name, service_type, event_date, event_time, duration_hours, total_price, review_prompt_sent, commission_percent, escrow_status, status, event_address, notes, client_name, client_label, vendor_response_deadline, event_id, client_user_id, provider_owner_user_id" as const;
+export type ParticipantBooking = Omit<
+  Tables["bookings"]["Row"],
+  "client_email" | "provider_owner_email" | "created_by" | "stripe_session_id" | "stripe_payment_intent_id"
+>;
+
+export const JOB_CARD_COLUMNS =
+  "id, created_at, updated_at, booking_id, event_id, provider_id, provider_name, service_type, event_type, event_date, suburb, organiser_name, escrow_amount, peer_services, arrival_time, venue_address, status, on_my_way, on_my_way_at, delivered_at, confirmed_at, vendor_user_id, organiser_user_id" as const;
+export type ParticipantJobCard = Omit<
+  Tables["job_cards"]["Row"],
+  "vendor_email" | "organiser_email" | "created_by"
+>;
+
+export const CHECKLIST_COLUMNS =
+  "id, created_at, updated_at, job_card_id, label, owner_role, order, status, done_at, vendor_user_id, organiser_user_id, done_by_user_id" as const;
+export type ParticipantChecklistItem = Omit<
+  Tables["stage_checklist_items"]["Row"],
+  "vendor_email" | "organiser_email" | "done_by_email" | "created_by"
+>;

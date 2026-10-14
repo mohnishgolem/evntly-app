@@ -3,9 +3,9 @@ import { LeaveReview } from "@/components/leave-review";
 import { CancelBookingButton } from "@/components/cancel-booking-button";
 import { JobCardPanel } from "@/components/job-card-panel";
 import type { getJobCardForBooking } from "@/lib/data/job-cards";
-import type { Database } from "@/lib/supabase/database.types";
+import type { ParticipantBooking } from "@/lib/public-columns";
 
-type Booking = Database["public"]["Tables"]["bookings"]["Row"];
+type Booking = ParticipantBooking;
 type JobCardResult = Awaited<ReturnType<typeof getJobCardForBooking>>;
 
 const STATUS_COLOR: Record<string, string> = {

@@ -13,10 +13,10 @@ import {
   toggleChecklistItem,
 } from "@/lib/actions/job-cards";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/lib/supabase/database.types";
+import type { ParticipantChecklistItem, ParticipantJobCard } from "@/lib/public-columns";
 
-type JobCard = Database["public"]["Tables"]["job_cards"]["Row"];
-type ChecklistItem = Database["public"]["Tables"]["stage_checklist_items"]["Row"];
+type JobCard = ParticipantJobCard;
+type ChecklistItem = ParticipantChecklistItem;
 
 const STEPS = [
   { key: "scheduled", label: "Scheduled" },
@@ -49,7 +49,7 @@ export function JobCardPanel({
   function addTask() {
     if (!newTask.trim()) return;
     startTransition(async () => {
-      await addChecklistItem(jobCard.id, jobCard.vendor_email, jobCard.organiser_email ?? "", newTask, viewer);
+      await addChecklistItem(jobCard.id, newTask, viewer);
       setNewTask("");
       router.refresh();
     });

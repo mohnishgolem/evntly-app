@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { notify, formatEventDate } from "@/lib/email";
+import { bookingParticipantEmail } from "@/lib/supabase/admin";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -22,41 +23,18 @@ export async function updateBookingStatus(
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
 
+  // RLS + the bookings lockdown trigger limit status changes to the vendor
+  // (and confirm/complete/cancel); confirming also opens the job card
+  // (create_job_card_on_confirm trigger).
   const { data: booking, error } = await supabase
     .from("bookings")
     .update({ status: VENDOR_TRANSITIONS[action] })
     .eq("id", bookingId)
-    .eq("provider_owner_email", user.email)
-    .select("*")
+    .eq("provider_owner_user_id", user.id)
+    .select("id, provider_name, event_date")
     .single();
 
   if (error) return { error: error.message };
-
-  // Confirming a booking kicks off day-of-event ops tracking.
-  if (action === "confirm" && booking) {
-    const { data: existingCard } = await supabase
-      .from("job_cards")
-      .select("id")
-      .eq("booking_id", bookingId)
-      .maybeSingle();
-
-    if (!existingCard) {
-      await supabase.from("job_cards").insert({
-        booking_id: bookingId,
-        event_id: booking.event_id,
-        vendor_email: user.email,
-        provider_id: booking.provider_id,
-        provider_name: booking.provider_name,
-        service_type: booking.service_type,
-        event_date: booking.event_date,
-        venue_address: booking.event_address,
-        organiser_email: booking.client_email,
-        organiser_name: booking.client_name,
-        escrow_amount: booking.total_price,
-        status: "scheduled",
-      });
-    }
-  }
 
   if (booking) {
     const when = formatEventDate(booking.event_date);
@@ -78,7 +56,7 @@ export async function updateBookingStatus(
       },
     }[action];
     notify({
-      to: booking.client_email,
+      to: (await bookingParticipantEmail(booking.id, "client_email")) ?? "",
       subject: copy.subject,
       heading: copy.heading,
       lines: [copy.line],
@@ -102,14 +80,14 @@ export async function cancelBookingAsCustomer(bookingId: string): Promise<Action
     .from("bookings")
     .update({ status: "cancelled" })
     .eq("id", bookingId)
-    .eq("client_email", user.email)
-    .select("provider_owner_email, client_name, event_date")
+    .eq("client_user_id", user.id)
+    .select("id, client_name, event_date")
     .single();
 
   if (error) return { error: error.message };
 
   notify({
-    to: booking.provider_owner_email,
+    to: (await bookingParticipantEmail(booking.id, "provider_owner_email")) ?? "",
     subject: `Booking cancelled: ${formatEventDate(booking.event_date)}`,
     heading: "A booking was cancelled",
     lines: [`${booking.client_name ?? "Your customer"} has cancelled their booking for ${formatEventDate(booking.event_date)}. That date is free again.`],

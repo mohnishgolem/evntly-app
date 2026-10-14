@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { EventTaskList } from "@/components/event-task-list";
+import { BOOKING_COLUMNS } from "@/lib/public-columns";
 
 export default async function EventDayPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getCurrentUser();
@@ -24,9 +25,9 @@ export default async function EventDayPage({ params }: { params: Promise<{ id: s
 
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("*")
+    .select(BOOKING_COLUMNS)
     .eq("event_id", id)
-    .eq("client_email", email)
+    .eq("client_user_id", session.user.id)
     .neq("status", "cancelled");
 
   const jobCards = await Promise.all(
