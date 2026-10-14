@@ -91,7 +91,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
         .eq("event_id", id)
         .eq("client_email", email)
         .order("event_date", { ascending: false }),
-      supabase.from("reviews").select("booking_id").eq("reviewer_email", email),
+      supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
     ]);
 
   let applicationCount = 0;

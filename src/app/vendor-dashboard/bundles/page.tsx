@@ -16,10 +16,9 @@ export default async function VendorBundlesPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/vendor-dashboard/bundles");
 
-  const email = session.user.email as string;
   const [myPackages, invites] = await Promise.all([
-    getVendorPackages(email),
-    getPendingInvitesForVendor(email),
+    getVendorPackages(session.user.id),
+    getPendingInvitesForVendor(session.user.id),
   ]);
 
   return (
@@ -39,7 +38,7 @@ export default async function VendorBundlesPage() {
               <div key={inv.id} className="rounded-2xl border border-border p-4">
                 <p className="font-medium">{inv.combined_package_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  Proposed by {inv.proposed_by_email} · Your share: ${inv.component_price}
+                  Proposed by {inv.proposed_by} · Your share: ${inv.component_price}
                 </p>
                 <PackageInviteActions participantId={inv.id} />
               </div>
@@ -68,7 +67,7 @@ export default async function VendorBundlesPage() {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {p.participant_emails?.length ?? 1} vendors · ${p.total_price}
+                  {p.participant_count || 1} vendors · ${p.total_price}
                 </p>
               </div>
             ))}

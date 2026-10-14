@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicPortfolioItem } from "@/lib/public-columns";
 
-type PortfolioItem = Database["public"]["Tables"]["portfolio_items"]["Row"];
+type PortfolioItem = PublicPortfolioItem;
 
 // Horizontal drag past this many px (and more horizontal than vertical)
 // counts as a swipe rather than a scroll/tap.

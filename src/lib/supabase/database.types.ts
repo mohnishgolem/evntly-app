@@ -17,7 +17,9 @@ export type Database = {
       blocked_users: {
         Row: {
           blocked_email: string
+          blocked_user_id: string | null
           blocker_email: string
+          blocker_user_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -25,7 +27,9 @@ export type Database = {
         }
         Insert: {
           blocked_email: string
+          blocked_user_id?: string | null
           blocker_email: string
+          blocker_user_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -33,7 +37,9 @@ export type Database = {
         }
         Update: {
           blocked_email?: string
+          blocked_user_id?: string | null
           blocker_email?: string
+          blocker_user_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -45,6 +51,7 @@ export type Database = {
         Row: {
           client_email: string | null
           client_name: string | null
+          client_user_id: string | null
           commission_percent: number | null
           created_at: string
           created_by: string | null
@@ -59,6 +66,7 @@ export type Database = {
           provider_id: string
           provider_name: string | null
           provider_owner_email: string | null
+          provider_owner_user_id: string | null
           review_prompt_sent: boolean | null
           service_type: string
           status: string
@@ -71,6 +79,7 @@ export type Database = {
         Insert: {
           client_email?: string | null
           client_name?: string | null
+          client_user_id?: string | null
           commission_percent?: number | null
           created_at?: string
           created_by?: string | null
@@ -85,6 +94,7 @@ export type Database = {
           provider_id: string
           provider_name?: string | null
           provider_owner_email?: string | null
+          provider_owner_user_id?: string | null
           review_prompt_sent?: boolean | null
           service_type: string
           status: string
@@ -97,6 +107,7 @@ export type Database = {
         Update: {
           client_email?: string | null
           client_name?: string | null
+          client_user_id?: string | null
           commission_percent?: number | null
           created_at?: string
           created_by?: string | null
@@ -111,6 +122,7 @@ export type Database = {
           provider_id?: string
           provider_name?: string | null
           provider_owner_email?: string | null
+          provider_owner_user_id?: string | null
           review_prompt_sent?: boolean | null
           service_type?: string
           status?: string
@@ -130,6 +142,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_email: string | null
+          customer_user_id: string | null
           discount_share: number | null
           id: string
           package_id: string | null
@@ -143,6 +156,7 @@ export type Database = {
           vendor_id: string | null
           vendor_name: string | null
           vendor_payout_amount: number | null
+          vendor_user_id: string | null
         }
         Insert: {
           amount: number
@@ -151,6 +165,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_email?: string | null
+          customer_user_id?: string | null
           discount_share?: number | null
           id?: string
           package_id?: string | null
@@ -164,6 +179,7 @@ export type Database = {
           vendor_id?: string | null
           vendor_name?: string | null
           vendor_payout_amount?: number | null
+          vendor_user_id?: string | null
         }
         Update: {
           amount?: number
@@ -172,6 +188,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_email?: string | null
+          customer_user_id?: string | null
           discount_share?: number | null
           id?: string
           package_id?: string | null
@@ -185,6 +202,7 @@ export type Database = {
           vendor_id?: string | null
           vendor_name?: string | null
           vendor_payout_amount?: number | null
+          vendor_user_id?: string | null
         }
         Relationships: []
       }
@@ -196,6 +214,7 @@ export type Database = {
           created_by: string | null
           customer_email: string
           customer_name: string | null
+          customer_user_id: string | null
           event_address: string | null
           event_date: string
           event_id: string | null
@@ -212,6 +231,7 @@ export type Database = {
           updated_at: string
           vendor_count: number | null
           vendor_emails: string[] | null
+          vendor_user_ids: string[]
         }
         Insert: {
           combined_package_id: string
@@ -220,6 +240,7 @@ export type Database = {
           created_by?: string | null
           customer_email: string
           customer_name?: string | null
+          customer_user_id?: string | null
           event_address?: string | null
           event_date: string
           event_id?: string | null
@@ -236,6 +257,7 @@ export type Database = {
           updated_at?: string
           vendor_count?: number | null
           vendor_emails?: string[] | null
+          vendor_user_ids?: string[]
         }
         Update: {
           combined_package_id?: string
@@ -244,6 +266,7 @@ export type Database = {
           created_by?: string | null
           customer_email?: string
           customer_name?: string | null
+          customer_user_id?: string | null
           event_address?: string | null
           event_date?: string
           event_id?: string | null
@@ -260,6 +283,7 @@ export type Database = {
           updated_at?: string
           vendor_count?: number | null
           vendor_emails?: string[] | null
+          vendor_user_ids?: string[]
         }
         Relationships: []
       }
@@ -291,14 +315,17 @@ export type Database = {
           created_by: string | null
           id: string
           initiating_vendor_email: string | null
+          initiating_vendor_user_id: string | null
           is_initiator: boolean | null
           package_id: string | null
           package_name: string | null
           proposed_by_email: string | null
+          proposed_by_user_id: string | null
           updated_at: string
           vendor_email: string
           vendor_id: string | null
           vendor_name: string | null
+          vendor_user_id: string | null
         }
         Insert: {
           acceptance_status: string
@@ -309,14 +336,17 @@ export type Database = {
           created_by?: string | null
           id?: string
           initiating_vendor_email?: string | null
+          initiating_vendor_user_id?: string | null
           is_initiator?: boolean | null
           package_id?: string | null
           package_name?: string | null
           proposed_by_email?: string | null
+          proposed_by_user_id?: string | null
           updated_at?: string
           vendor_email: string
           vendor_id?: string | null
           vendor_name?: string | null
+          vendor_user_id?: string | null
         }
         Update: {
           acceptance_status?: string
@@ -327,14 +357,17 @@ export type Database = {
           created_by?: string | null
           id?: string
           initiating_vendor_email?: string | null
+          initiating_vendor_user_id?: string | null
           is_initiator?: boolean | null
           package_id?: string | null
           package_name?: string | null
           proposed_by_email?: string | null
+          proposed_by_user_id?: string | null
           updated_at?: string
           vendor_email?: string
           vendor_id?: string | null
           vendor_name?: string | null
+          vendor_user_id?: string | null
         }
         Relationships: []
       }
@@ -350,8 +383,11 @@ export type Database = {
           initiating_vendor_email: string
           initiating_vendor_id: string
           initiating_vendor_name: string | null
+          initiating_vendor_user_id: string | null
           name: string
+          participant_count: number | null
           participant_emails: string[] | null
+          participant_user_ids: string[]
           status: string
           total_price: number | null
           updated_at: string
@@ -367,8 +403,11 @@ export type Database = {
           initiating_vendor_email: string
           initiating_vendor_id: string
           initiating_vendor_name?: string | null
+          initiating_vendor_user_id?: string | null
           name: string
+          participant_count?: number | null
           participant_emails?: string[] | null
+          participant_user_ids?: string[]
           status: string
           total_price?: number | null
           updated_at?: string
@@ -384,8 +423,11 @@ export type Database = {
           initiating_vendor_email?: string
           initiating_vendor_id?: string
           initiating_vendor_name?: string | null
+          initiating_vendor_user_id?: string | null
           name?: string
+          participant_count?: number | null
           participant_emails?: string[] | null
+          participant_user_ids?: string[]
           status?: string
           total_price?: number | null
           updated_at?: string
@@ -429,6 +471,7 @@ export type Database = {
           id: string
           listing_id: string
           organiser_email: string | null
+          organiser_user_id: string | null
           pitch: string | null
           quoted_amount: number
           service_type: string
@@ -437,6 +480,7 @@ export type Database = {
           vendor_email: string
           vendor_id: string
           vendor_name: string | null
+          vendor_user_id: string | null
         }
         Insert: {
           booking_confirmed?: boolean | null
@@ -447,6 +491,7 @@ export type Database = {
           id?: string
           listing_id: string
           organiser_email?: string | null
+          organiser_user_id?: string | null
           pitch?: string | null
           quoted_amount: number
           service_type: string
@@ -455,6 +500,7 @@ export type Database = {
           vendor_email: string
           vendor_id: string
           vendor_name?: string | null
+          vendor_user_id?: string | null
         }
         Update: {
           booking_confirmed?: boolean | null
@@ -465,6 +511,7 @@ export type Database = {
           id?: string
           listing_id?: string
           organiser_email?: string | null
+          organiser_user_id?: string | null
           pitch?: string | null
           quoted_amount?: number
           service_type?: string
@@ -473,6 +520,7 @@ export type Database = {
           vendor_email?: string
           vendor_id?: string
           vendor_name?: string | null
+          vendor_user_id?: string | null
         }
         Relationships: []
       }
@@ -541,6 +589,7 @@ export type Database = {
           event_id: string
           id: string
           owner_email: string
+          owner_user_id: string | null
           title: string
           updated_at: string
         }
@@ -551,6 +600,7 @@ export type Database = {
           event_id: string
           id?: string
           owner_email: string
+          owner_user_id?: string | null
           title: string
           updated_at?: string
         }
@@ -561,6 +611,7 @@ export type Database = {
           event_id?: string
           id?: string
           owner_email?: string
+          owner_user_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -577,6 +628,7 @@ export type Database = {
           id: string
           notes: string | null
           organiser_email: string
+          organiser_user_id: string | null
           required_services: string[]
           status: string
           suburb: string
@@ -592,6 +644,7 @@ export type Database = {
           id?: string
           notes?: string | null
           organiser_email: string
+          organiser_user_id?: string | null
           required_services: string[]
           status: string
           suburb: string
@@ -607,6 +660,7 @@ export type Database = {
           id?: string
           notes?: string | null
           organiser_email?: string
+          organiser_user_id?: string | null
           required_services?: string[]
           status?: string
           suburb?: string
@@ -675,8 +729,10 @@ export type Database = {
           created_by: string | null
           id: string
           participant_emails: string[] | null
+          participant_user_ids: string[]
           sender_email: string
           sender_name: string | null
+          sender_user_id: string | null
           thread_id: string
           updated_at: string
         }
@@ -689,8 +745,10 @@ export type Database = {
           created_by?: string | null
           id?: string
           participant_emails?: string[] | null
+          participant_user_ids?: string[]
           sender_email: string
           sender_name?: string | null
+          sender_user_id?: string | null
           thread_id: string
           updated_at?: string
         }
@@ -703,8 +761,10 @@ export type Database = {
           created_by?: string | null
           id?: string
           participant_emails?: string[] | null
+          participant_user_ids?: string[]
           sender_email?: string
           sender_name?: string | null
+          sender_user_id?: string | null
           thread_id?: string
           updated_at?: string
         }
@@ -719,8 +779,10 @@ export type Database = {
           created_by: string | null
           customer_email: string | null
           customer_name: string | null
+          customer_user_id: string | null
           id: string
           participant_emails: string[]
+          participant_user_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -731,8 +793,10 @@ export type Database = {
           created_by?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          customer_user_id?: string | null
           id?: string
           participant_emails: string[]
+          participant_user_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -743,8 +807,10 @@ export type Database = {
           created_by?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          customer_user_id?: string | null
           id?: string
           participant_emails?: string[]
+          participant_user_ids?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -766,6 +832,7 @@ export type Database = {
           on_my_way_at: string | null
           organiser_email: string | null
           organiser_name: string | null
+          organiser_user_id: string | null
           peer_services: string[] | null
           provider_id: string | null
           provider_name: string | null
@@ -774,6 +841,7 @@ export type Database = {
           suburb: string | null
           updated_at: string
           vendor_email: string
+          vendor_user_id: string | null
           venue_address: string | null
         }
         Insert: {
@@ -792,6 +860,7 @@ export type Database = {
           on_my_way_at?: string | null
           organiser_email?: string | null
           organiser_name?: string | null
+          organiser_user_id?: string | null
           peer_services?: string[] | null
           provider_id?: string | null
           provider_name?: string | null
@@ -800,6 +869,7 @@ export type Database = {
           suburb?: string | null
           updated_at?: string
           vendor_email: string
+          vendor_user_id?: string | null
           venue_address?: string | null
         }
         Update: {
@@ -818,6 +888,7 @@ export type Database = {
           on_my_way_at?: string | null
           organiser_email?: string | null
           organiser_name?: string | null
+          organiser_user_id?: string | null
           peer_services?: string[] | null
           provider_id?: string | null
           provider_name?: string | null
@@ -826,6 +897,7 @@ export type Database = {
           suburb?: string | null
           updated_at?: string
           vendor_email?: string
+          vendor_user_id?: string | null
           venue_address?: string | null
         }
         Relationships: []
@@ -840,9 +912,11 @@ export type Database = {
           id: string
           original_snippet: string | null
           recipient_email: string | null
+          recipient_user_id: string | null
           redacted_message: string | null
           sender_email: string | null
           sender_id: string
+          sender_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -854,9 +928,11 @@ export type Database = {
           id?: string
           original_snippet?: string | null
           recipient_email?: string | null
+          recipient_user_id?: string | null
           redacted_message?: string | null
           sender_email?: string | null
           sender_id: string
+          sender_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -868,9 +944,11 @@ export type Database = {
           id?: string
           original_snippet?: string | null
           recipient_email?: string | null
+          recipient_user_id?: string | null
           redacted_message?: string | null
           sender_email?: string | null
           sender_id?: string
+          sender_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -890,7 +968,9 @@ export type Database = {
           provider_id: string | null
           read: boolean | null
           recipient_email: string
+          recipient_user_id: string | null
           sender_email: string
+          sender_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -907,7 +987,9 @@ export type Database = {
           provider_id?: string | null
           read?: boolean | null
           recipient_email?: string
+          recipient_user_id?: string | null
           sender_email: string
+          sender_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -924,7 +1006,9 @@ export type Database = {
           provider_id?: string | null
           read?: boolean | null
           recipient_email?: string
+          recipient_user_id?: string | null
           sender_email?: string
+          sender_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -939,6 +1023,7 @@ export type Database = {
           media_type: string
           media_url: string
           owner_email: string
+          owner_user_id: string | null
           provider_id: string
           sort_order: number | null
           thumbnail_url: string | null
@@ -953,6 +1038,7 @@ export type Database = {
           media_type: string
           media_url: string
           owner_email: string
+          owner_user_id?: string | null
           provider_id: string
           sort_order?: number | null
           thumbnail_url?: string | null
@@ -967,6 +1053,7 @@ export type Database = {
           media_type?: string
           media_url?: string
           owner_email?: string
+          owner_user_id?: string | null
           provider_id?: string
           sort_order?: number | null
           thumbnail_url?: string | null
@@ -989,6 +1076,7 @@ export type Database = {
           call_time_window: string | null
           client_email: string
           client_name: string | null
+          client_user_id: string | null
           created_at: string
           created_by: string | null
           details: string | null
@@ -1011,6 +1099,7 @@ export type Database = {
           vendor_id: string
           vendor_name: string | null
           vendor_note: string | null
+          vendor_user_id: string | null
         }
         Insert: {
           booking_id?: string | null
@@ -1018,6 +1107,7 @@ export type Database = {
           call_time_window?: string | null
           client_email: string
           client_name?: string | null
+          client_user_id?: string | null
           created_at?: string
           created_by?: string | null
           details?: string | null
@@ -1040,6 +1130,7 @@ export type Database = {
           vendor_id: string
           vendor_name?: string | null
           vendor_note?: string | null
+          vendor_user_id?: string | null
         }
         Update: {
           booking_id?: string | null
@@ -1047,6 +1138,7 @@ export type Database = {
           call_time_window?: string | null
           client_email?: string
           client_name?: string | null
+          client_user_id?: string | null
           created_at?: string
           created_by?: string | null
           details?: string | null
@@ -1069,6 +1161,7 @@ export type Database = {
           vendor_id?: string
           vendor_name?: string | null
           vendor_note?: string | null
+          vendor_user_id?: string | null
         }
         Relationships: []
       }
@@ -1110,7 +1203,9 @@ export type Database = {
           id: string
           reason: string
           reported_email: string | null
+          reported_user_id: string | null
           reporter_email: string
+          reporter_user_id: string | null
           status: string | null
           updated_at: string
         }
@@ -1124,7 +1219,9 @@ export type Database = {
           id?: string
           reason: string
           reported_email?: string | null
+          reported_user_id?: string | null
           reporter_email: string
+          reporter_user_id?: string | null
           status?: string | null
           updated_at?: string
         }
@@ -1138,7 +1235,9 @@ export type Database = {
           id?: string
           reason?: string
           reported_email?: string | null
+          reported_user_id?: string | null
           reporter_email?: string
+          reporter_user_id?: string | null
           status?: string | null
           updated_at?: string
         }
@@ -1157,6 +1256,7 @@ export type Database = {
           rating: number
           reviewer_email: string
           reviewer_name: string | null
+          reviewer_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1171,6 +1271,7 @@ export type Database = {
           rating: number
           reviewer_email: string
           reviewer_name?: string | null
+          reviewer_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1185,6 +1286,7 @@ export type Database = {
           rating?: number
           reviewer_email?: string
           reviewer_name?: string | null
+          reviewer_user_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1222,6 +1324,7 @@ export type Database = {
           longitude: number | null
           name: string
           owner_email: string | null
+          owner_user_id: string | null
           packages: Json | null
           phone: string | null
           portfolio_urls: string[] | null
@@ -1265,6 +1368,7 @@ export type Database = {
           longitude?: number | null
           name: string
           owner_email?: string | null
+          owner_user_id?: string | null
           packages?: Json | null
           phone?: string | null
           portfolio_urls?: string[] | null
@@ -1308,6 +1412,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           owner_email?: string | null
+          owner_user_id?: string | null
           packages?: Json | null
           phone?: string | null
           portfolio_urls?: string[] | null
@@ -1335,45 +1440,54 @@ export type Database = {
           created_by: string | null
           done_at: string | null
           done_by_email: string | null
+          done_by_user_id: string | null
           id: string
           job_card_id: string
           label: string
           order: number | null
           organiser_email: string
+          organiser_user_id: string | null
           owner_role: string
           status: string
           updated_at: string
           vendor_email: string
+          vendor_user_id: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           done_at?: string | null
           done_by_email?: string | null
+          done_by_user_id?: string | null
           id?: string
           job_card_id: string
           label: string
           order?: number | null
           organiser_email: string
+          organiser_user_id?: string | null
           owner_role: string
           status: string
           updated_at?: string
           vendor_email: string
+          vendor_user_id?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           done_at?: string | null
           done_by_email?: string | null
+          done_by_user_id?: string | null
           id?: string
           job_card_id?: string
           label?: string
           order?: number | null
           organiser_email?: string
+          organiser_user_id?: string | null
           owner_role?: string
           status?: string
           updated_at?: string
           vendor_email?: string
+          vendor_user_id?: string | null
         }
         Relationships: []
       }
@@ -1511,6 +1625,7 @@ export type Database = {
           longitude: number | null
           name: string
           owner_email: string | null
+          owner_user_id: string | null
           packages: Json | null
           phone: string | null
           portfolio_urls: string[] | null
@@ -1540,6 +1655,16 @@ export type Database = {
       block_user: {
         Args: { p_conversation_id?: string; p_quote_id?: string }
         Returns: undefined
+      }
+      book_bundle: {
+        Args: {
+          p_event_address: string
+          p_event_date: string
+          p_event_time: string
+          p_notes: string
+          p_package_id: string
+        }
+        Returns: string
       }
       conversation_block_state: {
         Args: { p_conversation_id: string }
@@ -1602,6 +1727,7 @@ export type Database = {
           call_time_window: string | null
           client_email: string
           client_name: string | null
+          client_user_id: string | null
           created_at: string
           created_by: string | null
           details: string | null
@@ -1624,6 +1750,7 @@ export type Database = {
           vendor_id: string
           vendor_name: string | null
           vendor_note: string | null
+          vendor_user_id: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -1658,6 +1785,7 @@ export type Database = {
           longitude: number | null
           name: string
           owner_email: string | null
+          owner_user_id: string | null
           packages: Json | null
           phone: string | null
           portfolio_urls: string[] | null

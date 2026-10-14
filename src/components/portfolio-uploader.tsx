@@ -6,9 +6,9 @@ import { Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
-import type { Database } from "@/lib/supabase/database.types";
+import type { PublicPortfolioItem } from "@/lib/public-columns";
 
-type PortfolioItem = Database["public"]["Tables"]["portfolio_items"]["Row"];
+type PortfolioItem = PublicPortfolioItem;
 
 export function PortfolioUploader({
   providerId,

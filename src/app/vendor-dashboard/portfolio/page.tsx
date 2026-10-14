@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
+import { PORTFOLIO_COLUMNS } from "@/lib/public-columns";
 
 export default async function VendorPortfolioPage() {
   const session = await getCurrentUser();
@@ -31,7 +32,7 @@ export default async function VendorPortfolioPage() {
 
   const { data: items } = await supabase
     .from("portfolio_items")
-    .select("*")
+    .select(PORTFOLIO_COLUMNS)
     .eq("provider_id", listing.id)
     .order("sort_order", { ascending: true, nullsFirst: false });
 

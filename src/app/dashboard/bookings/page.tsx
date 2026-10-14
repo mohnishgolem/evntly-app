@@ -29,7 +29,7 @@ export default async function CustomerBookingsPage() {
       .select("*")
       .eq("client_email", email)
       .order("event_date", { ascending: false }),
-    supabase.from("reviews").select("booking_id").eq("reviewer_email", email),
+    supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
   ]);
 
   const reviewedBookingIds = new Set(

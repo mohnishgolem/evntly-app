@@ -11,5 +11,11 @@ export const PUBLIC_VENDOR_COLUMNS =
 
 export type PublicVendor = Omit<
   Database["public"]["Tables"]["service_providers"]["Row"],
-  "owner_email" | "phone" | "social_link" | "contact_name" | "service_address" | "unit_number"
+  | "owner_email"
+  | "owner_user_id"
+  | "phone"
+  | "social_link"
+  | "contact_name"
+  | "service_address"
+  | "unit_number"
 >;

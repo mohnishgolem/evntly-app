@@ -56,7 +56,7 @@ export async function deletePortfolioItem(itemId: string): Promise<ActionState> 
     .from("portfolio_items")
     .delete()
     .eq("id", itemId)
-    .eq("owner_email", user.email);
+    .eq("owner_user_id", user.id);
 
   if (error) return { error: error.message };
 

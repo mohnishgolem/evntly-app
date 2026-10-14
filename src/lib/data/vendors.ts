@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { LAUNCH_CATEGORIES, LAUNCH_CITY } from "@/lib/config";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
+import { PORTFOLIO_COLUMNS, REVIEW_COLUMNS } from "@/lib/public-columns";
 
 export async function getFeaturedVendors(limit = 8) {
   const supabase = await createClient();
@@ -67,7 +68,7 @@ export async function getVendorPortfolio(providerId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("portfolio_items")
-    .select("*")
+    .select(PORTFOLIO_COLUMNS)
     .eq("provider_id", providerId)
     .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -78,7 +79,7 @@ export async function getVendorReviews(providerId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("reviews")
-    .select("*")
+    .select(REVIEW_COLUMNS)
     .eq("provider_id", providerId)
     .order("created_at", { ascending: false });
 

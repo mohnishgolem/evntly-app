@@ -48,7 +48,7 @@ export default async function BundlesPage() {
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {b.participant_emails?.length ?? 1} vendors included
+                  {b.participant_count || 1} vendors included
                 </p>
               </Link>
             );
