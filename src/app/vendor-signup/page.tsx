@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SuburbPicker } from "@/components/suburb-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
@@ -192,12 +193,11 @@ export default function VendorSignupPage() {
             This helps us match you with nearby events.
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="city">Base city</Label>
-            <Input
+            <Label htmlFor="city">Base suburb</Label>
+            <SuburbPicker
               id="city"
-              placeholder="Sydney"
-              value={draft.city}
-              onChange={(e) => setDraft((d) => ({ ...d, city: e.target.value }))}
+              value={draft}
+              onChange={(loc) => setDraft((d) => ({ ...d, ...loc }))}
             />
           </div>
           <div className="space-y-1.5">

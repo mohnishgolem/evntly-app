@@ -34,6 +34,8 @@ export default async function EditListingPage({
           serviceType: listing.service_type,
           hourlyRate: listing.hourly_rate,
           city: listing.city ?? "",
+          latitude: listing.latitude,
+          longitude: listing.longitude,
           locationsServiced: listing.locations_serviced ?? [],
           eventTypes: listing.event_types ?? [],
           phone: listing.phone ?? "",

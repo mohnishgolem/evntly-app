@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -9,12 +10,30 @@ export type VendorSignupDraft = {
   serviceType: string;
   hourlyRate: number;
   city: string;
+  // Set when the vendor picks a suggestion from the suburb picker; otherwise
+  // the server geocodes `city` itself.
+  latitude?: number | null;
+  longitude?: number | null;
   locationsServiced: string[];
   eventTypes: string[];
   phone?: string;
 };
 
 export type VendorSignupState = { error?: string } | null;
+
+// Coordinates for the public map pin. Precision is coarsened to ~1 km by the
+// `coarsen_vendor_coordinates` DB trigger, whichever path supplied them.
+async function resolveCoordinates(draft: VendorSignupDraft) {
+  const { latitude, longitude } = draft;
+  if (latitude != null && longitude != null && isInAustralia(latitude, longitude)) {
+    return { latitude, longitude };
+  }
+  const place = draft.city ? await geocodeSuburb(draft.city) : null;
+  return {
+    latitude: place?.latitude ?? null,
+    longitude: place?.longitude ?? null,
+  };
+}
 
 export async function submitVendorListing(
   draft: VendorSignupDraft
@@ -38,6 +57,7 @@ export async function submitVendorListing(
     redirect("/vendor-dashboard");
   }
 
+  const coordinates = await resolveCoordinates(draft);
   const { error } = await supabase.from("service_providers").insert({
     owner_email: user.email,
     name: draft.businessName,
@@ -45,6 +65,7 @@ export async function submitVendorListing(
     service_type: draft.serviceType,
     hourly_rate: draft.hourlyRate,
     city: draft.city || null,
+    ...coordinates,
     // "which locations do you service" — the specific ask from the call
     locations_serviced: draft.locationsServiced,
     event_types: draft.eventTypes,
@@ -76,6 +97,7 @@ export async function updateVendorListing(
     return { error: "You need to be logged in to edit a listing." };
   }
 
+  const coordinates = await resolveCoordinates(draft);
   const { error } = await supabase
     .from("service_providers")
     .update({
@@ -84,6 +106,7 @@ export async function updateVendorListing(
       service_type: draft.serviceType,
       hourly_rate: draft.hourlyRate,
       city: draft.city || null,
+      ...coordinates,
       locations_serviced: draft.locationsServiced,
       event_types: draft.eventTypes,
       phone: draft.phone || null,
