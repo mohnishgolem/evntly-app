@@ -11,7 +11,6 @@ export default async function VendorEventFeedPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/vendor-dashboard/event-feed");
 
-  const email = session.user.email as string;
   const supabase = await createClient();
 
   const { data: vendor } = await supabase
@@ -52,7 +51,7 @@ export default async function VendorEventFeedPage() {
       .eq("status", "open")
       .contains("required_services", [vendor.service_type])
       .order("created_at", { ascending: false }),
-    supabase.from("event_applications").select("listing_id, status").eq("vendor_email", email),
+    supabase.from("event_applications").select("listing_id, status").eq("vendor_user_id", session.user.id),
   ]);
 
   const appliedListingIds = new Set((myApplications ?? []).map((a) => a.listing_id));

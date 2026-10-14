@@ -15,14 +15,13 @@ export default async function EventVendorSelectionPage({
   if (!session) redirect("/login?next=/dashboard/events");
 
   const { id } = await params;
-  const email = session.user.email as string;
   const supabase = await createClient();
 
   const { data: event } = await supabase
     .from("events")
     .select("*")
     .eq("id", id)
-    .eq("organiser_email", email)
+    .eq("organiser_user_id", session.user.id)
     .maybeSingle();
 
   if (!event) notFound();

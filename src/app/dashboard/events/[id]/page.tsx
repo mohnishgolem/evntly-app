@@ -77,7 +77,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
     .from("events")
     .select("*")
     .eq("id", id)
-    .eq("organiser_email", email)
+    .eq("organiser_user_id", session.user.id)
     .maybeSingle();
 
   if (!event) notFound();

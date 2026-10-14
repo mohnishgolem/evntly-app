@@ -76,3 +76,16 @@ export async function bookingParticipantEmail(
   const { data } = await admin.from("bookings").select(who).eq("id", bookingId).maybeSingle();
   return (data as Record<string, string | null> | null)?.[who] ?? null;
 }
+
+/** Notification addresses for event applications (null/missing ones dropped). */
+export async function applicationEmails(
+  applicationIds: string[],
+  who: "vendor_email" | "organiser_email"
+): Promise<string[]> {
+  const admin = createAdminClient();
+  if (!admin || applicationIds.length === 0) return [];
+  const { data } = await admin.from("event_applications").select(who).in("id", applicationIds);
+  return ((data ?? []) as Record<string, string | null>[])
+    .map((row) => row[who])
+    .filter((email): email is string => !!email);
+}

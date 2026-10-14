@@ -60,3 +60,10 @@ export type ParticipantChecklistItem = Omit<
   Tables["stage_checklist_items"]["Row"],
   "vendor_email" | "organiser_email" | "done_by_email" | "created_by"
 >;
+
+export const APPLICATION_COLUMNS =
+  "id, created_at, updated_at, listing_id, event_id, vendor_id, vendor_name, service_type, pitch, quoted_amount, status, booking_id, booking_confirmed, vendor_user_id, organiser_user_id" as const;
+export type ParticipantApplication = Omit<
+  Tables["event_applications"]["Row"],
+  "vendor_email" | "organiser_email" | "created_by"
+>;

@@ -1601,6 +1601,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_event_application: {
+        Args: { p_application_id: string }
+        Returns: Json
+      }
       accept_quote: { Args: { p_quote_id: string }; Returns: string }
       admin_service_providers: {
         Args: never

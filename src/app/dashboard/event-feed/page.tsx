@@ -8,6 +8,7 @@ import { CloseListingButton } from "@/components/close-listing-button";
 import { EventApplicationActions } from "@/components/event-application-actions";
 import { DashboardNav } from "@/components/dashboard-nav";
 import type { Database } from "@/lib/supabase/database.types";
+import { APPLICATION_COLUMNS, type ParticipantApplication } from "@/lib/public-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -26,19 +27,18 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 };
 
 type EventListing = Database["public"]["Tables"]["event_listings"]["Row"];
-type EventApplication = Database["public"]["Tables"]["event_applications"]["Row"];
+type EventApplication = ParticipantApplication;
 
 export default async function EventFeedPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/event-feed");
 
-  const email = session.user.email as string;
   const supabase = await createClient();
 
   const { data: events } = await supabase
     .from("events")
     .select("*")
-    .eq("organiser_email", email)
+    .eq("organiser_user_id", session.user.id)
     .order("created_at", { ascending: false });
 
   const eventIds = (events ?? []).map((e) => e.id);
@@ -57,7 +57,7 @@ export default async function EventFeedPage() {
   if (listingIds.length > 0) {
     const { data } = await supabase
       .from("event_applications")
-      .select("*")
+      .select(APPLICATION_COLUMNS)
       .in("listing_id", listingIds)
       .order("created_at", { ascending: false });
     applications = data ?? [];

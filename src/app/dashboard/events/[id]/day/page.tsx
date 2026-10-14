@@ -13,11 +13,10 @@ export default async function EventDayPage({ params }: { params: Promise<{ id: s
   if (!session) redirect("/login?next=/dashboard/events");
 
   const { id } = await params;
-  const email = session.user.email as string;
   const supabase = await createClient();
 
   const [{ data: event }, { data: tasks }] = await Promise.all([
-    supabase.from("events").select("*").eq("id", id).eq("organiser_email", email).maybeSingle(),
+    supabase.from("events").select("*").eq("id", id).eq("organiser_user_id", session.user.id).maybeSingle(),
     supabase.from("event_tasks").select("*").eq("event_id", id).order("created_at"),
   ]);
 

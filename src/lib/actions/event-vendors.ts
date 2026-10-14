@@ -33,7 +33,7 @@ export async function requestQuotesForEvent(
     .from("events")
     .select("*")
     .eq("id", eventId)
-    .eq("organiser_email", user.email)
+    .eq("organiser_user_id", user.id)
     .maybeSingle();
 
   if (!event) return { error: "Not your event." };

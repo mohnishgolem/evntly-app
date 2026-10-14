@@ -20,7 +20,7 @@ export async function addEventTask(eventId: string, title: string): Promise<Acti
     .from("events")
     .select("id")
     .eq("id", eventId)
-    .eq("organiser_email", user.email)
+    .eq("organiser_user_id", user.id)
     .maybeSingle();
 
   if (!event) return { error: "Not your event." };
@@ -50,7 +50,7 @@ export async function toggleEventTask(taskId: string, done: boolean): Promise<Ac
     .from("event_tasks")
     .update({ done })
     .eq("id", taskId)
-    .eq("owner_email", user.email)
+    .eq("owner_user_id", user.id)
     .select("event_id")
     .single();
 

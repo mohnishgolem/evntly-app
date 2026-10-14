@@ -61,7 +61,7 @@ export default async function VendorDetailPage({
     const { data: latestEvent } = await supabase
       .from("events")
       .select("id")
-      .eq("organiser_email", session.user.email)
+      .eq("organiser_user_id", session.user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

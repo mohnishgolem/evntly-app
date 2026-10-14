@@ -19,12 +19,11 @@ export default async function MyEventsPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/events");
 
-  const email = session.user.email as string;
   const supabase = await createClient();
   const { data: events } = await supabase
     .from("events")
     .select("*")
-    .eq("organiser_email", email)
+    .eq("organiser_user_id", session.user.id)
     .order("created_at", { ascending: false });
 
   return (

@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const { data: events } = await supabase
     .from("events")
     .select("*")
-    .eq("organiser_email", session.user.email as string)
+    .eq("organiser_user_id", session.user.id)
     .order("created_at", { ascending: false });
 
   const latestPlan = events?.[0] ?? null;
