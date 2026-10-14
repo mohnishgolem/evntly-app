@@ -263,6 +263,24 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_feed_tokens: {
+        Row: {
+          created_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       combined_package_participants: {
         Row: {
           acceptance_status: string
@@ -1561,6 +1579,7 @@ export type Database = {
           label: string
         }[]
       }
+      my_calendar_feed_token: { Args: { p_rotate?: boolean }; Returns: string }
       my_conversations: {
         Args: never
         Returns: {

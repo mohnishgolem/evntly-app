@@ -4,12 +4,14 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { VendorCalendar } from "@/components/vendor-calendar";
 import { personDisplayName } from "@/lib/messages";
+import { CalendarSync } from "@/components/calendar-sync";
+import { SITE_URL } from "@/lib/config";
 
 export default async function VendorCalendarPage() {
   const session = await requireVendor("/vendor-dashboard/calendar");
 
   const supabase = await createClient();
-  const [{ data: listings }, { data: bookings }] = await Promise.all([
+  const [{ data: listings }, { data: bookings }, { data: feedToken }] = await Promise.all([
     supabase
       .rpc("my_service_providers")
       .select("id, name, unavailable_dates, weekly_unavailable_days, available")
@@ -19,6 +21,8 @@ export default async function VendorCalendarPage() {
       .select("id, provider_id, event_date, event_time, status, client_name, client_email, total_price")
       .eq("provider_owner_email", session.user.email as string)
       .neq("status", "cancelled"),
+    // Created on first visit; see calendar_feed_tokens.
+    supabase.rpc("my_calendar_feed_token"),
   ]);
 
   // Event dates are Sydney calendar days; "today" must be too, not UTC.
@@ -47,6 +51,12 @@ export default async function VendorCalendarPage() {
             client_label: personDisplayName(b.client_name, b.client_email),
           }))}
         />
+      )}
+
+      {feedToken && (
+        <div className="mt-6">
+          <CalendarSync feedUrl={`${SITE_URL}/calendar-feed/${feedToken}.ics`} />
+        </div>
       )}
     </div>
   );
