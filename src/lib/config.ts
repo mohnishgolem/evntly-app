@@ -39,7 +39,7 @@ export const LAUNCH_CITY = "Sydney";
 
 // Browser chrome / installed-app colours: the app's dark and light page
 // backgrounds (globals.css --background). The app icon itself is
-// public/icons/* and src/app/apple-icon.png — the white wordmark on black.
+// public/icons/* and public/apple-touch-icon.png — the white wordmark on black.
 export const THEME_COLOR_DARK = "#101014";
 export const THEME_COLOR_LIGHT = "#ffffff";
 

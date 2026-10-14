@@ -34,6 +34,12 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: "Evntly",
+  // Home-screen icon: the white wordmark on black. A fixed URL (rather than
+  // the apple-icon file convention's hashed query string) is the path iOS
+  // also probes on its own when it misses the <link>.
+  icons: {
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   // Installed on iOS: launch full-screen with a translucent status bar.
   appleWebApp: {
     capable: true,
