@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MessageThread } from "@/components/message-thread";
 import { conversationIdFor, isLegacyConversationId } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
+import { BlockUserButton, UnblockButton } from "@/components/block-user";
 
 export default async function MessageThreadPage({
   params,
@@ -32,9 +33,10 @@ export default async function MessageThreadPage({
   }
 
   const supabase = await createClient();
-  const [{ data: messages }, { data: thread }] = await Promise.all([
+  const [{ data: messages }, { data: thread }, { data: blockState }] = await Promise.all([
     supabase.rpc("conversation_messages", { p_conversation_id: conversationId }),
     supabase.rpc("my_conversations").eq("conversation_id", conversationId).maybeSingle(),
+    supabase.rpc("conversation_block_state", { p_conversation_id: conversationId }),
   ]);
 
   // Both RPCs only return the caller's own conversations.
@@ -62,8 +64,22 @@ export default async function MessageThreadPage({
       >
         <ArrowLeft className="size-4" /> Messages
       </Link>
-      <h1 className="mb-6 text-2xl font-bold">{counterpartName}</h1>
-      {!booked && (
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">{counterpartName}</h1>
+        {blockState === "none" && (
+          <BlockUserButton name={counterpartName} conversationId={conversationId} />
+        )}
+      </div>
+      {blockState === "i_blocked" && (
+        <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-border bg-secondary px-4 py-3 text-sm">
+          <p>
+            You blocked {counterpartName}. Neither of you can send messages here, and they
+            can&apos;t request quotes from you.
+          </p>
+          <UnblockButton conversationId={conversationId} />
+        </div>
+      )}
+      {!booked && blockState === "none" && (
         <p className="mb-4 text-sm text-muted-foreground">
           Phone numbers, emails, and social handles are hidden here until this booking is
           confirmed.
@@ -73,6 +89,13 @@ export default async function MessageThreadPage({
         conversationId={conversationId}
         messages={visibleMessages}
         counterpartName={counterpartName}
+        closedReason={
+          blockState === "i_blocked"
+            ? "Unblock to send messages."
+            : blockState === "blocked_me"
+              ? "You can't reply to this conversation."
+              : undefined
+        }
       />
     </div>
   );

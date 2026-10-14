@@ -15,10 +15,13 @@ export function MessageThread({
   conversationId,
   messages,
   counterpartName,
+  closedReason,
 }: {
   conversationId: string;
   messages: Message[];
   counterpartName: string;
+  /** Set when a block stops new messages; replaces the composer. */
+  closedReason?: string;
 }) {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -67,24 +70,30 @@ export function MessageThread({
           })
         )}
       </div>
-      <form action={submit} className="flex items-end gap-2 border-t border-border p-3">
-        <Textarea
-          rows={1}
-          placeholder={`Message ${counterpartName}…`}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          className="min-h-9 flex-1 resize-none"
-        />
-        <Button type="submit" size="icon" disabled={pending || !content.trim()}>
-          <Send className="size-4" />
-        </Button>
-      </form>
+      {closedReason ? (
+        <p className="border-t border-border p-4 text-center text-sm text-muted-foreground">
+          {closedReason}
+        </p>
+      ) : (
+        <form action={submit} className="flex items-end gap-2 border-t border-border p-3">
+          <Textarea
+            rows={1}
+            placeholder={`Message ${counterpartName}…`}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            className="min-h-9 flex-1 resize-none"
+          />
+          <Button type="submit" size="icon" disabled={pending || !content.trim()}>
+            <Send className="size-4" />
+          </Button>
+        </form>
+      )}
       {error && <p className="px-3 pb-2 text-sm text-destructive">{error}</p>}
     </div>
   );

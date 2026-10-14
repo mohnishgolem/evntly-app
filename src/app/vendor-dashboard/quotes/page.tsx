@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { VendorQuoteResponse } from "@/components/vendor-quote-response";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { cn } from "@/lib/utils";
+import { BlockUserButton } from "@/components/block-user";
 import {
   effectiveQuoteStatus,
   quoteExpiresSoon,
@@ -97,6 +98,11 @@ export default async function VendorQuotesPage() {
                 )}
 
                 {status === "pending" && <VendorQuoteResponse quoteId={q.id} />}
+                {(status === "pending" || status === "quoted") && (
+                  <div className="mt-3 flex justify-end">
+                    <BlockUserButton name={q.client_name ?? "this customer"} quoteId={q.id} />
+                  </div>
+                )}
               </div>
             );
           })}
