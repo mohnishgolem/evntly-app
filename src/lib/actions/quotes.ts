@@ -4,8 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { notify, formatEventDate, formatAmount } from "@/lib/email";
 import { categoryLabel } from "@/lib/config";
+import { isQuoteExpired } from "@/lib/quote-expiry";
 
 export type ActionState = { error?: string; success?: boolean } | null;
+
+// The lockdown trigger refuses changes to an expired request; turn its raw
+// exception into something a person can act on.
+function friendlyError(message: string) {
+  return /has expired/i.test(message)
+    ? "This quote request has expired. Refresh to see the latest."
+    : message;
+}
 
 export type QuoteRequestDraft = {
   eventDate: string;
@@ -98,7 +107,7 @@ export async function respondToQuote(
     .select("client_email, vendor_name, event_type, event_date")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error.message) };
 
   const eventLabel = `${quote.event_type ?? "event"} on ${formatEventDate(quote.event_date)}`;
   notify(
@@ -144,6 +153,11 @@ export async function acceptQuote(quoteId: string): Promise<ActionState> {
     .single();
 
   if (fetchError || !quote) return { error: "Quote request not found." };
+  // Checked before the booking insert so an expired quote can't leave an
+  // orphaned booking behind when the DB then refuses the status change.
+  if (isQuoteExpired(quote)) {
+    return { error: "This quote has expired. Ask the vendor for a new one." };
+  }
   if (quote.status !== "quoted" || quote.quoted_amount == null) {
     return { error: "This quote isn't ready to accept yet." };
   }
@@ -175,7 +189,7 @@ export async function acceptQuote(quoteId: string): Promise<ActionState> {
     .update({ status: "accepted", booking_id: booking.id })
     .eq("id", quoteId);
 
-  if (updateError) return { error: updateError.message };
+  if (updateError) return { error: friendlyError(updateError.message) };
 
   notify({
     to: quote.vendor_email,
