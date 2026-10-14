@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
@@ -23,8 +22,7 @@ const MONTHS_BACK = 9;
 const MONTHS_AHEAD = 2;
 
 export default async function VendorEarningsPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/earnings");
+  const session = await requireVendor("/vendor-dashboard/earnings");
 
   const supabase = await createClient();
   const { data } = await supabase

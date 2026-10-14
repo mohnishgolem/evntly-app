@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getCurrentUser() {
@@ -18,4 +19,23 @@ export async function getCurrentUser() {
     (user.user_metadata?.full_name as string | undefined) ?? null;
 
   return { user, profile, displayName };
+}
+
+// Gate for vendor-only pages: logged-out visitors go to login (and come back
+// afterwards); logged-in users without a listing go to /vendor-dashboard,
+// which offers to create one. A "vendor" is anyone who owns a listing, in
+// any review status.
+export async function requireVendor(path: string) {
+  const session = await getCurrentUser();
+  if (!session) redirect(`/login?next=${encodeURIComponent(path)}`);
+
+  const supabase = await createClient();
+  const { data: listing } = await supabase
+    .rpc("my_service_providers")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+  if (!listing) redirect("/vendor-dashboard");
+
+  return session;
 }

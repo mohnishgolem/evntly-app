@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
@@ -8,8 +6,7 @@ import { VendorCalendar } from "@/components/vendor-calendar";
 import { personDisplayName } from "@/lib/messages";
 
 export default async function VendorCalendarPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/calendar");
+  const session = await requireVendor("/vendor-dashboard/calendar");
 
   const supabase = await createClient();
   const [{ data: listings }, { data: bookings }] = await Promise.all([
@@ -36,14 +33,7 @@ export default async function VendorCalendarPage() {
 
       <DashboardNav items={VENDOR_NAV_ITEMS} />
 
-      {!listings || listings.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          <Link href="/vendor-signup" className="font-medium underline underline-offset-2">
-            Create a listing
-          </Link>{" "}
-          to manage your availability.
-        </p>
-      ) : (
+      {listings && listings.length > 0 && (
         <VendorCalendar
           listings={listings}
           today={today}
