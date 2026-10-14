@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag, PartyPopper } from "lucide-react";
+import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
-import { getAllVendorsForAdmin, getAllUsersForAdmin, getReportsForAdmin } from "@/lib/data/admin";
+import {
+  getAllVendorsForAdmin,
+  getAllUsersForAdmin,
+  getReportsForAdmin,
+  getLeakLogForAdmin,
+} from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
 import { AdminUserRoles } from "@/components/admin-user-roles";
 import { AdminReports } from "@/components/admin-reports";
+import { AdminLeakLog } from "@/components/admin-leak-log";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default async function AdminPage() {
@@ -13,10 +19,11 @@ export default async function AdminPage() {
   if (!session) redirect("/login?next=/admin");
   if (session.profile?.role !== "admin") redirect("/");
 
-  const [vendors, users, reports] = await Promise.all([
+  const [vendors, users, reports, leakLog] = await Promise.all([
     getAllVendorsForAdmin(),
     getAllUsersForAdmin(),
     getReportsForAdmin(),
+    getLeakLogForAdmin(),
   ]);
 
   const pending = vendors.filter((v) => v.status === "pending_review");
@@ -51,7 +58,7 @@ export default async function AdminPage() {
         {/* flex-1 on TabsTrigger can't shrink past its (icon + label) content
             width without min-w-0, so on narrow viewports the row overflowed
             and clipped the first tab off-screen. Let it scroll horizontally
-            instead of trying to force 4 full-width tabs into ~343px. */}
+            instead of trying to force 4+ full-width tabs into ~343px. */}
         <TabsList className="scrollbar-hide mb-6 w-full justify-start overflow-x-auto">
           <TabsTrigger value="vendors" className="shrink-0">
             <Store /> Vendor Approval
@@ -61,6 +68,9 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="reports" className="shrink-0">
             <Flag /> Reports
+          </TabsTrigger>
+          <TabsTrigger value="leak-log" className="shrink-0">
+            <Banknote /> Leak Log
           </TabsTrigger>
         </TabsList>
 
@@ -127,6 +137,10 @@ export default async function AdminPage() {
 
         <TabsContent value="reports">
           <AdminReports reports={reports} />
+        </TabsContent>
+
+        <TabsContent value="leak-log">
+          <AdminLeakLog events={leakLog} />
         </TabsContent>
       </Tabs>
     </div>
