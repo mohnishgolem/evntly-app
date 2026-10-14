@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { VendorQuoteResponse } from "@/components/vendor-quote-response";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { cn } from "@/lib/utils";
+import { personDisplayName } from "@/lib/messages";
 import {
   effectiveQuoteStatus,
   quoteExpiresSoon,
@@ -61,7 +62,7 @@ export default async function VendorQuotesPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">
-                      {q.client_name ?? q.client_email}
+                      {personDisplayName(q.client_name, q.client_email)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {q.event_type} · {q.event_date} · {q.location}

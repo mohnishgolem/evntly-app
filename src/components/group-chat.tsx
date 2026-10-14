@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendGroupMessage } from "@/lib/actions/group-chat";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
+import { personDisplayName } from "@/lib/messages";
 
 type Message = Database["public"]["Tables"]["group_chat_messages"]["Row"];
 
@@ -53,7 +54,7 @@ export function GroupChat({
             return (
               <div key={m.id} className={cn("flex flex-col", isSelf ? "items-end" : "items-start")}>
                 <span className="mb-0.5 text-xs text-muted-foreground">
-                  {m.sender_name ?? m.sender_email}
+                  {m.sender_name ?? personDisplayName(null, m.sender_email, "Member")}
                 </span>
                 <div
                   className={cn(

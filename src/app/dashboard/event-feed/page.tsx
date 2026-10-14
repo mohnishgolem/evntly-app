@@ -130,7 +130,7 @@ export default async function EventFeedPage() {
                         <div key={app.id} className="rounded-xl bg-secondary p-3">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <p className="font-medium">{app.vendor_name ?? app.vendor_email}</p>
+                              <p className="font-medium">{app.vendor_name ?? "Vendor"}</p>
                               <p className="text-sm text-muted-foreground">
                                 {categoryLabel(app.service_type)} · ${app.quoted_amount}
                               </p>
