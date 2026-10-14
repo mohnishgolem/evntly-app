@@ -2,18 +2,9 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { getVendorPackages, getPendingInvitesForVendor } from "@/lib/data/bundles";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { CreateBundleForm } from "@/components/create-bundle-form";
 import { PackageInviteActions } from "@/components/package-invite-actions";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Waiting on other vendors",
@@ -38,7 +29,7 @@ export default async function VendorBundlesPage() {
         Team up with other vendors on a combined package customers can book together.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {invites.length > 0 && (
         <section className="mb-8">

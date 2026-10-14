@@ -6,16 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 
 const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: string }> = {
   pending_review: { icon: Clock, label: "Under review", color: "text-warning" },
@@ -52,7 +43,7 @@ export default async function VendorDashboardPage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Your listings</h1>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {!!unreadCount && (
         <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">

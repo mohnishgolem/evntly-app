@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorQuoteResponse } from "@/components/vendor-quote-response";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { BlockUserButton } from "@/components/block-user";
 import {
@@ -10,16 +11,6 @@ import {
   quoteExpiresSoon,
   quoteTimeLeft,
 } from "@/lib/quote-expiry";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Needs your response",
@@ -46,7 +37,7 @@ export default async function VendorQuotesPage() {
         Customers asking for a price on your services.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {!quotes || quotes.length === 0 ? (
         <p className="text-sm text-muted-foreground">No quote requests yet.</p>

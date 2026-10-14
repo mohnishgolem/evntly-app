@@ -234,6 +234,11 @@ export default async function VendorDetailPage({
                 vendorId={vendor.id}
                 vendorName={vendor.name}
                 eventId={latestEventId}
+                availability={{
+                  accepting: vendor.available !== false,
+                  unavailableDates: vendor.unavailable_dates ?? [],
+                  weeklyDaysOff: vendor.weekly_unavailable_days ?? [],
+                }}
               />
             </div>
           </div>

@@ -17,18 +17,47 @@ import {
 import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
 import { EVENT_TYPES } from "@/lib/config";
 
+// Mirrors the vendor's calendar settings so the form can warn before
+// submitting; fill_quote_request_vendor enforces the same rules in the DB.
+export type VendorAvailability = {
+  accepting: boolean;
+  unavailableDates: string[];
+  /** 0 = Sunday … 6 = Saturday */
+  weeklyDaysOff: number[];
+};
+
+function dateProblem(date: string, vendorName: string, availability?: VendorAvailability) {
+  if (!date || !availability) return null;
+  const [y, m, d] = date.split("-").map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  if (availability.unavailableDates.includes(date) || availability.weeklyDaysOff.includes(dow)) {
+    return `${vendorName} isn't available on that date — try another day.`;
+  }
+  return null;
+}
+
 export function RequestQuote({
   isAuthenticated,
   vendorId,
   vendorName,
   eventId,
+  availability,
 }: {
   isAuthenticated: boolean;
   vendorId: string;
   vendorName: string;
   eventId?: string;
+  availability?: VendorAvailability;
 }) {
   const [open, setOpen] = useState(false);
+
+  if (availability && !availability.accepting) {
+    return (
+      <Button variant="outline" size="lg" className="w-full" disabled>
+        Not taking new bookings right now
+      </Button>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -59,6 +88,7 @@ export function RequestQuote({
           vendorId={vendorId}
           vendorName={vendorName}
           eventId={eventId}
+          availability={availability}
           onSent={() => setOpen(false)}
         />
       </DialogContent>
@@ -70,13 +100,16 @@ function QuoteForm({
   vendorId,
   vendorName,
   eventId,
+  availability,
   onSent,
 }: {
   vendorId: string;
   vendorName: string;
   eventId?: string;
+  availability?: VendorAvailability;
   onSent: () => void;
 }) {
+  const [today] = useState(() => new Date().toLocaleDateString("en-CA"));
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -114,8 +147,13 @@ function QuoteForm({
     );
   }
 
+  const unavailable = dateProblem(draft.eventDate, vendorName, availability);
   const canSubmit =
-    draft.eventDate && draft.location && draft.estimatedGuests > 0 && draft.budgetRange;
+    draft.eventDate &&
+    !unavailable &&
+    draft.location &&
+    draft.estimatedGuests > 0 &&
+    draft.budgetRange;
 
   return (
     <div className="space-y-3">
@@ -125,7 +163,10 @@ function QuoteForm({
           <Input
             id="qr-date"
             type="date"
+            min={today}
             value={draft.eventDate}
+            aria-invalid={!!unavailable}
+            aria-describedby={unavailable ? "qr-date-problem" : undefined}
             onChange={(e) => setDraft((d) => ({ ...d, eventDate: e.target.value }))}
           />
         </div>
@@ -145,6 +186,11 @@ function QuoteForm({
           </select>
         </div>
       </div>
+      {unavailable && (
+        <p id="qr-date-problem" className="-mt-1 text-sm text-destructive">
+          {unavailable}
+        </p>
+      )}
       <div className="space-y-1.5">
         <Label htmlFor="qr-location">Location</Label>
         <Input

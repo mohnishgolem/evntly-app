@@ -5,16 +5,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { ApplyToEventForm } from "@/components/apply-to-event-form";
 import { DashboardNav } from "@/components/dashboard-nav";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 
 export default async function VendorEventFeedPage() {
   const session = await getCurrentUser();
@@ -46,7 +37,7 @@ export default async function VendorEventFeedPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-1 text-2xl font-bold">Event Feed</h1>
-        <DashboardNav items={NAV_ITEMS} />
+        <DashboardNav items={VENDOR_NAV_ITEMS} />
         <p className="text-sm text-muted-foreground">
           Your listing needs to be approved before you can apply to events.
         </p>
@@ -74,7 +65,7 @@ export default async function VendorEventFeedPage() {
         pitch and a price.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {!listings || listings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No open events right now. Check back soon.</p>

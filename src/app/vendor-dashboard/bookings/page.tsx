@@ -3,18 +3,9 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorBookingActions } from "@/components/vendor-booking-actions";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning",
@@ -48,7 +39,7 @@ export default async function VendorBookingsPage() {
         Bookings from accepted quotes, in one place.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {!bookings || bookings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No bookings yet.</p>

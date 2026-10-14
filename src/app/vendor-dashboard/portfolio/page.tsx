@@ -4,16 +4,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { DashboardNav } from "@/components/dashboard-nav";
-
-const NAV_ITEMS = [
-  { href: "/vendor-dashboard", label: "Listings" },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed" },
-  { href: "/vendor-dashboard/quotes", label: "Quotes" },
-  { href: "/vendor-dashboard/bookings", label: "Bookings" },
-  { href: "/vendor-dashboard/bundles", label: "Bundles" },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio" },
-  { href: "/messages", label: "Messages" },
-];
+import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 
 export default async function VendorPortfolioPage() {
   const session = await getCurrentUser();
@@ -51,7 +42,7 @@ export default async function VendorPortfolioPage() {
         Photos customers see on your {listing.name} listing.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={VENDOR_NAV_ITEMS} />
       <PortfolioUploader providerId={listing.id} items={items ?? []} />
     </div>
   );
