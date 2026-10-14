@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-guard";
 import { notify } from "@/lib/email";
-import { conversationCustomerEmail } from "@/lib/messages";
+import { conversationIdFor } from "@/lib/messages";
+import { messageRecipientEmail } from "@/lib/supabase/admin";
 import type { User } from "@supabase/supabase-js";
 
 export type SendMessageState = { error?: string; success?: boolean } | null;
@@ -17,19 +18,30 @@ const MESSAGE_EMAIL_COOLDOWN_MS = 10 * 60 * 1000;
 async function sentRecently(
   supabase: Awaited<ReturnType<typeof createClient>>,
   conversationId: string,
-  senderEmail: string
+  senderId: string
 ) {
+  // created_by is stamped with auth.uid() by the fill_message_recipient
+  // trigger; sender_email isn't readable (or filterable) by users.
   const { data } = await supabase
     .from("messages")
     .select("id")
     .eq("conversation_id", conversationId)
-    .eq("sender_email", senderEmail)
+    .eq("created_by", senderId)
     .gte("created_at", new Date(Date.now() - MESSAGE_EMAIL_COOLDOWN_MS).toISOString())
     .limit(1);
   return (data?.length ?? 0) > 0;
 }
 
-function notifyNewMessage(to: string, sender: string, content: string, conversationId: string) {
+// Recipient addresses aren't readable by the sender, so look the address up
+// server-side from the stored message (the DB trigger filled it in).
+async function notifyNewMessage(
+  messageId: string,
+  sender: string,
+  content: string,
+  conversationId: string
+) {
+  const to = await messageRecipientEmail(messageId);
+  if (!to) return;
   notify({
     to,
     subject: `New message from ${sender}`,
@@ -61,10 +73,10 @@ export async function sendVendorMessage(
     return { error: "You need to be logged in to contact a vendor." };
   }
 
-  // The vendor's email isn't publicly readable, and never comes from the
-  // client: the fill_message_recipient trigger addresses the message to the
-  // vendor's real owner from provider_id (and fill_leakage_event_recipient
-  // does the same for blocked attempts, from the conversation id).
+  // Recipients never come from the client: the fill_message_recipient
+  // trigger addresses the message from the conversation id — the vendor's
+  // owner from provider_id, the customer from their user id — and
+  // fill_leakage_event_recipient does the same for blocked attempts.
   const { data: vendor } = await supabase
     .from("service_providers")
     .select("id")
@@ -74,7 +86,7 @@ export async function sendVendorMessage(
 
   if (!vendor) return { error: "This vendor isn't accepting messages." };
 
-  const conversationId = [vendorId, user.email].sort().join(":");
+  const conversationId = conversationIdFor(vendorId, user.id);
 
   const guard = scanForPaymentCircumvention(content);
   if (guard.blocked) {
@@ -89,7 +101,7 @@ export async function sendVendorMessage(
     return { error: PAYMENT_GUARD_ERROR };
   }
 
-  const shouldEmail = !(await sentRecently(supabase, conversationId, user.email));
+  const shouldEmail = !(await sentRecently(supabase, conversationId, user.id));
 
   const { data: message, error } = await supabase
     .from("messages")
@@ -100,12 +112,12 @@ export async function sendVendorMessage(
       content,
       customer_initiated: true,
     })
-    .select("recipient_email")
+    .select("id")
     .single();
 
   if (error) return { error: error.message };
 
-  if (shouldEmail) notifyNewMessage(message.recipient_email, displayName(user), content, conversationId);
+  if (shouldEmail) await notifyNewMessage(message.id, displayName(user), content, conversationId);
 
   revalidatePath("/messages");
   return { success: true };
@@ -127,27 +139,22 @@ export async function sendReply(
     return { error: "You need to be logged in." };
   }
 
+  // RLS only returns rows from conversations the caller is part of, so an
+  // empty result covers both "doesn't exist" and "not yours".
   const { data: existing } = await supabase
     .from("messages")
-    .select("sender_email, recipient_email, provider_id, customer_initiated")
+    .select("provider_id, customer_initiated")
     .eq("conversation_id", conversationId)
     .limit(1)
     .maybeSingle();
 
   if (!existing) return { error: "Conversation not found." };
-  if (user.email !== existing.sender_email && user.email !== existing.recipient_email) {
-    return { error: "You don't have access to this conversation." };
-  }
-
-  const counterpart =
-    existing.sender_email === user.email ? existing.recipient_email : existing.sender_email;
 
   const guard = scanForPaymentCircumvention(trimmed);
   if (guard.blocked) {
     await supabase.from("leakage_events").insert({
       sender_id: user.id,
       sender_email: user.email,
-      recipient_email: counterpart,
       conversation_id: conversationId,
       category: guard.category,
       original_snippet: guard.snippet,
@@ -156,32 +163,35 @@ export async function sendReply(
     return { error: PAYMENT_GUARD_ERROR };
   }
 
-  const shouldEmail = !(await sentRecently(supabase, conversationId, user.email));
+  const shouldEmail = !(await sentRecently(supabase, conversationId, user.id));
 
-  const { error } = await supabase.from("messages").insert({
-    conversation_id: conversationId,
-    sender_email: user.email,
-    recipient_email: counterpart,
-    provider_id: existing.provider_id,
-    content: trimmed,
-    customer_initiated: existing.customer_initiated,
-  });
+  const { data: message, error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_email: user.email,
+      provider_id: existing.provider_id,
+      content: trimmed,
+      customer_initiated: existing.customer_initiated,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
 
   if (shouldEmail) {
     // The vendor side replies as their business, the customer side by name.
-    const customerEmail = conversationCustomerEmail(conversationId);
+    // A vendor's conversation id starts with their own listing id.
     let sender = displayName(user);
-    if (existing.provider_id && user.email !== customerEmail) {
-      const { data: vendor } = await supabase
-        .from("service_providers")
+    if (existing.provider_id) {
+      const { data: ownListing } = await supabase
+        .rpc("my_service_providers")
         .select("name")
         .eq("id", existing.provider_id)
         .maybeSingle();
-      if (vendor?.name) sender = vendor.name;
+      if (ownListing?.name) sender = ownListing.name;
     }
-    notifyNewMessage(counterpart, sender, trimmed, conversationId);
+    await notifyNewMessage(message.id, sender, trimmed, conversationId);
   }
 
   // conversationId contains ":" and "@", which are percent-encoded in the

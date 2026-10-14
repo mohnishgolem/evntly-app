@@ -11,6 +11,7 @@ import { QuoteList } from "@/components/quote-list";
 import { BookingList } from "@/components/booking-list";
 import { VendorCard } from "@/components/vendor-card";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
 
@@ -83,7 +84,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
   const [{ data: listing }, { data: quotes }, { data: bookings }, { data: myReviews }] =
     await Promise.all([
       supabase.from("event_listings").select("*").eq("source_event_id", id).maybeSingle(),
-      supabase.from("quote_requests").select("*").eq("event_id", id).eq("client_email", email),
+      supabase.rpc("my_quote_requests", { as_role: "client" }).eq("event_id", id),
       supabase
         .from("bookings")
         .select("*")
@@ -142,7 +143,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
   // vendor's own profile page, where Contact Vendor can start one.
   let existingThreadVendorIds = new Set<string>();
   if (bookedVendors.length > 0) {
-    const conversationIds = bookedVendors.map((b) => [b.provider_id, email].sort().join(":"));
+    const conversationIds = bookedVendors.map((b) => conversationIdFor(b.provider_id, session.user.id));
     const { data: existingMessages } = await supabase
       .from("messages")
       .select("provider_id")

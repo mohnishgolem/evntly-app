@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1466,6 +1466,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_quote: { Args: { p_quote_id: string }; Returns: string }
       admin_service_providers: {
         Args: never
         Returns: {
@@ -1518,8 +1519,72 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      conversation_messages: {
+        Args: { p_conversation_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          customer_initiated: boolean
+          from_me: boolean
+          id: string
+          provider_id: string
+          read: boolean
+        }[]
+      }
+      customer_label: { Args: { customer_email: string }; Returns: string }
       is_active_combined_package: { Args: { pkg_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      my_conversations: {
+        Args: never
+        Returns: {
+          booked: boolean
+          conversation_id: string
+          counterpart_name: string
+          i_am_vendor: boolean
+          last_at: string
+          last_content: string
+          provider_id: string
+          unread_count: number
+        }[]
+      }
+      my_quote_requests: {
+        Args: { as_role: string }
+        Returns: {
+          booking_id: string | null
+          budget_range: string
+          call_time_window: string | null
+          client_email: string
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          details: string | null
+          estimated_guests: number
+          estimated_hours: number | null
+          event_date: string
+          event_id: string | null
+          event_type: string | null
+          expires_at: string | null
+          id: string
+          location: string
+          origin: string | null
+          quoted_amount: number | null
+          request_call: boolean | null
+          service_type: string | null
+          status: string
+          stripe_session_id: string | null
+          updated_at: string
+          vendor_email: string
+          vendor_id: string
+          vendor_name: string | null
+          vendor_note: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "quote_requests"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       my_service_providers: {
         Args: never
         Returns: {
@@ -1572,9 +1637,18 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      my_unread_message_count: { Args: never; Returns: number }
       owns_service_provider: {
         Args: { p_provider_id: string }
         Returns: boolean
+      }
+      quote_expiry_for: {
+        Args: { base: string; event_date: string }
+        Returns: string
+      }
+      short_display_name: {
+        Args: { email: string; fallback?: string; full_name: string }
+        Returns: string
       }
     }
     Enums: {

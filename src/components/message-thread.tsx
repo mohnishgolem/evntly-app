@@ -9,17 +9,15 @@ import { sendReply } from "@/lib/actions/messages";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/supabase/database.types";
 
-type Message = Database["public"]["Tables"]["messages"]["Row"];
+type Message = Database["public"]["Functions"]["conversation_messages"]["Returns"][number];
 
 export function MessageThread({
   conversationId,
   messages,
-  selfEmail,
   counterpartName,
 }: {
   conversationId: string;
   messages: Message[];
-  selfEmail: string;
   counterpartName: string;
 }) {
   const router = useRouter();
@@ -50,7 +48,7 @@ export function MessageThread({
           </p>
         ) : (
           messages.map((m) => {
-            const isSelf = m.sender_email === selfEmail;
+            const isSelf = m.from_me;
             return (
               <div key={m.id} className={cn("flex flex-col", isSelf ? "items-end" : "items-start")}>
                 <span className="mb-0.5 text-xs text-muted-foreground">

@@ -1,22 +1,13 @@
-// Direct-message conversation ids are "<vendorId>:<customerEmail>" (sorted),
-// so the customer is whichever part is an email address.
-export function conversationCustomerEmail(conversationId: string) {
-  return conversationId.split(":").find((part) => part.includes("@")) ?? null;
+// Direct-message conversation ids are "<providerId>:<customerUserId>" — no
+// email address in them, since they show up in URLs and notification links.
+// The DB (fill_message_recipient) parses the same format to address messages.
+export function conversationIdFor(providerId: string, customerUserId: string) {
+  return `${providerId}:${customerUserId}`;
 }
 
-// Resolves a human-readable name for the other side of a 1:1 conversation.
-// Messages only store emails, so when the counterpart is the vendor (i.e. not
-// the customer) we use their business name via provider_id; otherwise there's
-// no name source for a customer, so we derive a short name from the email.
-export function counterpartDisplayName(
-  counterpartEmail: string,
-  providerName: string | null,
-  customerEmail: string | null
-) {
-  if (providerName && counterpartEmail !== customerEmail) {
-    return providerName;
-  }
-  return personDisplayName(null, counterpartEmail);
+/** Pre-2026-10 ids embedded the customer's email instead of their user id. */
+export function isLegacyConversationId(conversationId: string) {
+  return conversationId.includes("@");
 }
 
 // "Jane D." from a stored name, or from the email's local part when there's

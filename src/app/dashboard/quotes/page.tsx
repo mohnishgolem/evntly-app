@@ -20,11 +20,8 @@ export default async function CustomerQuotesPage() {
   if (!session) redirect("/login?next=/dashboard/quotes");
 
   const supabase = await createClient();
-  const { data: quotes } = await supabase
-    .from("quote_requests")
-    .select("*")
-    .eq("client_email", session.user.email as string)
-    .order("created_at", { ascending: false });
+  // Masked read: emails blanked, newest first (see my_quote_requests).
+  const { data: quotes } = await supabase.rpc("my_quote_requests", { as_role: "client" });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">

@@ -46,11 +46,7 @@ export default async function VendorDashboardPage() {
     );
   }
 
-  const { count: unreadCount } = await supabase
-    .from("messages")
-    .select("id", { count: "exact", head: true })
-    .eq("recipient_email", session.user.email as string)
-    .eq("read", false);
+  const { data: unreadCount } = await supabase.rpc("my_unread_message_count");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">

@@ -4,9 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { MessageThread } from "@/components/message-thread";
-import { counterpartDisplayName, conversationCustomerEmail } from "@/lib/messages";
+import { conversationIdFor, isLegacyConversationId } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
-import { hasBookingWithVendor } from "@/lib/data/messages";
 
 export default async function MessageThreadPage({
   params,
@@ -18,47 +17,39 @@ export default async function MessageThreadPage({
 
   const { conversationId: rawConversationId } = await params;
   const conversationId = decodeURIComponent(rawConversationId);
-  const email = session.user.email as string;
-  const supabase = await createClient();
 
-  const { data: messages } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true });
-
-  if (!messages || messages.length === 0) notFound();
-
-  const first = messages[0];
-  if (first.sender_email !== email && first.recipient_email !== email) notFound();
-
-  const counterpartEmail =
-    first.sender_email === email ? first.recipient_email : first.sender_email;
-
-  let provider: { name: string } | null = null;
-  if (first.provider_id) {
-    const { data } = await supabase
-      .from("service_providers")
-      .select("name")
-      .eq("id", first.provider_id)
-      .maybeSingle();
-    provider = data;
+  // Links in older notification emails used "<vendorId>:<customerEmail>".
+  // The customer can be sent to the new id; a vendor can't map an email to a
+  // user id (by design), so they land on the inbox instead.
+  if (isLegacyConversationId(conversationId)) {
+    const parts = conversationId.split(":");
+    const emailPart = parts.find((p) => p.includes("@"));
+    const providerPart = parts.find((p) => !p.includes("@"));
+    if (providerPart && emailPart === session.user.email) {
+      redirect(`/messages/${encodeURIComponent(conversationIdFor(providerPart, session.user.id))}`);
+    }
+    redirect("/messages");
   }
 
-  const unreadIds = messages
-    .filter((m) => !m.read && m.recipient_email === email)
-    .map((m) => m.id);
+  const supabase = await createClient();
+  const [{ data: messages }, { data: thread }] = await Promise.all([
+    supabase.rpc("conversation_messages", { p_conversation_id: conversationId }),
+    supabase.rpc("my_conversations").eq("conversation_id", conversationId).maybeSingle(),
+  ]);
+
+  // Both RPCs only return the caller's own conversations.
+  if (!messages || messages.length === 0 || !thread) notFound();
+
+  const unreadIds = messages.filter((m) => !m.read && !m.from_me).map((m) => m.id);
   if (unreadIds.length > 0) {
     await supabase.from("messages").update({ read: true }).in("id", unreadIds);
   }
 
-  const customerEmail = conversationCustomerEmail(conversationId) ?? counterpartEmail;
-  const counterpartName = counterpartDisplayName(counterpartEmail, provider?.name ?? null, customerEmail);
-
   // Contact info stays masked until this vendor/customer pair has a real
   // booking behind them — same stored message, it just renders unmasked
   // once that's true, no need to touch anything already sent.
-  const booked = first.provider_id ? await hasBookingWithVendor(first.provider_id, customerEmail) : false;
+  const booked = thread.booked;
+  const counterpartName = thread.counterpart_name;
   const visibleMessages = booked
     ? messages
     : messages.map((m) => ({ ...m, content: maskContactInfo(m.content) }));
@@ -81,7 +72,6 @@ export default async function MessageThreadPage({
       <MessageThread
         conversationId={conversationId}
         messages={visibleMessages}
-        selfEmail={email}
         counterpartName={counterpartName}
       />
     </div>

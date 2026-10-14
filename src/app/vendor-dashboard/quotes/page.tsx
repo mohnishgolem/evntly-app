@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { VendorQuoteResponse } from "@/components/vendor-quote-response";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { cn } from "@/lib/utils";
-import { personDisplayName } from "@/lib/messages";
 import {
   effectiveQuoteStatus,
   quoteExpiresSoon,
@@ -35,11 +34,9 @@ export default async function VendorQuotesPage() {
   if (!session) redirect("/login?next=/vendor-dashboard/quotes");
 
   const supabase = await createClient();
-  const { data: quotes } = await supabase
-    .from("quote_requests")
-    .select("*")
-    .eq("vendor_email", session.user.email as string)
-    .order("created_at", { ascending: false });
+  // Masked read: the customer's email is blanked and client_name is a short
+  // "Jane D." label (see my_quote_requests).
+  const { data: quotes } = await supabase.rpc("my_quote_requests", { as_role: "vendor" });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -62,7 +59,7 @@ export default async function VendorQuotesPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">
-                      {personDisplayName(q.client_name, q.client_email)}
+                      {q.client_name ?? "Customer"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {q.event_type} · {q.event_date} · {q.location}

@@ -2,7 +2,7 @@
 // but only *shown* once there's a real booking behind the conversation.
 // Before that, matches are masked at read time; the stored message is
 // never altered, so the same message simply renders unmasked once a
-// qualifying booking exists (see hasBookingWithVendor).
+// qualifying booking exists (the `booked` flag from the my_conversations RPC).
 
 const PATTERNS: { category: string; regex: RegExp }[] = [
   {
