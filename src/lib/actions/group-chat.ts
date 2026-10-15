@@ -16,11 +16,12 @@ export async function sendGroupMessage(threadId: string, content: string): Promi
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
 
+  // RLS only returns threads the caller belongs to.
   const { data: thread } = await supabase
     .from("group_chat_threads")
-    .select("participant_emails")
+    .select("id")
     .eq("id", threadId)
-    .single();
+    .maybeSingle();
   if (!thread) return { error: "Conversation not found." };
 
   const guard = scanForPaymentCircumvention(trimmed);
@@ -41,7 +42,7 @@ export async function sendGroupMessage(threadId: string, content: string): Promi
     sender_email: user.email,
     sender_name: user.user_metadata?.full_name ?? null,
     content: trimmed,
-    participant_emails: thread.participant_emails,
+    // participant_emails comes from the thread (fill_group_message_participants).
   });
   if (error) return { error: error.message };
 

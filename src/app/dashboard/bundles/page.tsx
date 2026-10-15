@@ -4,6 +4,7 @@ import { MessageCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { BUNDLE_BOOKING_COLUMNS } from "@/lib/public-columns";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
@@ -19,15 +20,14 @@ export default async function CustomerBundlesPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/bundles");
 
-  const email = session.user.email as string;
   const supabase = await createClient();
   const [{ data: bookings }, { data: threads }] = await Promise.all([
     supabase
       .from("bundle_bookings")
-      .select("*")
-      .eq("customer_email", email)
+      .select(BUNDLE_BOOKING_COLUMNS)
+      .eq("customer_user_id", session.user.id)
       .order("event_date", { ascending: false }),
-    supabase.from("group_chat_threads").select("id, bundle_booking_id").eq("customer_email", email),
+    supabase.from("group_chat_threads").select("id, bundle_booking_id").eq("customer_user_id", session.user.id),
   ]);
 
   const threadByBooking = new Map((threads ?? []).map((t) => [t.bundle_booking_id, t.id]));

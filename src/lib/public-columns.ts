@@ -67,3 +67,16 @@ export type ParticipantApplication = Omit<
   Tables["event_applications"]["Row"],
   "vendor_email" | "organiser_email" | "created_by"
 >;
+
+export const GROUP_THREAD_COLUMNS =
+  "id, created_at, updated_at, bundle_booking_id, combined_package_id, combined_package_name, customer_name, participant_count, customer_user_id" as const;
+
+export const GROUP_MESSAGE_COLUMNS =
+  "id, created_at, updated_at, thread_id, sender_name, content, attachment_file_uri, attachment_type, attachment_thumbnail_uri, sender_user_id" as const;
+export type ParticipantGroupMessage = Omit<
+  Tables["group_chat_messages"]["Row"],
+  "sender_email" | "participant_emails" | "participant_user_ids" | "created_by"
+>;
+
+export const BUNDLE_BOOKING_COLUMNS =
+  "id, created_at, updated_at, combined_package_id, combined_package_name, customer_name, event_date, event_time, event_address, notes, status, total_amount, platform_fee, payment_status, vendor_count, event_id, customer_user_id" as const;

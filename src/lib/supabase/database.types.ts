@@ -784,6 +784,7 @@ export type Database = {
           customer_name: string | null
           customer_user_id: string | null
           id: string
+          participant_count: number | null
           participant_emails: string[]
           participant_user_ids: string[]
           updated_at: string
@@ -798,6 +799,7 @@ export type Database = {
           customer_name?: string | null
           customer_user_id?: string | null
           id?: string
+          participant_count?: number | null
           participant_emails: string[]
           participant_user_ids?: string[]
           updated_at?: string
@@ -812,6 +814,7 @@ export type Database = {
           customer_name?: string | null
           customer_user_id?: string | null
           id?: string
+          participant_count?: number | null
           participant_emails?: string[]
           participant_user_ids?: string[]
           updated_at?: string

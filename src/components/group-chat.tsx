@@ -7,19 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { sendGroupMessage } from "@/lib/actions/group-chat";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/lib/supabase/database.types";
-import { personDisplayName } from "@/lib/messages";
+import type { ParticipantGroupMessage } from "@/lib/public-columns";
 
-type Message = Database["public"]["Tables"]["group_chat_messages"]["Row"];
+type Message = ParticipantGroupMessage;
 
 export function GroupChat({
   threadId,
   messages,
-  selfEmail,
+  selfUserId,
 }: {
   threadId: string;
   messages: Message[];
-  selfEmail: string;
+  selfUserId: string;
 }) {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -50,11 +49,11 @@ export function GroupChat({
           </p>
         ) : (
           messages.map((m) => {
-            const isSelf = m.sender_email === selfEmail;
+            const isSelf = m.sender_user_id === selfUserId;
             return (
               <div key={m.id} className={cn("flex flex-col", isSelf ? "items-end" : "items-start")}>
                 <span className="mb-0.5 text-xs text-muted-foreground">
-                  {m.sender_name ?? personDisplayName(null, m.sender_email, "Member")}
+                  {m.sender_name ?? "Member"}
                 </span>
                 <div
                   className={cn(
