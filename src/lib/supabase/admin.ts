@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 // Service-role client, server-only (the key has no NEXT_PUBLIC_ prefix, so
-// it never reaches the browser bundle). It bypasses RLS, so it's used for
-// exactly one thing: looking up the email address to send a notification to.
+// it never reaches the browser bundle). It bypasses RLS, so it's used only
+// to address notifications and to serve the calendar feed.
 // Users can't read each other's emails on quote_requests/messages (column
 // SELECT is revoked), so server actions running as the user can't either.
 function createAdminClient() {
@@ -17,25 +17,54 @@ function createAdminClient() {
   });
 }
 
+type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+type PartyTable = "quote_requests" | "messages" | "bookings" | "event_applications";
+
+// Stored emails are a snapshot from when the row was written and go stale if
+// a user changes their account email; the *_user_id beside each one doesn't.
+// Address notifications to the user's current account email, falling back
+// to the stored one (demo vendors have no account).
+async function partyEmails(
+  admin: AdminClient,
+  table: PartyTable,
+  rowIds: string[],
+  emailColumn: string
+): Promise<string[]> {
+  if (rowIds.length === 0) return [];
+  const idColumn = emailColumn.replace(/_email$/, "_user_id");
+  const { data } = await admin
+    .from(table)
+    .select(`${emailColumn}, ${idColumn}`)
+    .in("id", rowIds);
+  const rows = (data ?? []) as unknown as Record<string, string | null>[];
+  const emails = await Promise.all(
+    rows.map(async (row) => {
+      const userId = row[idColumn];
+      if (userId) {
+        const { data: found } = await admin.auth.admin.getUserById(userId);
+        if (found?.user?.email) return found.user.email;
+      }
+      return row[emailColumn];
+    })
+  );
+  return emails.filter((email): email is string => !!email);
+}
+
 export async function quoteParticipantEmail(
   quoteId: string,
   who: "client_email" | "vendor_email"
 ): Promise<string | null> {
   const admin = createAdminClient();
   if (!admin) return null;
-  const { data } = await admin.from("quote_requests").select(who).eq("id", quoteId).maybeSingle();
-  return (data as Record<string, string> | null)?.[who] ?? null;
+  const [email] = await partyEmails(admin, "quote_requests", [quoteId], who);
+  return email ?? null;
 }
 
 export async function messageRecipientEmail(messageId: string): Promise<string | null> {
   const admin = createAdminClient();
   if (!admin) return null;
-  const { data } = await admin
-    .from("messages")
-    .select("recipient_email")
-    .eq("id", messageId)
-    .maybeSingle();
-  return data?.recipient_email ?? null;
+  const [email] = await partyEmails(admin, "messages", [messageId], "recipient_email");
+  return email ?? null;
 }
 
 // Calendar feed (/calendar-feed/<token>.ics): calendar apps fetch it with no
@@ -73,19 +102,16 @@ export async function bookingParticipantEmail(
 ): Promise<string | null> {
   const admin = createAdminClient();
   if (!admin) return null;
-  const { data } = await admin.from("bookings").select(who).eq("id", bookingId).maybeSingle();
-  return (data as Record<string, string | null> | null)?.[who] ?? null;
+  const [email] = await partyEmails(admin, "bookings", [bookingId], who);
+  return email ?? null;
 }
 
-/** Notification addresses for event applications (null/missing ones dropped). */
+/** Notification addresses for event applications (missing ones dropped). */
 export async function applicationEmails(
   applicationIds: string[],
   who: "vendor_email" | "organiser_email"
 ): Promise<string[]> {
   const admin = createAdminClient();
-  if (!admin || applicationIds.length === 0) return [];
-  const { data } = await admin.from("event_applications").select(who).in("id", applicationIds);
-  return ((data ?? []) as Record<string, string | null>[])
-    .map((row) => row[who])
-    .filter((email): email is string => !!email);
+  if (!admin) return [];
+  return partyEmails(admin, "event_applications", applicationIds, who);
 }

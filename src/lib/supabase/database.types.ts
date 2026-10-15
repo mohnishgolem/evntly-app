@@ -1694,14 +1694,21 @@ export type Database = {
           read: boolean
         }[]
       }
-      counterpart_email: {
+      counterpart_user_id: {
         Args: { p_conversation_id: string; p_quote_id: string }
+        Returns: string
+      }
+      current_email: {
+        Args: { p_fallback?: string; p_user_id: string }
         Returns: string
       }
       customer_label: { Args: { customer_email: string }; Returns: string }
       is_active_combined_package: { Args: { pkg_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
-      is_blocked_between: { Args: { a: string; b: string }; Returns: boolean }
+      is_blocked_between_ids: {
+        Args: { a: string; b: string }
+        Returns: boolean
+      }
       is_conversation_participant: {
         Args: { p_conversation_id: string }
         Returns: boolean
@@ -1838,6 +1845,10 @@ export type Database = {
       unblock_user: {
         Args: { p_block_id?: string; p_conversation_id?: string }
         Returns: undefined
+      }
+      user_label: {
+        Args: { p_fallback_email?: string; p_user_id: string }
+        Returns: string
       }
     }
     Enums: {
