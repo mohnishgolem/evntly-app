@@ -6,6 +6,9 @@ import { getAdminSession } from "@/lib/data/user";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
+export type VendorStatus = "approved" | "rejected" | "suspended" | "pending_review";
+const VENDOR_STATUSES: VendorStatus[] = ["approved", "rejected", "suspended", "pending_review"];
+
 // RLS is the real enforcement boundary for these tables, but every write
 // here is also gated in code so a logged-in non-admin gets a clean error
 // instead of a raw Postgres rejection if the policies ever change.
@@ -18,9 +21,10 @@ async function requireAdmin() {
 
 export async function setVendorStatus(
   vendorId: string,
-  status: "approved" | "rejected" | "suspended"
+  status: VendorStatus
 ): Promise<ActionState> {
   if (!(await requireAdmin())) return { error: "Not authorized." };
+  if (!VENDOR_STATUSES.includes(status)) return { error: "Invalid status." };
 
   const supabase = await createClient();
   const { error } = await supabase

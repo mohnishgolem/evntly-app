@@ -111,7 +111,7 @@ export default async function AdminPage() {
                         <p className="text-sm text-muted-foreground">
                           {categoryLabel(v.service_type)} · {v.city} · ${v.hourly_rate}/hr
                         </p>
-                        <p className="text-sm text-muted-foreground">{v.owner_email}</p>
+                        <p className="break-all text-sm text-muted-foreground">{v.owner_email}</p>
                         {v.bio && <p className="mt-2 text-sm">{v.bio}</p>}
                         {!!v.locations_serviced?.length && (
                           <p className="mt-1 text-xs text-muted-foreground">
@@ -131,18 +131,21 @@ export default async function AdminPage() {
             <h2 className="mb-4 text-lg font-semibold">All other listings ({others.length})</h2>
             <div className="divide-y divide-border rounded-2xl border border-border">
               {others.map((v) => (
-                <div key={v.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                  <div>
+                // Stacks on phones: long owner emails used to push the
+                // status and buttons off the right edge of the card.
+                <div
+                  key={v.id}
+                  className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                >
+                  <div className="min-w-0">
                     <p className="text-sm font-medium">{v.name}</p>
-                    <p className="text-xs text-muted-foreground">{v.owner_email}</p>
+                    <p className="break-all text-xs text-muted-foreground">{v.owner_email}</p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
                     <span className="text-sm capitalize text-muted-foreground">{v.status}</span>
                     <AdminVendorActions
                       vendorId={v.id}
-                      currentStatus={
-                        v.status as "approved" | "rejected" | "suspended" | undefined
-                      }
+                      currentStatus={v.status as "approved" | "rejected" | "suspended"}
                     />
                   </div>
                 </div>

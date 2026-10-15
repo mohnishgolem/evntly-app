@@ -46,6 +46,19 @@ describe("admin actions", () => {
     expect(await admin.setVendorStatus("v1", "approved")).toEqual({ success: true });
     expect(current.writes).toEqual([{ table: "service_providers", op: "update", payload: { status: "approved" } }]);
   });
+
+  it("let admins move a listing back to pending review", async () => {
+    current = fakeSupabase({ user, aal: "aal2", results: { users: { data: { id: "u1", role: "admin" } } } });
+    expect(await admin.setVendorStatus("v1", "pending_review")).toEqual({ success: true });
+    expect(current.writes).toEqual([{ table: "service_providers", op: "update", payload: { status: "pending_review" } }]);
+  });
+
+  it("reject made-up statuses sent from the browser", async () => {
+    current = fakeSupabase({ user, aal: "aal2", results: { users: { data: { id: "u1", role: "admin" } } } });
+    // @ts-expect-error — simulating a tampered request
+    expect(await admin.setVendorStatus("v1", "featured")).toEqual({ error: "Invalid status." });
+    expect(current.writes).toHaveLength(0);
+  });
 });
 
 describe("submitReview (review manipulation)", () => {
