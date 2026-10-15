@@ -11,7 +11,7 @@
     "predev": "npm run copy-maplibre-worker",
     "prebuild": "npm run copy-maplibre-worker",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test:security": "vitest run tests/unit"
   },
   "dependencies": {
