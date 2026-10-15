@@ -95,7 +95,17 @@ export default async function VendorDetailPage({
     <div className="mx-auto max-w-5xl px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Escape characters that could break out of the <script> element or
+        // the HTML (vendor name/bio are attacker-controlled): </script>,
+        // and the JS-string line separators U+2028/U+2029.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd)
+            .replace(/</g, "\\u003c")
+            .replace(/>/g, "\\u003e")
+            .replace(/&/g, "\\u0026")
+            .replace(/\u2028/g, "\\u2028")
+            .replace(/\u2029/g, "\\u2029"),
+        }}
       />
       <div className="grid gap-8 md:grid-cols-3">
         <div className="md:col-span-2">
