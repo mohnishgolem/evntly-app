@@ -1,8 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+// `requestHeaders` lets the proxy forward extra request headers (the CSP
+// nonce) to the page render alongside the refreshed session cookies.
+export async function updateSession(request: NextRequest, requestHeaders?: Headers) {
+  const next = () =>
+    requestHeaders ? NextResponse.next({ request: { headers: requestHeaders } }) : NextResponse.next({ request });
+  let supabaseResponse = next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,10 +17,13 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+            // NextResponse.next({ request: { headers } }) forwards these
+            // headers, not request.cookies — keep the cookie header in sync.
+            requestHeaders?.set("cookie", request.cookies.toString());
+          });
+          supabaseResponse = next();
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
