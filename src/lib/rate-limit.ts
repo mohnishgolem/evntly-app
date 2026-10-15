@@ -62,20 +62,30 @@ export async function checkRateLimit(
   const admin = createAdminClient();
   if (!admin) return true;
 
-  // check_rate_limit isn't in the generated types until the migration lands.
-  const rpc = admin.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>
-  ) => Promise<{ data: boolean | null; error: { message: string } | null }>;
-
-  const { data, error } = await rpc("check_rate_limit", {
-    p_key: bucketKey(scope, identifier),
-    p_max: rule.max,
-    p_window_seconds: rule.windowSeconds,
-  });
-  if (error) {
-    console.warn(`rate limit check failed open (${scope}): ${error.message}`);
+  // A limiter fault must never take down login/messaging, so any failure —
+  // network, missing RPC, or a thrown error — fails open and is logged.
+  try {
+    // check_rate_limit isn't in the generated types yet. Call it as a method
+    // on the client: a detached `admin.rpc` loses `this` and throws.
+    const { data, error } = await (
+      admin as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>
+        ) => Promise<{ data: boolean | null; error: { message: string } | null }>;
+      }
+    ).rpc("check_rate_limit", {
+      p_key: bucketKey(scope, identifier),
+      p_max: rule.max,
+      p_window_seconds: rule.windowSeconds,
+    });
+    if (error) {
+      console.warn(`rate limit check failed open (${scope}): ${error.message}`);
+      return true;
+    }
+    return data !== false;
+  } catch (err) {
+    console.error(`rate limit check threw, failing open (${scope}):`, err);
     return true;
   }
-  return data !== false;
 }
