@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notify, formatEventDate, formatAmount } from "@/lib/email";
 import { categoryLabel } from "@/lib/config";
 import { quoteParticipantEmail } from "@/lib/supabase/admin";
+import { z } from "zod";
+import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -26,6 +28,18 @@ export type QuoteRequestDraft = {
   details?: string;
 };
 
+// Server actions are public HTTP endpoints — validate everything the browser
+// sends, whatever the form enforced.
+const quoteDraftSchema = z.object({
+  eventDate: z.iso.date(),
+  eventType: z.string().trim().min(1).max(80),
+  location: z.string().trim().min(1).max(200),
+  estimatedGuests: z.number().min(1).max(100000).transform(Math.round),
+  estimatedHours: z.number().min(0).max(240).optional(),
+  budgetRange: z.string().trim().min(1).max(80),
+  details: z.string().max(5000).optional(),
+});
+
 export async function requestQuote(
   vendorId: string,
   draft: QuoteRequestDraft,
@@ -37,6 +51,10 @@ export async function requestQuote(
   } = await supabase.auth.getUser();
 
   if (!user?.email) return { error: "You need to be logged in to request a quote." };
+  const parsedDraft = quoteDraftSchema.safeParse(draft);
+  if (!parsedDraft.success) return { error: "Check the quote details and try again." };
+  draft = parsedDraft.data;
+  if (!(await checkRateLimit("quoteUser", user.id))) return { error: RATE_LIMIT_ERROR };
 
   // Vendor details come from the DB, never the caller — this is a server
   // action, so a client-supplied email would let anyone point the quote (and
@@ -96,6 +114,13 @@ export async function respondToQuote(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
+  if (
+    action === "quote" &&
+    (quotedAmount == null || !Number.isFinite(quotedAmount) || quotedAmount <= 0 || quotedAmount > 1_000_000)
+  ) {
+    return { error: "Enter a valid quote amount." };
+  }
+  if (vendorNote.length > 5000) return { error: "That note is too long." };
 
   const { data: quote, error } = await supabase
     .from("quote_requests")

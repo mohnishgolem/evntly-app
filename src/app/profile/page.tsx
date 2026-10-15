@@ -11,6 +11,7 @@ import {
   Store,
   LogOut,
   Ban,
+  KeyRound,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -106,6 +107,7 @@ export default async function ProfilePage() {
       <div className="mb-6 overflow-hidden rounded-2xl bg-secondary">
         <Row icon={Settings} label="Account settings" href="/dashboard/settings" />
         <Row icon={FileText} label="My Quote Requests" href="/dashboard/quotes" />
+        <Row icon={KeyRound} label="Security (two-factor)" href="/profile/security" />
         <Row icon={Ban} label="Blocked people" href="/profile/blocked" />
         {vendorListing ? (
           <Row icon={Store} label="My vendor listing" href="/vendor-dashboard" last />

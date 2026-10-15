@@ -39,3 +39,24 @@ export async function requireVendor(path: string) {
 
   return session;
 }
+
+// Admin access needs the admin role AND a session verified with a second
+// factor (aal2). Admins without an authenticator are sent to set one up.
+// ADMIN_MFA_OPTIONAL=true is an emergency escape hatch only (e.g. if TOTP is
+// ever disabled on the Supabase project) — leave it unset in production.
+export async function getAdminSession() {
+  const session = await getCurrentUser();
+  if (!session || session.profile?.role !== "admin") return { session, admin: false, mfa: "n/a" as const };
+
+  if (process.env.ADMIN_MFA_OPTIONAL === "true") return { session, admin: true, mfa: "ok" as const };
+
+  const supabase = await createClient();
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const mfa =
+    aal?.currentLevel === "aal2"
+      ? ("ok" as const)
+      : aal?.nextLevel === "aal2"
+        ? ("needs-verify" as const)
+        : ("needs-enrol" as const);
+  return { session, admin: true, mfa };
+}

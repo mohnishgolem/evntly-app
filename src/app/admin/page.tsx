@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote } from "lucide-react";
-import { getCurrentUser } from "@/lib/data/user";
+import Link from "next/link";
+import { getAdminSession } from "@/lib/data/user";
 import {
   getAllVendorsForAdmin,
   getAllUsersForAdmin,
@@ -15,9 +16,28 @@ import { AdminLeakLog } from "@/components/admin-leak-log";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default async function AdminPage() {
-  const session = await getCurrentUser();
+  const { session, admin, mfa } = await getAdminSession();
   if (!session) redirect("/login?next=/admin");
-  if (session.profile?.role !== "admin") redirect("/");
+  if (!admin) redirect("/");
+  if (mfa === "needs-verify") redirect("/login/mfa?next=/admin");
+  if (mfa === "needs-enrol") {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center">
+        <ShieldAlert className="mx-auto mb-3 h-8 w-8 text-warning" />
+        <h1 className="mb-2 text-2xl font-bold">Two-factor authentication required</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          The admin dashboard can approve vendors and change user roles, so it needs an
+          authenticator app on your account.
+        </p>
+        <Link
+          href="/profile/security"
+          className="inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+        >
+          Set up two-factor authentication
+        </Link>
+      </div>
+    );
+  }
 
   const [vendors, users, reports, leakLog] = await Promise.all([
     getAllVendorsForAdmin(),

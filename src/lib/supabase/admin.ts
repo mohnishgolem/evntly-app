@@ -6,7 +6,7 @@ import type { Database } from "@/lib/supabase/database.types";
 // to address notifications and to serve the calendar feed.
 // Users can't read each other's emails on quote_requests/messages (column
 // SELECT is revoked), so server actions running as the user can't either.
-function createAdminClient() {
+export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) {
     console.warn("SUPABASE_SERVICE_ROLE_KEY is not set — skipping notification email.");

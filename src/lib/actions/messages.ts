@@ -13,6 +13,9 @@ import {
   type Attachment,
 } from "@/lib/attachments";
 import type { User } from "@supabase/supabase-js";
+import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+
+const MAX_MESSAGE_LENGTH = 5000;
 
 export type SendMessageState = { error?: string; success?: boolean } | null;
 
@@ -69,6 +72,7 @@ export async function sendVendorMessage(
 ): Promise<SendMessageState> {
   const content = String(formData.get("content") ?? "").trim();
   if (!content) return { error: "Write a message first." };
+  if (content.length > MAX_MESSAGE_LENGTH) return { error: "That message is too long." };
 
   const supabase = await createClient();
   const {
@@ -78,6 +82,7 @@ export async function sendVendorMessage(
   if (!user?.email) {
     return { error: "You need to be logged in to contact a vendor." };
   }
+  if (!(await checkRateLimit("messageUser", user.id))) return { error: RATE_LIMIT_ERROR };
 
   // Recipients never come from the client: the fill_message_recipient
   // trigger addresses the message from the conversation id — the vendor's
@@ -139,6 +144,7 @@ export async function sendReply(
 ): Promise<SendMessageState> {
   const trimmed = content.trim();
   if (!trimmed && !attachment) return { error: "Write a message first." };
+  if (trimmed.length > MAX_MESSAGE_LENGTH) return { error: "That message is too long." };
   if (
     attachment &&
     (!attachment.path.startsWith(attachmentFolder(conversationId)) ||
@@ -155,6 +161,7 @@ export async function sendReply(
   if (!user?.email) {
     return { error: "You need to be logged in." };
   }
+  if (!(await checkRateLimit("messageUser", user.id))) return { error: RATE_LIMIT_ERROR };
 
   // RLS only returns rows from conversations the caller is part of, so an
   // empty result covers both "doesn't exist" and "not yours".

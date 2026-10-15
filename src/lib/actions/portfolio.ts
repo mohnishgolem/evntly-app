@@ -34,6 +34,16 @@ export async function uploadPortfolioItem(
     return { error: "That image is over 10 MB." };
   }
 
+  // The listing must be the caller's own — otherwise anyone could add photos
+  // to another vendor's profile. (Also enforced by the DB insert trigger.)
+  const { data: ownListing } = await supabase
+    .rpc("my_service_providers")
+    .select("id")
+    .eq("id", providerId)
+    .maybeSingle();
+  if (!ownListing) return { error: "You can only add photos to your own listing." };
+  if (caption.length > 300) return { error: "That caption is too long." };
+
   // Extension derived from the (allow-listed) MIME type, not the filename.
   const ext = EXT_BY_TYPE[file.type];
   const path = `${user.id}/${providerId}/${crypto.randomUUID()}.${ext}`;

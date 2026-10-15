@@ -16,9 +16,11 @@ const initialState: AuthFormState = null;
 export function AuthTabs({
   defaultTab = "signup",
   defaultRole = "customer",
+  next,
 }: {
   defaultTab?: "signup" | "login";
   defaultRole?: "customer" | "vendor";
+  next?: string;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState(defaultTab);
@@ -42,7 +44,7 @@ export function AuthTabs({
         <SignupForm defaultRole={defaultRole} />
       </TabsContent>
       <TabsContent value="login" className="pt-6">
-        <LoginForm />
+        <LoginForm next={next} />
       </TabsContent>
     </Tabs>
   );
@@ -174,13 +176,14 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
   );
 }
 
-function LoginForm() {
+function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
     <div className="space-y-4">
       <SocialButtons />
       <form action={formAction} className="space-y-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <div className="space-y-1.5">
           <Label htmlFor="login-email">Email</Label>
           <Input id="login-email" name="email" type="email" placeholder="you@example.com" required />

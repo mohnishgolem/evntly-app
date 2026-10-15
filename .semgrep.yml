@@ -1,0 +1,22 @@
+rules:
+  - id: evntly-service-role-in-client
+    message: The service-role client bypasses RLS and must never be imported from a client component.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include: ["src/components/**", "src/app/**/*client*"]
+    pattern: import $X from "@/lib/supabase/admin"
+  - id: evntly-unvalidated-redirect
+    message: Redirect target comes from the request — wrap it in safeNextPath().
+    severity: ERROR
+    languages: [typescript]
+    patterns:
+      - pattern-either:
+          - pattern: NextResponse.redirect(`${$ORIGIN}${$NEXT}`)
+          - pattern: redirect(searchParams.get(...))
+      - pattern-not: NextResponse.redirect(`${$ORIGIN}${safeNextPath(...)}`)
+  - id: evntly-public-service-key
+    message: Never expose the service-role key via a NEXT_PUBLIC_ variable.
+    severity: ERROR
+    languages: [typescript]
+    pattern-regex: NEXT_PUBLIC_[A-Z_]*SERVICE_ROLE

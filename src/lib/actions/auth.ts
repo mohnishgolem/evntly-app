@@ -4,6 +4,25 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/config";
+import { safeNextPath } from "@/lib/safe-redirect";
+import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+
+// Origin for links Supabase emails or redirects to (OAuth callback, password
+// reset). Taken from the request only when it's one of ours — never echo an
+// arbitrary Origin/Host into a link that lands in someone's inbox.
+async function appOrigin() {
+  const origin = (await headers()).get("origin");
+  const trusted = new Set(
+    [
+      SITE_URL,
+      "http://localhost:3000",
+      process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+      process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
+    ].filter(Boolean)
+  );
+  return origin && trusted.has(origin) ? origin : SITE_URL;
+}
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Enter your name"),
@@ -39,6 +58,9 @@ export async function signup(
   }
 
   const { fullName, email, password, role } = parsed.data;
+  if (!(await checkRateLimit("signupIp", await clientIp()))) {
+    return { error: RATE_LIMIT_ERROR };
+  }
   const supabase = await createClient();
 
   // full_name lives in Supabase Auth's user_metadata — the existing `users`
@@ -83,6 +105,12 @@ export async function login(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  const [ipOk, emailOk] = await Promise.all([
+    checkRateLimit("loginIp", await clientIp()),
+    checkRateLimit("loginEmail", parsed.data.email),
+  ]);
+  if (!ipOk || !emailOk) return { error: RATE_LIMIT_ERROR };
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
@@ -90,7 +118,16 @@ export async function login(
     return { error: "Incorrect email or password." };
   }
 
-  redirect("/dashboard");
+  const next = safeNextPath(formData.get("next")?.toString());
+
+  // Accounts with an authenticator app enrolled must finish a second step
+  // before the session is upgraded to aal2 (required for admin actions).
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+    redirect(`/login/mfa?next=${encodeURIComponent(next)}`);
+  }
+
+  redirect(next);
 }
 
 // role is only forced on brand-new sign-ups (from the signup form's
@@ -98,7 +135,7 @@ export async function login(
 // role is never stomped back to "customer" by the callback route.
 export async function signInWithOAuth(provider: "google" | "apple", role?: "customer" | "vendor") {
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const origin = await appOrigin();
   const callback = new URL(`${origin}/auth/callback`);
   if (role) callback.searchParams.set("role", role);
 
@@ -132,8 +169,16 @@ export async function requestPasswordReset(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  // Silently drop over-limit requests: same "success" response either way,
+  // so the form can't be used to spam someone's inbox or probe accounts.
+  const [ipOk, emailOk] = await Promise.all([
+    checkRateLimit("passwordResetIp", await clientIp()),
+    checkRateLimit("passwordResetEmail", parsed.data.email),
+  ]);
+  if (!ipOk || !emailOk) return { success: true };
+
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const origin = await appOrigin();
 
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
