@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
+
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Log in to your Evntly account.",
+};
 
 export default function LoginPage() {
   return (

@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
+
+export const metadata: Metadata = {
+  title: "Sign up",
+  description: "Create an Evntly account to plan an event or list your business.",
+};
 
 export default async function SignupPage({
   searchParams,

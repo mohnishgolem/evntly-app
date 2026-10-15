@@ -1,8 +1,34 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Users } from "lucide-react";
 import { getBundleWithParticipants } from "@/lib/data/bundles";
 import { getCurrentUser } from "@/lib/data/user";
 import { BookBundleForm } from "@/components/book-bundle-form";
+import { SITE_URL } from "@/lib/config";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const { pkg, initiatingVendorApproved } = await getBundleWithParticipants(id);
+  if (!pkg || pkg.status !== "active" || !initiatingVendorApproved) return {};
+
+  const title = `${pkg.name} — vendor bundle`;
+  const description =
+    pkg.description ||
+    `${pkg.participant_count || 1} vendors in one package from ${pkg.initiating_vendor_name ?? "Evntly vendors"}.`;
+  const url = `${SITE_URL}/bundles/${id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function BundleDetailPage({
   params,

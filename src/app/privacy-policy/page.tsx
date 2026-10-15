@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "What personal information Evntly collects, how it's used, and your rights.",
+  alternates: { canonical: "/privacy-policy" },
+};
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">

@@ -48,6 +48,10 @@ export function AuthTabs({
   );
 }
 
+// Apple isn't enabled as a provider in Supabase Auth yet (needs an Apple
+// Developer account + Services ID). Flip this once it is.
+const APPLE_SIGN_IN_ENABLED = false;
+
 // Shown on both the signup and login forms — the call's ask was social
 // sign-in "on all form variations", not just one.
 function SocialButtons({ role }: { role?: "customer" | "vendor" }) {
@@ -59,11 +63,13 @@ function SocialButtons({ role }: { role?: "customer" | "vendor" }) {
             <GoogleIcon /> Google
           </Button>
         </form>
-        <form action={signInWithOAuth.bind(null, "apple", role)} className="flex-1">
-          <Button type="submit" variant="outline" className="w-full gap-2">
-            <AppleIcon /> Apple
-          </Button>
-        </form>
+        {APPLE_SIGN_IN_ENABLED && (
+          <form action={signInWithOAuth.bind(null, "apple", role)} className="flex-1">
+            <Button type="submit" variant="outline" className="w-full gap-2">
+              <AppleIcon /> Apple
+            </Button>
+          </form>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
