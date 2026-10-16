@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-guard";
+import { isPaymentGuardRejection, recordBlockedPayment } from "@/lib/payment-guard-log";
 import { notify } from "@/lib/email";
 import { conversationIdFor } from "@/lib/messages";
 import { messageRecipientEmail } from "@/lib/supabase/admin";
@@ -99,19 +99,6 @@ export async function sendVendorMessage(
 
   const conversationId = conversationIdFor(vendorId, user.id);
 
-  const guard = scanForPaymentCircumvention(content);
-  if (guard.blocked) {
-    await supabase.from("leakage_events").insert({
-      sender_id: user.id,
-      sender_email: user.email,
-      conversation_id: conversationId,
-      category: guard.category,
-      original_snippet: guard.snippet,
-      redacted_message: null,
-    });
-    return { error: PAYMENT_GUARD_ERROR };
-  }
-
   const shouldEmail = !(await sentRecently(supabase, conversationId, user.id));
 
   const { data: message, error } = await supabase
@@ -126,6 +113,10 @@ export async function sendVendorMessage(
     .select("id")
     .single();
 
+  // Payment talk: blocked or just flagged depending on the DB guard mode.
+  if (isPaymentGuardRejection(error)) {
+    return recordBlockedPayment(supabase, { id: user.id, email: user.email }, conversationId, content);
+  }
   if (error) return { error: error.message };
 
   if (shouldEmail) await notifyNewMessage(message.id, displayName(user), content, conversationId);
@@ -174,19 +165,6 @@ export async function sendReply(
 
   if (!existing) return { error: "Conversation not found." };
 
-  const guard = scanForPaymentCircumvention(trimmed);
-  if (guard.blocked) {
-    await supabase.from("leakage_events").insert({
-      sender_id: user.id,
-      sender_email: user.email,
-      conversation_id: conversationId,
-      category: guard.category,
-      original_snippet: guard.snippet,
-      redacted_message: null,
-    });
-    return { error: PAYMENT_GUARD_ERROR };
-  }
-
   const shouldEmail = !(await sentRecently(supabase, conversationId, user.id));
 
   const { data: message, error } = await supabase
@@ -203,6 +181,9 @@ export async function sendReply(
     .select("id")
     .single();
 
+  if (isPaymentGuardRejection(error)) {
+    return recordBlockedPayment(supabase, { id: user.id, email: user.email }, conversationId, trimmed);
+  }
   if (error) return { error: error.message };
 
   if (shouldEmail) {

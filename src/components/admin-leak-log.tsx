@@ -20,7 +20,7 @@ const LEGACY = "legacy";
 const categoryKey = (c: string) => (c in CATEGORY_LABEL ? c : LEGACY);
 const categoryLabel = (c: string) => CATEGORY_LABEL[c] ?? "Contact info (legacy)";
 
-// Three blocked attempts is a pattern, not a slip of the tongue.
+// Three flagged attempts is a pattern, not a slip of the tongue.
 const REPEAT_THRESHOLD = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -82,7 +82,7 @@ export function AdminLeakLog({ events }: { events: LeakLogEntry[] }) {
   if (events.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No blocked attempts yet. Messages that try to arrange cash, PayID, bank transfer or
+        Nothing flagged yet. Messages that try to arrange cash, PayID, bank transfer or
         crypto payments outside Evntly will show up here.
       </p>
     );
@@ -91,12 +91,13 @@ export function AdminLeakLog({ events }: { events: LeakLogEntry[] }) {
   return (
     <div className="space-y-8">
       <p className="text-sm text-muted-foreground">
-        Messages blocked for trying to take payment outside Evntly. The message was never
-        delivered — the sender was asked to edit it.
+        Messages that tried to arrange payment outside Evntly. Until in-app payments launch
+        they&apos;re delivered and only flagged here; &ldquo;Blocked&rdquo; ones were stopped and the
+        sender was asked to edit them.
       </p>
 
       <div className="grid grid-cols-3 gap-3">
-        <Stat value={recent.length} label="Blocked, last 30 days" />
+        <Stat value={recent.length} label="Flagged, last 30 days" />
         <Stat value={senders.length} label="People involved" />
         <Stat
           value={repeat.length}
@@ -185,11 +186,14 @@ export function AdminLeakLog({ events }: { events: LeakLogEntry[] }) {
                   >
                     {categoryLabel(e.category)}
                   </Badge>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {e.delivered ? "Delivered" : "Blocked"}
+                  </span>
                   <time
+                    className="ml-auto text-xs text-muted-foreground"
                     suppressHydrationWarning
                     dateTime={e.created_at}
                     title={new Date(e.created_at).toLocaleString()}
-                    className="text-xs text-muted-foreground"
                   >
                     {formatDistanceToNowStrict(new Date(e.created_at), { addSuffix: true })}
                   </time>

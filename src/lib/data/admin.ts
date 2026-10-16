@@ -39,7 +39,7 @@ export async function getReportsForAdmin() {
 
 export type LeakLogEntry = Awaited<ReturnType<typeof getLeakLogForAdmin>>[number];
 
-// Blocked off-platform payment attempts (and legacy contact-info
+// Flagged off-platform payment attempts (and legacy contact-info
 // redactions), newest first. leakage_events is admin-only under RLS. Each
 // entry is tied back to the vendor listing its conversation belongs to
 // (conversation ids are "<providerId>:<customerUserId>") so the admin can

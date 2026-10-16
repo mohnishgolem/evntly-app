@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { scanForPaymentCircumvention, PAYMENT_GUARD_ERROR } from "@/lib/payment-guard";
+import { isPaymentGuardRejection, recordBlockedPayment } from "@/lib/payment-guard-log";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -24,19 +24,6 @@ export async function sendGroupMessage(threadId: string, content: string): Promi
     .maybeSingle();
   if (!thread) return { error: "Conversation not found." };
 
-  const guard = scanForPaymentCircumvention(trimmed);
-  if (guard.blocked) {
-    await supabase.from("leakage_events").insert({
-      sender_id: user.id,
-      sender_email: user.email,
-      conversation_id: threadId,
-      category: guard.category,
-      original_snippet: guard.snippet,
-      redacted_message: null,
-    });
-    return { error: PAYMENT_GUARD_ERROR };
-  }
-
   const { error } = await supabase.from("group_chat_messages").insert({
     thread_id: threadId,
     sender_email: user.email,
@@ -44,6 +31,10 @@ export async function sendGroupMessage(threadId: string, content: string): Promi
     content: trimmed,
     // participant_emails comes from the thread (fill_group_message_participants).
   });
+  // Payment talk: blocked or just flagged depending on the DB guard mode.
+  if (isPaymentGuardRejection(error)) {
+    return recordBlockedPayment(supabase, { id: user.id, email: user.email }, threadId, trimmed);
+  }
   if (error) return { error: error.message };
 
   revalidatePath(`/messages/group/${threadId}`);

@@ -915,6 +915,7 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           created_by: string | null
+          delivered: boolean
           id: string
           original_snippet: string | null
           recipient_email: string | null
@@ -931,6 +932,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           created_by?: string | null
+          delivered?: boolean
           id?: string
           original_snippet?: string | null
           recipient_email?: string | null
@@ -947,6 +949,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           created_by?: string | null
+          delivered?: boolean
           id?: string
           original_snippet?: string | null
           recipient_email?: string | null
