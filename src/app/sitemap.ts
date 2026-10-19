@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { SITE_URL } from "@/lib/config";
+import { LAUNCH_CATEGORIES, SITE_URL } from "@/lib/config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
@@ -9,7 +9,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     supabase
       .from("service_providers")
       .select("id, updated_at")
-      .eq("status", "approved"),
+      .eq("status", "approved")
+      .in("service_type", LAUNCH_CATEGORIES),
     supabase.from("combined_packages").select("id, updated_at").eq("status", "active"),
   ]);
 

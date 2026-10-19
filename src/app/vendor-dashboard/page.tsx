@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Clock, ShieldCheck, XCircle, PauseCircle } from "lucide-react";
+import { Clock, ShieldCheck, XCircle, PauseCircle, ImagePlus } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { categoryLabel } from "@/lib/config";
@@ -37,7 +37,14 @@ export default async function VendorDashboardPage() {
     );
   }
 
-  const { data: unreadCount } = await supabase.rpc("my_unread_message_count");
+  const [{ data: unreadCount }, { data: portfolioRows }] = await Promise.all([
+    supabase.rpc("my_unread_message_count"),
+    supabase
+      .from("portfolio_items")
+      .select("provider_id")
+      .in("provider_id", listings.map((l) => l.id)),
+  ]);
+  const listingsWithPhotos = new Set((portfolioRows ?? []).map((r) => r.provider_id));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -87,6 +94,18 @@ export default async function VendorDashboardPage() {
                   </Link>
                 )}
               </div>
+              {!listingsWithPhotos.has(listing.id) && (
+                <Link
+                  href="/vendor-dashboard/portfolio"
+                  className="mt-4 flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm"
+                >
+                  <ImagePlus className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span>
+                    <span className="font-medium">Add photos of your work.</span> Organisers compare
+                    portfolios before asking for a quote, and listings without photos are easy to skip.
+                  </span>
+                </Link>
+              )}
             </div>
           );
         })}

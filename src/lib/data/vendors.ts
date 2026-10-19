@@ -29,7 +29,8 @@ export async function searchVendors(filters: VendorFilters = {}) {
   let query = supabase
     .from("service_providers")
     .select(PUBLIC_VENDOR_COLUMNS)
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .in("service_type", LAUNCH_CATEGORIES);
 
   if (filters.category) {
     query = query.eq("service_type", filters.category);

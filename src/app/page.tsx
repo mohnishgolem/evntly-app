@@ -10,6 +10,13 @@ import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 
 const HERO_SCENARIOS = ["Weddings", "Birthdays", "Corporate events", "Engagements"];
 
+const listFormat = new Intl.ListFormat("en-AU", { style: "long", type: "conjunction" });
+
+// "DJ" stays upper-case; other labels read as ordinary nouns ("photographers").
+function pluralCategory(c: { value: string; label: string }) {
+  return c.value === "dj" ? "DJs" : `${c.label.toLowerCase()}s`;
+}
+
 export default async function HomePage() {
   const [vendors, session] = await Promise.all([getFeaturedVendors(8), getCurrentUser()]);
   const savedVendorIds = session?.profile?.saved_providers ?? [];
@@ -52,8 +59,8 @@ export default async function HomePage() {
             Find the right vendors for your next event
           </h1>
           <p className="mx-auto mb-8 max-w-xl text-lg text-balance text-white/85">
-            Browse trusted {launchVendorCategories.map((c) => c.label.toLowerCase()).join(", ")}{" "}
-            for your {HERO_SCENARIOS.join(", ").toLowerCase()} — no account needed to look around.
+            Browse trusted {listFormat.format(launchVendorCategories.map(pluralCategory))} for your{" "}
+            {listFormat.format(HERO_SCENARIOS).toLowerCase()} — no account needed to look around.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
