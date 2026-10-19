@@ -76,6 +76,11 @@ export function categoryLabel(value: string) {
   return VENDOR_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 }
 
+/** "DJs", "photographers": for running text. */
+export function categoryPlural(value: string) {
+  return value === "dj" ? "DJs" : `${categoryLabel(value).toLowerCase()}s`;
+}
+
 export function categoryIcon(value: string): LucideIcon {
   return VENDOR_CATEGORIES.find((c) => c.value === value)?.icon ?? PartyPopper;
 }

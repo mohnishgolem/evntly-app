@@ -2,14 +2,21 @@ import Link from "next/link";
 import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { QuoteActions } from "@/components/quote-actions";
 import { cn } from "@/lib/utils";
+import { categoryPlural } from "@/lib/config";
 import {
   effectiveQuoteStatus,
   quoteExpiresSoon,
   quoteTimeLeft,
 } from "@/lib/quote-expiry";
 import type { Database } from "@/lib/supabase/database.types";
+import type { SimilarVendor } from "@/lib/data/vendors";
 
-type Quote = Database["public"]["Tables"]["quote_requests"]["Row"];
+// Follow-up bookkeeping columns aren't part of what the list shows (and the
+// my_quote_requests RPC doesn't return them).
+type Quote = Omit<
+  Database["public"]["Tables"]["quote_requests"]["Row"],
+  "vendor_reminder_sent_at" | "client_reminder_sent_at" | "expiry_notice_sent_at"
+>;
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   pending: { label: "Waiting on vendor", className: "text-warning" },
@@ -20,7 +27,13 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
   expired: { label: "Expired", className: "text-muted-foreground" },
 };
 
-export function QuoteList({ quotes }: { quotes: Quote[] }) {
+export function QuoteList({
+  quotes,
+  alternatives = {},
+}: {
+  quotes: Quote[];
+  alternatives?: Record<string, SimilarVendor[]>;
+}) {
   return (
     <div className="space-y-4">
       {quotes.map((q) => {
@@ -79,6 +92,25 @@ export function QuoteList({ quotes }: { quotes: Quote[] }) {
                   Request a new quote
                 </Link>
               </p>
+            )}
+
+            {!!alternatives[q.id]?.length && (
+              <div className="mt-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  Other {q.service_type ? categoryPlural(q.service_type) : "vendors"} you could ask
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {alternatives[q.id].map((v) => (
+                    <Link
+                      key={v.id}
+                      href={`/vendor/${v.id}`}
+                      className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
+                    >
+                      {v.name} <span className="text-muted-foreground">· ${v.hourly_rate}/hr</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             {status === "quoted" && (

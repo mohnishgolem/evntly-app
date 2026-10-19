@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import { LAUNCH_CATEGORIES, LAUNCH_CITY } from "@/lib/config";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 import { PORTFOLIO_COLUMNS, REVIEW_COLUMNS } from "@/lib/public-columns";
@@ -96,3 +98,29 @@ export async function getVendorReviews(providerId: string) {
 }
 
 export const launchCity = LAUNCH_CITY;
+
+export type SimilarVendor = { id: string; name: string; hourly_rate: number; city: string | null };
+
+/**
+ * Up to `limit` approved vendors in a category, founding first then newest —
+ * the fallback suggestions when a quote request expires or is declined.
+ * Takes any client so the cron route (service role) can use it too.
+ */
+export async function findSimilarVendors(
+  client: SupabaseClient<Database>,
+  serviceType: string,
+  excludeIds: string[] = [],
+  limit = 3
+): Promise<SimilarVendor[]> {
+  if (!LAUNCH_CATEGORIES.includes(serviceType as (typeof LAUNCH_CATEGORIES)[number])) return [];
+  const { data } = await client
+    .from("service_providers")
+    .select("id, name, hourly_rate, city")
+    .eq("status", "approved")
+    .eq("service_type", serviceType)
+    .order("founding_vendor", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .order("id")
+    .limit(limit + excludeIds.length);
+  return (data ?? []).filter((v) => !excludeIds.includes(v.id)).slice(0, limit);
+}

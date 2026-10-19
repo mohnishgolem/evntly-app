@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       error_events: {
         Row: {
           created_at: string
@@ -1127,6 +1145,7 @@ export type Database = {
           call_time_window: string | null
           client_email: string
           client_name: string | null
+          client_reminder_sent_at: string | null
           client_user_id: string | null
           created_at: string
           created_by: string | null
@@ -1136,6 +1155,7 @@ export type Database = {
           event_date: string
           event_id: string | null
           event_type: string | null
+          expiry_notice_sent_at: string | null
           expires_at: string | null
           id: string
           location: string
@@ -1150,6 +1170,7 @@ export type Database = {
           vendor_id: string
           vendor_name: string | null
           vendor_note: string | null
+          vendor_reminder_sent_at: string | null
           vendor_user_id: string | null
         }
         Insert: {
@@ -1158,6 +1179,7 @@ export type Database = {
           call_time_window?: string | null
           client_email: string
           client_name?: string | null
+          client_reminder_sent_at?: string | null
           client_user_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1167,6 +1189,7 @@ export type Database = {
           event_date: string
           event_id?: string | null
           event_type?: string | null
+          expiry_notice_sent_at?: string | null
           expires_at?: string | null
           id?: string
           location: string
@@ -1181,6 +1204,7 @@ export type Database = {
           vendor_id: string
           vendor_name?: string | null
           vendor_note?: string | null
+          vendor_reminder_sent_at?: string | null
           vendor_user_id?: string | null
         }
         Update: {
@@ -1189,6 +1213,7 @@ export type Database = {
           call_time_window?: string | null
           client_email?: string
           client_name?: string | null
+          client_reminder_sent_at?: string | null
           client_user_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1198,6 +1223,7 @@ export type Database = {
           event_date?: string
           event_id?: string | null
           event_type?: string | null
+          expiry_notice_sent_at?: string | null
           expires_at?: string | null
           id?: string
           location?: string
@@ -1212,6 +1238,7 @@ export type Database = {
           vendor_id?: string
           vendor_name?: string | null
           vendor_note?: string | null
+          vendor_reminder_sent_at?: string | null
           vendor_user_id?: string | null
         }
         Relationships: []
