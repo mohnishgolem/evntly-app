@@ -12,6 +12,7 @@ import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
 import { PortfolioGallery } from "@/components/portfolio-gallery";
+import { FoundingBadge } from "@/components/founding-badge";
 import { serializeJsonLd } from "@/lib/json-ld";
 
 export async function generateMetadata({
@@ -107,6 +108,7 @@ export default async function VendorDetailPage({
                 <h1 className="text-2xl font-bold">{vendor.name}</h1>
                 {vendor.verified && <ShieldCheck className="h-5 w-5 text-primary" />}
               </div>
+              {vendor.founding_vendor && <FoundingBadge className="mb-2" />}
               <p className="text-muted-foreground">{categoryLabel(vendor.service_type)}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 {!!vendor.rating && vendor.rating > 0 && (

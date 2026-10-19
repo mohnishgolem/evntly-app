@@ -38,6 +38,31 @@ export async function setVendorStatus(
   return { success: true };
 }
 
+export async function setFoundingVendor(
+  vendorId: string,
+  founding: boolean
+): Promise<ActionState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+  if (typeof founding !== "boolean") return { error: "Invalid value." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("service_providers")
+    .update({ founding_vendor: founding })
+    .eq("id", vendorId)
+    .select("id");
+
+  if (error) return { error: error.message };
+  if (!data?.length) return { error: "Listing not found." };
+
+  // Founding vendors sort first and carry a badge on every public surface.
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/explore");
+  revalidatePath(`/vendor/${vendorId}`);
+  return { success: true };
+}
+
 export async function setUserRole(
   userId: string,
   role: "customer" | "vendor" | "admin"

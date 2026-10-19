@@ -3,17 +3,19 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { setVendorStatus, type VendorStatus } from "@/lib/actions/admin";
+import { setFoundingVendor, setVendorStatus, type VendorStatus } from "@/lib/actions/admin";
 
 export function AdminVendorActions({
   vendorId,
   currentStatus,
+  founding = false,
 }: {
   vendorId: string;
   // Omitted for the pending-review queue (Approve/Reject). Passed for
   // already-decided listings so the right follow-up action shows instead —
   // previously there was no way to suspend an approved vendor at all.
   currentStatus?: Exclude<VendorStatus, "pending_review">;
+  founding?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -23,6 +25,15 @@ export function AdminVendorActions({
     startTransition(async () => {
       setError(null);
       const res = await setVendorStatus(vendorId, status);
+      if (res?.error) setError(res.error);
+      else router.refresh();
+    });
+  }
+
+  function toggleFounding() {
+    startTransition(async () => {
+      setError(null);
+      const res = await setFoundingVendor(vendorId, !founding);
       if (res?.error) setError(res.error);
       else router.refresh();
     });
@@ -47,6 +58,15 @@ export function AdminVendorActions({
             until approved again). */}
         <Button size="sm" variant="ghost" disabled={pending} onClick={() => act("pending_review")}>
           Move to pending
+        </Button>
+        <Button
+          size="sm"
+          variant={founding ? "secondary" : "ghost"}
+          disabled={pending}
+          aria-pressed={founding}
+          onClick={toggleFounding}
+        >
+          {founding ? "Remove founding" : "Mark founding"}
         </Button>
         {errorLine}
       </div>

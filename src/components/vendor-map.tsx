@@ -10,6 +10,7 @@ import { LocateFixed, Minus, Plus, Scan, Star, X } from "lucide-react";
 import { categoryColor, categoryIcon, categoryLabel } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { THEME_CHANGE_EVENT } from "@/components/theme-toggle";
+import { FoundingBadge } from "@/components/founding-badge";
 import type { PublicVendor } from "@/lib/vendor-columns";
 
 type Vendor = PublicVendor;
@@ -241,8 +242,11 @@ function VendorCard({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] leading-tight font-semibold text-foreground">
-            {vendor.name}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[15px] leading-tight font-semibold text-foreground">
+              {vendor.name}
+            </span>
+            {vendor.founding_vendor && <FoundingBadge compact className="shrink-0 px-1.5 py-0.5" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-muted-foreground">
             {categoryLabel(vendor.service_type)}

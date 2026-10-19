@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
+import { FoundingBadge } from "@/components/founding-badge";
 import { AdminUserRoles } from "@/components/admin-user-roles";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminLeakLog } from "@/components/admin-leak-log";
@@ -138,7 +139,10 @@ export default async function AdminPage() {
                   className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">{v.name}</p>
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                      {v.name}
+                      {v.founding_vendor && <FoundingBadge className="px-2 py-0.5" />}
+                    </p>
                     <p className="break-all text-xs text-muted-foreground">{v.owner_email}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
@@ -146,6 +150,7 @@ export default async function AdminPage() {
                     <AdminVendorActions
                       vendorId={v.id}
                       currentStatus={v.status as "approved" | "rejected" | "suspended"}
+                      founding={!!v.founding_vendor}
                     />
                   </div>
                 </div>
