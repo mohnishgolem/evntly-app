@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, PartyPopper } from "lucide-react";
@@ -15,6 +16,11 @@ import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
 import { BOOKING_COLUMNS, type ParticipantBooking } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Event board",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

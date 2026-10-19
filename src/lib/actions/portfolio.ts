@@ -7,6 +7,7 @@ import {
   isOwnPortfolioPath,
   portfolioFileError,
   portfolioMediaType,
+  portfolioPathFromUrl,
 } from "@/lib/portfolio-media";
 
 export type ActionState = { error?: string; success?: boolean } | null;
@@ -84,14 +85,26 @@ export async function deletePortfolioItem(itemId: string): Promise<ActionState> 
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
 
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from("portfolio_items")
     .delete()
     .eq("id", itemId)
-    .eq("owner_user_id", user.id);
+    .eq("owner_user_id", user.id)
+    .select("provider_id, media_url");
 
   if (error) return { error: error.message };
 
+  // Remove the file too, so deleted photos and videos stop being publicly
+  // reachable. Only paths inside the caller's own folder (storage policies
+  // enforce that as well); a failure here leaves an orphan, not an error.
+  const item = deleted?.[0];
+  const path = item?.media_url ? portfolioPathFromUrl(item.media_url) : null;
+  if (path?.startsWith(`${user.id}/`)) {
+    const { error: removeError } = await supabase.storage.from(PORTFOLIO_BUCKET).remove([path]);
+    if (removeError) console.error("[portfolio] file not removed:", removeError.message);
+  }
+
   revalidatePath("/vendor-dashboard/portfolio");
+  if (item?.provider_id) revalidatePath(`/vendor/${item.provider_id}`);
   return { success: true };
 }

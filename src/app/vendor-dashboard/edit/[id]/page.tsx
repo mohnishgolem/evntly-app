@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { EditListingForm } from "@/components/edit-listing-form";
+
+export const metadata: Metadata = {
+  title: "Edit listing",
+  robots: { index: false, follow: false },
+};
 
 export default async function EditListingPage({
   params,

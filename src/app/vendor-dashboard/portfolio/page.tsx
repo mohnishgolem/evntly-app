@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/user";
@@ -6,6 +7,11 @@ import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { PORTFOLIO_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Portfolio",
+  robots: { index: false, follow: false },
+};
 
 export default async function VendorPortfolioPage() {
   const session = await getCurrentUser();

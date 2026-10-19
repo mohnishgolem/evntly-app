@@ -52,3 +52,12 @@ export function isOwnPortfolioPath(path: string, userId: string, providerId: str
     rest.endsWith(`.${EXT_BY_TYPE[mime]}`)
   );
 }
+
+/** The storage path inside the portfolio bucket for one of its public URLs. */
+export function portfolioPathFromUrl(url: string) {
+  const marker = `/storage/v1/object/public/${PORTFOLIO_BUCKET}/`;
+  const at = url.indexOf(marker);
+  if (at === -1) return null;
+  const path = decodeURIComponent(url.slice(at + marker.length).split(/[?#]/)[0]);
+  return path.includes("..") ? null : path;
+}

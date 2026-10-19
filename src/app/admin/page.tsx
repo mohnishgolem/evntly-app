@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote, Bug } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +18,11 @@ import { AdminReports } from "@/components/admin-reports";
 import { AdminLeakLog } from "@/components/admin-leak-log";
 import { AdminErrorLog } from "@/components/admin-error-log";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminPage() {
   const { session, admin, mfa } = await getAdminSession();

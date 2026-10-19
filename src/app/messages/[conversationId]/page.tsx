@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,6 +9,11 @@ import { conversationIdFor, isLegacyConversationId } from "@/lib/messages";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import { BlockUserButton, UnblockButton } from "@/components/block-user";
 import { ATTACHMENT_BUCKET } from "@/lib/attachments";
+
+export const metadata: Metadata = {
+  title: "Conversation",
+  robots: { index: false, follow: false },
+};
 
 export default async function MessageThreadPage({
   params,

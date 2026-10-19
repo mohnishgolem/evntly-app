@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { categoryLabel } from "@/lib/config";
@@ -6,6 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { ApplyToEventForm } from "@/components/apply-to-event-form";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
+
+export const metadata: Metadata = {
+  title: "Event feed",
+  robots: { index: false, follow: false },
+};
 
 export default async function VendorEventFeedPage() {
   const session = await getCurrentUser();

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Clock, ShieldCheck, XCircle, PauseCircle, ImagePlus } from "lucide-react";
@@ -7,6 +8,11 @@ import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
+
+export const metadata: Metadata = {
+  title: "Vendor dashboard",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: string }> = {
   pending_review: { icon: Clock, label: "Under review", color: "text-warning" },

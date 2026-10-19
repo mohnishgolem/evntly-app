@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
@@ -5,6 +6,11 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { BUNDLE_BOOKING_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Bundle bookings",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

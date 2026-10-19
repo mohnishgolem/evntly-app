@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ChevronRight, LogOut, Mail, ShieldCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { logout } from "@/lib/actions/auth";
+
+export const metadata: Metadata = {
+  title: "Account settings",
+  robots: { index: false, follow: false },
+};
 
 function Row({
   icon: Icon,

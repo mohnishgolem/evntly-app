@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/user";
@@ -8,6 +9,11 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

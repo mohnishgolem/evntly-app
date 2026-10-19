@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +12,11 @@ import {
   quoteExpiresSoon,
   quoteTimeLeft,
 } from "@/lib/quote-expiry";
+
+export const metadata: Metadata = {
+  title: "Quote requests",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Needs your response",

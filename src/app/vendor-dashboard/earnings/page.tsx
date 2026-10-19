@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { requireVendor } from "@/lib/data/user";
@@ -6,6 +7,11 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { EarningsChart, type EarningsMonth } from "@/components/earnings-chart";
 import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Earnings",
+  robots: { index: false, follow: false },
+};
 
 const aud = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });

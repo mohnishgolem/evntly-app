@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
@@ -7,6 +8,11 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Your bookings",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

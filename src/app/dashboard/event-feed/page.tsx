@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
@@ -9,6 +10,11 @@ import { EventApplicationActions } from "@/components/event-application-actions"
 import { DashboardNav } from "@/components/dashboard-nav";
 import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_COLUMNS, type ParticipantApplication } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Event feed",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

@@ -4,6 +4,7 @@ import {
   portfolioFileError,
   portfolioMediaType,
   portfolioPath,
+  portfolioPathFromUrl,
 } from "@/lib/portfolio-media";
 
 describe("portfolio media rules", () => {
@@ -29,5 +30,13 @@ describe("portfolio media rules", () => {
     expect(isOwnPortfolioPath(path, "u2", "p1", "video/mp4")).toBe(false);
     expect(isOwnPortfolioPath(path, "u1", "p1", "image/png")).toBe(false);
     expect(isOwnPortfolioPath(`u1/p1/sub/${path.split("/").pop()}`, "u1", "p1", "video/mp4")).toBe(false);
+  });
+
+  it("maps a public URL back to its storage path", () => {
+    const base = "https://x.supabase.co/storage/v1/object/public/portfolio/";
+    expect(portfolioPathFromUrl(`${base}u1/p1/a.jpg`)).toBe("u1/p1/a.jpg");
+    expect(portfolioPathFromUrl(`${base}u1/p1/a.jpg?t=1`)).toBe("u1/p1/a.jpg");
+    expect(portfolioPathFromUrl(`${base}u1/../u2/a.jpg`)).toBeNull();
+    expect(portfolioPathFromUrl("https://images.unsplash.com/photo-1")).toBeNull();
   });
 });

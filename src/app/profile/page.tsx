@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PushToggle } from "@/components/push-toggle";
 import { getVapidPublicKey } from "@/lib/push";
@@ -18,6 +19,11 @@ import {
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
+
+export const metadata: Metadata = {
+  title: "Profile",
+  robots: { index: false, follow: false },
+};
 
 function Row({
   icon: Icon,

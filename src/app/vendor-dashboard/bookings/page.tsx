@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
@@ -8,6 +9,11 @@ import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Vendor bookings",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning",

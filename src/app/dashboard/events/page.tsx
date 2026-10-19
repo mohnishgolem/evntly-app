@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
+
+export const metadata: Metadata = {
+  title: "My events",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },

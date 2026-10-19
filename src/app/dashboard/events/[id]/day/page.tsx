@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -7,6 +8,11 @@ import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { EventTaskList } from "@/components/event-task-list";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Event day",
+  robots: { index: false, follow: false },
+};
 
 export default async function EventDayPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getCurrentUser();

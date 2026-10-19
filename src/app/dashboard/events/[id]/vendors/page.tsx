@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorSelectionGrid } from "@/components/vendor-selection-grid";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
+
+export const metadata: Metadata = {
+  title: "Event vendors",
+  robots: { index: false, follow: false },
+};
 
 type Vendor = PublicVendor;
 

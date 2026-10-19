@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
@@ -6,6 +7,11 @@ import { maskContactInfo } from "@/lib/contact-reveal";
 import { attachmentLabel } from "@/lib/attachments";
 import { PushToggle } from "@/components/push-toggle";
 import { getVapidPublicKey } from "@/lib/push";
+
+export const metadata: Metadata = {
+  title: "Messages",
+  robots: { index: false, follow: false },
+};
 
 export default async function MessagesPage() {
   const session = await getCurrentUser();

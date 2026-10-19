@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { UnblockButton } from "@/components/block-user";
+
+export const metadata: Metadata = {
+  title: "Blocked people",
+  robots: { index: false, follow: false },
+};
 
 export default async function BlockedPeoplePage() {
   const session = await getCurrentUser();

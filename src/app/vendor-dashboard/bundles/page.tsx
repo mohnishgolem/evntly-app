@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { getVendorPackages, getPendingInvitesForVendor } from "@/lib/data/bundles";
@@ -5,6 +6,11 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { CreateBundleForm } from "@/components/create-bundle-form";
 import { PackageInviteActions } from "@/components/package-invite-actions";
+
+export const metadata: Metadata = {
+  title: "Your bundles",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Waiting on other vendors",

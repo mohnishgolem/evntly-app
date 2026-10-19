@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { GroupChat } from "@/components/group-chat";
 import { GROUP_MESSAGE_COLUMNS, GROUP_THREAD_COLUMNS } from "@/lib/public-columns";
+
+export const metadata: Metadata = {
+  title: "Group chat",
+  robots: { index: false, follow: false },
+};
 
 export default async function GroupChatPage({
   params,

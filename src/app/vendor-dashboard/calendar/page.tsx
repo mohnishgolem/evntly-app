@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
@@ -5,6 +6,11 @@ import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { VendorCalendar } from "@/components/vendor-calendar";
 import { CalendarSync } from "@/components/calendar-sync";
 import { SITE_URL } from "@/lib/config";
+
+export const metadata: Metadata = {
+  title: "Calendar",
+  robots: { index: false, follow: false },
+};
 
 export default async function VendorCalendarPage() {
   const session = await requireVendor("/vendor-dashboard/calendar");

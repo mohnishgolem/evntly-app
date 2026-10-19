@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/user";
@@ -6,6 +7,11 @@ import { QuoteList } from "@/components/quote-list";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
+
+export const metadata: Metadata = {
+  title: "Your quote requests",
+  robots: { index: false, follow: false },
+};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
