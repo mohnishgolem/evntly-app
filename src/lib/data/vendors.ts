@@ -12,8 +12,9 @@ export async function getFeaturedVendors(limit = 8) {
     .select(PUBLIC_VENDOR_COLUMNS)
     .eq("status", "approved")
     .in("service_type", LAUNCH_CATEGORIES)
-    // Founding vendors first, then newest. Rating isn't a useful default
-    // until there are enough real reviews to rank by.
+    // Real vendors before sample listings, then founding vendors, then
+    // newest. Rating isn't a useful default until there are real reviews.
+    .order("is_demo", { ascending: true })
     .order("founding_vendor", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .order("id")
@@ -57,6 +58,7 @@ export async function searchVendors(filters: VendorFilters = {}) {
   }
 
   const { data } = await query
+    .order("is_demo", { ascending: true })
     .order("founding_vendor", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .order("id");
@@ -118,6 +120,7 @@ export async function findSimilarVendors(
     .select("id, name, hourly_rate, city")
     .eq("status", "approved")
     .eq("service_type", serviceType)
+    .order("is_demo", { ascending: true })
     .order("founding_vendor", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .order("id")

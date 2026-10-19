@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from("service_providers")
       .select("id, updated_at")
       .eq("status", "approved")
+      .eq("is_demo", false)
       .in("service_type", LAUNCH_CATEGORIES),
     supabase.from("combined_packages").select("id, updated_at").eq("status", "active"),
   ]);

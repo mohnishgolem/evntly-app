@@ -135,6 +135,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
       .select(PUBLIC_VENDOR_COLUMNS)
       .eq("status", "approved")
       .in("service_type", unfilledServices)
+      .order("is_demo", { ascending: true })
       .order("founding_vendor", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .order("id")

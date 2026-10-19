@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Star, ShieldCheck } from "lucide-react";
 import { categoryLabel, categoryIcon, SITE_URL } from "@/lib/config";
 import { FoundingBadge } from "@/components/founding-badge";
+import { SampleBadge } from "@/components/sample-badge";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import type { PublicVendor } from "@/lib/vendor-columns";
@@ -38,6 +39,7 @@ export function VendorCard({
         <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col items-start gap-1.5">
             {vendor.founding_vendor && <FoundingBadge compact />}
+            {vendor.is_demo && <SampleBadge compact />}
             {vendor.available && (
               <div className="flex items-center gap-1 overflow-hidden rounded-full bg-background px-2.5 py-1 text-xs font-semibold text-success shadow-sm">
                 <span className="size-1.5 shrink-0 rounded-full bg-success" />

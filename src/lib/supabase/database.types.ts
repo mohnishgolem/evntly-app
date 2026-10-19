@@ -1429,6 +1429,7 @@ export type Database = {
           experience_years: number | null
           founding_vendor: boolean | null
           gst_registered: boolean
+          is_demo: boolean
           hourly_rate: number
           id: string
           languages: string[] | null
@@ -1475,6 +1476,7 @@ export type Database = {
           experience_years?: number | null
           founding_vendor?: boolean | null
           gst_registered?: boolean
+          is_demo?: boolean
           hourly_rate: number
           id?: string
           languages?: string[] | null
@@ -1521,6 +1523,7 @@ export type Database = {
           experience_years?: number | null
           founding_vendor?: boolean | null
           gst_registered?: boolean
+          is_demo?: boolean
           hourly_rate?: number
           id?: string
           languages?: string[] | null
@@ -1755,6 +1758,7 @@ export type Database = {
           experience_years: number | null
           founding_vendor: boolean | null
           gst_registered: boolean
+          is_demo: boolean
           hourly_rate: number
           id: string
           languages: string[] | null
@@ -1925,6 +1929,7 @@ export type Database = {
           experience_years: number | null
           founding_vendor: boolean | null
           gst_registered: boolean
+          is_demo: boolean
           hourly_rate: number
           id: string
           languages: string[] | null

@@ -11,6 +11,7 @@ import { categoryColor, categoryIcon, categoryLabel } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { THEME_CHANGE_EVENT } from "@/components/theme-toggle";
 import { FoundingBadge } from "@/components/founding-badge";
+import { SampleBadge } from "@/components/sample-badge";
 import type { PublicVendor } from "@/lib/vendor-columns";
 
 type Vendor = PublicVendor;
@@ -247,6 +248,7 @@ function VendorCard({
               {vendor.name}
             </span>
             {vendor.founding_vendor && <FoundingBadge compact className="shrink-0 px-1.5 py-0.5" />}
+            {vendor.is_demo && <SampleBadge compact className="shrink-0 px-1.5 py-0.5" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-muted-foreground">
             {categoryLabel(vendor.service_type)}

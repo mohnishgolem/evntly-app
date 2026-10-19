@@ -13,6 +13,7 @@ import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
 import { PortfolioGallery } from "@/components/portfolio-gallery";
 import { FoundingBadge } from "@/components/founding-badge";
+import { SampleBadge } from "@/components/sample-badge";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { formatAbn } from "@/lib/abn";
 
@@ -37,6 +38,8 @@ export async function generateMetadata({
     description,
     alternates: { canonical: url },
     openGraph: { title, description, url, type: "profile" },
+    // Sample listings aren't real businesses: keep them out of search.
+    ...(vendor.is_demo ? { robots: { index: false, follow: false } } : {}),
     twitter: { card: "summary_large_image", title, description },
   };
 }
@@ -96,11 +99,13 @@ export default async function VendorDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <script
-        type="application/ld+json"
-        // Vendor name/bio are attacker-controlled — see serializeJsonLd.
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
-      />
+      {!vendor.is_demo && (
+        <script
+          type="application/ld+json"
+          // Vendor name/bio are attacker-controlled — see serializeJsonLd.
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+        />
+      )}
       <div className="grid gap-8 md:grid-cols-3">
         <div className="md:col-span-2">
           <div className="mb-4 flex items-start justify-between gap-4">
@@ -110,6 +115,7 @@ export default async function VendorDetailPage({
                 {vendor.verified && <ShieldCheck className="h-5 w-5 text-primary" />}
               </div>
               {vendor.founding_vendor && <FoundingBadge className="mb-2" />}
+              {vendor.is_demo && <SampleBadge className="mb-2" />}
               <p className="text-muted-foreground">{categoryLabel(vendor.service_type)}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 {!!vendor.rating && vendor.rating > 0 && (
@@ -172,9 +178,18 @@ export default async function VendorDetailPage({
             </div>
           )}
 
+          {vendor.is_demo && (
+            <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">
+              This is a sample listing that shows how vendor profiles work on Evntly. It isn&apos;t a
+              real business, its photos are stock images, and quote requests to it won&apos;t be
+              answered.
+            </p>
+          )}
           {portfolio.length > 0 && (
             <section className="mb-8">
-              <h2 className="mb-3 text-lg font-semibold">Portfolio</h2>
+              <h2 className="mb-3 text-lg font-semibold">
+                {vendor.is_demo ? "Sample photos" : "Portfolio"}
+              </h2>
               <PortfolioGallery items={portfolio} vendorName={vendor.name} />
             </section>
           )}
