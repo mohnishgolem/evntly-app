@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import { attachmentLabel } from "@/lib/attachments";
+import { PushToggle } from "@/components/push-toggle";
+import { getVapidPublicKey } from "@/lib/push";
 
 export default async function MessagesPage() {
   const session = await getCurrentUser();
@@ -12,11 +14,15 @@ export default async function MessagesPage() {
   const supabase = await createClient();
   // One row per conversation, newest first, with the counterpart already
   // reduced to a display name — users can't read each other's emails.
-  const { data: threads } = await supabase.rpc("my_conversations");
+  const [{ data: threads }, pushPublicKey] = await Promise.all([
+    supabase.rpc("my_conversations"),
+    getVapidPublicKey(),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Messages</h1>
+      <PushToggle publicKey={pushPublicKey} compact />
       {!threads || threads.length === 0 ? (
         <p className="text-sm text-muted-foreground">No conversations yet.</p>
       ) : (

@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { PushToggle } from "@/components/push-toggle";
+import { getVapidPublicKey } from "@/lib/push";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -55,6 +57,7 @@ export default async function ProfilePage() {
     supabase.rpc("my_service_providers").select("id").limit(1).maybeSingle(),
   ]);
 
+  const pushPublicKey = await getVapidPublicKey();
   const savedCount = session.profile?.saved_providers?.length ?? 0;
   const isAdmin = session.profile?.role === "admin";
   const label = session.displayName || email;
@@ -103,6 +106,10 @@ export default async function ProfilePage() {
           <ChevronRight className="size-4 text-background/60" />
         </Link>
       )}
+
+      <div className="mb-6">
+        <PushToggle publicKey={pushPublicKey} />
+      </div>
 
       <div className="mb-6 overflow-hidden rounded-2xl bg-secondary">
         <Row icon={Settings} label="Account settings" href="/dashboard/settings" />

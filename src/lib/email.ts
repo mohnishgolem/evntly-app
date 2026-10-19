@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { Resend } from "resend";
 import { SITE_URL } from "@/lib/config";
+import { sendPushToEmail } from "@/lib/push";
 
 // Transactional notification emails. Sending is scheduled with after() so a
 // slow or failing email provider never delays or fails the user's action —
@@ -79,9 +80,21 @@ function renderText({ heading, lines, quote, cta }: Notification) {
 // bounce, which hurts the sending domain's reputation with Resend.
 const UNDELIVERABLE_DOMAIN = /(\.(test|example|invalid|localhost)|@example\.(com|net|org))$/i;
 
+// Every notification is also pushed to the recipient's devices that have
+// push turned on (looked up by the same email address).
 export function notify(notification: Notification) {
   if (!isDeliverable(notification.to)) return;
-  after(() => sendEmail(notification));
+  const to = notification.to!.trim();
+  after(() =>
+    Promise.all([
+      sendEmail(notification),
+      sendPushToEmail(to, {
+        title: notification.heading,
+        body: notification.quote?.trim() || notification.lines[0] || notification.subject,
+        url: notification.cta.path,
+      }),
+    ]).then(() => undefined)
+  );
 }
 
 function isDeliverable(to: string | null | undefined) {
