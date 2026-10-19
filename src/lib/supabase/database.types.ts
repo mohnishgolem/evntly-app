@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_budget_items: {
+        Row: {
+          amount: number
+          created_at: string
+          event_id: string
+          id: string
+          label: string
+          organiser_user_id: string
+          paid: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_id: string
+          id?: string
+          label: string
+          organiser_user_id?: string
+          paid?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          label?: string
+          organiser_user_id?: string
+          paid?: boolean
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string

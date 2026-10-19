@@ -11,6 +11,9 @@ import { PostEventButton } from "@/components/post-event-button";
 import { QuoteList } from "@/components/quote-list";
 import { BookingList } from "@/components/booking-list";
 import { VendorCard } from "@/components/vendor-card";
+import { BudgetTracker } from "@/components/budget-tracker";
+import { summarizeBudget } from "@/lib/budget";
+import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
@@ -88,7 +91,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
 
   if (!event) notFound();
 
-  const [{ data: listing }, { data: quotes }, { data: bookings }, { data: myReviews }] =
+  const [{ data: listing }, { data: quotes }, { data: bookings }, { data: myReviews }, { data: budgetItems }] =
     await Promise.all([
       supabase.from("event_listings").select("*").eq("source_event_id", id).maybeSingle(),
       supabase.rpc("my_quote_requests", { as_role: "client" }).eq("event_id", id),
@@ -99,6 +102,11 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
         .eq("client_user_id", session.user.id)
         .order("event_date", { ascending: false }),
       supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
+      supabase
+        .from("event_budget_items")
+        .select("id, label, amount, paid")
+        .eq("event_id", id)
+        .order("created_at"),
     ]);
 
   let applicationCount = 0;
@@ -143,6 +151,34 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
     suggestedVendors = data ?? [];
   }
 
+  const openQuotes = allQuotes.filter((q) => effectiveQuoteStatus(q) === "quoted");
+  const ownCosts = (budgetItems ?? []).map((i) => ({ ...i, amount: Number(i.amount) }));
+  const budgetSummary = summarizeBudget({
+    budget: Number(event.budget_total),
+    bookings: allBookings,
+    openQuotes,
+    items: ownCosts,
+  });
+  const budgetLines = [
+    ...allBookings
+      .filter((b) => b.status !== "cancelled" && b.total_price != null)
+      .map((b) => ({
+        id: b.id,
+        kind: "booking" as const,
+        label: `${b.provider_name ?? "Vendor"} (${categoryLabel(b.service_type)})`,
+        amount: Number(b.total_price),
+      })),
+    ...openQuotes
+      .filter((q) => q.quoted_amount != null)
+      .map((q) => ({
+        id: q.id,
+        kind: "quote" as const,
+        label: `${q.vendor_name ?? "Vendor"} (${categoryLabel(q.service_type ?? "")})`,
+        amount: Number(q.quoted_amount),
+      })),
+    ...ownCosts.map((i) => ({ id: i.id, kind: "item" as const, label: i.label, amount: i.amount, paid: i.paid })),
+  ];
+
   const stage = computeStage({ event, hasAnyQuote: allQuotes.length > 0, bookings: allBookings });
 
   const bookedVendors = allBookings.filter((b) => b.status !== "cancelled");
@@ -169,14 +205,15 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
         {event.event_type} in {event.suburb}
       </h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        {event.event_date} · {event.guest_count} guests · Budget $
-        {event.budget_total.toLocaleString()}
+        {event.event_date} · {event.guest_count} guests
         {event.notes ? ` · ${event.notes}` : ""}
       </p>
 
       <DashboardNav items={NAV_ITEMS} />
 
       <EventStageTracker currentStage={stage} />
+
+      <BudgetTracker eventId={event.id} summary={budgetSummary} lines={budgetLines} />
 
       {stage >= 2 && (
         <section className="mb-8">
