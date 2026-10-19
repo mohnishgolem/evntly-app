@@ -80,30 +80,38 @@ function renderText({ heading, lines, quote, cta }: Notification) {
 const UNDELIVERABLE_DOMAIN = /(\.(test|example|invalid|localhost)|@example\.(com|net|org))$/i;
 
 export function notify(notification: Notification) {
+  if (!isDeliverable(notification.to)) return;
+  after(() => sendEmail(notification));
+}
+
+function isDeliverable(to: string | null | undefined) {
+  const address = to?.trim();
+  return !!address && !UNDELIVERABLE_DOMAIN.test(address);
+}
+
+/** Sends now and resolves when done; never throws. Prefer notify() in actions. */
+export async function sendEmail(notification: Notification) {
   const to = notification.to?.trim();
-  if (!to || UNDELIVERABLE_DOMAIN.test(to)) return;
+  if (!to || !isDeliverable(to)) return;
+  const resend = getClient();
+  const from = process.env.EMAIL_FROM;
+  if (!resend || !from) {
+    console.warn(`[email] RESEND_API_KEY/EMAIL_FROM not set — skipped "${notification.subject}"`);
+    return;
+  }
 
-  after(async () => {
-    const resend = getClient();
-    const from = process.env.EMAIL_FROM;
-    if (!resend || !from) {
-      console.warn(`[email] RESEND_API_KEY/EMAIL_FROM not set — skipped "${notification.subject}"`);
-      return;
-    }
-
-    try {
-      const { error } = await resend.emails.send({
-        from,
-        to,
-        subject: notification.subject,
-        html: renderHtml(notification),
-        text: renderText(notification),
-      });
-      if (error) console.error(`[email] failed "${notification.subject}":`, error.message);
-    } catch (err) {
-      console.error(`[email] failed "${notification.subject}":`, err);
-    }
-  });
+  try {
+    const { error } = await resend.emails.send({
+      from,
+      to,
+      subject: notification.subject,
+      html: renderHtml(notification),
+      text: renderText(notification),
+    });
+    if (error) console.error(`[email] failed "${notification.subject}":`, error.message);
+  } catch (err) {
+    console.error(`[email] failed "${notification.subject}":`, err);
+  }
 }
 
 export function formatEventDate(date: string | null | undefined) {

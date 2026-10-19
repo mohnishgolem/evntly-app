@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote } from "lucide-react";
+import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote, Bug } from "lucide-react";
 import Link from "next/link";
 import { getAdminSession } from "@/lib/data/user";
 import {
@@ -7,6 +7,7 @@ import {
   getAllUsersForAdmin,
   getReportsForAdmin,
   getLeakLogForAdmin,
+  getErrorSummaryForAdmin,
 } from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
@@ -14,6 +15,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { AdminUserRoles } from "@/components/admin-user-roles";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminLeakLog } from "@/components/admin-leak-log";
+import { AdminErrorLog } from "@/components/admin-error-log";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default async function AdminPage() {
@@ -40,11 +42,12 @@ export default async function AdminPage() {
     );
   }
 
-  const [vendors, users, reports, leakLog] = await Promise.all([
+  const [vendors, users, reports, leakLog, errors] = await Promise.all([
     getAllVendorsForAdmin(),
     getAllUsersForAdmin(),
     getReportsForAdmin(),
     getLeakLogForAdmin(),
+    getErrorSummaryForAdmin(),
   ]);
 
   const pending = vendors.filter((v) => v.status === "pending_review");
@@ -92,6 +95,9 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="leak-log" className="shrink-0">
             <Banknote /> Leak Log
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="shrink-0">
+            <Bug /> Errors{errors.length > 0 ? ` (${errors.length})` : ""}
           </TabsTrigger>
         </TabsList>
 
@@ -169,6 +175,10 @@ export default async function AdminPage() {
 
         <TabsContent value="leak-log">
           <AdminLeakLog events={leakLog} />
+        </TabsContent>
+
+        <TabsContent value="errors">
+          <AdminErrorLog errors={errors} />
         </TabsContent>
       </Tabs>
     </div>

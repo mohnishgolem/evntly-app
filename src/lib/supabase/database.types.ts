@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      error_events: {
+        Row: {
+          created_at: string
+          digest: string | null
+          fingerprint: string
+          id: number
+          message: string
+          path: string | null
+          route: string | null
+          source: string
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          digest?: string | null
+          fingerprint: string
+          id?: never
+          message: string
+          path?: string | null
+          route?: string | null
+          source: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          digest?: string | null
+          fingerprint?: string
+          id?: never
+          message?: string
+          path?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_email: string
@@ -1613,6 +1655,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_error_summary: {
+        Args: { p_days?: number }
+        Returns: {
+          fingerprint: string
+          first_seen: string
+          last_digest: string
+          last_path: string
+          last_route: string
+          last_seen: string
+          last_stack: string
+          message: string
+          occurrences: number
+          source: string
+        }[]
+      }
       accept_event_application: {
         Args: { p_application_id: string }
         Returns: Json

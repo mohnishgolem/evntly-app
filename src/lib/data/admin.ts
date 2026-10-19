@@ -67,3 +67,13 @@ export async function getLeakLogForAdmin() {
     };
   });
 }
+
+export type ErrorSummaryEntry = Awaited<ReturnType<typeof getErrorSummaryForAdmin>>[number];
+
+// Grouped error log (server + browser) for the last 7 days. The RPC returns
+// nothing unless the caller is an MFA-verified admin.
+export async function getErrorSummaryForAdmin() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_error_summary", { p_days: 7 });
+  return data ?? [];
+}

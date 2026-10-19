@@ -30,6 +30,8 @@ export const RATE_LIMITS = {
   quoteUser: { max: 20, windowSeconds: 60 * 60 },
   reportUser: { max: 10, windowSeconds: 60 * 60 },
   reviewUser: { max: 10, windowSeconds: 60 * 60 },
+  // Browser error reports (/api/client-errors), per IP.
+  clientErrorIp: { max: 20, windowSeconds: 10 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 export const RATE_LIMIT_ERROR = "Too many attempts. Please wait a few minutes and try again.";
