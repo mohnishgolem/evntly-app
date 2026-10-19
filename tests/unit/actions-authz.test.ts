@@ -93,21 +93,37 @@ describe("submitReview (review manipulation)", () => {
   });
 });
 
-describe("uploadPortfolioItem (vendor impersonation)", () => {
-  it("refuses to upload to a listing the caller doesn't own", async () => {
+describe("addPortfolioItem (vendor impersonation)", () => {
+  const ownPath = "u1/p1/0b6f3c3e-1b2a-4c5d-8e9f-0a1b2c3d4e5f.png";
+
+  it("refuses to record media for a listing the caller doesn't own", async () => {
     current = fakeSupabase({ user, results: { "rpc:my_service_providers": { data: null } } });
-    const fd = new FormData();
-    fd.set("file", new File([new Uint8Array(10)], "a.png", { type: "image/png" }));
-    const res = await portfolio.uploadPortfolioItem("someone-elses-listing", fd);
+    const res = await portfolio.addPortfolioItem("someone-elses-listing", {
+      path: "u1/someone-elses-listing/0b6f3c3e-1b2a-4c5d-8e9f-0a1b2c3d4e5f.png",
+      type: "image/png",
+    });
     expect(res?.error).toMatch(/your own listing/);
-    expect(current.client.storage.from).not.toHaveBeenCalled();
+    expect(current.writes).toHaveLength(0);
   });
 
-  it("refuses SVG uploads (script-capable)", async () => {
+  it("refuses SVG (script-capable) and other unlisted types", async () => {
     current = fakeSupabase({ user });
-    const fd = new FormData();
-    fd.set("file", new File(["<svg onload=alert(1)>"], "x.svg", { type: "image/svg+xml" }));
-    const res = await portfolio.uploadPortfolioItem("p1", fd);
-    expect(res?.error).toMatch(/JPG/);
+    const res = await portfolio.addPortfolioItem("p1", { path: "u1/p1/x.svg", type: "image/svg+xml" });
+    expect(res?.error).toMatch(/can't be added/);
+    expect(current.writes).toHaveLength(0);
+  });
+
+  it("refuses paths outside the caller's folder for that listing", async () => {
+    current = fakeSupabase({ user });
+    for (const path of [
+      "u2/p1/0b6f3c3e-1b2a-4c5d-8e9f-0a1b2c3d4e5f.png",
+      "u1/p2/0b6f3c3e-1b2a-4c5d-8e9f-0a1b2c3d4e5f.png",
+      "u1/p1/../../u2/p1/0b6f3c3e-1b2a-4c5d-8e9f-0a1b2c3d4e5f.png",
+      ownPath.replace(".png", ".mp4"),
+    ]) {
+      const res = await portfolio.addPortfolioItem("p1", { path, type: "image/png" });
+      expect(res?.error).toMatch(/can't be added/);
+    }
+    expect(current.writes).toHaveLength(0);
   });
 });

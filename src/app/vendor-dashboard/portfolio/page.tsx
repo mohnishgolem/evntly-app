@@ -44,7 +44,7 @@ export default async function VendorPortfolioPage() {
       </p>
 
       <DashboardNav items={VENDOR_NAV_ITEMS} />
-      <PortfolioUploader providerId={listing.id} items={items ?? []} />
+      <PortfolioUploader providerId={listing.id} userId={session.user.id} items={items ?? []} />
     </div>
   );
 }

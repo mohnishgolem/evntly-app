@@ -25,6 +25,8 @@ export function buildCsp(nonce: string, isDev = process.env.NODE_ENV === "develo
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${supabaseOrigin} ${MAP_ORIGIN} ${IMAGE_HOSTS}`,
+    // Portfolio videos are served from Supabase storage.
+    `media-src 'self' ${supabaseOrigin}`,
     "font-src 'self' data:",
     `connect-src 'self' ${supabaseOrigin} ${supabaseWs} ${MAP_ORIGIN}`,
     "worker-src 'self' blob:",

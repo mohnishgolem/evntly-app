@@ -2,21 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PORTFOLIO_BUCKET,
+  isOwnPortfolioPath,
+  portfolioFileError,
+  portfolioMediaType,
+} from "@/lib/portfolio-media";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
-// Raster images only — no SVG (can carry script) and no other types, since
-// portfolio files are served from a public bucket. Mirrors the bucket's
-// allowed_mime_types; both are enforced.
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic"]);
-const EXT_BY_TYPE: Record<string, string> = {
-  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/heic": "heic",
-};
-const MAX_PORTFOLIO_BYTES = 10 * 1024 * 1024;
-
-export async function uploadPortfolioItem(
+// The browser uploads the file straight to storage (server actions cap
+// request bodies at 1 MB, and videos are far bigger), then calls this to
+// record it. Storage policies only let users write under their own user-id
+// folder; here we also check the listing is theirs, the path is the one we
+// expect for it, and the object really exists with an allowed type and size.
+export async function addPortfolioItem(
   providerId: string,
-  formData: FormData
+  item: { path: string; type: string; caption?: string }
 ): Promise<ActionState> {
   const supabase = await createClient();
   const {
@@ -24,43 +26,45 @@ export async function uploadPortfolioItem(
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
 
-  const file = formData.get("file") as File | null;
-  const caption = String(formData.get("caption") ?? "");
-  if (!file || file.size === 0) return { error: "Choose a photo first." };
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    return { error: "Upload a JPG, PNG, WEBP, GIF or HEIC image." };
-  }
-  if (file.size > MAX_PORTFOLIO_BYTES) {
-    return { error: "That image is over 10 MB." };
+  const caption = (item.caption ?? "").trim();
+  if (caption.length > 300) return { error: "That caption is too long." };
+  const mediaType = portfolioMediaType(item.type);
+  if (!mediaType || !isOwnPortfolioPath(item.path, user.id, providerId, item.type)) {
+    return { error: "That file can't be added." };
   }
 
-  // The listing must be the caller's own — otherwise anyone could add photos
-  // to another vendor's profile. (Also enforced by the DB insert trigger.)
   const { data: ownListing } = await supabase
     .rpc("my_service_providers")
     .select("id")
     .eq("id", providerId)
     .maybeSingle();
   if (!ownListing) return { error: "You can only add photos to your own listing." };
-  if (caption.length > 300) return { error: "That caption is too long." };
 
-  // Extension derived from the (allow-listed) MIME type, not the filename.
-  const ext = EXT_BY_TYPE[file.type];
-  const path = `${user.id}/${providerId}/${crypto.randomUUID()}.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("portfolio")
-    .upload(path, file, { contentType: file.type });
-  if (uploadError) return { error: uploadError.message };
+  const folder = item.path.slice(0, item.path.lastIndexOf("/"));
+  const name = item.path.slice(item.path.lastIndexOf("/") + 1);
+  const { data: objects } = await supabase.storage
+    .from(PORTFOLIO_BUCKET)
+    .list(folder, { search: name, limit: 1 });
+  const object = objects?.find((o) => o.name === name);
+  const size = Number(object?.metadata?.size ?? NaN);
+  const storedType = String(object?.metadata?.mimetype ?? "");
+  if (!object || storedType !== item.type || Number.isNaN(size)) {
+    return { error: "Upload didn't finish. Try again." };
+  }
+  const sizeError = portfolioFileError({ type: storedType, size });
+  if (sizeError) {
+    await supabase.storage.from(PORTFOLIO_BUCKET).remove([item.path]);
+    return { error: sizeError };
+  }
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from("portfolio").getPublicUrl(path);
+  } = supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(item.path);
 
   const { error } = await supabase.from("portfolio_items").insert({
     provider_id: providerId,
     owner_email: user.email,
-    media_type: "image",
+    media_type: mediaType,
     media_url: publicUrl,
     caption: caption || null,
   });
@@ -68,6 +72,8 @@ export async function uploadPortfolioItem(
   if (error) return { error: error.message };
 
   revalidatePath("/vendor-dashboard/portfolio");
+  revalidatePath("/vendor-dashboard");
+  revalidatePath(`/vendor/${providerId}`);
   return { success: true };
 }
 

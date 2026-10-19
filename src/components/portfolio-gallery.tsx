@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { PublicPortfolioItem } from "@/lib/public-columns";
@@ -65,14 +65,33 @@ export function PortfolioGallery({
             key={item.id}
             type="button"
             onClick={() => setOpenIndex(i)}
-            className="aspect-square overflow-hidden rounded-xl transition-opacity hover:opacity-90"
+            aria-label={item.media_type === "video" ? `Play video${item.caption ? `: ${item.caption}` : ""}` : undefined}
+            className="relative aspect-square overflow-hidden rounded-xl transition-opacity hover:opacity-90"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.thumbnail_url ?? item.media_url}
-              alt={item.caption ?? vendorName}
-              className="h-full w-full object-cover"
-            />
+            {item.media_type === "video" ? (
+              <>
+                {/* First frame as the tile; "#t=0.1" makes Safari paint it. */}
+                <video
+                  src={`${item.media_url}#t=0.1`}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="pointer-events-none h-full w-full bg-black object-cover"
+                />
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-black/60 text-white">
+                    <Play className="size-5 translate-x-0.5 fill-current" />
+                  </span>
+                </span>
+              </>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.thumbnail_url ?? item.media_url}
+                alt={item.caption ?? vendorName}
+                className="h-full w-full object-cover"
+              />
+            )}
           </button>
         ))}
       </div>
@@ -99,7 +118,7 @@ export function PortfolioGallery({
             <button
               type="button"
               onClick={() => show((openIndex ?? 0) - 1)}
-              aria-label="Previous photo"
+              aria-label="Previous"
               className="absolute left-2 z-10 flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 sm:left-4"
             >
               <ChevronLeft className="size-7" />
@@ -112,14 +131,25 @@ export function PortfolioGallery({
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={current.id}
-                src={current.media_url}
-                alt={current.caption ?? vendorName}
-                className="max-h-[85vh] max-w-full rounded-lg object-contain select-none"
-                draggable={false}
-              />
+              {current.media_type === "video" ? (
+                <video
+                  key={current.id}
+                  src={current.media_url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[85vh] max-w-full rounded-lg"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={current.id}
+                  src={current.media_url}
+                  alt={current.caption ?? vendorName}
+                  className="max-h-[85vh] max-w-full rounded-lg object-contain select-none"
+                  draggable={false}
+                />
+              )}
             </div>
           )}
 
@@ -127,7 +157,7 @@ export function PortfolioGallery({
             <button
               type="button"
               onClick={() => show((openIndex ?? 0) + 1)}
-              aria-label="Next photo"
+              aria-label="Next"
               className="absolute right-2 z-10 flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 sm:right-4"
             >
               <ChevronRight className="size-7" />

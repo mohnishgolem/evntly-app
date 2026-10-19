@@ -5,16 +5,25 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { uploadPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
+import { addPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
+import { createClient } from "@/lib/supabase/client";
+import {
+  PORTFOLIO_ACCEPT,
+  PORTFOLIO_BUCKET,
+  portfolioFileError,
+  portfolioPath,
+} from "@/lib/portfolio-media";
 import type { PublicPortfolioItem } from "@/lib/public-columns";
 
 type PortfolioItem = PublicPortfolioItem;
 
 export function PortfolioUploader({
   providerId,
+  userId,
   items,
 }: {
   providerId: string;
+  userId: string;
   items: PortfolioItem[];
 }) {
   const router = useRouter();
@@ -26,12 +35,23 @@ export function PortfolioUploader({
   function upload() {
     const file = fileRef.current?.files?.[0];
     if (!file) return;
+    const fileError = portfolioFileError(file);
+    if (fileError) {
+      setError(fileError);
+      return;
+    }
     setError(null);
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("caption", caption);
     startTransition(async () => {
-      const res = await uploadPortfolioItem(providerId, formData);
+      // Straight to storage: server actions can't take bodies over 1 MB.
+      const path = portfolioPath(userId, providerId, file.type);
+      const { error: uploadError } = await createClient()
+        .storage.from(PORTFOLIO_BUCKET)
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) {
+        setError("Couldn't upload that file. Try again.");
+        return;
+      }
+      const res = await addPortfolioItem(providerId, { path, type: file.type, caption });
       if (res?.error) setError(res.error);
       else {
         setCaption("");
@@ -51,7 +71,7 @@ export function PortfolioUploader({
   return (
     <div>
       <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-dashed border-border p-4 sm:flex-row sm:items-center">
-        <Input ref={fileRef} type="file" accept="image/*" className="flex-1" />
+        <Input ref={fileRef} type="file" accept={PORTFOLIO_ACCEPT} className="flex-1" />
         <Input
           placeholder="Caption (optional)"
           value={caption}
@@ -59,21 +79,35 @@ export function PortfolioUploader({
           className="sm:w-48"
         />
         <Button disabled={pending} onClick={upload}>
-          <Upload /> Upload
+          <Upload /> {pending ? "Uploading…" : "Upload"}
         </Button>
       </div>
+      <p className="-mt-4 mb-6 text-xs text-muted-foreground">
+        Photos up to 10 MB, or short video clips (MP4, MOV, WEBM) up to 50 MB.
+      </p>
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          <Plus className="mr-1 inline h-4 w-4" /> Add your first portfolio photo above.
+          <Plus className="mr-1 inline h-4 w-4" /> Add your first photo or video clip above.
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {items.map((item) => (
             <div key={item.id} className="group relative aspect-square overflow-hidden rounded-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.media_url} alt={item.caption ?? ""} className="h-full w-full object-cover" />
+              {item.media_type === "video" ? (
+                <video
+                  src={item.media_url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  controls
+                  className="h-full w-full bg-black object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.media_url} alt={item.caption ?? ""} className="h-full w-full object-cover" />
+              )}
               <button
                 type="button"
                 onClick={() => remove(item.id)}
