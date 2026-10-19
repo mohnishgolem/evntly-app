@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      page_views: {
+        Row: {
+          created_at: string
+          id: number
+          kind: string
+          user_id: string | null
+          vendor_id: string | null
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          kind: string
+          user_id?: string | null
+          vendor_id?: string | null
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          kind?: string
+          user_id?: string | null
+          vendor_id?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       event_budget_items: {
         Row: {
           amount: number
@@ -1748,6 +1775,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_funnel: {
+        Args: { p_days?: number }
+        Returns: { label: string; people: number; step: number }[]
+      }
       admin_error_summary: {
         Args: { p_days?: number }
         Returns: {

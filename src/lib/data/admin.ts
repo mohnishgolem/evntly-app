@@ -77,3 +77,23 @@ export async function getErrorSummaryForAdmin() {
   const { data } = await supabase.rpc("admin_error_summary", { p_days: 7 });
   return data ?? [];
 }
+
+export type FunnelStep = { step: number; label: string; people: number };
+
+// Funnel counts for the last 7 and 30 days (admin_funnel returns nothing
+// unless the caller is an MFA-verified admin).
+export async function getFunnelForAdmin() {
+  const supabase = await createClient();
+  const [week, month] = await Promise.all([
+    supabase.rpc("admin_funnel", { p_days: 7 }),
+    supabase.rpc("admin_funnel", { p_days: 30 }),
+  ]);
+  const byStep = new Map<number, { label: string; week: number; month: number }>();
+  for (const r of month.data ?? []) byStep.set(r.step, { label: r.label, week: 0, month: Number(r.people) });
+  for (const r of week.data ?? []) {
+    const row = byStep.get(r.step) ?? { label: r.label, week: 0, month: 0 };
+    row.week = Number(r.people);
+    byStep.set(r.step, row);
+  }
+  return [...byStep.entries()].sort(([a], [b]) => a - b).map(([step, v]) => ({ step, ...v }));
+}

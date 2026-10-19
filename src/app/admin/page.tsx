@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote, Bug } from "lucide-react";
+import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote, Bug, Filter } from "lucide-react";
 import Link from "next/link";
 import { getAdminSession } from "@/lib/data/user";
 import {
@@ -9,6 +9,7 @@ import {
   getReportsForAdmin,
   getLeakLogForAdmin,
   getErrorSummaryForAdmin,
+  getFunnelForAdmin,
 } from "@/lib/data/admin";
 import { categoryLabel } from "@/lib/config";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
@@ -17,6 +18,7 @@ import { AdminUserRoles } from "@/components/admin-user-roles";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminLeakLog } from "@/components/admin-leak-log";
 import { AdminErrorLog } from "@/components/admin-error-log";
+import { AdminFunnel } from "@/components/admin-funnel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const metadata: Metadata = {
@@ -48,12 +50,13 @@ export default async function AdminPage() {
     );
   }
 
-  const [vendors, users, reports, leakLog, errors] = await Promise.all([
+  const [vendors, users, reports, leakLog, errors, funnel] = await Promise.all([
     getAllVendorsForAdmin(),
     getAllUsersForAdmin(),
     getReportsForAdmin(),
     getLeakLogForAdmin(),
     getErrorSummaryForAdmin(),
+    getFunnelForAdmin(),
   ]);
 
   const pending = vendors.filter((v) => v.status === "pending_review");
@@ -101,6 +104,9 @@ export default async function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="leak-log" className="shrink-0">
             <Banknote /> Leak Log
+          </TabsTrigger>
+          <TabsTrigger value="funnel" className="shrink-0">
+            <Filter /> Funnel
           </TabsTrigger>
           <TabsTrigger value="errors" className="shrink-0">
             <Bug /> Errors{errors.length > 0 ? ` (${errors.length})` : ""}
@@ -181,6 +187,10 @@ export default async function AdminPage() {
 
         <TabsContent value="leak-log">
           <AdminLeakLog events={leakLog} />
+        </TabsContent>
+
+        <TabsContent value="funnel">
+          <AdminFunnel rows={funnel} />
         </TabsContent>
 
         <TabsContent value="errors">

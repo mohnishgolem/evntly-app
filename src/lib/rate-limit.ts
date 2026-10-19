@@ -32,6 +32,8 @@ export const RATE_LIMITS = {
   reviewUser: { max: 10, windowSeconds: 60 * 60 },
   // Browser error reports (/api/client-errors), per IP.
   clientErrorIp: { max: 20, windowSeconds: 10 * 60 },
+  // Anonymous funnel page views (/api/track), per IP.
+  pageViewIp: { max: 120, windowSeconds: 10 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 export const RATE_LIMIT_ERROR = "Too many attempts. Please wait a few minutes and try again.";

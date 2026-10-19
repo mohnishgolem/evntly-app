@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { ErrorReporter } from "@/components/error-reporter";
+import { PageViewTracker } from "@/components/page-view-tracker";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
@@ -94,6 +95,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteFooter />
         <Analytics />
         <ErrorReporter />
+        <PageViewTracker />
       </body>
     </html>
   );
