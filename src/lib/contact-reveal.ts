@@ -32,6 +32,9 @@ function isContactMatch(category: string, match: string) {
     // Avoid false-positives on plain numbers (e.g. "50 guests", "$1200-1500")
     if (!/\d{3}.*\d{3}/.test(match.replace(/\D/g, ""))) return false;
     if (isLikelyDate(match.trim())) return false;
+    // A range like "1200-1500" (prices, guest counts) — one dash between two
+    // short numbers — isn't a phone number.
+    if (/^\d{2,5}\s?-\s?\d{2,5}$/.test(match.trim())) return false;
   }
   return true;
 }

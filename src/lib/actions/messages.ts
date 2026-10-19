@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isPaymentGuardRejection, recordBlockedPayment } from "@/lib/payment-guard-log";
 import { notify } from "@/lib/email";
 import { conversationIdFor } from "@/lib/messages";
+import { maskContactInfo } from "@/lib/contact-reveal";
 import { messageRecipientEmail } from "@/lib/supabase/admin";
 import {
   attachmentFolder,
@@ -58,7 +59,9 @@ async function notifyNewMessage(
     subject: `New message from ${sender}`,
     heading: `${sender} sent you a message`,
     lines: [],
-    quote: content,
+    // Previews leave Evntly (email, push), so contact details are always
+    // masked here; the thread shows them once there's a booking.
+    quote: maskContactInfo(content),
     cta: { label: "Reply on Evntly", path: `/messages/${encodeURIComponent(conversationId)}` },
   });
 }
