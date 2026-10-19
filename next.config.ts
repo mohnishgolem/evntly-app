@@ -28,6 +28,13 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The attachment scanner's OCR engine loads a worker script and WASM from
+  // node_modules at runtime, which the bundler can't see — keep it external
+  // and ship its files with the messages routes (where sendReply runs).
+  serverExternalPackages: ["tesseract.js", "tesseract.js-core"],
+  outputFileTracingIncludes: {
+    "/messages/**": ["./node_modules/tesseract.js/**/*", "./node_modules/tesseract.js-core/**/*"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

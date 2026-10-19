@@ -12,6 +12,7 @@ import {
   ATTACHMENT_BUCKET,
   MAX_ATTACHMENT_BYTES,
   attachmentFileName,
+  attachmentLabel,
   attachmentPath,
   isAllowedAttachmentType,
   isImageAttachment,
@@ -21,6 +22,8 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Message = Database["public"]["Functions"]["conversation_messages"]["Returns"][number] & {
   attachmentUrl: string | null;
+  /** Set (pre-booking) while the file is being scanned or contains contact details. */
+  attachmentHeld?: "pending" | "contact" | null;
 };
 
 // Phone photos are often 4000px+ / several MB; downscale before upload so
@@ -158,6 +161,8 @@ export function MessageThread({
                     path={m.attachment_file_uri}
                     type={m.attachment_type}
                     isSelf={isSelf}
+                    held={m.attachmentHeld ?? null}
+                    counterpartName={counterpartName}
                   />
                 )}
                 {m.content && (
@@ -256,12 +261,43 @@ function MessageAttachment({
   path,
   type,
   isSelf,
+  held,
+  counterpartName,
 }: {
   url: string | null;
   path: string;
   type: string | null;
   isSelf: boolean;
+  held: "pending" | "contact" | null;
+  counterpartName: string;
 }) {
+  if (held && !isSelf) {
+    return (
+      <span className="max-w-[80%] rounded-2xl bg-secondary px-3.5 py-2 text-sm text-muted-foreground">
+        {held === "pending"
+          ? `${attachmentLabel(type)} — checking the file…`
+          : `${attachmentLabel(type)} hidden until this booking is confirmed (it contains contact details).`}
+      </span>
+    );
+  }
+  if (held === "contact" && isSelf && url) {
+    return (
+      <div className="flex max-w-[80%] flex-col items-end gap-1">
+        <MessageAttachment
+          url={url}
+          path={path}
+          type={type}
+          isSelf
+          held={null}
+          counterpartName={counterpartName}
+        />
+        <span className="text-xs text-muted-foreground">
+          Hidden from {counterpartName} until a booking is confirmed: it looks like it contains
+          contact details.
+        </span>
+      </div>
+    );
+  }
   if (!url) {
     return (
       <span className="rounded-2xl bg-secondary px-3.5 py-2 text-sm text-muted-foreground">

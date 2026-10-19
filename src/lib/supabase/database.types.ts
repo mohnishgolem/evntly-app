@@ -1055,6 +1055,7 @@ export type Database = {
       messages: {
         Row: {
           attachment_file_uri: string | null
+          attachment_scan: string | null
           attachment_thumbnail_uri: string | null
           attachment_type: string | null
           booking_id: string | null
@@ -1074,6 +1075,7 @@ export type Database = {
         }
         Insert: {
           attachment_file_uri?: string | null
+          attachment_scan?: string | null
           attachment_thumbnail_uri?: string | null
           attachment_type?: string | null
           booking_id?: string | null
@@ -1093,6 +1095,7 @@ export type Database = {
         }
         Update: {
           attachment_file_uri?: string | null
+          attachment_scan?: string | null
           attachment_thumbnail_uri?: string | null
           attachment_type?: string | null
           booking_id?: string | null
@@ -1810,6 +1813,7 @@ export type Database = {
         Returns: {
           attachment_file_uri: string
           attachment_type: string
+          attachment_scan: string | null
           content: string
           created_at: string
           customer_initiated: boolean

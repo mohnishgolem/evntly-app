@@ -8,13 +8,17 @@ import { AdminVendorActions } from "@/components/admin-vendor-actions";
 import { cn } from "@/lib/utils";
 import type { LeakLogEntry } from "@/lib/data/admin";
 
-// Categories written by src/lib/payment-guard.ts. phone/email/social come
+// Categories written by src/lib/payment-guard.ts, plus attachment_* from the
+// attachment scanner (src/lib/attachment-scan.ts). phone/email/social come
 // from the removed contact-info scanner and are kept only as history.
 const CATEGORY_LABEL: Record<string, string> = {
   cash: "Cash",
   payid: "PayID",
   bank_transfer: "Bank transfer",
   crypto: "Crypto",
+  attachment_phone: "Phone in attachment",
+  attachment_email: "Email in attachment",
+  attachment_social: "Social handle in attachment",
 };
 const LEGACY = "legacy";
 const categoryKey = (c: string) => (c in CATEGORY_LABEL ? c : LEGACY);

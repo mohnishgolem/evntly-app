@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isPaymentGuardRejection, recordBlockedPayment } from "@/lib/payment-guard-log";
@@ -12,6 +13,7 @@ import {
   isAllowedAttachmentType,
   type Attachment,
 } from "@/lib/attachments";
+import { scanMessageAttachment } from "@/lib/attachment-scan";
 import type { User } from "@supabase/supabase-js";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 
@@ -185,6 +187,10 @@ export async function sendReply(
     return recordBlockedPayment(supabase, { id: user.id, email: user.email }, conversationId, trimmed);
   }
   if (error) return { error: error.message };
+
+  // Check the file for contact details after responding; until the scan
+  // finishes the other party sees "checking attachment" instead of the file.
+  if (attachment) after(() => scanMessageAttachment(message.id).then(() => undefined));
 
   if (shouldEmail) {
     // The vendor side replies as their business, the customer side by name.

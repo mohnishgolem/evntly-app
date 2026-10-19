@@ -68,11 +68,22 @@ export default async function MessageThreadPage({
     }
   }
 
-  const visibleMessages = messages.map((m) => ({
-    ...m,
-    content: booked ? m.content : maskContactInfo(m.content),
-    attachmentUrl: m.attachment_file_uri ? (signedUrls.get(m.attachment_file_uri) ?? null) : null,
-  }));
+  // Attachments are scanned for contact details; until there's a booking the
+  // recipient can't open one that's still being checked or that contains
+  // contact details (storage refuses it too). The sender always sees theirs.
+  const visibleMessages = messages.map((m) => {
+    const scan = m.attachment_scan;
+    const held = !booked && (scan === "pending" || scan === "contact");
+    return {
+      ...m,
+      content: booked ? m.content : maskContactInfo(m.content),
+      attachmentUrl:
+        m.attachment_file_uri && !(held && !m.from_me)
+          ? (signedUrls.get(m.attachment_file_uri) ?? null)
+          : null,
+      attachmentHeld: held ? (scan as "pending" | "contact") : null,
+    };
+  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">

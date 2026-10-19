@@ -27,17 +27,32 @@ function isLikelyDate(s: string): boolean {
   return /^\d{4}-\d{1,2}-\d{1,2}$/.test(s) || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$/.test(s);
 }
 
+function isContactMatch(category: string, match: string) {
+  if (category === "phone") {
+    // Avoid false-positives on plain numbers (e.g. "50 guests", "$1200-1500")
+    if (!/\d{3}.*\d{3}/.test(match.replace(/\D/g, ""))) return false;
+    if (isLikelyDate(match.trim())) return false;
+  }
+  return true;
+}
+
 export function maskContactInfo(content: string): string {
   let masked = content;
   for (const { category, regex } of PATTERNS) {
-    masked = masked.replace(regex, (match) => {
-      if (category === "phone") {
-        // Avoid false-positives on plain numbers (e.g. "50 guests", "$1200-1500")
-        if (!/\d{3}.*\d{3}/.test(match.replace(/\D/g, ""))) return match;
-        if (isLikelyDate(match.trim())) return match;
-      }
-      return "[hidden until booking confirmed]";
-    });
+    masked = masked.replace(regex, (match) =>
+      isContactMatch(category, match) ? "[hidden until booking confirmed]" : match
+    );
   }
   return masked;
+}
+
+/** The contact details found in a piece of text (e.g. OCR'd from a photo). */
+export function findContactInfo(content: string): { category: string; match: string }[] {
+  const found: { category: string; match: string }[] = [];
+  for (const { category, regex } of PATTERNS) {
+    for (const match of content.match(regex) ?? []) {
+      if (isContactMatch(category, match)) found.push({ category, match: match.trim() });
+    }
+  }
+  return found;
 }
