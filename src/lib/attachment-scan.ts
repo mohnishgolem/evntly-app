@@ -28,7 +28,16 @@ async function ocrImage(bytes: Uint8Array) {
   const { createWorker } = await import("tesseract.js");
   // /tmp is the only writable directory on Vercel; the language data is
   // cached there between invocations of a warm function.
-  const worker = await createWorker("eng", 1, { cachePath: "/tmp" });
+  // errorHandler: a crashed worker otherwise leaves recognize() pending
+  // forever (we'd only find out from the timeout).
+  let workerError: unknown = null;
+  const worker = await createWorker("eng", 1, {
+    cachePath: "/tmp",
+    errorHandler: (err: unknown) => {
+      workerError = err;
+    },
+  });
+  if (workerError) throw workerError;
   try {
     const { data } = await worker.recognize(Buffer.from(bytes));
     return data.text;

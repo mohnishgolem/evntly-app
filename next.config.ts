@@ -33,7 +33,22 @@ const nextConfig: NextConfig = {
   // and ship its files with the messages routes (where sendReply runs).
   serverExternalPackages: ["tesseract.js", "tesseract.js-core"],
   outputFileTracingIncludes: {
-    "/messages/**": ["./node_modules/tesseract.js/**/*", "./node_modules/tesseract.js-core/**/*"],
+    // The worker script's own requires aren't traced either (it's spawned by
+    // path), so list its dependencies explicitly.
+    "/messages/**": [
+      "./node_modules/tesseract.js/**/*",
+      "./node_modules/tesseract.js-core/**/*",
+      "./node_modules/bmp-js/**/*",
+      "./node_modules/zlibjs/**/*",
+      "./node_modules/wasm-feature-detect/**/*",
+      "./node_modules/idb-keyval/**/*",
+      "./node_modules/regenerator-runtime/**/*",
+      "./node_modules/is-url/**/*",
+      "./node_modules/node-fetch/**/*",
+      "./node_modules/whatwg-url/**/*",
+      "./node_modules/tr46/**/*",
+      "./node_modules/webidl-conversions/**/*",
+    ],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
