@@ -76,6 +76,29 @@ export function EditListingForm({
         />
       </div>
 
+      <div className="space-y-1.5">
+        <Label htmlFor="edit-abn">ABN (optional)</Label>
+        <Input
+          id="edit-abn"
+          inputMode="numeric"
+          placeholder="e.g. 51 824 753 556"
+          value={draft.abn ?? ""}
+          onChange={(e) => setDraft((d) => ({ ...d, abn: e.target.value }))}
+        />
+        <label className="flex items-center gap-2 pt-1 text-sm">
+          <input
+            type="checkbox"
+            checked={!!draft.gstRegistered}
+            onChange={(e) => setDraft((d) => ({ ...d, gstRegistered: e.target.checked }))}
+            className="size-4 accent-primary"
+          />
+          Registered for GST
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Shown on your profile and on booking invoices. Corporate clients usually need it.
+        </p>
+      </div>
+
       <div>
         <p className="mb-2 text-sm font-medium">Category</p>
         <div className="grid grid-cols-2 gap-2">

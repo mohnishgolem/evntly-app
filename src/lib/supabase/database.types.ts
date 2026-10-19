@@ -1310,6 +1310,7 @@ export type Database = {
       }
       service_providers: {
         Row: {
+          abn: string | null
           acceptance_rate: number | null
           available: boolean | null
           avatar_url: string | null
@@ -1325,6 +1326,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          gst_registered: boolean
           hourly_rate: number
           id: string
           languages: string[] | null
@@ -1354,6 +1356,7 @@ export type Database = {
           weekly_unavailable_days: number[] | null
         }
         Insert: {
+          abn?: string | null
           acceptance_rate?: number | null
           available?: boolean | null
           avatar_url?: string | null
@@ -1369,6 +1372,7 @@ export type Database = {
           event_types?: string[] | null
           experience_years?: number | null
           founding_vendor?: boolean | null
+          gst_registered?: boolean
           hourly_rate: number
           id?: string
           languages?: string[] | null
@@ -1398,6 +1402,7 @@ export type Database = {
           weekly_unavailable_days?: number[] | null
         }
         Update: {
+          abn?: string | null
           acceptance_rate?: number | null
           available?: boolean | null
           avatar_url?: string | null
@@ -1413,6 +1418,7 @@ export type Database = {
           event_types?: string[] | null
           experience_years?: number | null
           founding_vendor?: boolean | null
+          gst_registered?: boolean
           hourly_rate?: number
           id?: string
           languages?: string[] | null
@@ -1615,6 +1621,7 @@ export type Database = {
       admin_service_providers: {
         Args: never
         Returns: {
+          abn: string | null
           acceptance_rate: number | null
           available: boolean | null
           avatar_url: string | null
@@ -1630,6 +1637,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          gst_registered: boolean
           hourly_rate: number
           id: string
           languages: string[] | null
@@ -1782,6 +1790,7 @@ export type Database = {
       my_service_providers: {
         Args: never
         Returns: {
+          abn: string | null
           acceptance_rate: number | null
           available: boolean | null
           avatar_url: string | null
@@ -1797,6 +1806,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          gst_registered: boolean
           hourly_rate: number
           id: string
           languages: string[] | null

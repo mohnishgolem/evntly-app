@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -62,6 +63,14 @@ export default async function VendorBookingsPage() {
                 </span>
               </div>
               <VendorBookingActions bookingId={b.id} status={b.status} />
+              {(b.status === "confirmed" || b.status === "completed") && (
+                <Link
+                  href={`/bookings/${b.id}/invoice`}
+                  className="mt-3 inline-block text-sm underline underline-offset-2"
+                >
+                  Invoice
+                </Link>
+              )}
               {jobCardByBooking.get(b.id)?.jobCard && (
                 <JobCardPanel
                   jobCard={jobCardByBooking.get(b.id)!.jobCard!}

@@ -13,7 +13,7 @@ export async function SiteHeader() {
   const session = await getCurrentUser();
 
   return (
-    <header className="glass-material sticky top-0 z-50 border-b border-border/60">
+    <header className="glass-material sticky top-0 z-50 border-b border-border/60 print:hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/">

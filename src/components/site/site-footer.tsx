@@ -3,7 +3,7 @@ import { Logo } from "@/components/site/logo";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/60">
+    <footer className="border-t border-border/60 print:hidden">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <Logo />

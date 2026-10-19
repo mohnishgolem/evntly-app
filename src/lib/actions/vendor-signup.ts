@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
+import { isValidAbn, normalizeAbn } from "@/lib/abn";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -17,6 +18,9 @@ export type VendorSignupDraft = {
   locationsServiced: string[];
   eventTypes: string[];
   phone?: string;
+  // Edit form only (optional at signup): shown on booking invoices.
+  abn?: string;
+  gstRegistered?: boolean;
 };
 
 export type VendorSignupState = { error?: string } | null;
@@ -97,6 +101,11 @@ export async function updateVendorListing(
     return { error: "You need to be logged in to edit a listing." };
   }
 
+  const abn = normalizeAbn(draft.abn);
+  if (abn && !isValidAbn(abn)) {
+    return { error: "That ABN isn't valid. Check the 11 digits on abr.business.gov.au." };
+  }
+
   const coordinates = await resolveCoordinates(draft);
   const { error } = await supabase
     .from("service_providers")
@@ -110,6 +119,9 @@ export async function updateVendorListing(
       locations_serviced: draft.locationsServiced,
       event_types: draft.eventTypes,
       phone: draft.phone || null,
+      abn,
+      // GST registration needs an ABN.
+      gst_registered: !!abn && !!draft.gstRegistered,
     })
     // RLS (service_providers_update_own) limits this to the caller's own row.
     .eq("id", listingId);

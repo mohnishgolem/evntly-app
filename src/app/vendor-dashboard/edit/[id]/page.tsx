@@ -39,6 +39,8 @@ export default async function EditListingPage({
           locationsServiced: listing.locations_serviced ?? [],
           eventTypes: listing.event_types ?? [],
           phone: listing.phone ?? "",
+          abn: listing.abn ?? "",
+          gstRegistered: listing.gst_registered ?? false,
         }}
       />
     </div>

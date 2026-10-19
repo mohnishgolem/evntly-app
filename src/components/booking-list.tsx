@@ -44,9 +44,17 @@ export function BookingList({
             </span>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {b.status !== "cancelled" && b.status !== "completed" && (
               <CancelBookingButton bookingId={b.id} />
+            )}
+            {(b.status === "confirmed" || b.status === "completed") && (
+              <Link
+                href={`/bookings/${b.id}/invoice`}
+                className="text-sm underline underline-offset-2"
+              >
+                Invoice
+              </Link>
             )}
             {b.status === "completed" && !reviewedBookingIds.has(b.id) && (
               <LeaveReview providerId={b.provider_id} bookingId={b.id} eventType={b.service_type} />

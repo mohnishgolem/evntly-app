@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Star, MapPin, ShieldCheck, Clock } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, Building2 } from "lucide-react";
 import { getVendorById, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +14,7 @@ import { ReportVendor } from "@/components/report-vendor";
 import { PortfolioGallery } from "@/components/portfolio-gallery";
 import { FoundingBadge } from "@/components/founding-badge";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { formatAbn } from "@/lib/abn";
 
 export async function generateMetadata({
   params,
@@ -125,6 +126,11 @@ export default async function VendorDetailPage({
                 {!!vendor.experience_years && (
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" /> {vendor.experience_years} yrs experience
+                  </span>
+                )}
+                {vendor.abn && (
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-4 w-4" /> ABN {formatAbn(vendor.abn)}
                   </span>
                 )}
               </div>
