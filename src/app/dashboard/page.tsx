@@ -30,7 +30,8 @@ export default async function DashboardPage() {
     .from("events")
     .select("*")
     .eq("organiser_user_id", session.user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id");
 
   const latestPlan = events?.[0] ?? null;
 
@@ -41,7 +42,9 @@ export default async function DashboardPage() {
       .select(PUBLIC_VENDOR_COLUMNS)
       .eq("status", "approved")
       .in("service_type", latestPlan.required_services)
-      .order("rating", { ascending: false, nullsFirst: false })
+      .order("founding_vendor", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id")
       .limit(8);
     shortlist = data;
   }

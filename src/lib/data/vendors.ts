@@ -10,7 +10,11 @@ export async function getFeaturedVendors(limit = 8) {
     .select(PUBLIC_VENDOR_COLUMNS)
     .eq("status", "approved")
     .in("service_type", LAUNCH_CATEGORIES)
-    .order("rating", { ascending: false, nullsFirst: false })
+    // Founding vendors first, then newest. Rating isn't a useful default
+    // until there are enough real reviews to rank by.
+    .order("founding_vendor", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .order("id")
     .limit(limit);
 
   return data ?? [];
@@ -50,7 +54,10 @@ export async function searchVendors(filters: VendorFilters = {}) {
     query = query.lte("hourly_rate", filters.maxPrice);
   }
 
-  const { data } = await query.order("rating", { ascending: false, nullsFirst: false });
+  const { data } = await query
+    .order("founding_vendor", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .order("id");
   return data ?? [];
 }
 
@@ -82,7 +89,8 @@ export async function getVendorReviews(providerId: string) {
     .from("reviews")
     .select(REVIEW_COLUMNS)
     .eq("provider_id", providerId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id");
 
   return data ?? [];
 }

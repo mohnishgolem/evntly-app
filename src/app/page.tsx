@@ -123,7 +123,7 @@ export default async function HomePage() {
         {vendors.length > 0 ? (
           <section className="mt-12">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Top rated vendors in {launchCity}</h2>
+              <h2 className="text-xl font-bold">Featured vendors in {launchCity}</h2>
               <Link
                 href="/explore"
                 className="flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:text-primary"
