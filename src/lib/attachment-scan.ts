@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findContactInfo } from "@/lib/contact-reveal";
 import { ATTACHMENT_BUCKET } from "@/lib/attachments";
+import { recordError } from "@/lib/error-report";
 
 // Scans a message attachment for contact details before the other party can
 // open it (see the attachment_scanning migration for the visibility rules).
@@ -77,6 +78,12 @@ export async function scanMessageAttachment(messageId: string): Promise<ScanResu
     }
   } catch (err) {
     console.error("[attachment-scan] failed:", err);
+    await recordError({
+      source: "server",
+      message: `Attachment scan failed (${message.attachment_type}): ${err instanceof Error ? err.message : String(err)}`,
+      stack: err instanceof Error ? err.stack : null,
+      route: "attachment-scan",
+    });
   }
 
   await admin.from("messages").update({ attachment_scan: result }).eq("id", message.id);
