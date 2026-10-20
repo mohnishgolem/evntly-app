@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   // The attachment scanner's OCR engine loads a worker script and WASM from
   // node_modules at runtime, which the bundler can't see — keep it external
   // and ship its files with the messages routes (where sendReply runs).
-  serverExternalPackages: ["tesseract.js", "tesseract.js-core"],
+  serverExternalPackages: ["tesseract.js", "tesseract.js-core", "heic-convert", "heic-decode", "libheif-js"],
   outputFileTracingIncludes: {
     // The worker script's own requires aren't traced either (it's spawned by
     // path), so list its dependencies explicitly.
@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
       "./node_modules/tesseract.js/**/*",
       "./node_modules/tesseract.js-core/**/*",
       "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**/*",
+      "./node_modules/heic-convert/**/*",
+      "./node_modules/heic-decode/**/*",
+      "./node_modules/libheif-js/**/*",
+      "./node_modules/jpeg-js/**/*",
+      "./node_modules/pngjs/**/*",
       "./node_modules/bmp-js/**/*",
       "./node_modules/zlibjs/**/*",
       "./node_modules/wasm-feature-detect/**/*",

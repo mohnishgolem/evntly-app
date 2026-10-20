@@ -48,7 +48,14 @@ describe("attachment scanning", () => {
     expect(categories).toEqual(expect.arrayContaining(["phone", "social"]));
   }, 60_000);
 
+  it("converts an iPhone HEIC photo and OCRs it", async () => {
+    const heic = process.env.ATTACHMENT_SCAN_HEIC_FIXTURE;
+    if (!heic) return; // Needs a HEIC file (e.g. sips -s format heic flyer.jpg).
+    const text = await extractAttachmentText(new Uint8Array(readFileSync(heic)), "image/heic");
+    expect(findContactInfo(text ?? "").map((f) => f.category)).toEqual(expect.arrayContaining(["phone", "social"]));
+  }, 60_000);
+
   it("doesn't try to read formats it can't decode", async () => {
-    expect(await extractAttachmentText(new Uint8Array([1, 2, 3]), "image/heic")).toBeNull();
+    expect(await extractAttachmentText(new Uint8Array([1, 2, 3]), "application/zip")).toBeNull();
   });
 });

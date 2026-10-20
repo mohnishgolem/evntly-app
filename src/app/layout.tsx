@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import Script from "next/script";
+import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { ErrorReporter } from "@/components/error-reporter";
 import { PageViewTracker } from "@/components/page-view-tracker";
@@ -83,13 +83,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The proxy puts a fresh nonce in the request's CSP header (src/proxy.ts).
+  const nonce =
+    (await headers()).get("content-security-policy")?.match(/'nonce-([^']+)'/)?.[1] ?? undefined;
+
   return (
     <html lang="en" className={`${logoFont.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Runs before first paint so the theme never flashes. Rendered by
+            hand with the request's CSP nonce: browsers hide nonce values from
+            the DOM, so React would otherwise report a hydration mismatch. */}
+        <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body className="min-h-full flex flex-col">
-        <Script id="theme-bootstrap" strategy="beforeInteractive">
-          {THEME_BOOTSTRAP}
-        </Script>
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

@@ -14,9 +14,10 @@ export type ScanResult = "clear" | "contact" | "error";
 
 const SCAN_TIMEOUT_MS = 45_000;
 const MAX_PDF_TEXT = 100_000;
-// Formats tesseract can decode. HEIC (iPhone originals that the browser
-// couldn't convert) can't be read, so it's marked "error" and shown.
+// Formats tesseract can decode directly. iPhone HEIC originals (when the
+// browser couldn't convert them before upload) are converted to JPEG first.
 const OCR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const HEIC_TYPES = new Set(["image/heic", "image/heif"]);
 const OCR_LANG_PATH = path.join(process.cwd(), "node_modules/@tesseract.js-data/eng/4.0.0_best_int");
 
 async function extractPdfText(bytes: Uint8Array) {
@@ -50,9 +51,16 @@ async function ocrImage(bytes: Uint8Array) {
   }
 }
 
+async function heicToJpeg(bytes: Uint8Array) {
+  const { default: convert } = await import("heic-convert");
+  const jpeg = await convert({ buffer: Buffer.from(bytes), format: "JPEG", quality: 0.9 });
+  return new Uint8Array(jpeg);
+}
+
 export async function extractAttachmentText(bytes: Uint8Array, type: string) {
   if (type === "application/pdf") return extractPdfText(bytes);
   if (OCR_TYPES.has(type)) return ocrImage(bytes);
+  if (HEIC_TYPES.has(type)) return ocrImage(await heicToJpeg(bytes));
   return null;
 }
 
