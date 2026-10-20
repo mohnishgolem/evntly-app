@@ -1,7 +1,10 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function getCurrentUser() {
+// cache(): the header, the Terms prompt and the page all ask for the session
+// on the same request — fetch it once.
+export const getCurrentUser = cache(async function getCurrentUser() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,7 +22,7 @@ export async function getCurrentUser() {
     (user.user_metadata?.full_name as string | undefined) ?? null;
 
   return { user, profile, displayName };
-}
+});
 
 // Gate for vendor-only pages: logged-out visitors go to login (and come back
 // afterwards); logged-in users without a listing go to /vendor-dashboard,

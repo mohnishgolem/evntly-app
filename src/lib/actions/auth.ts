@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { TERMS_VERSION } from "@/lib/config";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -70,7 +72,9 @@ export async function signup(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, role } },
+    // terms_version: they ticked the Terms box; the new-user trigger records
+    // it with a server-side timestamp.
+    options: { data: { full_name: fullName, role, terms_version: TERMS_VERSION } },
   });
 
   if (error) {
@@ -216,4 +220,14 @@ export async function updatePassword(
   }
 
   redirect("/dashboard");
+}
+
+// Records acceptance of the current Terms (Google sign-ins, accounts from
+// before acceptance was recorded, and everyone after a Terms update).
+export async function acceptCurrentTerms(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_terms", { p_version: TERMS_VERSION });
+  if (error) return { error: "Couldn't save that. Please try again." };
+  revalidatePath("/", "layout");
+  return {};
 }

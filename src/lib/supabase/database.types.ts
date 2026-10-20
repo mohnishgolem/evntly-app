@@ -1775,6 +1775,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_terms: {
+        Args: { p_version: string }
+        Returns: undefined
+      }
       admin_funnel: {
         Args: { p_days?: number }
         Returns: { label: string; people: number; step: number }[]

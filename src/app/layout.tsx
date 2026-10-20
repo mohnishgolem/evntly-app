@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { ErrorReporter } from "@/components/error-reporter";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { TermsGate } from "@/components/terms-gate";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
@@ -103,6 +104,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Analytics />
         <ErrorReporter />
         <PageViewTracker />
+        <TermsGate />
       </body>
     </html>
   );
