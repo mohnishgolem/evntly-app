@@ -18,7 +18,6 @@ export default async function EditListingPage({
   if (!session) redirect("/login?next=/vendor-dashboard");
 
   const { id } = await params;
-  const email = session.user.email as string;
   const supabase = await createClient();
 
   const { data: listing } = await supabase

@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
     "/messages/**": [
       "./node_modules/tesseract.js/**/*",
       "./node_modules/tesseract.js-core/**/*",
+      "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**/*",
       "./node_modules/bmp-js/**/*",
       "./node_modules/zlibjs/**/*",
       "./node_modules/wasm-feature-detect/**/*",

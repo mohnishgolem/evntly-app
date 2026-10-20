@@ -1,4 +1,5 @@
 import "server-only";
+import path from "node:path";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findContactInfo } from "@/lib/contact-reveal";
 import { ATTACHMENT_BUCKET } from "@/lib/attachments";
@@ -16,6 +17,7 @@ const MAX_PDF_TEXT = 100_000;
 // Formats tesseract can decode. HEIC (iPhone originals that the browser
 // couldn't convert) can't be read, so it's marked "error" and shown.
 const OCR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const OCR_LANG_PATH = path.join(process.cwd(), "node_modules/@tesseract.js-data/eng/4.0.0_best_int");
 
 async function extractPdfText(bytes: Uint8Array) {
   const { extractText, getDocumentProxy } = await import("unpdf");
@@ -26,12 +28,14 @@ async function extractPdfText(bytes: Uint8Array) {
 
 async function ocrImage(bytes: Uint8Array) {
   const { createWorker } = await import("tesseract.js");
-  // /tmp is the only writable directory on Vercel; the language data is
-  // cached there between invocations of a warm function.
+  // English LSTM data ships with the app (@tesseract.js-data/eng, traced
+  // into the function by next.config) rather than being downloaded from a
+  // CDN on each cold start. /tmp is the only writable directory on Vercel.
   // errorHandler: a crashed worker otherwise leaves recognize() pending
   // forever (we'd only find out from the timeout).
   let workerError: unknown = null;
   const worker = await createWorker("eng", 1, {
+    langPath: OCR_LANG_PATH,
     cachePath: "/tmp",
     errorHandler: (err: unknown) => {
       workerError = err;
