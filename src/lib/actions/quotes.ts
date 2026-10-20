@@ -1,5 +1,6 @@
 "use server";
 
+import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { notify, formatEventDate, formatAmount } from "@/lib/email";
@@ -31,7 +32,7 @@ export type QuoteRequestDraft = {
 // Server actions are public HTTP endpoints — validate everything the browser
 // sends, whatever the form enforced.
 const quoteDraftSchema = z.object({
-  eventDate: z.iso.date(),
+  eventDate: z.iso.date().refine((d) => isBookableEventDate(d), EVENT_DATE_ERROR),
   eventType: z.string().trim().min(1).max(80),
   location: z.string().trim().min(1).max(200),
   estimatedGuests: z.number().min(1).max(100000).transform(Math.round),
@@ -52,7 +53,10 @@ export async function requestQuote(
 
   if (!user?.email) return { error: "You need to be logged in to request a quote." };
   const parsedDraft = quoteDraftSchema.safeParse(draft);
-  if (!parsedDraft.success) return { error: "Check the quote details and try again." };
+  if (!parsedDraft.success) {
+    const dateIssue = parsedDraft.error.issues.some((i) => i.path[0] === "eventDate");
+    return { error: dateIssue ? EVENT_DATE_ERROR : "Check the quote details and try again." };
+  }
   draft = parsedDraft.data;
   if (!(await checkRateLimit("quoteUser", user.id))) return { error: RATE_LIMIT_ERROR };
 

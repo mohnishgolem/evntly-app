@@ -1,5 +1,6 @@
 "use server";
 
+import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -150,6 +151,7 @@ export async function bookBundle(packageId: string, draft: BookBundleDraft): Pro
     data: { user },
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
+  if (!isBookableEventDate(draft.eventDate)) return { error: EVENT_DATE_ERROR };
 
   const { error } = await supabase.rpc("book_bundle", {
     p_package_id: packageId,

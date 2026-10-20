@@ -1,5 +1,6 @@
 "use client";
 
+import { earliestEventDate } from "@/lib/event-dates";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { FileText, CheckCircle2 } from "lucide-react";
@@ -109,7 +110,7 @@ function QuoteForm({
   availability?: VendorAvailability;
   onSent: () => void;
 }) {
-  const [today] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [today] = useState(() => earliestEventDate());
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);

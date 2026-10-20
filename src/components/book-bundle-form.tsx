@@ -1,5 +1,6 @@
 "use client";
 
+import { earliestEventDate } from "@/lib/event-dates";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export function BookBundleForm({
               <Input
                 id="bb-date"
                 type="date"
+                min={earliestEventDate()}
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
               />

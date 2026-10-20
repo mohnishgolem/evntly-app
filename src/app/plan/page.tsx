@@ -1,5 +1,6 @@
 "use client";
 
+import { earliestEventDate } from "@/lib/event-dates";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ export default function PlanPage() {
         <Field title="Event date">
           <Input
             type="date"
+            min={earliestEventDate()}
             value={draft.eventDate}
             onChange={(e) => setDraft((d) => ({ ...d, eventDate: e.target.value }))}
           />

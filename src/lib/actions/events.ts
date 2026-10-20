@@ -1,5 +1,6 @@
 "use server";
 
+import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ export async function claimEventPlan(draft: PlanDraft) {
   if (!user?.email) {
     return { error: "Not logged in" };
   }
+  if (!isBookableEventDate(draft.eventDate)) return { error: EVENT_DATE_ERROR };
 
   const { data: event, error } = await supabase
     .from("events")
