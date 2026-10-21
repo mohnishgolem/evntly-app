@@ -1,202 +1,79 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { ShieldAlert, Store, Users, Flag, PartyPopper, Banknote, Bug, Filter } from "lucide-react";
 import Link from "next/link";
-import { getAdminSession } from "@/lib/data/user";
+import { BarChart3, Bug, ChevronRight, Flag, ShieldCheck, Store, Users, type LucideIcon } from "lucide-react";
+import { requireAdminPage } from "@/lib/data/user";
 import {
   getAllVendorsForAdmin,
   getAllUsersForAdmin,
   getReportsForAdmin,
-  getLeakLogForAdmin,
   getErrorSummaryForAdmin,
-  getFunnelForAdmin,
 } from "@/lib/data/admin";
-import { categoryLabel } from "@/lib/config";
-import { AdminVendorActions } from "@/components/admin-vendor-actions";
-import { FoundingBadge } from "@/components/founding-badge";
-import { AdminUserRoles } from "@/components/admin-user-roles";
-import { AdminReports } from "@/components/admin-reports";
-import { AdminLeakLog } from "@/components/admin-leak-log";
-import { AdminErrorLog } from "@/components/admin-error-log";
-import { AdminFunnel } from "@/components/admin-funnel";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin",
   robots: { index: false, follow: false },
 };
 
-export default async function AdminPage() {
-  const { session, admin, mfa } = await getAdminSession();
-  if (!session) redirect("/login?next=/admin");
-  if (!admin) redirect("/");
-  if (mfa === "needs-verify") redirect("/login/mfa?next=/admin");
-  if (mfa === "needs-enrol") {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center">
-        <ShieldAlert className="mx-auto mb-3 h-8 w-8 text-warning" />
-        <h1 className="mb-2 text-2xl font-bold">Two-factor authentication required</h1>
-        <p className="mb-6 text-sm text-muted-foreground">
-          The admin dashboard can approve vendors and change user roles, so it needs an
-          authenticator app on your account.
-        </p>
-        <Link
-          href="/profile/security"
-          className="inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
-        >
-          Set up two-factor authentication
-        </Link>
-      </div>
-    );
-  }
+function Tile({
+  href,
+  icon: Icon,
+  value,
+  label,
+  urgent,
+}: {
+  href: string;
+  icon: LucideIcon;
+  value: number;
+  label: string;
+  urgent?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-4 rounded-2xl border p-4 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring",
+        urgent ? "border-primary/40 bg-primary/5" : "border-border",
+      )}
+    >
+      <Icon className={cn("size-6 shrink-0", urgent ? "text-primary" : "text-muted-foreground")} strokeWidth={1.75} aria-hidden />
+      <span className="min-w-0 flex-1">
+        <span className="block text-2xl font-bold tabular-nums">{value}</span>
+        <span className="block text-sm text-muted-foreground">{label}</span>
+      </span>
+      <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+    </Link>
+  );
+}
 
-  const [vendors, users, reports, leakLog, errors, funnel] = await Promise.all([
+export default async function AdminOverviewPage() {
+  const { needsEnrol } = await requireAdminPage("/admin");
+  if (needsEnrol) return <AdminMfaRequired />;
+
+  const [vendors, users, reports, errors] = await Promise.all([
     getAllVendorsForAdmin(),
     getAllUsersForAdmin(),
     getReportsForAdmin(),
-    getLeakLogForAdmin(),
     getErrorSummaryForAdmin(),
-    getFunnelForAdmin(),
   ]);
 
-  const pending = vendors.filter((v) => v.status === "pending_review");
-  const others = vendors.filter((v) => v.status !== "pending_review");
-  const pendingReportsCount = reports.filter((r) => (r.status ?? "pending") === "pending").length;
+  const pending = vendors.filter((v) => v.status === "pending_review").length;
+  const live = vendors.filter((v) => v.status === "approved" && !v.is_demo).length;
+  const openReports = reports.filter((r) => (r.status ?? "pending") === "pending").length;
+  const customers = users.filter((u) => u.role === "customer").length;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold">
-        <ShieldAlert className="h-6 w-6 text-warning" /> Admin Dashboard
-      </h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Manage vendors, users, and moderation.
-      </p>
-
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-border p-4">
-          <p className="text-2xl font-bold">{pending.length}</p>
-          <p className="text-sm text-muted-foreground">Pending Vendors</p>
-        </div>
-        <div className="rounded-2xl border border-border p-4">
-          <p className="text-2xl font-bold">{users.length}</p>
-          <p className="text-sm text-muted-foreground">Total Users</p>
-        </div>
-        <div className="rounded-2xl border border-border p-4">
-          <p className="text-2xl font-bold">{pendingReportsCount}</p>
-          <p className="text-sm text-muted-foreground">Open Reports</p>
-        </div>
+      <AdminHeading title="Overview" description="What needs an admin today." />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Tile href="/admin/approvals" icon={ShieldCheck} value={pending} label="Vendors awaiting approval" urgent={pending > 0} />
+        <Tile href="/admin/support" icon={Flag} value={openReports} label="Open reports" urgent={openReports > 0} />
+        <Tile href="/admin/vendors" icon={Store} value={live} label="Live vendors (excl. samples)" />
+        <Tile href="/admin/customers" icon={Users} value={customers} label="Customers" />
+        <Tile href="/admin/analytics" icon={Bug} value={errors.length} label="Distinct errors logged" urgent={errors.length > 0} />
+        <Tile href="/admin/analytics" icon={BarChart3} value={users.length} label="Total accounts" />
       </div>
-
-      <Tabs defaultValue="vendors">
-        {/* flex-1 on TabsTrigger can't shrink past its (icon + label) content
-            width without min-w-0, so on narrow viewports the row overflowed
-            and clipped the first tab off-screen. Let it scroll horizontally
-            instead of trying to force 4+ full-width tabs into ~343px. */}
-        <TabsList className="scrollbar-hide mb-6 w-full justify-start overflow-x-auto">
-          <TabsTrigger value="vendors" className="shrink-0">
-            <Store /> Vendor Approval
-          </TabsTrigger>
-          <TabsTrigger value="roles" className="shrink-0">
-            <Users /> User Roles
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="shrink-0">
-            <Flag /> Reports
-          </TabsTrigger>
-          <TabsTrigger value="leak-log" className="shrink-0">
-            <Banknote /> Leak Log
-          </TabsTrigger>
-          <TabsTrigger value="funnel" className="shrink-0">
-            <Filter /> Funnel
-          </TabsTrigger>
-          <TabsTrigger value="errors" className="shrink-0">
-            <Bug /> Errors{errors.length > 0 ? ` (${errors.length})` : ""}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="vendors">
-          <section className="mb-10">
-            <h2 className="mb-4 text-lg font-semibold">Pending review ({pending.length})</h2>
-            {pending.length === 0 ? (
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <PartyPopper className="size-4" /> Nothing waiting on you.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {pending.map((v) => (
-                  <div key={v.id} className="rounded-2xl border border-border p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold">{v.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {categoryLabel(v.service_type)} · {v.city} · ${v.hourly_rate}/hr
-                        </p>
-                        <p className="break-all text-sm text-muted-foreground">{v.owner_email}</p>
-                        {v.bio && <p className="mt-2 text-sm">{v.bio}</p>}
-                        {!!v.locations_serviced?.length && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Services: {v.locations_serviced.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <AdminVendorActions vendorId={v.id} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section>
-            <h2 className="mb-4 text-lg font-semibold">All other listings ({others.length})</h2>
-            <div className="divide-y divide-border rounded-2xl border border-border">
-              {others.map((v) => (
-                // Stacks on phones: long owner emails used to push the
-                // status and buttons off the right edge of the card.
-                <div
-                  key={v.id}
-                  className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                >
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-2 text-sm font-medium">
-                      {v.name}
-                      {v.founding_vendor && <FoundingBadge className="px-2 py-0.5" />}
-                    </p>
-                    <p className="break-all text-xs text-muted-foreground">{v.owner_email}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
-                    <span className="text-sm capitalize text-muted-foreground">{v.status}</span>
-                    <AdminVendorActions
-                      vendorId={v.id}
-                      currentStatus={v.status as "approved" | "rejected" | "suspended"}
-                      founding={!!v.founding_vendor}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </TabsContent>
-
-        <TabsContent value="roles">
-          <AdminUserRoles users={users} />
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <AdminReports reports={reports} />
-        </TabsContent>
-
-        <TabsContent value="leak-log">
-          <AdminLeakLog events={leakLog} />
-        </TabsContent>
-
-        <TabsContent value="funnel">
-          <AdminFunnel rows={funnel} />
-        </TabsContent>
-
-        <TabsContent value="errors">
-          <AdminErrorLog errors={errors} />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

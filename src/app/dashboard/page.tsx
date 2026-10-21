@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { VendorCard } from "@/components/vendor-card";
 import { PlanClaimer } from "@/components/plan-claimer";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
@@ -15,15 +16,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 type Vendor = PublicVendor;
 
@@ -64,7 +56,7 @@ export default async function DashboardPage() {
         {session.displayName ? `Welcome, ${session.displayName}` : "Your dashboard"}
       </h1>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       {latestPlan ? (
         <>

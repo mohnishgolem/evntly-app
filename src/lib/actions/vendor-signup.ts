@@ -140,5 +140,5 @@ export async function updateVendorListing(
 
   if (error) return { error: error.message };
 
-  redirect("/vendor-dashboard");
+  redirect("/vendor-dashboard/business");
 }

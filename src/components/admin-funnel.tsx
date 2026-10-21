@@ -21,7 +21,7 @@ function FunnelTable({ title, rows }: { title: string; rows: Row[] }) {
   const top = Math.max(1, ...rows.map((r) => r.month));
   return (
     <section>
-      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+      <h3 className="mb-3 text-base font-semibold">{title}</h3>
       <div className="overflow-hidden rounded-2xl border border-border">
         <table className="w-full text-sm">
           <thead>

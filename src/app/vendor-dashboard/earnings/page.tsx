@@ -3,13 +3,11 @@ import Link from "next/link";
 import { addMonths, format, parseISO, startOfMonth } from "date-fns";
 import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { EarningsChart, type EarningsMonth } from "@/components/earnings-chart";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Earnings",
+  title: "Analytics",
   robots: { index: false, follow: false },
 };
 
@@ -74,12 +72,10 @@ export default async function VendorEarningsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Earnings</h1>
+      <h1 className="mb-1 text-2xl font-bold">Analytics</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        What your bookings are worth — earned once you mark a booking completed.
+        Earnings: what your bookings are worth — earned once you mark a booking completed.
       </p>
-
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

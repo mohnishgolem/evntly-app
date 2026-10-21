@@ -15,6 +15,7 @@ import { BudgetTracker } from "@/components/budget-tracker";
 import { summarizeBudget } from "@/lib/budget";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
@@ -25,15 +26,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Booking = ParticipantBooking;
@@ -209,7 +201,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
         {event.notes ? ` · ${event.notes}` : ""}
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       <EventStageTracker currentStage={stage} />
 

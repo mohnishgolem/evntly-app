@@ -99,7 +99,7 @@ export async function requestQuote(
       "Couples usually book whoever replies first — send your quote while it's fresh.",
     ],
     quote: draft.details,
-    cta: { label: "Reply with a quote", path: "/vendor-dashboard/quotes" },
+    cta: { label: "Reply with a quote", path: "/vendor-dashboard/enquiries" },
   });
 
   revalidatePath("/dashboard/quotes");
@@ -167,7 +167,7 @@ export async function respondToQuote(
         }
   );
 
-  revalidatePath("/vendor-dashboard/quotes");
+  revalidatePath("/vendor-dashboard", "layout");
   return { success: true };
 }
 

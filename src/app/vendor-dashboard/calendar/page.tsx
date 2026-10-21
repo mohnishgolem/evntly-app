@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { VendorCalendar } from "@/components/vendor-calendar";
 import { CalendarSync } from "@/components/calendar-sync";
 import { SITE_URL } from "@/lib/config";
@@ -39,8 +37,6 @@ export default async function VendorCalendarPage() {
       <p className="mb-6 text-sm text-muted-foreground">
         Your bookings at a glance, and the days you&apos;re not available.
       </p>
-
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {listings && listings.length > 0 && (
         <VendorCalendar

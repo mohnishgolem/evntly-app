@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { BUNDLE_BOOKING_COLUMNS } from "@/lib/public-columns";
 
 export const metadata: Metadata = {
@@ -12,15 +13,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 export default async function CustomerBundlesPage() {
   const session = await getCurrentUser();
@@ -45,7 +37,7 @@ export default async function CustomerBundlesPage() {
         Multi-vendor bundles you&apos;ve booked, with a group chat for every vendor involved.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       {!bookings || bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

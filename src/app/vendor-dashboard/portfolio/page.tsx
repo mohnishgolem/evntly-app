@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
+import { VENDOR_BUSINESS_TABS } from "@/lib/nav";
 import { PORTFOLIO_COLUMNS } from "@/lib/public-columns";
 
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export default async function VendorPortfolioPage() {
         Photos customers see on your {listing.name} listing.
       </p>
 
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
+      <DashboardNav items={VENDOR_BUSINESS_TABS} />
       <PortfolioUploader providerId={listing.id} userId={session.user.id} items={items ?? []} />
     </div>
   );

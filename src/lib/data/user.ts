@@ -24,6 +24,16 @@ export const getCurrentUser = cache(async function getCurrentUser() {
   return { user, profile, displayName };
 });
 
+// Unread message count for the signed-in user, shared by the header and
+// the vendor/admin sidebars on the same request. 0 when signed out.
+export const getUnreadMessageCount = cache(async function getUnreadMessageCount() {
+  const session = await getCurrentUser();
+  if (!session) return 0;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("my_unread_message_count");
+  return data ?? 0;
+});
+
 // Gate for vendor-only pages: logged-out visitors go to login (and come back
 // afterwards); logged-in users without a listing go to /vendor-dashboard,
 // which offers to create one. A "vendor" is anyone who owns a listing, in
@@ -47,7 +57,7 @@ export async function requireVendor(path: string) {
 // factor (aal2). Admins without an authenticator are sent to set one up.
 // ADMIN_MFA_OPTIONAL=true is an emergency escape hatch only (e.g. if TOTP is
 // ever disabled on the Supabase project) — leave it unset in production.
-export async function getAdminSession() {
+export const getAdminSession = cache(async function getAdminSession() {
   const session = await getCurrentUser();
   if (!session || session.profile?.role !== "admin") return { session, admin: false, mfa: "n/a" as const };
 
@@ -62,4 +72,15 @@ export async function getAdminSession() {
         ? ("needs-verify" as const)
         : ("needs-enrol" as const);
   return { session, admin: true, mfa };
+});
+
+// Gate for every /admin page. Each page calls this itself: the admin layout
+// only draws navigation, and a layout isn't re-run when moving between
+// pages client-side, so it can't be the security boundary.
+export async function requireAdminPage(path: string) {
+  const { session, admin, mfa } = await getAdminSession();
+  if (!session) redirect(`/login?next=${encodeURIComponent(path)}`);
+  if (!admin) redirect("/");
+  if (mfa === "needs-verify") redirect(`/login/mfa?next=${encodeURIComponent(path)}`);
+  return { session, needsEnrol: mfa === "needs-enrol" };
 }

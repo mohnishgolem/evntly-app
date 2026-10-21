@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { VendorBookingActions } from "@/components/vendor-booking-actions";
-import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
@@ -46,8 +44,6 @@ export default async function VendorBookingsPage() {
       <p className="mb-6 text-sm text-muted-foreground">
         Bookings from accepted quotes, in one place.
       </p>
-
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
 
       {!bookings || bookings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No bookings yet.</p>

@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { ApplyToEventForm } from "@/components/apply-to-event-form";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
+import { VENDOR_ENQUIRY_TABS } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "Event feed",
@@ -42,7 +42,7 @@ export default async function VendorEventFeedPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-1 text-2xl font-bold">Event Feed</h1>
-        <DashboardNav items={VENDOR_NAV_ITEMS} />
+        <DashboardNav items={VENDOR_ENQUIRY_TABS} />
         <p className="text-sm text-muted-foreground">
           Your listing needs to be approved before you can apply to events.
         </p>
@@ -70,7 +70,7 @@ export default async function VendorEventFeedPage() {
         pitch and a price.
       </p>
 
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
+      <DashboardNav items={VENDOR_ENQUIRY_TABS} />
 
       {!listings || listings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No open events right now. Check back soon.</p>

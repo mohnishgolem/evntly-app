@@ -84,7 +84,7 @@ export async function recordError(report: ErrorReport) {
             row.digest ? `Digest: ${row.digest}` : "You'll get one email per new error type each day.",
           ],
           quote: row.stack ?? row.message,
-          cta: { label: "Open the admin error log", path: "/admin" },
+          cta: { label: "Open the admin error log", path: "/admin/analytics" },
         })
       )
     );

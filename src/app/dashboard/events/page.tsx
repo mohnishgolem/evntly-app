@@ -5,21 +5,13 @@ import { ChevronRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "My events",
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 export default async function MyEventsPage() {
   const session = await getCurrentUser();
@@ -39,7 +31,7 @@ export default async function MyEventsPage() {
         Every event you&apos;ve planned, each with its own board.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       {!events || events.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

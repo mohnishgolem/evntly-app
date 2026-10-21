@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         `Someone asked you for a quote for their ${(q.event_type ?? "event").toLowerCase()} on ${formatEventDate(q.event_date)}${q.location ? ` in ${q.location}` : ""}.`,
         "It expires in under 24 hours. Send a price or decline so they can plan.",
       ],
-      cta: { label: "Reply now", path: "/vendor-dashboard/quotes" },
+      cta: { label: "Reply now", path: "/vendor-dashboard/enquiries" },
     });
   }
 

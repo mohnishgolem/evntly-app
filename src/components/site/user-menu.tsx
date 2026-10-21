@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { LayoutDashboard, Settings, LogOut, Store, FileText, CalendarClock, ShieldAlert, UserRound } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,92 +15,81 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/actions/auth";
-import type { Database } from "@/lib/supabase/database.types";
+import { activeHref, drawerSections, type NavRole } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
-type UserRow = Database["public"]["Tables"]["users"]["Row"] | null;
-
+// Account dropdown (768px+). Same items as the drawer minus the marketplace
+// links, which are already in the header.
 export function UserMenu({
-  profile,
+  role,
   email,
   displayName,
+  unread = 0,
 }: {
-  profile: UserRow;
+  role: NavRole;
   email: string;
   displayName?: string | null;
+  unread?: number;
 }) {
+  const pathname = usePathname();
   const label = displayName || email;
   const initial = (label ?? "?").charAt(0).toUpperCase();
-  const isVendor = profile?.role === "vendor";
+  const sections = drawerSections(role).filter((s) => s.title !== "Marketplace" && s.title !== undefined);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" className="h-10 w-10 rounded-full p-0">
-            <Avatar className="h-9 w-9">
+          <Button
+            variant="ghost"
+            aria-label={unread > 0 ? `Account menu, ${unread} unread messages` : "Account menu"}
+            className="relative size-11 rounded-full p-0"
+          >
+            <Avatar className="size-9">
               <AvatarFallback>{initial}</AvatarFallback>
             </Avatar>
+            {unread > 0 && (
+              <span aria-hidden className="absolute top-1 right-1 size-2.5 rounded-full bg-primary ring-2 ring-background" />
+            )}
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="truncate">{label}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            render={
-              <Link href="/profile">
-                <UserRound /> Profile
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href={isVendor ? "/vendor-dashboard" : "/dashboard"}>
-                <LayoutDashboard /> Dashboard
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href={isVendor ? "/vendor-dashboard/quotes" : "/dashboard/quotes"}>
-                <FileText /> Quotes
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href={isVendor ? "/vendor-dashboard/bookings" : "/dashboard/bookings"}>
-                <CalendarClock /> Bookings
-              </Link>
-            }
-          />
-          {isVendor && (
-            <DropdownMenuItem
-              render={
-                <Link href="/vendor-signup">
-                  <Store /> My listing
-                </Link>
-              }
-            />
-          )}
-          {profile?.role === "admin" && (
-            <DropdownMenuItem
-              render={
-                <Link href="/admin">
-                  <ShieldAlert /> Admin
-                </Link>
-              }
-            />
-          )}
-          <DropdownMenuItem
-            render={
-              <Link href="/dashboard/settings">
-                <Settings /> Settings
-              </Link>
-            }
-          />
         </DropdownMenuGroup>
+        {sections.map((section) => {
+          const current = activeHref(pathname, section.items);
+          return (
+            <DropdownMenuGroup key={section.title}>
+              <DropdownMenuSeparator />
+              {sections.length > 1 && (
+                <DropdownMenuLabel className="text-xs text-muted-foreground">{section.title}</DropdownMenuLabel>
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = item.href === current;
+                return (
+                  <DropdownMenuItem
+                    key={item.href}
+                    className={cn(active && "bg-accent font-semibold")}
+                    render={
+                      <Link href={item.href} aria-current={active ? "page" : undefined}>
+                        <Icon />
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge === "unread" && unread > 0 && (
+                          <span className="rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
+                      </Link>
+                    }
+                  />
+                );
+              })}
+            </DropdownMenuGroup>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

@@ -1,109 +1,49 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
-import { VendorQuoteResponse } from "@/components/vendor-quote-response";
-import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_NAV_ITEMS } from "@/lib/nav";
-import { cn } from "@/lib/utils";
-import { BlockUserButton } from "@/components/block-user";
-import {
-  effectiveQuoteStatus,
-  quoteExpiresSoon,
-  quoteTimeLeft,
-} from "@/lib/quote-expiry";
+import { getVendorQuotes } from "@/lib/data/vendor-quotes";
+import { VendorQuoteCards } from "@/components/vendor-quote-cards";
 
 export const metadata: Metadata = {
-  title: "Quote requests",
+  title: "Quotes",
   robots: { index: false, follow: false },
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Needs your response",
-  quoted: "You quoted this",
-  accepted: "Accepted — booking created",
-  declined: "You declined",
-  cancelled: "Customer cancelled",
-  expired: "Expired",
 };
 
 export default async function VendorQuotesPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/vendor-dashboard/quotes");
 
-  const supabase = await createClient();
-  // Masked read: the customer's email is blanked and client_name is a short
-  // "Jane D." label (see my_quote_requests).
-  const { data: quotes } = await supabase.rpc("my_quote_requests", { as_role: "vendor" });
+  const { quotes, enquiries } = await getVendorQuotes();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Quote requests</h1>
+      <h1 className="mb-1 text-2xl font-bold">Quotes</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Customers asking for a price on your services.
+        Prices you&apos;ve sent, and how each request ended up.
       </p>
 
-      <DashboardNav items={VENDOR_NAV_ITEMS} />
+      {enquiries.length > 0 && (
+        <Link
+          href="/vendor-dashboard/enquiries"
+          className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm"
+        >
+          <span>
+            <span className="font-semibold">
+              {enquiries.length} new {enquiries.length === 1 ? "request" : "requests"}
+            </span>{" "}
+            waiting for your price.
+          </span>
+          <span className="font-medium underline underline-offset-2">Reply</span>
+        </Link>
+      )}
 
-      {!quotes || quotes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No quote requests yet.</p>
+      {quotes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No quotes yet. When you reply to an enquiry with a price, it moves here.
+        </p>
       ) : (
-        <div className="space-y-4">
-          {quotes.map((q) => {
-            const status = effectiveQuoteStatus(q);
-            const timeLeft = quoteTimeLeft(q);
-            return (
-              <div key={q.id} className="rounded-2xl border border-border p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-semibold">
-                      {q.client_name ?? "Customer"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {q.event_type} · {q.event_date} · {q.location}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {q.estimated_guests} guests · Budget {q.budget_range}
-                    </p>
-                    {q.details && <p className="mt-1 text-sm">{q.details}</p>}
-                  </div>
-                  <span className="shrink-0 text-sm font-medium text-muted-foreground">
-                    {STATUS_LABEL[status] ?? status}
-                  </span>
-                </div>
-
-                {timeLeft && (
-                  <p
-                    className={cn(
-                      "mt-2 text-xs",
-                      quoteExpiresSoon(q)
-                        ? "font-medium text-warning"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {status === "pending"
-                      ? `Reply ${timeLeft.replace(/^in /, "within ")} or this request expires.`
-                      : `Your quote of $${q.quoted_amount} is open for the customer to accept — expires ${timeLeft}.`}
-                  </p>
-                )}
-                {status === "expired" && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {q.quoted_amount != null
-                      ? "The customer didn't accept your quote in time."
-                      : "This request expired before you replied."}
-                  </p>
-                )}
-
-                {status === "pending" && <VendorQuoteResponse quoteId={q.id} />}
-                {(status === "pending" || status === "quoted") && (
-                  <div className="mt-3 flex justify-end">
-                    <BlockUserButton name={q.client_name ?? "this customer"} quoteId={q.id} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <VendorQuoteCards quotes={quotes} />
       )}
     </div>
   );

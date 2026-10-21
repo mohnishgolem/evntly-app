@@ -24,7 +24,7 @@ export async function blockUser(target: {
     revalidatePath(`/messages/${encodeURIComponent(target.conversationId)}`);
   }
   revalidatePath("/messages");
-  revalidatePath("/vendor-dashboard/quotes");
+  revalidatePath("/vendor-dashboard", "layout");
   revalidatePath("/profile/blocked");
   return { success: true };
 }

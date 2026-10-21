@@ -8,6 +8,7 @@ import { PostEventButton } from "@/components/post-event-button";
 import { CloseListingButton } from "@/components/close-listing-button";
 import { EventApplicationActions } from "@/components/event-application-actions";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_COLUMNS, type ParticipantApplication } from "@/lib/public-columns";
 
@@ -16,15 +17,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   pending: { label: "Waiting for your response", className: "text-warning" },
@@ -79,7 +71,7 @@ export default async function EventFeedPage() {
         Post your event publicly and let vendors come to you with a pitch and a price.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       {!latestEvent ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

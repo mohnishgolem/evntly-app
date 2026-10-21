@@ -1,59 +1,56 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/data/user";
+import { getCurrentUser, getUnreadMessageCount } from "@/lib/data/user";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/site/user-menu";
-import { MobileNav } from "@/components/site/mobile-nav";
+import { NavDrawer } from "@/components/site/nav-drawer";
+import { HeaderLinks } from "@/components/site/header-links";
 import { Logo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { navRole } from "@/lib/nav";
 
-// Global top-level nav is identical for every visitor (Home/Explore), always
-// visible, never swapped by role. Only the right-hand side changes based on
-// auth state — that's the secondary menu the call asked for.
+// Rendered on the server with the session already known, so the menu for
+// the user's role is in the first paint — no flash of the wrong navigation.
+// Which links appear is presentation only: every page and action checks
+// permissions itself.
 export async function SiteHeader() {
   const session = await getCurrentUser();
+  const role = navRole(session?.profile?.role, !!session);
+
+  const unread = await getUnreadMessageCount();
 
   return (
     <header className="glass-material sticky top-0 z-50 border-b border-border/60 print:hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
-          <Link href="/">
+        <div className="flex items-center gap-6">
+          <Link href="/" aria-label="Evntly home" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-            <Link href="/" className="text-foreground/80 hover:text-foreground transition-colors">
-              Home
-            </Link>
-            <Link href="/explore" className="text-foreground/80 hover:text-foreground transition-colors">
-              Explore
-            </Link>
-            <Link href="/bundles" className="text-foreground/80 hover:text-foreground transition-colors">
-              Bundles
-            </Link>
-            <Link href="/plan" className="text-foreground/80 hover:text-foreground transition-colors">
-              Start planning
-            </Link>
-          </nav>
+          <HeaderLinks />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {session ? (
-            <UserMenu
-              profile={session.profile}
-              email={session.user.email ?? ""}
-              displayName={session.displayName}
-            />
+            <div className="hidden md:block">
+              <UserMenu
+                role={role}
+                email={session.user.email ?? ""}
+                displayName={session.displayName}
+                unread={unread}
+              />
+            </div>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
-              <Button
-                variant="ghost"
-                nativeButton={false}
-                render={<Link href="/login">Log in</Link>}
-              />
+              <Button variant="ghost" nativeButton={false} render={<Link href="/login">Log in</Link>} />
               <Button nativeButton={false} render={<Link href="/signup">Sign up</Link>} />
             </div>
           )}
           <ThemeToggle />
-          <MobileNav isAuthenticated={!!session} profile={session?.profile ?? null} />
+          <NavDrawer
+            role={role}
+            name={session?.displayName}
+            email={session?.user.email}
+            unread={unread}
+          />
         </div>
       </div>
     </header>

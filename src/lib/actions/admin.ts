@@ -34,7 +34,7 @@ export async function setVendorStatus(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { success: true };
 }
 
@@ -56,7 +56,7 @@ export async function setFoundingVendor(
   if (!data?.length) return { error: "Listing not found." };
 
   // Founding vendors sort first and carry a badge on every public surface.
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/");
   revalidatePath("/explore");
   revalidatePath(`/vendor/${vendorId}`);
@@ -74,7 +74,7 @@ export async function setUserRole(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { success: true };
 }
 
@@ -89,6 +89,6 @@ export async function updateReportStatus(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { success: true };
 }

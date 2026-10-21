@@ -31,13 +31,13 @@ export function ThemeToggle() {
   // the real theme before paint, but React doesn't know which icon to show
   // until it reads the class client-side, so avoid a hydration mismatch.
   if (!theme) {
-    return <Button variant="ghost" size="icon" aria-hidden className="invisible" />;
+    return <Button variant="ghost" size="icon-lg" aria-hidden className="invisible" />;
   }
 
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="icon-lg"
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       onClick={toggle}
     >

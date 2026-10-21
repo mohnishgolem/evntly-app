@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { QuoteList } from "@/components/quote-list";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 
@@ -13,15 +14,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/events", label: "My Events" },
-  { href: "/dashboard/event-feed", label: "Event Feed" },
-  { href: "/dashboard/quotes", label: "Quotes" },
-  { href: "/dashboard/bookings", label: "Bookings" },
-  { href: "/dashboard/bundles", label: "Bundles" },
-  { href: "/messages", label: "Messages" },
-];
 
 export default async function CustomerQuotesPage() {
   const session = await getCurrentUser();
@@ -55,7 +47,7 @@ export default async function CustomerQuotesPage() {
         Track quotes you&apos;ve asked vendors for, and accept the ones you like.
       </p>
 
-      <DashboardNav items={NAV_ITEMS} />
+      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
 
       {!quotes || quotes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">
