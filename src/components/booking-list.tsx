@@ -4,9 +4,17 @@ import { CancelBookingButton } from "@/components/cancel-booking-button";
 import { JobCardPanel } from "@/components/job-card-panel";
 import type { getJobCardForBooking } from "@/lib/data/job-cards";
 import type { ParticipantBooking } from "@/lib/public-columns";
+import type { PaymentSummary } from "@/lib/event-board";
 
 type Booking = ParticipantBooking;
 type JobCardResult = Awaited<ReturnType<typeof getJobCardForBooking>>;
+
+const PAYMENT_TONE: Record<PaymentSummary["tone"], string> = {
+  neutral: "text-muted-foreground",
+  attention: "text-warning",
+  active: "text-primary",
+  success: "text-success",
+};
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning",
@@ -19,10 +27,13 @@ export function BookingList({
   bookings,
   jobCardByBooking,
   reviewedBookingIds,
+  payments,
 }: {
   bookings: Booking[];
   jobCardByBooking: Map<string, JobCardResult>;
   reviewedBookingIds: Set<string>;
+  /** Payment status per booking id, shown under the price (Event Board). */
+  payments?: Map<string, PaymentSummary>;
 }) {
   return (
     <div className="space-y-4">
@@ -38,6 +49,11 @@ export function BookingList({
                 {b.event_address ? ` · ${b.event_address}` : ""}
               </p>
               {!!b.total_price && <p className="text-sm font-semibold">${b.total_price}</p>}
+              {payments?.get(b.id) && b.status !== "cancelled" && (
+                <p className={`text-sm font-medium ${PAYMENT_TONE[payments.get(b.id)!.tone]}`}>
+                  {payments.get(b.id)!.label}
+                </p>
+              )}
             </div>
             <span className={`text-sm font-medium capitalize ${STATUS_COLOR[b.status] ?? ""}`}>
               {b.status}

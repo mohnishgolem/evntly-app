@@ -8,6 +8,7 @@ import { TermsGate } from "@/components/terms-gate";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { MobileTabBar } from "@/components/site/mobile-tab-bar";
 import { SITE_URL, LAUNCH_CITY, THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/lib/config";
 
 // Resolves light/dark before first paint (localStorage, falling back to
@@ -103,6 +104,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <MobileTabBar />
         <Analytics />
         <ErrorReporter />
         <PageViewTracker />

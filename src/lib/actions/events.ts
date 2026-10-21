@@ -3,6 +3,7 @@
 import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { geocodeSuburb } from "@/lib/geocode";
 
 export type PlanDraft = {
   eventType: string;
@@ -25,6 +26,10 @@ export async function claimEventPlan(draft: PlanDraft) {
   }
   if (!isBookableEventDate(draft.eventDate)) return { error: EVENT_DATE_ERROR };
 
+  // Suburb-level coordinates let the Event Board match vendors by service
+  // area. Best-effort: the event saves without them if the lookup fails.
+  const place = await geocodeSuburb(draft.suburb).catch(() => null);
+
   const { data: event, error } = await supabase
     .from("events")
     .insert({
@@ -37,6 +42,8 @@ export async function claimEventPlan(draft: PlanDraft) {
       required_services: draft.requiredServices,
       notes: draft.notes || null,
       status: "planning",
+      latitude: place?.latitude ?? null,
+      longitude: place?.longitude ?? null,
     })
     .select("id")
     .single();

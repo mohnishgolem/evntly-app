@@ -33,7 +33,7 @@ export function PlanClaimer() {
       localStorage.removeItem("evntly_plan_draft");
       if (res.success && res.eventId) {
         if (stashed.postToFeed) await publishEventToFeed(res.eventId);
-        router.push(`/dashboard/events/${res.eventId}/vendors`);
+        router.push(`/dashboard/events/${res.eventId}`);
         return;
       }
       setClaiming(false);

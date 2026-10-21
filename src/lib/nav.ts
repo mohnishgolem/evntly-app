@@ -94,6 +94,15 @@ export const CUSTOMER_DASHBOARD_TABS: NavItem[] = [
   { href: "/messages", label: "Messages", icon: MessageCircle },
 ];
 
+// Phone tab bar for signed-in customers (below md; the header covers wider
+// screens). Four destinations, per Apple's 3–5 tab guidance.
+export const CUSTOMER_TAB_BAR: NavItem[] = [
+  { href: "/dashboard", label: "Home", icon: Home, exact: true, match: ["/saved", "/profile"] },
+  { href: "/dashboard/events", label: "Events", icon: CalendarDays, match: ["/plan"] },
+  { href: "/explore", label: "Explore", icon: Search, match: ["/vendor", "/bundles"] },
+  { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
+];
+
 // ── Vendor ───────────────────────────────────────────────────────────────
 // Enquiries = new requests waiting on the vendor (quote requests still
 // pending, Event Feed leads, messages). Quotes = requests the vendor has
@@ -140,6 +149,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/events", label: "Events", icon: CalendarDays },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/support", label: "Support", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
@@ -150,6 +160,7 @@ export const ADMIN_NAV: NavItem[] = [
 // functions and can't cross the server/client boundary.
 export const NAV_SETS = {
   customerTabs: CUSTOMER_DASHBOARD_TABS,
+  customerTabBar: CUSTOMER_TAB_BAR,
   vendor: VENDOR_NAV,
   vendorEnquiryTabs: VENDOR_ENQUIRY_TABS,
   vendorBusinessTabs: VENDOR_BUSINESS_TABS,

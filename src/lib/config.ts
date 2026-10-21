@@ -67,6 +67,9 @@ export const THEME_COLOR_LIGHT = "#ffffff";
 // this if/when a custom domain is attached to the Vercel project.
 export const SITE_URL = "https://evntly-tau.vercel.app";
 
+// events.guest_count is one of these labels (the plan wizard's buckets).
+export const GUEST_BUCKETS = ["Under 80", "80 – 150", "Over 150"] as const;
+
 export const EVENT_TYPES = [
   "Wedding",
   "Birthday",

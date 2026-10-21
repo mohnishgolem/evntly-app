@@ -751,6 +751,33 @@ export type Database = {
         }
         Relationships: []
       }
+      event_vendors: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          organiser_user_id: string
+          provider_id: string
+          service_type: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          organiser_user_id?: string
+          provider_id: string
+          service_type?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          organiser_user_id?: string
+          provider_id?: string
+          service_type?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           budget_total: number
@@ -760,6 +787,9 @@ export type Database = {
           event_type: string
           guest_count: string
           id: string
+          latitude: number | null
+          longitude: number | null
+          name: string | null
           notes: string | null
           organiser_email: string
           organiser_user_id: string | null
@@ -776,6 +806,9 @@ export type Database = {
           event_type: string
           guest_count: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string | null
           notes?: string | null
           organiser_email: string
           organiser_user_id?: string | null
@@ -792,6 +825,9 @@ export type Database = {
           event_type?: string
           guest_count?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string | null
           notes?: string | null
           organiser_email?: string
           organiser_user_id?: string | null
@@ -2187,6 +2223,7 @@ export type Database = {
         }
         Returns: string
       }
+      booked_vendor_ids_on: { Args: { p_date: string }; Returns: string[] }
       check_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
         Returns: boolean

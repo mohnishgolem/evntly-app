@@ -9,11 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
+import { EVENT_TYPES, GUEST_BUCKETS, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import { claimEventPlan, type PlanDraft } from "@/lib/actions/events";
 import { publishEventToFeed } from "@/lib/actions/event-feed";
 
-const GUEST_BUCKETS = ["Under 80", "80 – 150", "Over 150"] as const;
 const BUDGET_MIN = 500;
 const BUDGET_MAX = 30000;
 
@@ -49,7 +48,7 @@ export default function PlanPage() {
       const res = await claimEventPlan(draft);
       if (res.success && res.eventId) {
         if (postToFeed) await publishEventToFeed(res.eventId);
-        router.push(`/dashboard/events/${res.eventId}/vendors`);
+        router.push(`/dashboard/events/${res.eventId}`);
         return;
       }
       localStorage.setItem("evntly_plan_draft", JSON.stringify({ draft, postToFeed }));

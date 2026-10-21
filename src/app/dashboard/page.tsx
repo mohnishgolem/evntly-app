@@ -3,52 +3,41 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { VendorCard } from "@/components/vendor-card";
 import { PlanClaimer } from "@/components/plan-claimer";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { categoryLabel } from "@/lib/config";
+import { EventSummaryCard } from "@/components/event-board/board-cards";
 import { Button } from "@/components/ui/button";
-import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
+import { planningProgress } from "@/lib/event-board";
+import { sydneyDate } from "@/lib/event-dates";
 
 export const metadata: Metadata = {
   title: "Dashboard",
   robots: { index: false, follow: false },
 };
 
-
-type Vendor = PublicVendor;
-
 export default async function DashboardPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard");
 
   const supabase = await createClient();
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .eq("organiser_user_id", session.user.id)
-    .order("created_at", { ascending: false })
-    .order("id");
-
-  const latestPlan = events?.[0] ?? null;
-
-  let shortlist: Vendor[] | null = null;
-  if (latestPlan?.required_services?.length) {
-    const { data } = await supabase
-      .from("service_providers")
-      .select(PUBLIC_VENDOR_COLUMNS)
-      .eq("status", "approved")
-      .in("service_type", latestPlan.required_services)
-      .order("is_demo", { ascending: true })
-      .order("founding_vendor", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
+  const [{ data: events }, { data: bookings }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .eq("organiser_user_id", session.user.id)
+      .gte("event_date", sydneyDate())
+      .order("event_date", { ascending: true })
       .order("id")
-      .limit(8);
-    shortlist = data;
-  }
+      .limit(4),
+    supabase
+      .from("bookings")
+      .select("event_id, service_type, status")
+      .eq("client_user_id", session.user.id)
+      .not("event_id", "is", null),
+  ]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-2xl px-4 py-8 lg:max-w-4xl">
       <PlanClaimer />
 
       <h1 className="mb-1 text-2xl font-bold">
@@ -57,44 +46,34 @@ export default async function DashboardPage() {
 
       <DashboardNav tabs="customerTabs" />
 
-      {latestPlan ? (
-        <>
-          <p className="mb-6 text-muted-foreground">
-            Planning a <strong>{latestPlan.event_type}</strong> in {latestPlan.suburb} on{" "}
-            {latestPlan.event_date} for {latestPlan.guest_count} guests — budget $
-            {latestPlan.budget_total.toLocaleString()}.
-          </p>
-
-          <section>
-            <h2 className="mb-4 text-lg font-semibold">
-              Your vendor shortlist ({latestPlan.required_services.map(categoryLabel).join(", ")})
-            </h2>
-            {shortlist && shortlist.length > 0 ? (
-              <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-                {shortlist.map((v) => (
-                  <VendorCard
-                    key={v.id}
-                    vendor={v}
-                    saved={(session.profile?.saved_providers ?? []).includes(v.id)}
-                    isAuthenticated
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No matching vendors yet — check back soon, or{" "}
-                <Link href="/explore" className="underline underline-offset-2">
-                  browse everyone
-                </Link>
-                .
-              </p>
-            )}
-          </section>
-        </>
+      {events && events.length > 0 ? (
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Upcoming events</h2>
+            <Link href="/dashboard/events" className="flex h-11 items-center text-sm font-medium underline underline-offset-2">
+              All events
+            </Link>
+          </div>
+          <ul className="grid gap-4 md:grid-cols-2">
+            {events.map((e) => (
+              <li key={e.id}>
+                <EventSummaryCard
+                  event={e}
+                  href={`/dashboard/events/${e.id}`}
+                  className="h-full"
+                  progress={planningProgress(
+                    e.required_services,
+                    (bookings ?? []).filter((b) => b.event_id === e.id)
+                  )}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-border py-12 text-center">
+        <div className="mt-6 rounded-3xl border border-dashed border-border py-12 text-center">
           <p className="mb-4 text-muted-foreground">You haven&apos;t started planning an event yet.</p>
-          <Button nativeButton={false} render={<Link href="/plan">Start planning</Link>} />
+          <Button size="lg" nativeButton={false} render={<Link href="/plan">Start planning</Link>} />
         </div>
       )}
     </div>

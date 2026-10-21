@@ -33,7 +33,7 @@ declare
   out text := '';
   attacker uuid; vendor uuid; vendor2 uuid; customer uuid;
   v_listing text; v2_listing text; atk_listing text; q_id text; b_id text; pkg_id text; part_id text;
-  r text; n int; amt numeric;
+  r text; n int; amt numeric; ev text;
 
 begin
   attacker := pg_temp.new_user('rt-attacker@example.invalid', '{"role":"admin","full_name":"Attacker"}');
@@ -223,6 +223,36 @@ begin
       into n using r;
     out := out || E'\n' || case when n = 1 then 'PASS' else 'FAIL' end || ' L6c report decision audited -> ' || n;
   exception when others then out := out || E'\nFAIL L6b/c audit log: ' || sqlerrm;
+  end;
+
+  -- E1–E4: Event Board shortlists are private to the organiser.
+  begin
+    perform pg_temp.act_as(customer);
+    insert into public.events (organiser_email, organiser_user_id, event_type, event_date, suburb, guest_count, budget_total, required_services, status)
+    values ('rt-customer@example.invalid', customer, 'Party', current_date + 30, 'Bondi', 'Under 80', 2000, array['dj'], 'planning')
+    returning id into ev;
+    insert into public.event_vendors (event_id, provider_id, service_type) values (ev, v_listing, 'made-up');
+    select service_type into r from public.event_vendors where event_id = ev;
+    out := out || E'\n' || case when r = 'dj' then 'PASS' else 'FAIL' end || ' E1 shortlist service_type comes from the listing -> ' || coalesce(r, 'null');
+
+    perform pg_temp.act_as(attacker);
+    select count(*) into n from public.event_vendors where event_id = ev;
+    out := out || E'\n' || case when n = 0 then 'PASS' else 'FAIL' end || ' E2 other users cannot read a shortlist -> ' || n;
+    begin
+      insert into public.event_vendors (event_id, provider_id) values (ev, v2_listing);
+      out := out || E'\nFAIL E3 shortlisted onto someone else''s event';
+    exception when others then out := out || E'\nPASS E3 cannot shortlist onto someone else''s event';
+    end;
+
+    perform pg_temp.act_as(vendor);
+    select count(*) into n from public.event_vendors where provider_id = v_listing;
+    out := out || E'\n' || case when n = 0 then 'PASS' else 'FAIL' end || ' E4 vendors cannot see who shortlisted them -> ' || n;
+    select count(*) into n from public.events where id = ev;
+    out := out || E'\n' || case when n = 0 then 'PASS' else 'FAIL' end || ' E5 vendors cannot read customer events -> ' || n;
+    perform pg_temp.act_as(null);
+  exception when others then
+    perform pg_temp.act_as(null);
+    out := out || E'\nFAIL E1-E5 event board: ' || sqlerrm;
   end;
 
   raise exception 'SECURITY REGRESSION RESULTS (rolled back):%', out;
