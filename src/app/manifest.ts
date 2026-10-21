@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "Evntly — Find trusted event vendors",
     short_name: "Evntly",
-    description: `Book DJs, photographers, florists and caterers for your event in ${LAUNCH_CITY}.`,
+    description: `Book photographers, decorators, DJs, celebrants, venues and more for your event in ${LAUNCH_CITY}.`,
     start_url: "/",
     scope: "/",
     display: "standalone",

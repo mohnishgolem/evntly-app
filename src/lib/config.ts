@@ -9,16 +9,22 @@ import {
   Sparkles,
   ClipboardList,
   PartyPopper,
+  HeartHandshake,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 
+// Order is display order (filter chips, plan/signup pickers): the Ecosystem
+// Strategy's focus categories first, then the rest.
 export const VENDOR_CATEGORIES = [
-  { value: "dj", label: "DJ", icon: Music },
   { value: "photographer", label: "Photographer", icon: Camera },
+  { value: "decorator", label: "Decorator", icon: Palette },
+  { value: "dj", label: "DJ", icon: Music },
+  { value: "celebrant", label: "Celebrant", icon: HeartHandshake },
+  { value: "venue", label: "Venue", icon: Landmark },
   { value: "florist", label: "Florist", icon: Flower2 },
   { value: "caterer", label: "Caterer", icon: UtensilsCrossed },
   { value: "videographer", label: "Videographer", icon: Video },
-  { value: "decorator", label: "Decorator", icon: Palette },
   { value: "mc", label: "MC", icon: Mic },
   { value: "makeup_artist", label: "Makeup Artist", icon: Sparkles },
   { value: "event_planner", label: "Event Planner", icon: ClipboardList },
@@ -26,14 +32,27 @@ export const VENDOR_CATEGORIES = [
 
 export type VendorCategory = (typeof VENDOR_CATEGORIES)[number]["value"];
 
-// Categories live in the launch market. Everything else in VENDOR_CATEGORIES
-// exists in the schema but is hidden from browse/signup until launch expands.
-export const LAUNCH_CATEGORIES: VendorCategory[] = [
-  "dj",
+// Categories live in the launch market: browse, plan and signup. Currently
+// every category; narrow this list to hide some without touching the data.
+export const LAUNCH_CATEGORIES: VendorCategory[] = VENDOR_CATEGORIES.map((c) => c.value);
+
+// The Ecosystem Strategy's focus categories (Sydney photographers,
+// decorators, DJs, celebrants and small venues): named in marketing copy.
+export const FEATURED_CATEGORIES: VendorCategory[] = [
   "photographer",
-  "florist",
-  "caterer",
+  "decorator",
+  "dj",
+  "celebrant",
+  "venue",
 ];
+
+export function isVendorCategory(value: string): value is VendorCategory {
+  return VENDOR_CATEGORIES.some((c) => c.value === value);
+}
+
+export function isLaunchCategory(value: string): value is VendorCategory {
+  return (LAUNCH_CATEGORIES as string[]).includes(value);
+}
 
 export const LAUNCH_CITY = "Sydney";
 
@@ -92,10 +111,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   florist: "#e0559a",
   caterer: "#e8a53a",
   videographer: "#0891b2",
-  decorator: "#e0559a",
+  decorator: "#d946ef",
   mc: "#e8a53a",
   makeup_artist: "#e11d48",
   event_planner: "#16a34a",
+  celebrant: "#ea580c",
+  venue: "#0d9488",
 };
 
 export function categoryColor(value: string) {

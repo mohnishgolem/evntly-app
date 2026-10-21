@@ -7,10 +7,8 @@ import { Label } from "@/components/ui/label";
 import { SuburbPicker } from "@/components/suburb-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
+import { EVENT_TYPES, isLaunchCategory, VENDOR_CATEGORIES } from "@/lib/config";
 import { updateVendorListing, type VendorSignupDraft } from "@/lib/actions/vendor-signup";
-
-const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
 
 export function EditListingForm({
   listingId,
@@ -20,6 +18,11 @@ export function EditListingForm({
   initial: VendorSignupDraft;
 }) {
   const [draft, setDraft] = useState<VendorSignupDraft>(initial);
+  // Launch categories, plus the listing's own if it's no longer one of them,
+  // so a vendor whose category left the launch list can still see it.
+  const categories = VENDOR_CATEGORIES.filter(
+    (c) => isLaunchCategory(c.value) || c.value === initial.serviceType
+  );
   const [locationInput, setLocationInput] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 import { isValidAbn, normalizeAbn } from "@/lib/abn";
+import { isLaunchCategory, isVendorCategory } from "@/lib/config";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -49,6 +50,11 @@ export async function submitVendorListing(
 
   if (!user?.email) {
     return { error: "You need to be logged in to list a business." };
+  }
+
+  // New listings can only join a category that's live in the launch market.
+  if (!isLaunchCategory(draft.serviceType)) {
+    return { error: "Pick one of the listed categories." };
   }
 
   const { data: existing } = await supabase
@@ -99,6 +105,12 @@ export async function updateVendorListing(
 
   if (!user?.email) {
     return { error: "You need to be logged in to edit a listing." };
+  }
+
+  // Existing listings may keep a category that has since left the launch
+  // list (the edit form still shows it), but nothing outside the known set.
+  if (!isVendorCategory(draft.serviceType)) {
+    return { error: "Pick one of the listed categories." };
   }
 
   const abn = normalizeAbn(draft.abn);

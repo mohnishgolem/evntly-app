@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
-import { LAUNCH_CATEGORIES, LAUNCH_CITY } from "@/lib/config";
+import { LAUNCH_CATEGORIES, LAUNCH_CITY, isLaunchCategory } from "@/lib/config";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 import { PORTFOLIO_COLUMNS, REVIEW_COLUMNS } from "@/lib/public-columns";
 
@@ -114,7 +114,7 @@ export async function findSimilarVendors(
   excludeIds: string[] = [],
   limit = 3
 ): Promise<SimilarVendor[]> {
-  if (!LAUNCH_CATEGORIES.includes(serviceType as (typeof LAUNCH_CATEGORIES)[number])) return [];
+  if (!isLaunchCategory(serviceType)) return [];
   const { data } = await client
     .from("service_providers")
     .select("id, name, hourly_rate, city")

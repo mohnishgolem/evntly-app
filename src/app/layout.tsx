@@ -27,7 +27,7 @@ export const logoFont = localFont({
 });
 
 const DEFAULT_DESCRIPTION =
-  `Book DJs, photographers, florists and caterers for your wedding, birthday or corporate event in ${LAUNCH_CITY}.`;
+  `Book photographers, decorators, DJs, celebrants, venues and more for your wedding, birthday or corporate event in ${LAUNCH_CITY}.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -52,8 +52,11 @@ export const metadata: Metadata = {
   keywords: [
     "event vendors",
     `${LAUNCH_CITY} wedding vendors`,
-    "DJ hire",
     "wedding photographer",
+    "event decorator",
+    "DJ hire",
+    "wedding celebrant",
+    "event venue",
     "florist",
     "caterer",
     "event planning",
