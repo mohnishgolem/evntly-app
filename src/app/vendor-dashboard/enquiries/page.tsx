@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/data/user";
 import { getVendorQuotes } from "@/lib/data/vendor-quotes";
 import { VendorQuoteCards } from "@/components/vendor-quote-cards";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_ENQUIRY_TABS } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "Enquiries",
@@ -24,7 +23,7 @@ export default async function VendorEnquiriesPage() {
         Customers asking for a price. Reply before the request expires.
       </p>
 
-      <DashboardNav items={VENDOR_ENQUIRY_TABS} label="Enquiry types" />
+      <DashboardNav tabs="vendorEnquiryTabs" label="Enquiry types" />
 
       {enquiries.length === 0 ? (
         <p className="text-sm text-muted-foreground">

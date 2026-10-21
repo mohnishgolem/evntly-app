@@ -15,7 +15,6 @@ import { BudgetTracker } from "@/components/budget-tracker";
 import { summarizeBudget } from "@/lib/budget";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { conversationIdFor } from "@/lib/messages";
 import type { Database } from "@/lib/supabase/database.types";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
@@ -201,7 +200,7 @@ export default async function EventBoardPage({ params }: { params: Promise<{ id:
         {event.notes ? ` · ${event.notes}` : ""}
       </p>
 
-      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
+      <DashboardNav tabs="customerTabs" />
 
       <EventStageTracker currentStage={stage} />
 

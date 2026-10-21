@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, getUnreadMessageCount } from "@/lib/data/user";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { AppSidebar, SidebarFrame } from "@/components/site/app-sidebar";
-import { CUSTOMER_DASHBOARD_TABS, VENDOR_ENQUIRY_TABS, VENDOR_NAV } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { maskContactInfo } from "@/lib/contact-reveal";
 import { attachmentLabel } from "@/lib/attachments";
@@ -34,11 +33,11 @@ export default async function MessagesPage() {
 
   return (
     <SidebarFrame
-      sidebar={isVendor ? <AppSidebar title="Your business" items={VENDOR_NAV} unread={unread} /> : null}
+      sidebar={isVendor ? <AppSidebar title="Your business" nav="vendor" unread={unread} /> : null}
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Messages</h1>
-        <DashboardNav items={isVendor ? VENDOR_ENQUIRY_TABS : CUSTOMER_DASHBOARD_TABS} />
+        <DashboardNav tabs={isVendor ? "vendorEnquiryTabs" : "customerTabs"} />
         <PushToggle publicKey={pushPublicKey} compact />
         {!threads || threads.length === 0 ? (
           <p className="text-sm text-muted-foreground">No conversations yet.</p>

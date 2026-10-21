@@ -145,6 +145,19 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
+// Server components pass one of these names to client nav components
+// (DashboardNav, AppSidebar), never the arrays: the icons are component
+// functions and can't cross the server/client boundary.
+export const NAV_SETS = {
+  customerTabs: CUSTOMER_DASHBOARD_TABS,
+  vendor: VENDOR_NAV,
+  vendorEnquiryTabs: VENDOR_ENQUIRY_TABS,
+  vendorBusinessTabs: VENDOR_BUSINESS_TABS,
+  admin: ADMIN_NAV,
+} satisfies Record<string, NavItem[]>;
+
+export type NavSetName = keyof typeof NAV_SETS;
+
 /** Drawer contents for a role. */
 export function drawerSections(role: NavRole): NavSection[] {
   switch (role) {

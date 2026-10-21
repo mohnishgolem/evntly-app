@@ -5,7 +5,6 @@ import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { PayoutActions } from "@/components/payments/payout-actions";
-import { VENDOR_BUSINESS_TABS } from "@/lib/nav";
 import { formatAud } from "@/lib/payments/money";
 import { milestoneStage } from "@/lib/payments/status";
 import { getPaymentsStatus } from "@/lib/payments/server";
@@ -46,7 +45,7 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Payouts</h1>
       <p className="mb-6 text-sm text-muted-foreground">How customers&apos; payments reach your bank account.</p>
-      <DashboardNav items={VENDOR_BUSINESS_TABS} label="Business sections" />
+      <DashboardNav tabs="vendorBusinessTabs" label="Business sections" />
 
       <section className="mb-6 rounded-2xl border border-border p-5">
         <div className="mb-3 flex items-center gap-2">

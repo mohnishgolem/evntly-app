@@ -2,21 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { activeHref, type NavItem } from "@/lib/nav";
+import { activeHref, NAV_SETS, type NavSetName } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 // In-page section tabs (customer dashboard, vendor Enquiries / My Business).
 // Highlights by prefix so detail pages (e.g. /dashboard/events/123) keep
 // their section lit.
 export function DashboardNav({
-  items,
+  tabs,
   label = "Sections",
 }: {
-  items: Pick<NavItem, "href" | "label" | "match" | "exact">[];
+  tabs: NavSetName;
   label?: string;
 }) {
   const pathname = usePathname();
-  const current = activeHref(pathname, items as NavItem[]);
+  const items = NAV_SETS[tabs];
+  const current = activeHref(pathname, items);
 
   return (
     <nav aria-label={label} className="relative mb-6">

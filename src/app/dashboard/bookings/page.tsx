@@ -5,7 +5,6 @@ import { CalendarClock } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
@@ -48,7 +47,7 @@ export default async function CustomerBookingsPage() {
         Bookings created from accepted quotes.
       </p>
 
-      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
+      <DashboardNav tabs="customerTabs" />
 
       {!bookings || bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { QuoteList } from "@/components/quote-list";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 
@@ -47,7 +46,7 @@ export default async function CustomerQuotesPage() {
         Track quotes you&apos;ve asked vendors for, and accept the ones you like.
       </p>
 
-      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
+      <DashboardNav tabs="customerTabs" />
 
       {!quotes || quotes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

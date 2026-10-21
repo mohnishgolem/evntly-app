@@ -5,7 +5,6 @@ import { MessageCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import { BUNDLE_BOOKING_COLUMNS } from "@/lib/public-columns";
 
 export const metadata: Metadata = {
@@ -37,7 +36,7 @@ export default async function CustomerBundlesPage() {
         Multi-vendor bundles you&apos;ve booked, with a group chat for every vendor involved.
       </p>
 
-      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
+      <DashboardNav tabs="customerTabs" />
 
       {!bookings || bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

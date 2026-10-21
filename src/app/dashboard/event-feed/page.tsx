@@ -8,7 +8,6 @@ import { PostEventButton } from "@/components/post-event-button";
 import { CloseListingButton } from "@/components/close-listing-button";
 import { EventApplicationActions } from "@/components/event-application-actions";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { CUSTOMER_DASHBOARD_TABS } from "@/lib/nav";
 import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_COLUMNS, type ParticipantApplication } from "@/lib/public-columns";
 
@@ -71,7 +70,7 @@ export default async function EventFeedPage() {
         Post your event publicly and let vendors come to you with a pitch and a price.
       </p>
 
-      <DashboardNav items={CUSTOMER_DASHBOARD_TABS} />
+      <DashboardNav tabs="customerTabs" />
 
       {!latestEvent ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

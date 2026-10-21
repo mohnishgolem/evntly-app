@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/user";
 import { getVendorPackages, getPendingInvitesForVendor } from "@/lib/data/bundles";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_BUSINESS_TABS } from "@/lib/nav";
 import { CreateBundleForm } from "@/components/create-bundle-form";
 import { PackageInviteActions } from "@/components/package-invite-actions";
 
@@ -34,7 +33,7 @@ export default async function VendorBundlesPage() {
         Team up with other vendors on a combined package customers can book together.
       </p>
 
-      <DashboardNav items={VENDOR_BUSINESS_TABS} />
+      <DashboardNav tabs="vendorBusinessTabs" />
 
       {invites.length > 0 && (
         <section className="mb-8">

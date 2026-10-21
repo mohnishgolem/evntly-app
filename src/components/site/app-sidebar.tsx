@@ -1,22 +1,24 @@
+"use client";
+
 import { NavList } from "@/components/site/nav-list";
-import type { NavItem } from "@/lib/nav";
+import { NAV_SETS, type NavSetName } from "@/lib/nav";
 
 // Persistent left sidebar for the vendor and admin areas from 1200px.
 // Below that, the same items are in the dark drawer.
 export function AppSidebar({
   title,
-  items,
+  nav,
   unread = 0,
 }: {
   title: string;
-  items: NavItem[];
+  nav: NavSetName;
   unread?: number;
 }) {
   return (
     <aside className="hidden w-60 shrink-0 desk:block">
       <nav aria-label={title} className="sticky top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto py-8 pr-2">
         <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</p>
-        <NavList items={items} variant="sidebar" unread={unread} />
+        <NavList items={NAV_SETS[nav]} variant="sidebar" unread={unread} />
       </nav>
     </aside>
   );

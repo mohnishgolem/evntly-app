@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { VENDOR_BUSINESS_TABS } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "My Business",
@@ -56,7 +55,7 @@ export default async function VendorBusinessPage() {
         Your listings, portfolio and bundles — what customers see.
       </p>
 
-      <DashboardNav items={VENDOR_BUSINESS_TABS} label="Business sections" />
+      <DashboardNav tabs="vendorBusinessTabs" label="Business sections" />
 
       <div className="space-y-4">
         {listings.map((listing) => {
