@@ -286,3 +286,13 @@
 .dark {
   --map-ctrl-icon-filter: invert(1);
 }
+
+/* iOS Low Power Mode blocks autoplay and draws a play button over the
+   decorative hero video. Hide it — the poster frame shows instead. */
+.hero-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+.hero-video::-webkit-media-controls {
+  display: none !important;
+}

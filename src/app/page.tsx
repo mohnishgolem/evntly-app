@@ -6,7 +6,7 @@ import { VendorCard } from "@/components/vendor-card";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { getFeaturedVendors, launchCity } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
-import { FEATURED_CATEGORIES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES, categoryPlural } from "@/lib/config";
+import { FEATURED_CATEGORIES, VENDOR_CATEGORIES, categoryPlural } from "@/lib/config";
 
 const HERO_SCENARIOS = ["Weddings", "Birthdays", "Corporate events", "Engagements"];
 
@@ -15,9 +15,9 @@ const listFormat = new Intl.ListFormat("en-AU", { style: "long", type: "conjunct
 export default async function HomePage() {
   const [vendors, session] = await Promise.all([getFeaturedVendors(8), getCurrentUser()]);
   const savedVendorIds = session?.profile?.saved_providers ?? [];
-  const launchVendorCategories = VENDOR_CATEGORIES.filter((c) =>
-    LAUNCH_CATEGORIES.includes(c.value)
-  );
+  // The strategy's focus categories only — all 11 crowded the hero on
+  // phones. "More" goes to Explore, which lists every category.
+  const featuredCategories = VENDOR_CATEGORIES.filter((c) => FEATURED_CATEGORIES.includes(c.value));
 
   return (
     <div className="pb-16">
@@ -42,7 +42,7 @@ export default async function HomePage() {
           playsInline
           preload="metadata"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+          className="hero-video absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
 
@@ -55,19 +55,20 @@ export default async function HomePage() {
           </h1>
           <p className="mx-auto mb-8 max-w-xl text-lg text-balance text-white/85">
             Browse trusted {FEATURED_CATEGORIES.map(categoryPlural).join(", ")} and more for your{" "}
-            {listFormat.format(HERO_SCENARIOS).toLowerCase()} — no account needed to look around.
+            {listFormat.format(HERO_SCENARIOS).toLowerCase()}.
           </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          {/* Side by side at every width; on phones each takes half the row. */}
+          <div className="mx-auto flex max-w-md items-center justify-center gap-3 sm:max-w-none">
             <Button
               size="lg"
-              className="h-12 px-8 text-base shadow-lg"
+              className="h-12 flex-1 px-4 text-[15px] shadow-lg sm:flex-none sm:px-8 sm:text-base"
               nativeButton={false}
               render={<Link href="/plan">Start planning</Link>}
             />
             <Button
               size="lg"
               variant="outline"
-              className="h-12 border-white/40 bg-white/90 px-8 text-base text-neutral-900 shadow-lg backdrop-blur-sm hover:bg-white hover:text-neutral-900 dark:border-white/40 dark:bg-white/90 dark:text-neutral-900 dark:hover:bg-white dark:hover:text-neutral-900"
+              className="h-12 flex-1 border-white/40 bg-white/90 px-4 text-[15px] text-neutral-900 sm:flex-none sm:px-8 sm:text-base shadow-lg backdrop-blur-sm hover:bg-white hover:text-neutral-900 dark:border-white/40 dark:bg-white/90 dark:text-neutral-900 dark:hover:bg-white dark:hover:text-neutral-900"
               nativeButton={false}
               render={<Link href="/explore">Browse vendors</Link>}
             />
@@ -75,7 +76,7 @@ export default async function HomePage() {
         </div>
 
         <div className="relative mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-3">
-          {launchVendorCategories.map((c) => (
+          {featuredCategories.map((c) => (
             <Link
               key={c.value}
               href={`/explore?category=${c.value}`}
@@ -85,6 +86,12 @@ export default async function HomePage() {
               {c.label}
             </Link>
           ))}
+          <Link
+            href="/explore"
+            className="flex items-center gap-1 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/25"
+          >
+            More <ChevronRight className="size-4" />
+          </Link>
         </div>
       </section>
 
