@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-// The page itself is a client component, which can't export metadata.
+// Metadata lives here so the page can stay focused on the listing check.
 export const metadata: Metadata = {
   title: "List your business",
   description: "List your event business on Evntly and get quote requests from people planning events in Sydney.",
