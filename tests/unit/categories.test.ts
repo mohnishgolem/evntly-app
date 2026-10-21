@@ -11,12 +11,16 @@ import {
 
 describe("launch categories", () => {
   it("feature the Ecosystem Strategy focus set", () => {
-    expect(FEATURED_CATEGORIES).toEqual(["photographer", "decorator", "dj", "celebrant", "venue"]);
+    expect(FEATURED_CATEGORIES).toEqual(["photographer", "decorator", "dj", "celebrant"]);
     for (const c of FEATURED_CATEGORIES) expect(LAUNCH_CATEGORIES).toContain(c);
   });
 
-  it("include every vendor category", () => {
-    expect(LAUNCH_CATEGORIES).toEqual(VENDOR_CATEGORIES.map((c) => c.value));
+  it("include every vendor category except hidden ones", () => {
+    expect(LAUNCH_CATEGORIES).toEqual(
+      VENDOR_CATEGORIES.map((c) => c.value).filter((c) => c !== "venue")
+    );
+    expect(isLaunchCategory("venue")).toBe(false);
+    expect(isVendorCategory("venue")).toBe(true);
   });
 
   it("are all known vendor categories with labels", () => {

@@ -24,7 +24,7 @@ export default function TermsPage() {
             <strong className={strong}>Sai Mohnish Golem (ABN 49 193 658 959), trading as Evntly</strong>.
             Evntly is an online marketplace that connects people planning events
             (&quot;Customers&quot;) with independent businesses offering event services such as
-            photographers, decorators, DJs, celebrants and venues (&quot;Vendors&quot;), currently in the
+            photographers, decorators, DJs and celebrants (&quot;Vendors&quot;), currently in the
             Sydney area. By creating an account or using Evntly, you agree to these Terms and our{" "}
             <Link href="/privacy-policy" className={link}>Privacy Policy</Link>.
           </p>

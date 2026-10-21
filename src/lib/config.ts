@@ -32,19 +32,19 @@ export const VENDOR_CATEGORIES = [
 
 export type VendorCategory = (typeof VENDOR_CATEGORIES)[number]["value"];
 
-// Categories live in the launch market: browse, plan and signup. Currently
-// every category; narrow this list to hide some without touching the data.
-export const LAUNCH_CATEGORIES: VendorCategory[] = VENDOR_CATEGORIES.map((c) => c.value);
+// Categories hidden from browse, plan and signup for now. Venues need
+// per-event pricing (listings are priced per hour) before they launch.
+export const HIDDEN_CATEGORIES: VendorCategory[] = ["venue"];
+
+// Categories live in the launch market: browse, plan and signup.
+export const LAUNCH_CATEGORIES: VendorCategory[] = VENDOR_CATEGORIES.map((c) => c.value).filter(
+  (c) => !HIDDEN_CATEGORIES.includes(c)
+);
 
 // The Ecosystem Strategy's focus categories (Sydney photographers,
-// decorators, DJs, celebrants and small venues): named in marketing copy.
-export const FEATURED_CATEGORIES: VendorCategory[] = [
-  "photographer",
-  "decorator",
-  "dj",
-  "celebrant",
-  "venue",
-];
+// decorators, DJs, celebrants and small venues), named in marketing copy.
+// Venue returns here when it's unhidden.
+export const FEATURED_CATEGORIES: VendorCategory[] = ["photographer", "decorator", "dj", "celebrant"];
 
 export function isVendorCategory(value: string): value is VendorCategory {
   return VENDOR_CATEGORIES.some((c) => c.value === value);
