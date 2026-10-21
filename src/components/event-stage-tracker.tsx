@@ -4,7 +4,7 @@ const STAGES = [
   "Create event",
   "Add vendor slots",
   "Quote and compare",
-  "Book into escrow",
+  "Book and pay",
   "Track and message",
   "Event day",
   "Complete",

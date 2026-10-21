@@ -65,14 +65,16 @@ export default async function VendorBookingsPage() {
                 </span>
               </div>
               <VendorBookingActions bookingId={b.id} status={b.status} />
-              {(b.status === "confirmed" || b.status === "completed") && (
-                <Link
-                  href={`/bookings/${b.id}/invoice`}
-                  className="mt-3 inline-block text-sm underline underline-offset-2"
-                >
-                  Invoice
+              <div className="mt-3 flex flex-wrap gap-4 text-sm">
+                <Link href={`/bookings/${b.id}`} className="font-medium underline underline-offset-2">
+                  Booking & payments
                 </Link>
-              )}
+                {(b.status === "confirmed" || b.status === "completed") && (
+                  <Link href={`/bookings/${b.id}/invoice`} className="underline underline-offset-2">
+                    Invoice
+                  </Link>
+                )}
+              </div>
               {jobCardByBooking.get(b.id)?.jobCard && (
                 <JobCardPanel
                   jobCard={jobCardByBooking.get(b.id)!.jobCard!}

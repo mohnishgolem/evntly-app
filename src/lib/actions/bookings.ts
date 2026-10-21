@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { notify, formatEventDate } from "@/lib/email";
 import { bookingParticipantEmail } from "@/lib/supabase/admin";
+import { releaseDepositForBooking } from "@/lib/payments/server";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -35,6 +36,10 @@ export async function updateBookingStatus(
     .single();
 
   if (error) return { error: error.message };
+
+  // A paid deposit becomes the vendor's once they confirm (the plan both
+  // parties agreed says so). Re-checked in the database before any transfer.
+  if (booking && action === "confirm") await releaseDepositForBooking(booking.id);
 
   if (booking) {
     const when = formatEventDate(booking.event_date);

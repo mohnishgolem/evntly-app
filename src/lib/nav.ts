@@ -2,6 +2,7 @@ import {
   BarChart3,
   Briefcase,
   CalendarDays,
+  CreditCard,
   ClipboardList,
   FileText,
   Flag,
@@ -18,6 +19,7 @@ import {
   Store,
   UserRound,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -112,7 +114,7 @@ export const VENDOR_NAV: NavItem[] = [
     href: "/vendor-dashboard/business",
     label: "My Business",
     icon: Briefcase,
-    match: ["/vendor-dashboard/edit", "/vendor-dashboard/portfolio", "/vendor-dashboard/bundles"],
+    match: ["/vendor-dashboard/edit", "/vendor-dashboard/portfolio", "/vendor-dashboard/bundles", "/vendor-dashboard/payouts"],
   },
   { href: "/vendor-dashboard/earnings", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, match: ["/profile"] },
@@ -128,16 +130,17 @@ export const VENDOR_BUSINESS_TABS: NavItem[] = [
   { href: "/vendor-dashboard/business", label: "Listings", icon: Store, match: ["/vendor-dashboard/edit"] },
   { href: "/vendor-dashboard/portfolio", label: "Portfolio", icon: LayoutGrid },
   { href: "/vendor-dashboard/bundles", label: "Bundles", icon: Package },
+  { href: "/vendor-dashboard/payouts", label: "Payouts", icon: Wallet },
 ];
 
 // ── Admin ────────────────────────────────────────────────────────────────
-// Only sections that exist. Bookings, Payments and Settings are added when
-// they're built (Payments needs Stripe).
+// Only sections that exist. Bookings and Settings are added when built.
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/support", label: "Support", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];

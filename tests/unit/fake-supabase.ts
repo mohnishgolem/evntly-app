@@ -14,7 +14,7 @@ export function fakeSupabase(opts: {
   const builder = (key: string, table: string) => {
     const b: Record<string, unknown> = {};
     const chain = () => b;
-    for (const m of ["select", "eq", "in", "gte", "gt", "lte", "is", "order", "limit"]) b[m] = vi.fn(chain);
+    for (const m of ["select", "eq", "neq", "in", "gte", "gt", "lte", "is", "order", "limit"]) b[m] = vi.fn(chain);
     for (const op of ["insert", "update", "delete", "upsert"]) {
       b[op] = vi.fn((payload?: unknown) => {
         writes.push({ table, op, payload });
