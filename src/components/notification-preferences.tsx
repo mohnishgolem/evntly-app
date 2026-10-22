@@ -48,14 +48,15 @@ export function NotificationPreferences({ initial, audience }: { initial: Notifi
               )}
             </span>
             {(["email", "push"] as const).map((ch) => (
-              <span key={ch} className="flex justify-center">
+              // The label gives each switch a 44px tap area.
+              <label key={ch} className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center has-[[data-disabled]]:cursor-not-allowed">
                 <Switch
                   aria-label={`${c.label} by ${ch}`}
                   checked={prefs[ch][c.key]}
                   disabled={isLocked(c.key, ch)}
                   onCheckedChange={(v) => toggle(ch, c.key, v)}
                 />
-              </span>
+              </label>
             ))}
           </div>
         ))}

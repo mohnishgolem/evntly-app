@@ -55,7 +55,7 @@ export function BlockUserButton({
         render={
           <button
             type="button"
-            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+            className="-mr-2 inline-flex min-h-11 items-center gap-1 px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
           >
             <Ban className="size-3.5" /> Block
           </button>

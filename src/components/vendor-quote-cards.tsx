@@ -29,8 +29,9 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
         const timeLeft = quoteTimeLeft(q);
         return (
           <div key={q.id} className="rounded-2xl border border-border p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            {/* Phones: status on its own line above the details; wider: on the right. */}
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="min-w-0">
                 <p className="font-semibold">
                   {q.client_name ?? "Customer"}
                 </p>
@@ -53,7 +54,7 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
                   </p>
                 )}
               </div>
-              <span className="shrink-0 text-sm font-medium text-muted-foreground">
+              <span className="order-first shrink-0 text-sm font-medium text-muted-foreground sm:order-none">
                 {STATUS_LABEL[status] ?? status}
               </span>
             </div>

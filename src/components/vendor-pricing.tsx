@@ -116,10 +116,10 @@ export function ServiceAreaForm({
           Measured from {baseSuburb || "your base suburb"}. Change your base suburb in Listings.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 items-end gap-3">
         <div className="space-y-1.5">
           <Label htmlFor={`radius-${listingId}`}>Service radius (km)</Label>
-          <Input
+          <Input className="h-11 md:h-9"
             id={`radius-${listingId}`}
             inputMode="numeric"
             value={form.radiusKm}
@@ -128,7 +128,7 @@ export function ServiceAreaForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`minhrs-${listingId}`}>Minimum booking (hours)</Label>
-          <Input
+          <Input className="h-11 md:h-9"
             id={`minhrs-${listingId}`}
             inputMode="decimal"
             placeholder="None"
@@ -138,7 +138,7 @@ export function ServiceAreaForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`free-${listingId}`}>Free travel (km)</Label>
-          <Input
+          <Input className="h-11 md:h-9"
             id={`free-${listingId}`}
             inputMode="numeric"
             value={form.freeTravelKm}
@@ -147,7 +147,7 @@ export function ServiceAreaForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`fee-${listingId}`}>Travel fee per km after that</Label>
-          <Input
+          <Input className="h-11 md:h-9"
             id={`fee-${listingId}`}
             inputMode="decimal"
             placeholder="$0"
@@ -198,7 +198,7 @@ export function PackageList({
 }) {
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="font-semibold">Packages</h3>
           <p className="text-sm text-muted-foreground">
@@ -235,7 +235,16 @@ export function PackageList({
   );
 }
 
+// Bottom sheet on phones, side panel from tablet up (as on the Event Board).
+function useSheetSide() {
+  const [side] = useState<"bottom" | "right">(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches ? "right" : "bottom"
+  );
+  return side;
+}
+
 function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPackageRow }) {
+  const side = useSheetSide();
   const [open, setOpen] = useState(false);
   const { pending, error, setError, run } = useSaver();
   const [form, setForm] = useState(() => ({
@@ -300,8 +309,8 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
         {pkg ? <Pencil aria-hidden /> : (<><Plus aria-hidden /> Add package</>)}
       </SheetTrigger>
       <SheetContent
-        side="right"
-        className="max-h-dvh overflow-y-auto px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-md"
+        side={side}
+        className="max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-md sm:rounded-none"
       >
         <SheetHeader className="px-0">
           <SheetTitle>{pkg ? "Edit package" : "New package"}</SheetTitle>
@@ -310,28 +319,28 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
         <form onSubmit={save} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor={id("name")}>Name</Label>
-            <Input id={id("name")} maxLength={80} placeholder="e.g. 4 hour party coverage" required {...field("name")} />
+            <Input className="h-11 md:h-9" id={id("name")} maxLength={80} placeholder="e.g. 4 hour party coverage" required {...field("name")} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 items-end gap-3">
             <div className="space-y-1.5">
               <Label htmlFor={id("price")}>Price (AUD)</Label>
-              <Input id={id("price")} inputMode="decimal" required {...field("price")} />
+              <Input className="h-11 md:h-9" id={id("price")} inputMode="decimal" required {...field("price")} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={id("hours")}>Hours included</Label>
-              <Input id={id("hours")} inputMode="decimal" placeholder="Flat price" {...field("includedHours")} />
+              <Input className="h-11 md:h-9" id={id("hours")} inputMode="decimal" placeholder="Flat price" {...field("includedHours")} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={id("extra")}>Each extra hour</Label>
-              <Input id={id("extra")} inputMode="decimal" placeholder="Not offered" {...field("extraHourPrice")} />
+              <Input className="h-11 md:h-9" id={id("extra")} inputMode="decimal" placeholder="Not offered" {...field("extraHourPrice")} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={id("deposit")}>Deposit (%)</Label>
-              <Input id={id("deposit")} inputMode="numeric" placeholder="—" {...field("depositPercent")} />
+              <Input className="h-11 md:h-9" id={id("deposit")} inputMode="numeric" placeholder="—" {...field("depositPercent")} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={id("delivery")}>Delivery (days)</Label>
-              <Input id={id("delivery")} inputMode="numeric" placeholder="—" {...field("deliveryDays")} />
+              <Input className="h-11 md:h-9" id={id("delivery")} inputMode="numeric" placeholder="—" {...field("deliveryDays")} />
             </div>
           </div>
           <div className="space-y-1.5">

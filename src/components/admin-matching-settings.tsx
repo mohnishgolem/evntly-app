@@ -67,7 +67,7 @@ export function AdminMatchingSettings({ enabled, weights }: { enabled: boolean; 
                 inputMode="numeric"
                 value={form[k]}
                 onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
-                className="text-right"
+                className="h-11 md:h-9 text-right"
               />
               <span className="w-8 text-right text-xs text-muted-foreground">
                 {valid && total > 0 ? `${Math.round((values[k] / total) * 100)}%` : ""}

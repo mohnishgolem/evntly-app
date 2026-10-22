@@ -109,7 +109,7 @@ const SUGGESTIONS_SHOWN = 3;
 /** Same limit the server and database enforce. */
 const MAX_OPEN_REQUESTS = 5;
 const SHEET_CLASS =
-  "max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-xl sm:rounded-none";
+  "max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:rounded-none";
 
 function useSheetSide() {
   const [side] = useState<"bottom" | "right">(() =>
@@ -427,17 +427,20 @@ function MatchSummary({ match: m }: { match: TeamMatch }) {
           <span className="rounded-full bg-champagne/15 px-2 py-0.5 font-medium text-warning">Outside usual area</span>
         )}
       </p>
-      <p className="text-muted-foreground">{m.reason}</p>
+      {/* Two lines on phones; the full reason is in the details panel. */}
+      <p className="line-clamp-2 text-muted-foreground sm:line-clamp-none">{m.reason}</p>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="min-h-8 font-medium text-foreground underline-offset-2 hover:underline"
+        className="-ml-1 min-h-11 px-1 font-medium text-foreground underline-offset-2 hover:underline"
       >
         {open ? "Hide details" : "Price & details"}
       </button>
       {open && (
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl bg-muted/50 p-3 text-muted-foreground">
+          <dt className="sm:hidden">Why</dt>
+          <dd className="sm:hidden">{m.reason}</dd>
           {e ? (
             <>
               <dt>Estimate</dt>
@@ -781,16 +784,16 @@ function CompareQuotesSheet({ category }: { category: TeamCategory }) {
   return (
     <Sheet>
       <SheetTrigger render={<Button size="lg" />}>{n === 1 ? "Review quote" : `Compare ${n} quotes`}</SheetTrigger>
-      <SheetContent side={side} className={cn(SHEET_CLASS, "sm:max-w-3xl")}>
+      <SheetContent side={side} className={cn(SHEET_CLASS, "data-[side=right]:sm:max-w-2xl")}>
         <SheetHeader className="px-0">
           <SheetTitle>{categoryLabel(category.service)} quotes</SheetTitle>
           <SheetDescription>
             Cheapest first. Quotes are offers — nothing is booked until you choose one and the vendor confirms.
           </SheetDescription>
         </SheetHeader>
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {category.quoted.map((q, i) => (
-            <li key={q.id} className="flex flex-col rounded-2xl border border-border p-4">
+            <li key={q.id} className="flex min-w-0 flex-col rounded-2xl border border-border p-4">
               <div className="flex items-start justify-between gap-2">
                 <Link href={`/vendor/${q.vendor_id}`} className="font-semibold hover:underline">
                   {q.vendor_name}
@@ -828,7 +831,7 @@ function BookQuoteButton({ quoteId, vendorName, amount }: { quoteId: string; ven
           <p className="text-sm">
             Book {vendorName} for ${Number(amount ?? 0).toLocaleString("en-AU")}? They&apos;ll confirm, then set up payments.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               size="lg"
               disabled={pending}
@@ -848,8 +851,8 @@ function BookQuoteButton({ quoteId, vendorName, amount }: { quoteId: string; ven
           </div>
         </>
       ) : (
-        <Button size="lg" variant="outline" className="w-full" onClick={() => setConfirming(true)}>
-          Choose {vendorName}
+        <Button size="lg" variant="outline" className="w-full" aria-label={`Choose ${vendorName}`} onClick={() => setConfirming(true)}>
+          Choose
         </Button>
       )}
       {error && (
@@ -889,10 +892,11 @@ function InviteAnother({
           {error}
         </p>
       )}
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button
           size="lg"
           disabled={pending}
+          aria-label={`Invite ${next.name}`}
           onClick={() =>
             startTransition(async () => {
               const res = await requestQuotesForEvent(eventId, [next.id]);
@@ -901,7 +905,7 @@ function InviteAnother({
             })
           }
         >
-          {pending && <Loader2 className="animate-spin" aria-hidden />} Invite {next.name}
+          {pending && <Loader2 className="animate-spin" aria-hidden />} Invite
         </Button>
         <Button size="lg" variant="ghost" disabled={pending} onClick={() => setDismissed(true)}>
           Not now

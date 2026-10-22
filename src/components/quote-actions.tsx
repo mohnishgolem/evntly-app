@@ -30,10 +30,10 @@ export function QuoteActions({ quoteId }: { quoteId: string }) {
 
   return (
     <div className="mt-3 flex gap-2">
-      <Button size="sm" disabled={pending} onClick={accept}>
+      <Button size="lg" disabled={pending} onClick={accept}>
         Accept & book
       </Button>
-      <Button size="sm" variant="outline" disabled={pending} onClick={decline}>
+      <Button size="lg" variant="outline" disabled={pending} onClick={decline}>
         Decline
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}

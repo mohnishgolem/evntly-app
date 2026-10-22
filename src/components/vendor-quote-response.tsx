@@ -83,14 +83,14 @@ export function VendorQuoteResponse({ quoteId, estimatedHours }: { quoteId: stri
 
   return (
     <div className="mt-3 space-y-3 rounded-xl bg-secondary p-3 sm:p-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 items-end gap-3">
         <div className="space-y-1">
           <Label htmlFor={id("amount")}>Total price (AUD)</Label>
-          <Input id={id("amount")} inputMode="decimal" placeholder="$" value={form.amount} onChange={set("amount")} />
+          <Input className="h-11 md:h-9" id={id("amount")} inputMode="decimal" placeholder="$" value={form.amount} onChange={set("amount")} />
         </div>
         <div className="space-y-1">
           <Label htmlFor={id("hours")}>Hours of coverage</Label>
-          <Input id={id("hours")} inputMode="decimal" placeholder="—" value={form.coverageHours} onChange={set("coverageHours")} />
+          <Input className="h-11 md:h-9" id={id("hours")} inputMode="decimal" placeholder="—" value={form.coverageHours} onChange={set("coverageHours")} />
         </div>
       </div>
 
@@ -98,26 +98,26 @@ export function VendorQuoteResponse({ quoteId, estimatedHours }: { quoteId: stri
         type="button"
         onClick={() => setDetails((d) => !d)}
         aria-expanded={details}
-        className="flex min-h-9 items-center gap-1 text-sm font-medium"
+        className="flex min-h-11 items-center gap-1 text-left text-sm font-medium"
       >
-        <ChevronDown className={details ? "size-4 rotate-180 transition-transform" : "size-4 transition-transform"} aria-hidden />
-        {details ? "Fewer details" : "Add inclusions, deposit, delivery and terms"}
+        <ChevronDown className={details ? "size-4 shrink-0 rotate-180 transition-transform" : "size-4 shrink-0 transition-transform"} aria-hidden />
+        {details ? "Fewer details" : "Add inclusions, deposit and terms"}
       </button>
 
       {details && (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 items-end gap-3">
             <div className="space-y-1">
               <Label htmlFor={id("travel")} className="text-xs">Travel (in total)</Label>
-              <Input id={id("travel")} inputMode="decimal" placeholder="$0" value={form.travelFee} onChange={set("travelFee")} />
+              <Input className="h-11 md:h-9" id={id("travel")} inputMode="decimal" placeholder="$0" value={form.travelFee} onChange={set("travelFee")} />
             </div>
             <div className="space-y-1">
               <Label htmlFor={id("deposit")} className="text-xs">Deposit</Label>
-              <Input id={id("deposit")} inputMode="decimal" placeholder="$" value={form.deposit} onChange={set("deposit")} />
+              <Input className="h-11 md:h-9" id={id("deposit")} inputMode="decimal" placeholder="$" value={form.deposit} onChange={set("deposit")} />
             </div>
             <div className="space-y-1">
               <Label htmlFor={id("delivery")} className="text-xs">Delivery (days)</Label>
-              <Input id={id("delivery")} inputMode="numeric" placeholder="—" value={form.deliveryDays} onChange={set("deliveryDays")} />
+              <Input className="h-11 md:h-9" id={id("delivery")} inputMode="numeric" placeholder="—" value={form.deliveryDays} onChange={set("deliveryDays")} />
             </div>
           </div>
           <div className="space-y-1">

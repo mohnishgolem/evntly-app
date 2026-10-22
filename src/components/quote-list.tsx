@@ -43,8 +43,9 @@ export function QuoteList({
         const timeLeft = quoteTimeLeft(q);
         return (
           <div key={q.id} className="rounded-2xl border border-border p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            {/* Phones: status on its own line above the details; wider: on the right. */}
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="min-w-0">
                 <Link
                   href={`/vendor/${q.vendor_id}`}
                   className="font-semibold hover:underline"
@@ -59,7 +60,7 @@ export function QuoteList({
                 </p>
               </div>
               <span
-                className={`flex items-center gap-1.5 text-sm font-medium ${meta.className}`}
+                className={`order-first flex shrink-0 items-center gap-1.5 text-sm font-medium sm:order-none ${meta.className}`}
               >
                 {status === "accepted" ? (
                   <CheckCircle2 className="h-4 w-4" />

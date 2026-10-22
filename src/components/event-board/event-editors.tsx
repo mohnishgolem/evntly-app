@@ -104,7 +104,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
         <form onSubmit={save} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="ev-name">Event name</Label>
-            <Input
+            <Input className="h-11 md:h-9"
               id="ev-name"
               value={form.name}
               maxLength={80}
@@ -115,7 +115,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ev-date">Date</Label>
-              <Input
+              <Input className="h-11 md:h-9"
                 id="ev-date"
                 type="date"
                 required
@@ -127,7 +127,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ev-suburb">Suburb</Label>
-              <Input
+              <Input className="h-11 md:h-9"
                 id="ev-suburb"
                 required
                 disabled={event.locked}
@@ -140,7 +140,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ev-start">Starts</Label>
-              <Input
+              <Input className="h-11 md:h-9"
                 id="ev-start"
                 type="time"
                 disabled={event.locked}
@@ -150,7 +150,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ev-end">Ends</Label>
-              <Input
+              <Input className="h-11 md:h-9"
                 id="ev-end"
                 type="time"
                 disabled={event.locked}
@@ -185,7 +185,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
           </fieldset>
           <div className="space-y-1.5">
             <Label htmlFor="ev-budget">Total budget (AUD)</Label>
-            <Input
+            <Input className="h-11 md:h-9"
               id="ev-budget"
               inputMode="decimal"
               value={form.budgetTotal}
@@ -198,13 +198,13 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
               <p className="text-xs text-muted-foreground">
                 Leave blank to share the rest of your total budget evenly. Used to find vendors in your price range.
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 items-end gap-2">
                 {event.requiredServices.map((service) => (
                   <div key={service} className="space-y-1">
                     <Label htmlFor={`ev-cat-${service}`} className="text-xs text-muted-foreground">
                       {categoryLabel(service)}
                     </Label>
-                    <Input
+                    <Input className="h-11 md:h-9"
                       id={`ev-cat-${service}`}
                       inputMode="decimal"
                       placeholder="$"

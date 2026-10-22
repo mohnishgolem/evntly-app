@@ -95,7 +95,7 @@ export default function PlanPage() {
         </Field>
 
         <Field title="Event date">
-          <Input
+          <Input className="h-11 md:h-9"
             type="date"
             min={earliestEventDate()}
             value={draft.eventDate}
@@ -105,13 +105,13 @@ export default function PlanPage() {
 
         <Field title="Start and end time (optional)">
           <div className="grid grid-cols-2 gap-2">
-            <Input
+            <Input className="h-11 md:h-9"
               type="time"
               aria-label="Start time"
               value={draft.startTime}
               onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
             />
-            <Input
+            <Input className="h-11 md:h-9"
               type="time"
               aria-label="End time"
               value={draft.endTime}
@@ -125,7 +125,7 @@ export default function PlanPage() {
         </Field>
 
         <Field title="Suburb">
-          <Input
+          <Input className="h-11 md:h-9"
             placeholder="e.g. Bondi"
             value={draft.suburb}
             onChange={(e) => setDraft((d) => ({ ...d, suburb: e.target.value }))}
