@@ -19,8 +19,10 @@ import {
   type PaymentSummary,
 } from "@/lib/event-board";
 import { locateEvent } from "@/lib/data/events";
+import { loadMatchContext, loadMatchingSettings } from "@/lib/data/matching";
+import { categoryBudgetCents, matchCategory, type CategoryMatches, type MatchEvent, type ScoredMatch } from "@/lib/matching/engine";
 import { sydneyDate } from "@/lib/event-dates";
-import type { TeamCategory, TeamVendor } from "@/components/event-board/vendor-team";
+import type { TeamCategory, TeamMatch, TeamVendor } from "@/components/event-board/vendor-team";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
@@ -87,7 +89,8 @@ export async function loadEventBoard(
   }
 
   const organiserId = event.organiser_user_id ?? viewer.userId;
-  const [shortlistRes, quotesRes, bookingsRes, bookedRes, candidatesRes] = await Promise.all([
+  const [settings, shortlistRes, quotesRes, bookingsRes, bookedRes, candidatesRes] = await Promise.all([
+    loadMatchingSettings(supabase),
     supabase.from("event_vendors").select("provider_id, service_type").eq("event_id", eventId),
     supabase
       .from("quote_requests")
@@ -130,6 +133,36 @@ export async function loadEventBoard(
   if (missing.length) {
     const { data } = await supabase.from("service_providers").select(PUBLIC_VENDOR_COLUMNS).in("id", missing);
     for (const v of (data ?? []) as PublicVendor[]) known.set(v.id, v);
+  }
+
+  // Smart matching (Stage A + B) per category, unless an admin switched it off.
+  const matches = new Map<string, CategoryMatches>();
+  const budgets = new Map<string, number | null>();
+  for (const service of event.required_services) {
+    budgets.set(
+      service,
+      categoryBudgetCents(service, event.budget_total, event.required_services, event.category_budgets as Record<string, unknown>)
+    );
+  }
+  if (settings.enabled && candidates.length) {
+    const ctx = await loadMatchContext(supabase, candidates.map((v) => v.id), event.event_date, settings.weights);
+    for (const service of event.required_services) {
+      const matchEvent: MatchEvent = {
+        eventType: event.event_type,
+        date: event.event_date,
+        startTime: event.start_time,
+        endTime: event.end_time,
+        suburb: event.suburb,
+        latitude: event.latitude,
+        longitude: event.longitude,
+        budgetCents: budgets.get(service) ?? null,
+      };
+      matches.set(service, matchCategory(candidates.filter((v) => v.service_type === service), service, matchEvent, ctx));
+    }
+  }
+  const matchFor = new Map<string, TeamMatch>();
+  for (const m of matches.values()) {
+    for (const s of [...m.eligible, ...m.unconfirmed]) matchFor.set(s.vendorId, toTeamMatch(s));
   }
 
   // Payments: the existing milestone plans, read-only here.
@@ -188,6 +221,7 @@ export async function loadEventBoard(
       bookingId: booking?.id,
       bookingPrice: booking?.total_price != null ? Number(booking.total_price) : null,
       payment: booking?.payment,
+      match: matchFor.get(v.id),
     };
   };
 
@@ -195,8 +229,16 @@ export async function loadEventBoard(
   const shortlistByService = new Map<string, number>();
   const categories: TeamCategory[] = event.required_services.map((service) => {
     const inCategory = [...known.values()].filter((v) => v.service_type === service);
-    const matching = inCategory.filter((v) => matchesEvent(v, event, bookedIds)).sort(rankVendors);
-    availableByService.set(service, inCategory.filter((v) => isAvailableOn(v, event.event_date, bookedIds)).length);
+    const m = matches.get(service);
+    // With matching on, suggestions are the engine's confirmed matches then
+    // the "availability pending" ones, each best first.
+    const matching = m
+      ? [...m.eligible, ...m.unconfirmed].map((s) => known.get(s.vendorId)!).filter(Boolean)
+      : inCategory.filter((v) => matchesEvent(v, event, bookedIds)).sort(rankVendors);
+    availableByService.set(
+      service,
+      m ? m.eligible.length + m.unconfirmed.length : inCategory.filter((v) => isAvailableOn(v, event.event_date, bookedIds)).length
+    );
 
     const team = inCategory
       .filter((v) => teamIds.has(v.id))
@@ -211,7 +253,15 @@ export async function loadEventBoard(
       .slice(0, 12)
       .map(toTeamVendor);
 
-    return { service, availableCount: availableByService.get(service) ?? 0, team, suggestions };
+    return {
+      service,
+      availableCount: availableByService.get(service) ?? 0,
+      confirmedCount: m ? m.eligible.length : null,
+      budgetCents: budgets.get(service) ?? null,
+      widened: m?.widened ?? false,
+      team,
+      suggestions,
+    };
   });
 
   const due = bookingViews.find((b) => b.status !== "cancelled" && b.payment.actionDue);
@@ -238,3 +288,24 @@ export async function loadEventBoard(
   };
 }
 
+
+function toTeamMatch(s: ScoredMatch): TeamMatch {
+  return {
+    score: s.score,
+    reason: s.reason,
+    confirmed: s.status === "eligible",
+    outsideUsualArea: (s.areaTier ?? 0) > 0,
+    distanceKm: s.distanceKm == null ? null : Math.round(s.distanceKm),
+    pending: s.pending.map((p) => p.message),
+    estimate: s.price
+      ? {
+          totalCents: s.price.totalCents,
+          travelCents: s.price.travelCents,
+          basis: s.price.basis,
+          packageName: s.price.packageName ?? null,
+          inclusions: s.price.inclusions.slice(0, 4),
+          notes: s.price.notes,
+        }
+      : null,
+  };
+}

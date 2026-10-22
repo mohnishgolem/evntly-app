@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { deleteEvent, setEventCategories, updateEventDetails } from "@/lib/actions/event-board";
 import { GUEST_BUCKETS, LAUNCH_CATEGORIES, categoryIcon, categoryLabel } from "@/lib/config";
 import { earliestEventDate } from "@/lib/event-dates";
+import { formatEventTimes } from "@/lib/event-times";
 import { cn } from "@/lib/utils";
 
 export type EditableEvent = {
@@ -22,7 +23,12 @@ export type EditableEvent = {
   budgetTotal: number;
   notes: string | null;
   requiredServices: string[];
-  /** Date and place are locked while vendors are booked. */
+  /** "HH:MM" or "". */
+  startTime: string;
+  endTime: string;
+  /** Whole dollars per category, only where the customer set one. */
+  categoryBudgets: Record<string, number>;
+  /** Date, times and place are locked while vendors are booked. */
   locked: boolean;
 };
 
@@ -50,18 +56,32 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
     guestCount: event.guestCount,
     budgetTotal: String(event.budgetTotal),
     notes: event.notes ?? "",
+    startTime: event.startTime,
+    endTime: event.endTime,
   });
+  const [catBudgets, setCatBudgets] = useState<Record<string, string>>(() =>
+    Object.fromEntries(event.requiredServices.map((s) => [s, event.categoryBudgets[s] ? String(event.categoryBudgets[s]) : ""]))
+  );
 
   function save(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const budget = Number(form.budgetTotal.replace(/[$,\s]/g, ""));
     if (!Number.isFinite(budget)) return setError("Enter a budget in dollars.");
+    const categoryBudgets: Record<string, number> = {};
+    for (const [service, raw] of Object.entries(catBudgets)) {
+      const clean = raw.replace(/[$,\s]/g, "");
+      if (!clean) continue;
+      const n = Number(clean);
+      if (!Number.isFinite(n) || n < 0) return setError(`Enter the ${categoryLabel(service).toLowerCase()} budget in dollars.`);
+      if (n > 0) categoryBudgets[service] = n;
+    }
     startTransition(async () => {
       const res = await updateEventDetails(event.id, {
         ...form,
         guestCount: form.guestCount as (typeof GUEST_BUCKETS)[number],
         budgetTotal: budget,
+        categoryBudgets,
       });
       if (res?.error) setError(res.error);
       else {
@@ -117,9 +137,33 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
               />
             </div>
           </div>
-          {event.locked && (
-            <p className="text-xs text-muted-foreground">Date and suburb are locked while vendors are booked.</p>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ev-start">Starts</Label>
+              <Input
+                id="ev-start"
+                type="time"
+                disabled={event.locked}
+                value={form.startTime}
+                onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ev-end">Ends</Label>
+              <Input
+                id="ev-end"
+                type="time"
+                disabled={event.locked}
+                value={form.endTime}
+                onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {event.locked
+              ? "Date, times and suburb are locked while vendors are booked."
+              : formatEventTimes(form.startTime || null, form.endTime || null) ?? "An end time before the start means it runs past midnight."}
+          </p>
           <fieldset className="space-y-1.5">
             <legend className="text-sm font-medium">Guests</legend>
             <div className="grid grid-cols-3 gap-2">
@@ -148,8 +192,32 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
               onChange={(e) => setForm((f) => ({ ...f, budgetTotal: e.target.value }))}
             />
           </div>
+          {event.requiredServices.length > 0 && (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Budget per vendor (optional)</legend>
+              <p className="text-xs text-muted-foreground">
+                Leave blank to share the rest of your total budget evenly. Used to find vendors in your price range.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {event.requiredServices.map((service) => (
+                  <div key={service} className="space-y-1">
+                    <Label htmlFor={`ev-cat-${service}`} className="text-xs text-muted-foreground">
+                      {categoryLabel(service)}
+                    </Label>
+                    <Input
+                      id={`ev-cat-${service}`}
+                      inputMode="decimal"
+                      placeholder="$"
+                      value={catBudgets[service] ?? ""}
+                      onChange={(e) => setCatBudgets((b) => ({ ...b, [service]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </fieldset>
+          )}
           <div className="space-y-1.5">
-            <Label htmlFor="ev-notes">Notes for vendors</Label>
+            <Label htmlFor="ev-notes">Special requirements</Label>
             <Textarea
               id="ev-notes"
               rows={3}

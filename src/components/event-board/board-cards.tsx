@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin, Users, Wallet } from "lucide-react";
 import { categoryLabel } from "@/lib/config";
+import { formatEventTimes, shortTime } from "@/lib/event-times";
 import type { NextStep } from "@/lib/event-board";
 import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
@@ -70,7 +71,14 @@ export function EventHeader({
         <div className="flex items-center gap-2">
           <CalendarDays className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           <dt className="sr-only">Date</dt>
-          <dd>{formatEventDay(event.event_date, true)}</dd>
+          <dd>
+            {formatEventDay(event.event_date, true)}
+            {event.start_time && event.end_time && (
+              <span className="block text-xs text-muted-foreground">
+                {formatEventTimes(shortTime(event.start_time), shortTime(event.end_time))}
+              </span>
+            )}
+          </dd>
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden />

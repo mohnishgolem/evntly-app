@@ -13,6 +13,7 @@ import { BookingList } from "@/components/booking-list";
 import { BudgetTracker } from "@/components/budget-tracker";
 import { VendorTeam } from "@/components/event-board/vendor-team";
 import { CategoriesSheet, DeleteEventButton, EditEventSheet } from "@/components/event-board/event-editors";
+import { shortTime } from "@/lib/event-times";
 import { EventHeader, NextStepCard } from "@/components/event-board/board-cards";
 import { summarizeBudget } from "@/lib/budget";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
@@ -156,6 +157,9 @@ export default async function EventBoardPage({
               budgetTotal: Number(event.budget_total),
               notes: event.notes,
               requiredServices: event.required_services,
+              startTime: shortTime(event.start_time),
+              endTime: shortTime(event.end_time),
+              categoryBudgets: categoryBudgetDollars(event.category_budgets),
               locked,
             }}
           />
@@ -297,5 +301,15 @@ export default async function EventBoardPage({
         <DeleteEventButton eventId={event.id} />
       </div>
     </div>
+  );
+}
+
+/** events.category_budgets (cents) → whole dollars for the edit form. */
+function categoryBudgetDollars(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(raw as Record<string, unknown>)
+      .filter((e): e is [string, number] => typeof e[1] === "number" && e[1] > 0)
+      .map(([k, v]) => [k, Math.round(v / 100)])
   );
 }

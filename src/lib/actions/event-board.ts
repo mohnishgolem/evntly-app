@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { GUEST_BUCKETS, isLaunchCategory } from "@/lib/config";
 import { geocodeSuburb } from "@/lib/geocode";
+import { eventTimesSchema, shortTime } from "@/lib/event-times";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type BoardActionState = { error?: string; success?: boolean } | null;
@@ -23,7 +24,7 @@ async function ownEvent(eventId: string) {
   if (!user || typeof eventId !== "string") return { supabase, user: null, event: null };
   const { data: event } = await supabase
     .from("events")
-    .select("id, event_date, suburb, required_services")
+    .select("id, event_date, suburb, required_services, start_time, end_time")
     .eq("id", eventId)
     .eq("organiser_user_id", user.id)
     .maybeSingle();
@@ -77,14 +78,18 @@ export async function setEventCategories(eventId: string, services: string[]): P
 
 // ── Edit / delete ───────────────────────────────────────────────────────
 
-const eventSchema = z.object({
-  name: z.string().trim().max(80),
-  eventDate: z.iso.date(),
-  suburb: z.string().trim().min(1, "Add a suburb.").max(120),
-  guestCount: z.enum(GUEST_BUCKETS),
-  budgetTotal: z.number().min(0).max(10_000_000),
-  notes: z.string().trim().max(2000),
-});
+const eventSchema = z
+  .object({
+    name: z.string().trim().max(80),
+    eventDate: z.iso.date(),
+    suburb: z.string().trim().min(1, "Add a suburb.").max(120),
+    guestCount: z.enum(GUEST_BUCKETS),
+    budgetTotal: z.number().min(0).max(10_000_000),
+    notes: z.string().trim().max(2000),
+    /** Whole dollars per category. */
+    categoryBudgets: z.record(z.string(), z.number().min(0).max(10_000_000)).optional(),
+  })
+  .and(eventTimesSchema);
 
 export type EventDetailsInput = z.input<typeof eventSchema>;
 
@@ -109,9 +114,23 @@ export async function updateEventDetails(eventId: string, input: EventDetailsInp
 
   const dateChanged = d.eventDate !== event.event_date;
   const placeChanged = d.suburb.toLowerCase() !== event.suburb.toLowerCase();
+  const timesChanged =
+    (d.startTime ?? "") !== shortTime(event.start_time) || (d.endTime ?? "") !== shortTime(event.end_time);
   if (dateChanged && !isBookableEventDate(d.eventDate)) return { error: EVENT_DATE_ERROR };
-  if ((dateChanged || placeChanged) && (await activeBookingCount(supabase, eventId, user.id)) > 0) {
-    return { error: "You have vendors booked for this date and place. Cancel those bookings before moving the event." };
+  if ((dateChanged || placeChanged || timesChanged) && (await activeBookingCount(supabase, eventId, user.id)) > 0) {
+    return { error: "You have vendors booked for this date, time and place. Cancel those bookings before moving the event." };
+  }
+
+  // Per-category budgets: only for this event's categories, stored in cents,
+  // and together no more than the total.
+  const categoryBudgets: Record<string, number> = {};
+  for (const [service, dollars] of Object.entries(d.categoryBudgets ?? {})) {
+    if (!event.required_services.includes(service)) return { error: "Unknown vendor category." };
+    if (dollars > 0) categoryBudgets[service] = Math.round(dollars * 100);
+  }
+  const budgeted = Object.values(categoryBudgets).reduce((a, b) => a + b, 0);
+  if (d.budgetTotal > 0 && budgeted > Math.round(d.budgetTotal * 100)) {
+    return { error: "Your category budgets add up to more than your total budget." };
   }
 
   const update: Database["public"]["Tables"]["events"]["Update"] = {
@@ -121,6 +140,9 @@ export async function updateEventDetails(eventId: string, input: EventDetailsInp
     guest_count: d.guestCount,
     budget_total: Math.round(d.budgetTotal * 100) / 100,
     notes: d.notes || null,
+    start_time: d.startTime ?? null,
+    end_time: d.endTime ?? null,
+    category_budgets: categoryBudgets,
   };
   if (placeChanged) {
     const place = await geocodeSuburb(d.suburb).catch(() => null);

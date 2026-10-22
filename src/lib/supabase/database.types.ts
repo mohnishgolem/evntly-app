@@ -108,6 +108,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           duration_hours: number | null
+          end_time: string | null
           escrow_status: string | null
           event_address: string | null
           event_date: string
@@ -121,6 +122,8 @@ export type Database = {
           provider_owner_user_id: string | null
           review_prompt_sent: boolean | null
           service_type: string
+          slot: unknown
+          start_time: string | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -137,6 +140,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_hours?: number | null
+          end_time?: string | null
           escrow_status?: string | null
           event_address?: string | null
           event_date: string
@@ -150,6 +154,8 @@ export type Database = {
           provider_owner_user_id?: string | null
           review_prompt_sent?: boolean | null
           service_type: string
+          slot?: unknown
+          start_time?: string | null
           status: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -166,6 +172,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_hours?: number | null
+          end_time?: string | null
           escrow_status?: string | null
           event_address?: string | null
           event_date?: string
@@ -179,6 +186,8 @@ export type Database = {
           provider_owner_user_id?: string | null
           review_prompt_sent?: boolean | null
           service_type?: string
+          slot?: unknown
+          start_time?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -776,13 +785,30 @@ export type Database = {
           provider_id?: string
           service_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "event_vendors_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_vendors_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
           budget_total: number
+          category_budgets: Json
           created_at: string
           created_by: string | null
+          end_time: string | null
           event_date: string
           event_type: string
           guest_count: string
@@ -794,14 +820,17 @@ export type Database = {
           organiser_email: string
           organiser_user_id: string | null
           required_services: string[]
+          start_time: string | null
           status: string
           suburb: string
           updated_at: string
         }
         Insert: {
           budget_total: number
+          category_budgets?: Json
           created_at?: string
           created_by?: string | null
+          end_time?: string | null
           event_date: string
           event_type: string
           guest_count: string
@@ -813,14 +842,17 @@ export type Database = {
           organiser_email: string
           organiser_user_id?: string | null
           required_services: string[]
+          start_time?: string | null
           status: string
           suburb: string
           updated_at?: string
         }
         Update: {
           budget_total?: number
+          category_budgets?: Json
           created_at?: string
           created_by?: string | null
+          end_time?: string | null
           event_date?: string
           event_type?: string
           guest_count?: string
@@ -832,6 +864,7 @@ export type Database = {
           organiser_email?: string
           organiser_user_id?: string | null
           required_services?: string[]
+          start_time?: string | null
           status?: string
           suburb?: string
           updated_at?: string
@@ -1759,6 +1792,7 @@ export type Database = {
         Row: {
           abn: string | null
           acceptance_rate: number | null
+          availability_confirmed_at: string | null
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
@@ -1773,6 +1807,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          free_travel_km: number
           gst_registered: boolean
           hourly_rate: number
           id: string
@@ -1781,6 +1816,7 @@ export type Database = {
           latitude: number | null
           locations_serviced: string[] | null
           longitude: number | null
+          min_booking_hours: number | null
           name: string
           owner_email: string | null
           owner_user_id: string | null
@@ -1797,6 +1833,8 @@ export type Database = {
           service_type: string
           social_link: string | null
           status: string | null
+          travel_fee_cents_per_km: number
+          travels_regional: boolean
           unavailable_dates: string[] | null
           unit_number: string | null
           updated_at: string
@@ -1806,6 +1844,7 @@ export type Database = {
         Insert: {
           abn?: string | null
           acceptance_rate?: number | null
+          availability_confirmed_at?: string | null
           available?: boolean | null
           avatar_url?: string | null
           avg_response_hours?: number | null
@@ -1820,6 +1859,7 @@ export type Database = {
           event_types?: string[] | null
           experience_years?: number | null
           founding_vendor?: boolean | null
+          free_travel_km?: number
           gst_registered?: boolean
           hourly_rate: number
           id?: string
@@ -1828,6 +1868,7 @@ export type Database = {
           latitude?: number | null
           locations_serviced?: string[] | null
           longitude?: number | null
+          min_booking_hours?: number | null
           name: string
           owner_email?: string | null
           owner_user_id?: string | null
@@ -1844,6 +1885,8 @@ export type Database = {
           service_type: string
           social_link?: string | null
           status?: string | null
+          travel_fee_cents_per_km?: number
+          travels_regional?: boolean
           unavailable_dates?: string[] | null
           unit_number?: string | null
           updated_at?: string
@@ -1853,6 +1896,7 @@ export type Database = {
         Update: {
           abn?: string | null
           acceptance_rate?: number | null
+          availability_confirmed_at?: string | null
           available?: boolean | null
           avatar_url?: string | null
           avg_response_hours?: number | null
@@ -1867,6 +1911,7 @@ export type Database = {
           event_types?: string[] | null
           experience_years?: number | null
           founding_vendor?: boolean | null
+          free_travel_km?: number
           gst_registered?: boolean
           hourly_rate?: number
           id?: string
@@ -1875,6 +1920,7 @@ export type Database = {
           latitude?: number | null
           locations_serviced?: string[] | null
           longitude?: number | null
+          min_booking_hours?: number | null
           name?: string
           owner_email?: string | null
           owner_user_id?: string | null
@@ -1891,6 +1937,8 @@ export type Database = {
           service_type?: string
           social_link?: string | null
           status?: string | null
+          travel_fee_cents_per_km?: number
+          travels_regional?: boolean
           unavailable_dates?: string[] | null
           unit_number?: string | null
           updated_at?: string
@@ -2070,6 +2118,65 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_packages: {
+        Row: {
+          active: boolean
+          created_at: string
+          delivery_days: number | null
+          deposit_percent: number | null
+          description: string | null
+          extra_hour_cents: number | null
+          id: string
+          included_hours: number | null
+          inclusions: string[]
+          name: string
+          price_cents: number
+          provider_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          delivery_days?: number | null
+          deposit_percent?: number | null
+          description?: string | null
+          extra_hour_cents?: number | null
+          id?: string
+          included_hours?: number | null
+          inclusions?: string[]
+          name: string
+          price_cents: number
+          provider_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          delivery_days?: number | null
+          deposit_percent?: number | null
+          description?: string | null
+          extra_hour_cents?: number | null
+          id?: string
+          included_hours?: number | null
+          inclusions?: string[]
+          name?: string
+          price_cents?: number
+          provider_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_packages_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_payout_details: {
         Row: {
           abn: string | null
@@ -2157,6 +2264,7 @@ export type Database = {
         Returns: {
           abn: string | null
           acceptance_rate: number | null
+          availability_confirmed_at: string | null
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
@@ -2171,6 +2279,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          free_travel_km: number
           gst_registered: boolean
           hourly_rate: number
           id: string
@@ -2179,6 +2288,7 @@ export type Database = {
           latitude: number | null
           locations_serviced: string[] | null
           longitude: number | null
+          min_booking_hours: number | null
           name: string
           owner_email: string | null
           owner_user_id: string | null
@@ -2195,6 +2305,8 @@ export type Database = {
           service_type: string
           social_link: string | null
           status: string | null
+          travel_fee_cents_per_km: number
+          travels_regional: boolean
           unavailable_dates: string[] | null
           unit_number: string | null
           updated_at: string
@@ -2329,6 +2441,7 @@ export type Database = {
         Returns: undefined
       }
       mask_contact_info: { Args: { p: string }; Returns: string }
+      matching_settings: { Args: never; Returns: Json }
       my_blocks: {
         Args: never
         Returns: {
@@ -2400,6 +2513,7 @@ export type Database = {
         Returns: {
           abn: string | null
           acceptance_rate: number | null
+          availability_confirmed_at: string | null
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
@@ -2414,6 +2528,7 @@ export type Database = {
           event_types: string[] | null
           experience_years: number | null
           founding_vendor: boolean | null
+          free_travel_km: number
           gst_registered: boolean
           hourly_rate: number
           id: string
@@ -2422,6 +2537,7 @@ export type Database = {
           latitude: number | null
           locations_serviced: string[] | null
           longitude: number | null
+          min_booking_hours: number | null
           name: string
           owner_email: string | null
           owner_user_id: string | null
@@ -2438,6 +2554,8 @@ export type Database = {
           service_type: string
           social_link: string | null
           status: string | null
+          travel_fee_cents_per_km: number
+          travels_regional: boolean
           unavailable_dates: string[] | null
           unit_number: string | null
           updated_at: string
@@ -2494,6 +2612,14 @@ export type Database = {
       user_label: {
         Args: { p_fallback_email?: string; p_user_id: string }
         Returns: string
+      }
+      vendor_busy_slots: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          provider_id: string
+          slot_end: string
+          slot_start: string
+        }[]
       }
     }
     Enums: {

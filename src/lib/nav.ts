@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Sparkles,
   Store,
+  Tags,
   UserRound,
   Users,
   Wallet,
@@ -123,7 +124,13 @@ export const VENDOR_NAV: NavItem[] = [
     href: "/vendor-dashboard/business",
     label: "My Business",
     icon: Briefcase,
-    match: ["/vendor-dashboard/edit", "/vendor-dashboard/portfolio", "/vendor-dashboard/bundles", "/vendor-dashboard/payouts"],
+    match: [
+      "/vendor-dashboard/edit",
+      "/vendor-dashboard/pricing",
+      "/vendor-dashboard/portfolio",
+      "/vendor-dashboard/bundles",
+      "/vendor-dashboard/payouts",
+    ],
   },
   { href: "/vendor-dashboard/earnings", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, match: ["/profile"] },
@@ -137,6 +144,7 @@ export const VENDOR_ENQUIRY_TABS: NavItem[] = [
 
 export const VENDOR_BUSINESS_TABS: NavItem[] = [
   { href: "/vendor-dashboard/business", label: "Listings", icon: Store, match: ["/vendor-dashboard/edit"] },
+  { href: "/vendor-dashboard/pricing", label: "Service & pricing", icon: Tags },
   { href: "/vendor-dashboard/portfolio", label: "Portfolio", icon: LayoutGrid },
   { href: "/vendor-dashboard/bundles", label: "Bundles", icon: Package },
   { href: "/vendor-dashboard/payouts", label: "Payouts", icon: Wallet },

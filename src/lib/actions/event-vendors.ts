@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requestQuote } from "@/lib/actions/quotes";
+import { eventHours } from "@/lib/matching/engine";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -50,6 +51,7 @@ export async function requestQuotesForEvent(
     eventType: event.event_type,
     location: event.suburb,
     estimatedGuests: estimateGuestCount(event.guest_count),
+    estimatedHours: eventHours(event.start_time, event.end_time) ?? undefined,
     budgetRange: event.budget_total ? `$${event.budget_total.toLocaleString()}` : "Flexible",
     details: event.notes || undefined,
   };

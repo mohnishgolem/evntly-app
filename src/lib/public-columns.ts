@@ -41,10 +41,11 @@ export type PublicParticipant = Omit<
 // email. Own rows are found by the *_user_id columns; the customer is shown
 // to vendors as client_label ("Jane D.").
 export const BOOKING_COLUMNS =
-  "id, created_at, updated_at, provider_id, provider_name, service_type, event_date, event_time, duration_hours, total_price, review_prompt_sent, commission_percent, escrow_status, status, event_address, notes, client_name, client_label, vendor_response_deadline, event_id, client_user_id, provider_owner_user_id" as const;
+  "id, created_at, updated_at, provider_id, provider_name, service_type, event_date, event_time, duration_hours, total_price, review_prompt_sent, commission_percent, escrow_status, status, event_address, notes, client_name, client_label, vendor_response_deadline, event_id, client_user_id, provider_owner_user_id, start_time, end_time" as const;
+// `slot` (generated tsrange for the no-overlap constraint) isn't read by the app.
 export type ParticipantBooking = Omit<
   Tables["bookings"]["Row"],
-  "client_email" | "provider_owner_email" | "created_by" | "stripe_session_id" | "stripe_payment_intent_id"
+  "client_email" | "provider_owner_email" | "created_by" | "stripe_session_id" | "stripe_payment_intent_id" | "slot"
 >;
 
 export const JOB_CARD_COLUMNS =

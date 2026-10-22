@@ -32,11 +32,37 @@ export type TeamVendor = {
   bookingId?: string;
   bookingPrice?: number | null;
   payment?: PaymentSummary;
+  /** Smart-matching result, when matching is on and the vendor passed Stage A. */
+  match?: TeamMatch;
+};
+
+export type TeamMatch = {
+  score: number;
+  reason: string;
+  /** Passed every check with a current calendar; false = availability pending. */
+  confirmed: boolean;
+  outsideUsualArea: boolean;
+  distanceKm: number | null;
+  pending: string[];
+  estimate: {
+    totalCents: number;
+    travelCents: number;
+    basis: "package" | "hourly";
+    packageName: string | null;
+    inclusions: string[];
+    notes: string[];
+  } | null;
 };
 
 export type TeamCategory = {
   service: string;
   availableCount: number;
+  /** Confirmed matches (null when smart matching is off). */
+  confirmedCount: number | null;
+  /** This category's budget in cents, if known. */
+  budgetCents: number | null;
+  /** Results include vendors from outside their usual area. */
+  widened: boolean;
   /** Vendors the customer has acted on (shortlisted, quoted, booked…). */
   team: TeamVendor[];
   /** Matching vendors not yet on the team, best first. */
@@ -62,12 +88,20 @@ const PAYMENT_TONE: Record<PaymentSummary["tone"], string> = {
 
 const SUGGESTIONS_SHOWN = 3;
 
+export function formatCents(cents: number) {
+  return `$${(cents / 100).toLocaleString("en-AU", { maximumFractionDigits: 0 })}`;
+}
+
 function availabilityLine(c: TeamCategory) {
   const confirmed = c.team.find((v) => v.status === "confirmed");
   if (confirmed) return `Confirmed: ${confirmed.name}`;
   const booked = c.team.find((v) => v.status === "booked");
   if (booked) return `${booked.name} is confirming`;
-  if (c.availableCount === 0) return "No vendors available on your date yet";
+  if (c.availableCount === 0) return c.confirmedCount != null ? "No matches yet" : "No vendors available on your date yet";
+  if (c.confirmedCount != null) {
+    if (c.confirmedCount > 0) return `${c.confirmedCount} confirmed match${c.confirmedCount === 1 ? "" : "es"}`;
+    return `${c.availableCount} possible match${c.availableCount === 1 ? "" : "es"} · availability pending`;
+  }
   return `${c.availableCount} vendor${c.availableCount === 1 ? "" : "s"} available on your date`;
 }
 
@@ -160,6 +194,9 @@ function CategoryPanel({ eventId, category, readOnly }: { eventId: string; categ
   const [showAll, setShowAll] = useState(false);
   const filled = category.team.some((v) => v.status === "confirmed" || v.status === "booked");
   const suggestions = showAll ? category.suggestions : category.suggestions.slice(0, SUGGESTIONS_SHOWN);
+  const smart = category.confirmedCount != null;
+  const best = suggestions.filter((v) => !smart || v.match?.confirmed);
+  const pending = smart ? suggestions.filter((v) => !v.match?.confirmed) : [];
 
   return (
     <div className="space-y-4 px-2.5 pb-3 sm:px-4 sm:pb-4">
@@ -176,12 +213,23 @@ function CategoryPanel({ eventId, category, readOnly }: { eventId: string; categ
 
       {!filled && (
         <section>
-          <h3 className="px-1 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Suggested for your date
-          </h3>
+          <div className="flex items-baseline justify-between gap-3 px-1 pb-2">
+            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {smart ? "Best matches" : "Suggested for your date"}
+            </h3>
+            {category.budgetCents != null && (
+              <span className="text-xs text-muted-foreground">Budget {formatCents(category.budgetCents)}</span>
+            )}
+          </div>
+          {category.widened && (
+            <p className="px-1 pb-2 text-xs text-muted-foreground">
+              Few vendors cover your suburb, so we&apos;ve included some who travel further.
+            </p>
+          )}
           {suggestions.length === 0 ? (
             <div className="rounded-xl bg-muted/60 px-4 py-5 text-sm text-muted-foreground">
               No {categoryPlural(category.service)} match your date, area and budget yet.{" "}
+              {smart && "Post your event to the Event Feed and new vendors can send you quotes. "}
               <Link
                 href={`/explore?category=${category.service}`}
                 className="font-medium text-foreground underline underline-offset-2"
@@ -190,11 +238,33 @@ function CategoryPanel({ eventId, category, readOnly }: { eventId: string; categ
               </Link>
             </div>
           ) : (
-            <ul className="space-y-2">
-              {suggestions.map((v) => (
-                <VendorRow key={v.id} eventId={eventId} vendor={v} readOnly={readOnly} />
-              ))}
-            </ul>
+            <>
+              {best.length > 0 ? (
+                <ul className="space-y-2">
+                  {best.map((v) => (
+                    <VendorRow key={v.id} eventId={eventId} vendor={v} readOnly={readOnly} />
+                  ))}
+                </ul>
+              ) : (
+                smart && (
+                  <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
+                    No confirmed matches yet. These vendors fit your event but haven&apos;t confirmed their calendar.
+                  </p>
+                )
+              )}
+              {pending.length > 0 && (
+                <>
+                  <h3 className="px-1 pt-4 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Availability pending
+                  </h3>
+                  <ul className="space-y-2">
+                    {pending.map((v) => (
+                      <VendorRow key={v.id} eventId={eventId} vendor={v} readOnly={readOnly} />
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
           )}
           {category.suggestions.length > SUGGESTIONS_SHOWN && (
             <button
@@ -257,6 +327,7 @@ function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: 
               </span>
             )}
           </p>
+          {v.match && <MatchSummary match={v.match} />}
           {v.status !== "suggested" && (
             <p className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
               <span className={cn("rounded-full px-2 py-0.5 font-semibold", STATUS_STYLE[v.status])}>
@@ -268,10 +339,17 @@ function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: 
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-sm font-semibold" title={`From $${v.hourlyRate}/hr`}>
-            {priceTier(v.hourlyRate)}
-            <span className="sr-only"> (from ${v.hourlyRate} per hour)</span>
-          </span>
+          {v.match?.estimate ? (
+            <span className="text-right">
+              <span className="block text-sm font-semibold">{formatCents(v.match.estimate.totalCents)}</span>
+              <span className="block text-[11px] text-muted-foreground">estimate</span>
+            </span>
+          ) : (
+            <span className="text-sm font-semibold" title={`From $${v.hourlyRate}/hr`}>
+              {priceTier(v.hourlyRate)}
+              <span className="sr-only"> (from ${v.hourlyRate} per hour)</span>
+            </span>
+          )}
           {!readOnly && (
             <SaveVendorButton vendorId={v.id} initialSaved={v.saved} isAuthenticated size="lg" className="-mr-2 shadow-none" />
           )}
@@ -280,6 +358,86 @@ function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: 
 
       {!readOnly && <RowActions eventId={eventId} vendor={v} />}
     </li>
+  );
+}
+
+function MatchSummary({ match: m }: { match: TeamMatch }) {
+  const [open, setOpen] = useState(false);
+  const e = m.estimate;
+  return (
+    <div className="mt-1.5 space-y-1 text-xs">
+      <p className="flex flex-wrap items-center gap-1.5">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">{m.score}% match</span>
+        {m.confirmed ? (
+          <span className="rounded-full bg-success/10 px-2 py-0.5 font-medium text-success">Calendar up to date</span>
+        ) : (
+          <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">Availability pending</span>
+        )}
+        {m.outsideUsualArea && (
+          <span className="rounded-full bg-champagne/15 px-2 py-0.5 font-medium text-warning">Outside usual area</span>
+        )}
+      </p>
+      <p className="text-muted-foreground">{m.reason}</p>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="min-h-8 font-medium text-foreground underline-offset-2 hover:underline"
+      >
+        {open ? "Hide details" : "Price & details"}
+      </button>
+      {open && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl bg-muted/50 p-3 text-muted-foreground">
+          {e ? (
+            <>
+              <dt>Estimate</dt>
+              <dd className="text-foreground">
+                {formatCents(e.totalCents)}
+                {e.packageName ? ` · ${e.packageName}` : e.basis === "hourly" ? " · hourly rate" : ""}
+              </dd>
+              {e.travelCents > 0 && (
+                <>
+                  <dt>Travel</dt>
+                  <dd>{formatCents(e.travelCents)} included</dd>
+                </>
+              )}
+              {e.inclusions.length > 0 && (
+                <>
+                  <dt>Includes</dt>
+                  <dd>{e.inclusions.join(" · ")}</dd>
+                </>
+              )}
+              {e.notes.length > 0 && (
+                <>
+                  <dt>Note</dt>
+                  <dd>{e.notes.join(". ")}</dd>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <dt>Price</dt>
+              <dd>Ask for a quote</dd>
+            </>
+          )}
+          {m.distanceKm != null && (
+            <>
+              <dt>Distance</dt>
+              <dd>About {m.distanceKm} km</dd>
+            </>
+          )}
+          {m.pending.length > 0 && (
+            <>
+              <dt>Pending</dt>
+              <dd>{m.pending.join(". ")}</dd>
+            </>
+          )}
+          <dd className="col-span-2 pt-1 text-[11px]">
+            Estimates use the vendor&apos;s own prices. Their quote is what you book.
+          </dd>
+        </dl>
+      )}
+    </div>
   );
 }
 

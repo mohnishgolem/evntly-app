@@ -35,7 +35,15 @@ export async function updateBookingStatus(
     .select("id, provider_name, event_date")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    // bookings_vendor_no_overlap: Postgres refuses a second confirmed booking
+    // that overlaps one the vendor already has, even if two confirmations
+    // race each other.
+    if (error.code === "23P01") {
+      return { error: "You already have a confirmed booking at that time. Cancel or move it before confirming this one." };
+    }
+    return { error: error.message };
+  }
 
   // A paid deposit becomes the vendor's once they confirm (the plan both
   // parties agreed says so). Re-checked in the database before any transfer.

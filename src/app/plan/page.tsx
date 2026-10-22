@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { EVENT_TYPES, GUEST_BUCKETS, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import { claimEventPlan, type PlanDraft } from "@/lib/actions/events";
 import { publishEventToFeed } from "@/lib/actions/event-feed";
+import { formatEventTimes, NOT_LOGGED_IN } from "@/lib/event-times";
 
 const BUDGET_MIN = 500;
 const BUDGET_MAX = 30000;
@@ -20,6 +21,7 @@ export default function PlanPage() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [postToFeed, setPostToFeed] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<PlanDraft>({
     eventType: "",
     eventDate: "",
@@ -28,6 +30,8 @@ export default function PlanPage() {
     budgetTotal: 10000,
     requiredServices: [],
     notes: "",
+    startTime: "",
+    endTime: "",
   });
 
   const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
@@ -38,17 +42,23 @@ export default function PlanPage() {
     !!draft.suburb &&
     !!draft.guestCount &&
     draft.requiredServices.length > 0 &&
-    draft.budgetTotal > 0;
+    draft.budgetTotal > 0 &&
+    !draft.startTime === !draft.endTime;
 
   function finish() {
     startTransition(async () => {
       // Already logged in? Save the event directly. claimEventPlan returns
       // {error: "Not logged in"} (without throwing) for anonymous visitors,
       // so fall back to the localStorage-draft-then-signup flow in that case.
+      setError(null);
       const res = await claimEventPlan(draft);
       if (res.success && res.eventId) {
         if (postToFeed) await publishEventToFeed(res.eventId);
         router.push(`/dashboard/events/${res.eventId}`);
+        return;
+      }
+      if (res.error !== NOT_LOGGED_IN) {
+        setError(res.error ?? "Couldn't save your event.");
         return;
       }
       localStorage.setItem("evntly_plan_draft", JSON.stringify({ draft, postToFeed }));
@@ -91,6 +101,27 @@ export default function PlanPage() {
             value={draft.eventDate}
             onChange={(e) => setDraft((d) => ({ ...d, eventDate: e.target.value }))}
           />
+        </Field>
+
+        <Field title="Start and end time (optional)">
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="time"
+              aria-label="Start time"
+              value={draft.startTime}
+              onChange={(e) => setDraft((d) => ({ ...d, startTime: e.target.value }))}
+            />
+            <Input
+              type="time"
+              aria-label="End time"
+              value={draft.endTime}
+              onChange={(e) => setDraft((d) => ({ ...d, endTime: e.target.value }))}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {formatEventTimes(draft.startTime || null, draft.endTime || null) ??
+              "Times let us price packages for your event's length and check vendors are free."}
+          </p>
         </Field>
 
         <Field title="Suburb">
@@ -174,10 +205,11 @@ export default function PlanPage() {
           </div>
         </Field>
 
-        <Field title="Notes (optional)">
+        <Field title="Special requirements (optional)">
           <Textarea
             rows={3}
-            placeholder="Any details about your vision, theme, or must-haves…"
+            maxLength={2000}
+            placeholder="Theme, must-have shots, accessibility, cultural requirements…"
             value={draft.notes}
             onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
           />
@@ -193,6 +225,11 @@ export default function PlanPage() {
           <Switch checked={postToFeed} onCheckedChange={setPostToFeed} />
         </div>
 
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
         <Button className="w-full" size="lg" disabled={!canSubmit || pending} onClick={finish}>
           {pending ? "Building…" : "Build my event board"}
         </Button>
