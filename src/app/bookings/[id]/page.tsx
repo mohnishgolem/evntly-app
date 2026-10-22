@@ -11,6 +11,9 @@ import { formatEventDate } from "@/lib/email";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { BookingPayments, type PaymentMilestone } from "@/components/payments/booking-payments";
 import { VendorBookingActions } from "@/components/vendor-booking-actions";
+import { DisputePanel } from "@/components/dispute-panel";
+import { loadBookingDisputes } from "@/lib/data/disputes";
+import { sydneyDate } from "@/lib/event-dates";
 
 export const metadata: Metadata = {
   title: "Booking",
@@ -102,6 +105,9 @@ export default async function BookingPage({
   }
 
   const totalCents = Math.round(Number(booking.total_price ?? 0) * 100);
+  const disputes = await loadBookingDisputes(booking.id, session.user.id);
+  // Same window the open_booking_dispute RPC enforces.
+  const canDispute = booking.status !== "declined" && booking.event_date >= sydneyDate(-90);
   const backHref = role === "vendor" ? "/vendor-dashboard/bookings" : role === "admin" ? "/admin/payments" : "/dashboard/bookings";
 
   return (
@@ -153,6 +159,8 @@ export default async function BookingPage({
         )}
         {role === "vendor" && <VendorBookingActions bookingId={booking.id} status={booking.status} />}
       </header>
+
+      <DisputePanel bookingId={booking.id} role={role} disputes={disputes} canOpen={canDispute} />
 
       <BookingPayments
         role={role}

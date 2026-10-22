@@ -46,21 +46,21 @@ export function AdminVendorActions({
     return (
       <div className="flex flex-wrap items-center gap-2">
         {reactivate ? (
-          <Button size="sm" disabled={pending} onClick={() => act("approved")}>
+          <Button size="lg" disabled={pending} onClick={() => act("approved")}>
             Reactivate
           </Button>
         ) : (
-          <Button size="sm" variant="outline" disabled={pending} onClick={() => act("suspended")}>
+          <Button size="lg" variant="outline" disabled={pending} onClick={() => act("suspended")}>
             Suspend
           </Button>
         )}
         {/* Sends the listing back to the review queue (hidden from Explore
             until approved again). */}
-        <Button size="sm" variant="ghost" disabled={pending} onClick={() => act("pending_review")}>
+        <Button size="lg" variant="ghost" disabled={pending} onClick={() => act("pending_review")}>
           Move to pending
         </Button>
         <Button
-          size="sm"
+          size="lg"
           variant={founding ? "secondary" : "ghost"}
           disabled={pending}
           aria-pressed={founding}
@@ -75,10 +75,10 @@ export function AdminVendorActions({
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      <Button size="sm" disabled={pending} onClick={() => act("approved")}>
+      <Button size="lg" disabled={pending} onClick={() => act("approved")}>
         Approve
       </Button>
-      <Button size="sm" variant="outline" disabled={pending} onClick={() => act("rejected")}>
+      <Button size="lg" variant="outline" disabled={pending} onClick={() => act("rejected")}>
         Reject
       </Button>
       {errorLine}

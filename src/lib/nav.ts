@@ -13,7 +13,9 @@ import {
   MessageCircle,
   Package,
   Search,
+  Scale,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Store,
@@ -161,6 +163,8 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/events", label: "Events", icon: CalendarDays },
   { href: "/admin/matching", label: "Matching", icon: Sparkles },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/disputes", label: "Disputes", icon: Scale },
+  { href: "/admin/risk", label: "Risk", icon: ShieldAlert },
   { href: "/admin/support", label: "Support", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];

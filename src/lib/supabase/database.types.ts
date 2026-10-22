@@ -98,6 +98,106 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_dispute_messages: {
+        Row: {
+          author_role: string
+          author_user_id: string
+          body: string
+          created_at: string
+          dispute_id: string
+          id: string
+        }
+        Insert: {
+          author_role: string
+          author_user_id: string
+          body: string
+          created_at?: string
+          dispute_id: string
+          id?: string
+        }
+        Update: {
+          author_role?: string
+          author_user_id?: string
+          body?: string
+          created_at?: string
+          dispute_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_dispute_messages_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "booking_disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_disputes: {
+        Row: {
+          booking_id: string
+          created_at: string
+          customer_user_id: string | null
+          description: string
+          desired_outcome: string | null
+          id: string
+          opened_by_role: string
+          opened_by_user_id: string
+          outcome: string | null
+          reason: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          vendor_user_id: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          customer_user_id?: string | null
+          description: string
+          desired_outcome?: string | null
+          id?: string
+          opened_by_role: string
+          opened_by_user_id: string
+          outcome?: string | null
+          reason: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_user_id?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          customer_user_id?: string | null
+          description?: string
+          desired_outcome?: string | null
+          id?: string
+          opened_by_role?: string
+          opened_by_user_id?: string
+          outcome?: string | null
+          reason?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           client_email: string | null
@@ -1895,6 +1995,27 @@ export type Database = {
           },
         ]
       }
+      risk_reviews: {
+        Row: {
+          note: string
+          reviewed_at: string
+          reviewed_by: string
+          user_id: string
+        }
+        Insert: {
+          note: string
+          reviewed_at?: string
+          reviewed_by: string
+          user_id: string
+        }
+        Update: {
+          note?: string
+          reviewed_at?: string
+          reviewed_by?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_providers: {
         Row: {
           abn: string | null
@@ -2343,6 +2464,10 @@ export type Database = {
       }
       accept_quote: { Args: { p_quote_id: string }; Returns: string }
       accept_terms: { Args: { p_version: string }; Returns: undefined }
+      add_dispute_message: {
+        Args: { p_body: string; p_dispute_id: string }
+        Returns: string
+      }
       admin_error_summary: {
         Args: { p_days?: number }
         Returns: {
@@ -2366,7 +2491,12 @@ export type Database = {
           step: number
         }[]
       }
+      admin_mark_risk_reviewed: {
+        Args: { p_note: string; p_user_id: string }
+        Returns: undefined
+      }
       admin_matching_report: { Args: { p_days?: number }; Returns: Json }
+      admin_risk_overview: { Args: { p_days?: number }; Returns: Json }
       admin_service_providers: {
         Args: never
         Returns: {
@@ -2431,6 +2561,15 @@ export type Database = {
       admin_set_matching_settings: {
         Args: { p_enabled: boolean; p_weights: Json }
         Returns: Json
+      }
+      admin_update_dispute: {
+        Args: {
+          p_dispute_id: string
+          p_note: string
+          p_outcome: string
+          p_status: string
+        }
+        Returns: undefined
       }
       attachment_readable: { Args: { p_path: string }; Returns: boolean }
       block_user: {
@@ -2692,6 +2831,15 @@ export type Database = {
         }
       }
       my_unread_message_count: { Args: never; Returns: number }
+      open_booking_dispute: {
+        Args: {
+          p_booking_id: string
+          p_description: string
+          p_desired_outcome?: string
+          p_reason: string
+        }
+        Returns: string
+      }
       owns_service_provider: {
         Args: { p_provider_id: string }
         Returns: boolean
@@ -2743,6 +2891,10 @@ export type Database = {
           slot_end: string
           slot_start: string
         }[]
+      }
+      withdraw_booking_dispute: {
+        Args: { p_dispute_id: string }
+        Returns: undefined
       }
     }
     Enums: {
