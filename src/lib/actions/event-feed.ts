@@ -34,6 +34,7 @@ async function notifyApplicationsDeclined(
 
 function notifyDeclined(to: string, eventType: string | null, eventDate: string | null) {
   notify({
+    category: "quotes",
     to,
     subject: `Update on your application: ${eventType ?? "event"} on ${formatEventDate(eventDate)}`,
     heading: "The organiser went with another vendor",
@@ -192,6 +193,7 @@ export async function applyToEventListing(
 
   const [organiserEmail] = await applicationEmails([application.id], "organiser_email");
   notify({
+    category: "enquiries",
     to: organiserEmail,
     subject: `${vendor.name} applied to your ${listing.event_type ?? "event"}`,
     heading: `${vendor.name} wants to work your event`,
@@ -263,6 +265,7 @@ export async function respondToApplication(
 
   const [vendorEmail] = await applicationEmails([applicationId], "vendor_email");
   notify({
+    category: "bookings",
     to: vendorEmail,
     subject: `You got the job: ${listing.event_type ?? "event"} on ${formatEventDate(listing.event_date)}`,
     heading: "Your application was accepted",

@@ -102,6 +102,7 @@ export async function requestQuote(
 
   const matched = origin === "smart_match";
   notify({
+    category: "enquiries",
     to: (await quoteParticipantEmail(quote.id, "vendor_email")) ?? "",
     subject: matched
       ? `You've been matched: ${draft.eventType} in ${draft.location} on ${formatEventDate(draft.eventDate)}`
@@ -196,6 +197,7 @@ export async function respondToQuote(
   notify(
     action === "quote"
       ? {
+          category: "quotes",
           to: clientEmail,
           subject: `${quote.vendor_name} sent you a quote`,
           heading: `${quote.vendor_name} quoted ${formatAmount(quote.quoted_amount)}`,
@@ -204,6 +206,7 @@ export async function respondToQuote(
           cta: board ? { label: "Compare quotes", path: board } : { label: "View quote", path: "/dashboard/quotes" },
         }
       : {
+          category: "quotes",
           to: clientEmail,
           subject: `${quote.vendor_name} can't take your ${quote.event_type ?? "event"}`,
           heading: `${quote.vendor_name} declined your request`,
@@ -242,6 +245,7 @@ export async function acceptQuote(quoteId: string): Promise<ActionState> {
 
   if (quote) {
     notify({
+      category: "quotes",
       to: (await quoteParticipantEmail(quoteId, "vendor_email")) ?? "",
       subject: `Your quote was accepted: ${quote.event_type ?? "event"} on ${formatEventDate(quote.event_date)}`,
       heading: "Your quote was accepted",

@@ -48,7 +48,10 @@ export default async function SmartOpportunitiesPage() {
       </dl>
       <p className="-mt-6 mb-8 text-xs text-muted-foreground">
         Last {STATS_WINDOW_DAYS} days, all quote requests ({stats.received}). Requests still waiting and ones customers
-        cancel don&apos;t count against you.
+        cancel don&apos;t count against you.{" "}
+        <Link href="/dashboard/settings/notifications" className="font-medium text-foreground underline underline-offset-2">
+          Notification settings
+        </Link>
       </p>
 
       <h2 className="mb-3 font-semibold">Waiting for your quote</h2>

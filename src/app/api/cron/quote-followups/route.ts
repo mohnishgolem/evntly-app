@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
 
   for (const q of vendorDue.data ?? []) {
     notify({
+      category: "reminders",
       to: q.vendor_user_id ? emailOf.get(q.vendor_user_id) : null,
       subject: `Reply today: quote request for ${formatEventDate(q.event_date)} expires soon`,
       heading: "A quote request is about to expire",
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
 
   for (const q of clientDue.data ?? []) {
     notify({
+      category: "reminders",
       to: q.client_user_id ? emailOf.get(q.client_user_id) : null,
       subject: `${q.vendor_name ?? "Your vendor"}'s quote expires soon`,
       heading: "Your quote expires in under 24 hours",
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
       ? await findSimilarVendors(admin, q.service_type, q.vendor_id ? [q.vendor_id] : [])
       : [];
     notify({
+      category: "reminders",
       to: q.client_user_id ? emailOf.get(q.client_user_id) : null,
       subject: `${q.vendor_name ?? "A vendor"} didn't reply — here are a few others`,
       heading: `${q.vendor_name ?? "The vendor"} didn't reply in time`,

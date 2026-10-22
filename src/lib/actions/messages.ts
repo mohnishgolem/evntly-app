@@ -55,6 +55,7 @@ async function notifyNewMessage(
   const to = await messageRecipientEmail(messageId);
   if (!to) return;
   notify({
+    category: "messages",
     to,
     subject: `New message from ${sender}`,
     heading: `${sender} sent you a message`,

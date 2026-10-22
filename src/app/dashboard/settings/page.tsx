@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ChevronRight, LogOut, Mail, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Bell, ChevronRight, LogOut, Mail, ShieldCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { logout } from "@/lib/actions/auth";
 
@@ -49,6 +50,15 @@ export default async function SettingsPage() {
           last
         />
       </div>
+
+      <Link
+        href="/dashboard/settings/notifications"
+        className="mt-6 flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-[15px] transition-colors hover:bg-accent"
+      >
+        <Bell className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+        <span className="flex-1">Notifications</span>
+        <ChevronRight className="size-4 text-muted-foreground/60" />
+      </Link>
 
       <form action={logout} className="mt-6 overflow-hidden rounded-2xl bg-secondary">
         <button

@@ -517,5 +517,5 @@ export async function notifyParty(
 ) {
   const userId = who === "vendor" ? plan.vendor_user_id : plan.customer_user_id;
   const { data } = await admin.auth.admin.getUserById(userId);
-  notify({ to: data.user?.email, ...message, cta: { label: "View booking", path: `/bookings/${plan.booking_id}` } });
+  notify({ category: "bookings", to: data.user?.email, ...message, cta: { label: "View booking", path: `/bookings/${plan.booking_id}` } });
 }

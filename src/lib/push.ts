@@ -110,16 +110,3 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     console.error("[push] failed:", err);
   }
 }
-
-/** Notifications are addressed by email; push needs the account behind it. */
-export async function sendPushToEmail(email: string, payload: PushPayload) {
-  const admin = createAdminClient();
-  if (!admin) return;
-  const { data: user } = await admin
-    .from("users")
-    .select("id")
-    .ilike("email", email.replace(/[%_\\]/g, "\\$&"))
-    .limit(1)
-    .maybeSingle();
-  if (user?.id) await sendPushToUser(user.id, payload);
-}

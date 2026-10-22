@@ -69,6 +69,7 @@ export async function updateBookingStatus(
       },
     }[action];
     notify({
+      category: "bookings",
       to: (await bookingParticipantEmail(booking.id, "client_email")) ?? "",
       subject: copy.subject,
       heading: copy.heading,
@@ -100,6 +101,7 @@ export async function cancelBookingAsCustomer(bookingId: string): Promise<Action
   if (error) return { error: error.message };
 
   notify({
+    category: "bookings",
     to: (await bookingParticipantEmail(booking.id, "provider_owner_email")) ?? "",
     subject: `Booking cancelled: ${formatEventDate(booking.event_date)}`,
     heading: "A booking was cancelled",

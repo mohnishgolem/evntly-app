@@ -1,7 +1,9 @@
 import { after } from "next/server";
 import { Resend } from "resend";
 import { SITE_URL } from "@/lib/config";
-import { sendPushToEmail } from "@/lib/push";
+import { sendPushToUser } from "@/lib/push";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isAllowed, normalisePrefs, type NotificationCategory, type NotificationPrefs } from "@/lib/notification-prefs";
 
 // Transactional notification emails. Sending is scheduled with after() so a
 // slow or failing email provider never delays or fails the user's action —
@@ -13,6 +15,8 @@ import { sendPushToEmail } from "@/lib/push";
 
 type Notification = {
   to: string | null | undefined;
+  /** Which preference governs it (see notification-prefs.ts). */
+  category: NotificationCategory;
   subject: string;
   heading: string;
   // Plain-text paragraphs; user-supplied values are escaped before rendering.
@@ -43,7 +47,7 @@ function truncate(value: string, max = 280) {
   return value.length > max ? `${value.slice(0, max - 1).trimEnd()}…` : value;
 }
 
-function renderHtml({ heading, lines, quote, cta }: Notification) {
+function renderHtml({ heading, lines, quote, cta }: Omit<Notification, "category">) {
   const url = `${SITE_URL}${cta.path}`;
   const paragraphs = lines
     .map((line) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#3a3a3c;">${escapeHtml(line)}</p>`)
@@ -65,15 +69,26 @@ function renderHtml({ heading, lines, quote, cta }: Notification) {
           <a href="${url}" style="display:inline-block;margin-top:6px;padding:12px 22px;background:#e8604a;color:#ffffff;text-decoration:none;border-radius:999px;font-size:15px;font-weight:600;">${escapeHtml(cta.label)}</a>
         </td></tr>
       </table>
-      <p style="margin:16px 0 0;font-size:12px;color:#8e8e93;">You're getting this because you have an account on Evntly.</p>
+      <p style="margin:16px 0 0;font-size:12px;color:#8e8e93;">You're getting this because you have an account on Evntly. <a href="${SITE_URL}${PREFS_PATH}" style="color:#8e8e93;">Choose which emails you get</a></p>
     </td></tr>
   </table>
 </body></html>`;
 }
 
-function renderText({ heading, lines, quote, cta }: Notification) {
-  return [heading, "", ...lines, ...(quote ? ["", `"${truncate(quote)}"`] : []), "", `${cta.label}: ${SITE_URL}${cta.path}`].join("\n");
+function renderText({ heading, lines, quote, cta }: Omit<Notification, "category">) {
+  return [
+    heading,
+    "",
+    ...lines,
+    ...(quote ? ["", `"${truncate(quote)}"`] : []),
+    "",
+    `${cta.label}: ${SITE_URL}${cta.path}`,
+    "",
+    `Choose which emails you get: ${SITE_URL}${PREFS_PATH}`,
+  ].join("\n");
 }
+
+export const PREFS_PATH = "/dashboard/settings/notifications";
 
 // Reserved, never-deliverable domains (RFC 2606/6761) used by seeded and test
 // accounts, e.g. the demo vendors on evntly.test. Sending to them can only
@@ -81,20 +96,44 @@ function renderText({ heading, lines, quote, cta }: Notification) {
 const UNDELIVERABLE_DOMAIN = /(\.(test|example|invalid|localhost)|@example\.(com|net|org))$/i;
 
 // Every notification is also pushed to the recipient's devices that have
-// push turned on (looked up by the same email address).
+// push turned on. Both channels follow the recipient's preferences, looked up
+// by the address it's going to (accounts without a row get everything).
 export function notify(notification: Notification) {
   if (!isDeliverable(notification.to)) return;
   const to = notification.to!.trim();
-  after(() =>
-    Promise.all([
-      sendEmail(notification),
-      sendPushToEmail(to, {
-        title: notification.heading,
-        body: notification.quote?.trim() || notification.lines[0] || notification.subject,
-        url: notification.cta.path,
-      }),
-    ]).then(() => undefined)
-  );
+  after(async () => {
+    const { userId, prefs } = await recipientPrefs(to);
+    await Promise.all([
+      isAllowed(prefs, notification.category, "email") ? sendEmail(notification) : undefined,
+      userId && isAllowed(prefs, notification.category, "push")
+        ? sendPushToUser(userId, {
+            title: notification.heading,
+            body: notification.quote?.trim() || notification.lines[0] || notification.subject,
+            url: notification.cta.path,
+          })
+        : undefined,
+    ]);
+  });
+}
+
+/** The account behind an address and its preferences. Never throws; falls back to "everything on". */
+export async function recipientPrefs(email: string): Promise<{ userId: string | null; prefs: NotificationPrefs }> {
+  try {
+    const admin = createAdminClient();
+    if (!admin) return { userId: null, prefs: normalisePrefs(null) };
+    const { data: user } = await admin
+      .from("users")
+      .select("id")
+      .ilike("email", email.replace(/[%_\\]/g, "\\$&"))
+      .limit(1)
+      .maybeSingle();
+    if (!user?.id) return { userId: null, prefs: normalisePrefs(null) };
+    const { data: row } = await admin.from("notification_preferences").select("prefs").eq("user_id", user.id).maybeSingle();
+    return { userId: user.id, prefs: normalisePrefs(row?.prefs) };
+  } catch (err) {
+    console.error("[notify] preference lookup failed:", err);
+    return { userId: null, prefs: normalisePrefs(null) };
+  }
 }
 
 function isDeliverable(to: string | null | undefined) {
@@ -103,7 +142,7 @@ function isDeliverable(to: string | null | undefined) {
 }
 
 /** Sends now and resolves when done; never throws. Prefer notify() in actions. */
-export async function sendEmail(notification: Notification) {
+export async function sendEmail(notification: Omit<Notification, "category">) {
   const to = notification.to?.trim();
   if (!to || !isDeliverable(to)) return;
   const resend = getClient();
