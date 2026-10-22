@@ -1162,6 +1162,65 @@ export type Database = {
         }
         Relationships: []
       }
+      match_runs: {
+        Row: {
+          created_at: string
+          eligible: number
+          event_date: string | null
+          event_id: string
+          excluded: number
+          exclusion_counts: Json
+          id: number
+          run_date: string
+          service: string
+          suburb: string | null
+          top_score: number | null
+          unconfirmed: number
+          updated_at: string
+          widened: boolean
+        }
+        Insert: {
+          created_at?: string
+          eligible?: number
+          event_date?: string | null
+          event_id: string
+          excluded?: number
+          exclusion_counts?: Json
+          id?: never
+          run_date: string
+          service: string
+          suburb?: string | null
+          top_score?: number | null
+          unconfirmed?: number
+          updated_at?: string
+          widened?: boolean
+        }
+        Update: {
+          created_at?: string
+          eligible?: number
+          event_date?: string | null
+          event_id?: string
+          excluded?: number
+          exclusion_counts?: Json
+          id?: never
+          run_date?: string
+          service?: string
+          suburb?: string | null
+          top_score?: number | null
+          unconfirmed?: number
+          updated_at?: string
+          widened?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           attachment_file_uri: string | null
@@ -1580,6 +1639,7 @@ export type Database = {
           origin: string | null
           quoted_amount: number | null
           request_call: boolean | null
+          responded_at: string | null
           service_description: string | null
           service_type: string | null
           status: string
@@ -1623,6 +1683,7 @@ export type Database = {
           origin?: string | null
           quoted_amount?: number | null
           request_call?: boolean | null
+          responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
           status: string
@@ -1666,6 +1727,7 @@ export type Database = {
           origin?: string | null
           quoted_amount?: number | null
           request_call?: boolean | null
+          responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
           status?: string
@@ -2286,6 +2348,7 @@ export type Database = {
           step: number
         }[]
       }
+      admin_matching_report: { Args: { p_days?: number }; Returns: Json }
       admin_service_providers: {
         Args: never
         Returns: {
@@ -2346,6 +2409,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      admin_set_matching_settings: {
+        Args: { p_enabled: boolean; p_weights: Json }
+        Returns: Json
       }
       attachment_readable: { Args: { p_path: string }; Returns: boolean }
       block_user: {
@@ -2524,6 +2591,7 @@ export type Database = {
           origin: string | null
           quoted_amount: number | null
           request_call: boolean | null
+          responded_at: string | null
           service_description: string | null
           service_type: string | null
           status: string
@@ -2620,6 +2688,7 @@ export type Database = {
         Args: { base: string; event_date: string }
         Returns: string
       }
+      refresh_vendor_reliability: { Args: never; Returns: number }
       respond_to_payment_plan: {
         Args: { p_agree: boolean; p_note?: string; p_plan_id: string }
         Returns: undefined

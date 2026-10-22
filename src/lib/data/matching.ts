@@ -1,10 +1,13 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sydneyDate } from "@/lib/event-dates";
 import {
   categoryBudgetCents,
   DEFAULT_WEIGHTS,
   matchCategory,
+  matchRunRows,
   normaliseWeights,
   type BusySlot,
   type CategoryMatches,
@@ -125,4 +128,26 @@ export async function matchEventCategories(
     matches.set(service, matchCategory(candidates.filter((v) => v.service_type === service), service, matchEvent, ctx));
   }
   return { matches, budgets };
+}
+
+/**
+ * Log today's matching results for an event (one row per category per day,
+ * updated in place) so admins can see search volume and failures. Written
+ * with the service role — match_runs isn't readable or writable by users.
+ * Never throws: history is nice-to-have, the board must not depend on it.
+ */
+export async function recordMatchRuns(
+  event: { id: string; suburb: string; event_date: string },
+  matches: Map<string, CategoryMatches>
+) {
+  if (matches.size === 0) return;
+  try {
+    const admin = createAdminClient();
+    if (!admin) return;
+    const rows = matchRunRows(event, matches, sydneyDate()).map((r) => ({ ...r, updated_at: new Date().toISOString() }));
+    const { error } = await admin.from("match_runs").upsert(rows, { onConflict: "event_id,service,run_date" });
+    if (error) console.error("recordMatchRuns failed", error.message);
+  } catch (err) {
+    console.error("recordMatchRuns failed", err);
+  }
 }

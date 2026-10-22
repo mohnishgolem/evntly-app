@@ -9,6 +9,8 @@ import { EventHeader } from "@/components/event-board/board-cards";
 import { VendorTeam } from "@/components/event-board/vendor-team";
 import { categoryLabel } from "@/lib/config";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
+import { explainEventMatching } from "@/lib/data/admin-matching";
+import { AdminMatchExplainer } from "@/components/admin-match-explainer";
 
 export const metadata: Metadata = {
   title: "Event",
@@ -28,6 +30,7 @@ export default async function AdminEventPage({ params }: { params: Promise<{ id:
   const board = await loadEventBoard(id, { userId: session.user.id, savedVendorIds: [], asAdmin: true });
   if (!board) notFound();
   const { event, categories, quotes, bookings, progress } = board;
+  const explained = await explainEventMatching(event);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -46,6 +49,12 @@ export default async function AdminEventPage({ params }: { params: Promise<{ id:
         ) : (
           <p className="text-sm text-muted-foreground">No vendor categories chosen.</p>
         )}
+      </section>
+
+      <section id="matching" className="mb-8 scroll-mt-24">
+        <h2 className="mb-1 text-lg font-semibold">Why vendors were matched</h2>
+        <p className="mb-3 text-sm text-muted-foreground">Every listing in this event&apos;s categories, as matching runs right now.</p>
+        <AdminMatchExplainer {...explained} />
       </section>
 
       <section className="mb-8">

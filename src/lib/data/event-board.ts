@@ -19,7 +19,8 @@ import {
   type PaymentSummary,
 } from "@/lib/event-board";
 import { locateEvent } from "@/lib/data/events";
-import { loadMatchingSettings, matchEventCategories } from "@/lib/data/matching";
+import { after } from "next/server";
+import { loadMatchingSettings, matchEventCategories, recordMatchRuns } from "@/lib/data/matching";
 import type { ScoredMatch } from "@/lib/matching/engine";
 import type { QuoteDetailFields } from "@/components/quote-details";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
@@ -140,6 +141,9 @@ export async function loadEventBoard(
 
   // Smart matching (Stage A + B) per category, unless an admin switched it off.
   const { matches, budgets } = await matchEventCategories(supabase, event, candidates, settings);
+  // History for admin reporting, written after the page is sent. Only the
+  // organiser's own views count as searches (not admins looking at it).
+  if (!viewer.asAdmin) after(() => recordMatchRuns(event, matches));
   const matchFor = new Map<string, TeamMatch>();
   for (const m of matches.values()) {
     for (const s of [...m.eligible, ...m.unconfirmed]) matchFor.set(s.vendorId, toTeamMatch(s));

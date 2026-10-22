@@ -159,6 +159,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
+  { href: "/admin/matching", label: "Matching", icon: Sparkles },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/support", label: "Support", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

@@ -403,3 +403,61 @@ export function reasonForVendor(reason: string | null) {
   const m = reason.match(/^Recommended because this .+? (specialises|covers|can travel|offers|fits|is |has |replies)(.*)$/);
   return m ? `Why you matched: ${m[1]}${m[2]}` : reason;
 }
+
+/** Plain labels for exclusion codes (admin reports and explanations). */
+export const EXCLUSION_LABELS: Record<ExclusionCode, string> = {
+  not_approved: "Not approved",
+  sample_listing: "Sample listing",
+  wrong_category: "Different category",
+  paused: "Paused",
+  date_blocked: "Date blocked",
+  day_off: "Day off",
+  booked: "Already booked",
+  outside_area: "Outside area",
+  duration: "Can't cover the hours",
+  over_budget: "Over budget",
+};
+
+export type MatchRunRow = {
+  event_id: string;
+  service: string;
+  run_date: string;
+  suburb: string;
+  event_date: string;
+  eligible: number;
+  unconfirmed: number;
+  excluded: number;
+  widened: boolean;
+  top_score: number | null;
+  exclusion_counts: Record<string, number>;
+};
+
+/**
+ * One history row per category for match_runs: counts, best score, and how
+ * many vendors each rule excluded (a vendor failing two rules counts under
+ * both, so the breakdown shows every reason, not just the first).
+ */
+export function matchRunRows(
+  event: { id: string; suburb: string; event_date: string },
+  matches: Map<string, CategoryMatches>,
+  runDate: string
+): MatchRunRow[] {
+  return [...matches.values()].map((m) => {
+    const counts: Record<string, number> = {};
+    for (const e of m.excluded) for (const x of e.exclusions) counts[x.code] = (counts[x.code] ?? 0) + 1;
+    const scores = [...m.eligible, ...m.unconfirmed].map((s) => s.score);
+    return {
+      event_id: event.id,
+      service: m.service,
+      run_date: runDate,
+      suburb: event.suburb,
+      event_date: event.event_date,
+      eligible: m.eligible.length,
+      unconfirmed: m.unconfirmed.length,
+      excluded: m.excluded.length,
+      widened: m.widened,
+      top_score: scores.length ? Math.max(...scores) : null,
+      exclusion_counts: counts,
+    };
+  });
+}
