@@ -11,19 +11,24 @@ export function fakeSupabase(opts: {
   const writes: { table: string; op: string; payload?: unknown }[] = [];
   const result = (key: string) => opts.results?.[key] ?? { data: null, error: null };
 
+  // A "table:op" key (e.g. "quote_requests:insert") overrides "table" for
+  // calls that wrote, so a read and an insert on one table can differ.
   const builder = (key: string, table: string) => {
     const b: Record<string, unknown> = {};
+    let op: string | null = null;
+    const res = () => (op && opts.results?.[`${key}:${op}`]) || result(key);
     const chain = () => b;
     for (const m of ["select", "eq", "neq", "in", "gte", "gt", "lte", "is", "order", "limit"]) b[m] = vi.fn(chain);
-    for (const op of ["insert", "update", "delete", "upsert"]) {
-      b[op] = vi.fn((payload?: unknown) => {
-        writes.push({ table, op, payload });
+    for (const o of ["insert", "update", "delete", "upsert"]) {
+      b[o] = vi.fn((payload?: unknown) => {
+        op = o;
+        writes.push({ table, op: o, payload });
         return b;
       });
     }
-    b.maybeSingle = vi.fn(async () => result(key));
-    b.single = vi.fn(async () => result(key));
-    b.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result(key)).then(resolve);
+    b.maybeSingle = vi.fn(async () => res());
+    b.single = vi.fn(async () => res());
+    b.then = (resolve: (v: unknown) => unknown) => Promise.resolve(res()).then(resolve);
     return b;
   };
 

@@ -3,7 +3,8 @@ import type { Database } from "@/lib/supabase/database.types";
 
 // Service-role client, server-only (the key has no NEXT_PUBLIC_ prefix, so
 // it never reaches the browser bundle). It bypasses RLS, so it's used only
-// to address notifications and to serve the calendar feed.
+// to address notifications, serve the calendar feed and record the
+// server-computed match score on a quote invitation.
 // Users can't read each other's emails on quote_requests/messages (column
 // SELECT is revoked), so server actions running as the user can't either.
 export function createAdminClient() {

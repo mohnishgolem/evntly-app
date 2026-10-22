@@ -2,10 +2,15 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import {
+  categoryBudgetCents,
   DEFAULT_WEIGHTS,
+  matchCategory,
   normaliseWeights,
   type BusySlot,
+  type CategoryMatches,
   type MatchContext,
+  type MatchEvent,
+  type MatchVendor,
   type MatchWeights,
 } from "@/lib/matching/engine";
 import type { MatchPackage } from "@/lib/matching/pricing";
@@ -68,4 +73,56 @@ export async function loadMatchContext(
   }));
 
   return { packages, portfolioCounts, busy, weights, now: new Date() };
+}
+
+type MatchableEventRow = {
+  event_type: string;
+  event_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  suburb: string;
+  latitude: number | null;
+  longitude: number | null;
+  budget_total: number;
+  required_services: string[];
+  category_budgets: unknown;
+};
+
+/**
+ * Run Stage A + B for each of an event's categories over `candidates`
+ * (approved listings in those categories). Shared by the Event Board and the
+ * quote-invite action, so what a customer is shown and what the server
+ * re-checks before sending can't drift apart. Empty when matching is off.
+ */
+export async function matchEventCategories(
+  supabase: Supabase,
+  event: MatchableEventRow,
+  candidates: MatchVendor[],
+  settings: MatchingSettings
+) {
+  const matches = new Map<string, CategoryMatches>();
+  const budgets = new Map<string, number | null>();
+  for (const service of event.required_services) {
+    budgets.set(
+      service,
+      categoryBudgetCents(service, event.budget_total, event.required_services, event.category_budgets as Record<string, unknown>)
+    );
+  }
+  if (!settings.enabled || candidates.length === 0) return { matches, budgets };
+
+  const ctx = await loadMatchContext(supabase, candidates.map((v) => v.id), event.event_date, settings.weights);
+  for (const service of event.required_services) {
+    const matchEvent: MatchEvent = {
+      eventType: event.event_type,
+      date: event.event_date,
+      startTime: event.start_time,
+      endTime: event.end_time,
+      suburb: event.suburb,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      budgetCents: budgets.get(service) ?? null,
+    };
+    matches.set(service, matchCategory(candidates.filter((v) => v.service_type === service), service, matchEvent, ctx));
+  }
+  return { matches, budgets };
 }

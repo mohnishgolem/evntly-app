@@ -7,6 +7,8 @@ import {
   quoteTimeLeft,
 } from "@/lib/quote-expiry";
 import type { VendorQuote } from "@/lib/data/vendor-quotes";
+import { QuoteDetails } from "@/components/quote-details";
+import { reasonForVendor } from "@/lib/matching/engine";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Needs your response",
@@ -38,7 +40,18 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
                 <p className="text-sm text-muted-foreground">
                   {q.estimated_guests} guests · Budget {q.budget_range}
                 </p>
+                {q.estimated_hours != null && (
+                  <p className="text-sm text-muted-foreground">{Number(q.estimated_hours)} hours</p>
+                )}
                 {q.details && <p className="mt-1 text-sm">{q.details}</p>}
+                {q.match_score != null && (
+                  <p className="mt-2 text-xs">
+                    <span className="mr-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                      {q.match_score}% match
+                    </span>
+                    <span className="text-muted-foreground">{reasonForVendor(q.match_reason)}</span>
+                  </p>
+                )}
               </div>
               <span className="shrink-0 text-sm font-medium text-muted-foreground">
                 {STATUS_LABEL[status] ?? status}
@@ -67,7 +80,8 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
               </p>
             )}
 
-            {status === "pending" && <VendorQuoteResponse quoteId={q.id} />}
+            {status !== "pending" && q.quoted_amount != null && <QuoteDetails quote={q} />}
+            {status === "pending" && <VendorQuoteResponse quoteId={q.id} estimatedHours={q.estimated_hours} />}
             {(status === "pending" || status === "quoted") && (
               <div className="mt-3 flex justify-end">
                 <BlockUserButton name={q.client_name ?? "this customer"} quoteId={q.id} />

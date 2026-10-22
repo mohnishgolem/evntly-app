@@ -392,3 +392,14 @@ export function categoryBudgetCents(
   const left = totalCents - [...explicit.values()].reduce((a, b) => a + b, 0);
   return left > 0 ? Math.floor(left / rest.length) : null;
 }
+
+/**
+ * The customer-facing reason rephrased for the vendor:
+ * "Recommended because this photographer covers Parramatta and fits your budget."
+ * → "Why you matched: covers Parramatta and fits your budget."
+ */
+export function reasonForVendor(reason: string | null) {
+  if (!reason) return null;
+  const m = reason.match(/^Recommended because this .+? (specialises|covers|can travel|offers|fits|is |has |replies)(.*)$/);
+  return m ? `Why you matched: ${m[1]}${m[2]}` : reason;
+}

@@ -8,10 +8,14 @@ import { Button } from "@/components/ui/button";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { categoryIcon, categoryLabel, categoryPlural } from "@/lib/config";
 import { setShortlisted } from "@/lib/actions/event-board";
-import { requestQuotesForEvent } from "@/lib/actions/event-vendors";
+import { requestQuotesForEvent, type InviteResult } from "@/lib/actions/event-vendors";
 import { acceptQuote } from "@/lib/actions/quotes";
 import { priceTier, TEAM_STATUS_LABEL, type PaymentSummary, type TeamStatus } from "@/lib/event-board";
 import { cn } from "@/lib/utils";
+import { QuoteDetails, type QuoteDetailFields } from "@/components/quote-details";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { quoteTimeLeft } from "@/lib/quote-expiry";
 
 export type TeamVendor = {
   id: string;
@@ -54,8 +58,23 @@ export type TeamMatch = {
   } | null;
 };
 
+export type CompareQuote = QuoteDetailFields & {
+  id: string;
+  vendor_id: string | null;
+  vendor_name: string;
+  status: string;
+  expires_at: string | null;
+  match_score: number | null;
+};
+
 export type TeamCategory = {
   service: string;
+  /** Quote requests still pending or quoted (max 5 per category). */
+  openRequests: number;
+  /** Priced quotes awaiting the customer, cheapest first. */
+  quoted: CompareQuote[];
+  /** The latest request that was declined or expired, if nothing replaced it. */
+  lost: { name: string; kind: "declined" | "expired" } | null;
   availableCount: number;
   /** Confirmed matches (null when smart matching is off). */
   confirmedCount: number | null;
@@ -87,6 +106,17 @@ const PAYMENT_TONE: Record<PaymentSummary["tone"], string> = {
 };
 
 const SUGGESTIONS_SHOWN = 3;
+/** Same limit the server and database enforce. */
+const MAX_OPEN_REQUESTS = 5;
+const SHEET_CLASS =
+  "max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-xl sm:rounded-none";
+
+function useSheetSide() {
+  const [side] = useState<"bottom" | "right">(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches ? "right" : "bottom"
+  );
+  return side;
+}
 
 export function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-AU", { maximumFractionDigits: 0 })}`;
@@ -198,8 +228,28 @@ function CategoryPanel({ eventId, category, readOnly }: { eventId: string; categ
   const best = suggestions.filter((v) => !smart || v.match?.confirmed);
   const pending = smart ? suggestions.filter((v) => !v.match?.confirmed) : [];
 
+  const invitable = [
+    ...category.team.filter((v) => v.status === "shortlisted" || v.status === "declined"),
+    ...category.suggestions.filter((v) => v.status === "suggested"),
+  ];
+  const slots = Math.max(0, MAX_OPEN_REQUESTS - category.openRequests);
+  const nextBest = category.suggestions.find((v) => v.status === "suggested");
+
   return (
     <div className="space-y-4 px-2.5 pb-3 sm:px-4 sm:pb-4">
+      {!readOnly && (category.quoted.length > 0 || (!filled && invitable.length > 0)) && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {category.quoted.length > 0 && <CompareQuotesSheet category={category} />}
+          {!filled && invitable.length > 0 && slots > 0 && (
+            <RequestQuotesSheet eventId={eventId} category={category} vendors={invitable} slots={slots} />
+          )}
+        </div>
+      )}
+
+      {!readOnly && !filled && category.lost && nextBest && (
+        <InviteAnother eventId={eventId} lost={category.lost} next={nextBest} />
+      )}
+
       {category.team.length > 0 && (
         <section>
           <h3 className="px-1 pb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Your team</h3>
@@ -574,6 +624,289 @@ function RowActions({ eventId, vendor: v }: { eventId: string; vendor: TeamVendo
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+// ── Batch quote requests ────────────────────────────────────────────────
+
+function RequestQuotesSheet({
+  eventId,
+  category,
+  vendors,
+  slots,
+}: {
+  eventId: string;
+  category: TeamCategory;
+  vendors: TeamVendor[];
+  slots: number;
+}) {
+  const router = useRouter();
+  const side = useSheetSide();
+  const [open, setOpen] = useState(false);
+  const initial = () =>
+    new Set(
+      vendors
+        .filter((v) => v.status !== "declined")
+        .slice(0, Math.min(3, slots))
+        .map((v) => v.id)
+    );
+  const [picked, setPicked] = useState<Set<string>>(initial);
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<InviteResult | null>(null);
+
+  function toggle(id: string) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < slots) next.add(id);
+      return next;
+    });
+  }
+
+  function send() {
+    setResult(null);
+    startTransition(async () => {
+      const res = await requestQuotesForEvent(eventId, [...picked]);
+      setResult(res);
+      if (res.success) router.refresh();
+    });
+  }
+
+  const plural = categoryPlural(category.service);
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setPicked(initial());
+          setResult(null);
+        }
+      }}
+    >
+      <SheetTrigger render={<Button size="lg" variant={category.quoted.length ? "outline" : "default"} />}>
+        Request quotes
+      </SheetTrigger>
+      <SheetContent side={side} className={SHEET_CLASS}>
+        <SheetHeader className="px-0">
+          <SheetTitle>Request quotes from {plural}</SheetTitle>
+          <SheetDescription>
+            Pick up to {slots}. We&apos;ll send each one your event details — not your contact details — and they have 7
+            days to reply.
+          </SheetDescription>
+        </SheetHeader>
+
+        {result?.success ? (
+          <div className="space-y-3">
+            <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success">
+              Sent to {result.sent} {result.sent === 1 ? categoryLabel(category.service).toLowerCase() : plural}. Quotes will
+              appear on your board.
+            </p>
+            <SkippedList skipped={result.skipped} />
+            <Button size="lg" className="w-full" onClick={() => setOpen(false)}>
+              Done
+            </Button>
+          </div>
+        ) : (
+          <>
+            <ul className="space-y-2">
+              {vendors.map((v) => {
+                const on = picked.has(v.id);
+                const disabled = !on && picked.size >= slots;
+                return (
+                  <li key={v.id}>
+                    <label
+                      className={cn(
+                        "flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors",
+                        on ? "border-foreground bg-foreground/[0.03]" : "border-border",
+                        disabled && "cursor-not-allowed opacity-50"
+                      )}
+                    >
+                      <Checkbox checked={on} disabled={disabled} onCheckedChange={() => toggle(v.id)} className="mt-0.5" />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium">{v.name}</span>
+                          {v.match?.estimate && (
+                            <span className="shrink-0 text-sm font-semibold">{formatCents(v.match.estimate.totalCents)}</span>
+                          )}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {v.match ? `${v.match.score}% match · ${v.match.confirmed ? "calendar up to date" : "availability pending"}` : TEAM_STATUS_LABEL[v.status]}
+                          {v.status === "declined" ? " · declined before" : ""}
+                        </span>
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+            {result?.error && (
+              <div className="space-y-2">
+                <p role="alert" className="text-sm text-destructive">
+                  {result.error}
+                </p>
+                <SkippedList skipped={result.skipped} />
+              </div>
+            )}
+            <Button size="lg" className="w-full" disabled={pending || picked.size === 0} onClick={send}>
+              {pending && <Loader2 className="animate-spin" aria-hidden />}
+              Send {picked.size} request{picked.size === 1 ? "" : "s"}
+            </Button>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SkippedList({ skipped }: { skipped?: { name: string; reason: string }[] }) {
+  if (!skipped?.length) return null;
+  return (
+    <ul className="space-y-1 text-sm text-muted-foreground">
+      {skipped.map((s) => (
+        <li key={s.name}>
+          <span className="font-medium text-foreground">{s.name}</span> not sent: {s.reason}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── Quote comparison ────────────────────────────────────────────────────
+
+function CompareQuotesSheet({ category }: { category: TeamCategory }) {
+  const side = useSheetSide();
+  const n = category.quoted.length;
+  return (
+    <Sheet>
+      <SheetTrigger render={<Button size="lg" />}>{n === 1 ? "Review quote" : `Compare ${n} quotes`}</SheetTrigger>
+      <SheetContent side={side} className={cn(SHEET_CLASS, "sm:max-w-3xl")}>
+        <SheetHeader className="px-0">
+          <SheetTitle>{categoryLabel(category.service)} quotes</SheetTitle>
+          <SheetDescription>
+            Cheapest first. Quotes are offers — nothing is booked until you choose one and the vendor confirms.
+          </SheetDescription>
+        </SheetHeader>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {category.quoted.map((q, i) => (
+            <li key={q.id} className="flex flex-col rounded-2xl border border-border p-4">
+              <div className="flex items-start justify-between gap-2">
+                <Link href={`/vendor/${q.vendor_id}`} className="font-semibold hover:underline">
+                  {q.vendor_name}
+                </Link>
+                {i === 0 && n > 1 && (
+                  <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">Lowest</span>
+                )}
+              </div>
+              <p className="mt-1 text-2xl font-semibold">{q.quoted_amount != null ? `$${Number(q.quoted_amount).toLocaleString("en-AU")}` : "—"}</p>
+              <p className="text-xs text-muted-foreground">
+                {q.match_score != null ? `${q.match_score}% match · ` : ""}
+                {quoteTimeLeft(q) ? `expires ${quoteTimeLeft(q)}` : ""}
+              </p>
+              <div className="flex-1">
+                <QuoteDetails quote={q} />
+              </div>
+              <BookQuoteButton quoteId={q.id} vendorName={q.vendor_name} amount={q.quoted_amount} />
+            </li>
+          ))}
+        </ul>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function BookQuoteButton({ quoteId, vendorName, amount }: { quoteId: string; vendorName: string; amount: number | null }) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="mt-3 space-y-2 border-t border-border pt-3">
+      {confirming ? (
+        <>
+          <p className="text-sm">
+            Book {vendorName} for ${Number(amount ?? 0).toLocaleString("en-AU")}? They&apos;ll confirm, then set up payments.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="lg"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  const res = await acceptQuote(quoteId);
+                  if (res?.error) setError(res.error);
+                  else router.refresh();
+                })
+              }
+            >
+              {pending && <Loader2 className="animate-spin" aria-hidden />} Book
+            </Button>
+            <Button size="lg" variant="ghost" disabled={pending} onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+          </div>
+        </>
+      ) : (
+        <Button size="lg" variant="outline" className="w-full" onClick={() => setConfirming(true)}>
+          Choose {vendorName}
+        </Button>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Replacing a vendor who declined or didn't reply ─────────────────────
+
+function InviteAnother({
+  eventId,
+  lost,
+  next,
+}: {
+  eventId: string;
+  lost: { name: string; kind: "declined" | "expired" };
+  next: TeamVendor;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  return (
+    <div className="rounded-xl border border-champagne/50 bg-champagne/10 p-3 text-sm">
+      <p>
+        {lost.kind === "declined" ? `${lost.name} can't take your event.` : `${lost.name} didn't reply in time.`} Invite{" "}
+        <span className="font-semibold">{next.name}</span>
+        {next.match ? ` (${next.match.score}% match)` : ""} instead?
+      </p>
+      {error && (
+        <p role="alert" className="mt-1 text-destructive">
+          {error}
+        </p>
+      )}
+      <div className="mt-2 flex gap-2">
+        <Button
+          size="lg"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              const res = await requestQuotesForEvent(eventId, [next.id]);
+              if (res.error) setError(res.error);
+              else router.refresh();
+            })
+          }
+        >
+          {pending && <Loader2 className="animate-spin" aria-hidden />} Invite {next.name}
+        </Button>
+        <Button size="lg" variant="ghost" disabled={pending} onClick={() => setDismissed(true)}>
+          Not now
+        </Button>
+      </div>
     </div>
   );
 }

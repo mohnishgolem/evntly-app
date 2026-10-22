@@ -114,7 +114,7 @@ export const VENDOR_NAV: NavItem[] = [
     href: "/vendor-dashboard/enquiries",
     label: "Enquiries",
     icon: Inbox,
-    match: ["/vendor-dashboard/event-feed", "/messages"],
+    match: ["/vendor-dashboard/opportunities", "/vendor-dashboard/event-feed", "/messages"],
     badge: "unread",
   },
   { href: "/vendor-dashboard/quotes", label: "Quotes", icon: FileText },
@@ -137,6 +137,7 @@ export const VENDOR_NAV: NavItem[] = [
 ];
 
 export const VENDOR_ENQUIRY_TABS: NavItem[] = [
+  { href: "/vendor-dashboard/opportunities", label: "Smart matches", icon: Sparkles },
   { href: "/vendor-dashboard/enquiries", label: "Quote requests", icon: FileText },
   { href: "/vendor-dashboard/event-feed", label: "Event Feed", icon: Inbox },
   { href: "/messages", label: "Messages", icon: MessageCircle },

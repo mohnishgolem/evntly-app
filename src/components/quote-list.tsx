@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { QuoteActions } from "@/components/quote-actions";
+import { QuoteDetails } from "@/components/quote-details";
 import { cn } from "@/lib/utils";
 import { categoryPlural } from "@/lib/config";
 import {
@@ -136,6 +137,7 @@ export function QuoteList({
                     {q.vendor_note}
                   </p>
                 )}
+                <QuoteDetails quote={q} />
                 <QuoteActions quoteId={q.id} />
               </div>
             )}

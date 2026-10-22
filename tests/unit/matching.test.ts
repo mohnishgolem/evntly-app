@@ -10,6 +10,7 @@ import {
   matchCategory,
   normaliseWeights,
   qualityFit,
+  reasonForVendor,
   reliabilityFit,
   type BusySlot,
   type MatchContext,
@@ -320,5 +321,15 @@ describe("category budgets", () => {
   it("ignores junk in category_budgets", () => {
     expect(categoryBudgetCents("dj", 1000, ["dj"], { dj: "lots" as unknown as number })).toBe(100_000);
     expect(categoryBudgetCents("dj", 1000, ["dj"], { dj: -5 })).toBe(100_000);
+  });
+});
+
+describe("reasonForVendor", () => {
+  it("rephrases the customer's reason for the vendor", () => {
+    expect(reasonForVendor("Recommended because this makeup artist covers Parramatta and fits your budget.")).toBe(
+      "Why you matched: covers Parramatta and fits your budget."
+    );
+    expect(reasonForVendor("Matches your date and dj needs.")).toBe("Matches your date and dj needs.");
+    expect(reasonForVendor(null)).toBeNull();
   });
 });

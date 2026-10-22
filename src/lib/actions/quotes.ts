@@ -8,8 +8,13 @@ import { categoryLabel } from "@/lib/config";
 import { quoteParticipantEmail } from "@/lib/supabase/admin";
 import { z } from "zod";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+import type { Database } from "@/lib/supabase/database.types";
 
-export type ActionState = { error?: string; success?: boolean } | null;
+export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
+
+/** Where a quote request came from (quote_requests.origin). */
+export type QuoteOrigin = "vendor_profile" | "event_board" | "smart_match";
+const ORIGINS: QuoteOrigin[] = ["vendor_profile", "event_board", "smart_match"];
 
 // The lockdown trigger refuses changes to an expired request; turn its raw
 // exception into something a person can act on.
@@ -44,8 +49,10 @@ const quoteDraftSchema = z.object({
 export async function requestQuote(
   vendorId: string,
   draft: QuoteRequestDraft,
-  eventId?: string
+  eventId?: string,
+  opts: { origin?: QuoteOrigin; matchScore?: number | null } = {}
 ): Promise<ActionState> {
+  const origin: QuoteOrigin = opts.origin && ORIGINS.includes(opts.origin) ? opts.origin : "vendor_profile";
   const supabase = await createClient();
   const {
     data: { user },
@@ -81,36 +88,63 @@ export async function requestQuote(
       budget_range: draft.budgetRange,
       details: draft.details || null,
       status: "pending",
-      origin: "vendor_profile",
+      origin,
       event_id: eventId ?? null,
     })
     .select("id, service_type")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    // quote_requests_live_invite_uniq: one open request per vendor per event.
+    if (error.code === "23505") return { error: "You've already asked this vendor for a quote for this event." };
+    return { error: friendlyError(error.message) };
+  }
 
+  const matched = origin === "smart_match";
   notify({
     to: (await quoteParticipantEmail(quote.id, "vendor_email")) ?? "",
-    subject: `New quote request: ${draft.eventType} on ${formatEventDate(draft.eventDate)}`,
-    heading: "You have a new quote request",
+    subject: matched
+      ? `You've been matched: ${draft.eventType} in ${draft.location} on ${formatEventDate(draft.eventDate)}`
+      : `New quote request: ${draft.eventType} on ${formatEventDate(draft.eventDate)}`,
+    heading: matched ? "Evntly matched you to an event" : "You have a new quote request",
     lines: [
       `Someone is planning a ${draft.eventType.toLowerCase()} in ${draft.location} on ${formatEventDate(draft.eventDate)} and would like a quote from you.`,
-      `Service: ${categoryLabel(quote.service_type ?? "")}. Guests: about ${draft.estimatedGuests}. Budget: ${draft.budgetRange}.`,
-      "Couples usually book whoever replies first — send your quote while it's fresh.",
+      `Service: ${categoryLabel(quote.service_type ?? "")}. Guests: about ${draft.estimatedGuests}${draft.estimatedHours ? `. Hours: ${draft.estimatedHours}` : ""}. Budget: ${draft.budgetRange}.`,
+      matched && opts.matchScore != null
+        ? `It's a ${opts.matchScore}% match for your area, prices and availability. The customer picked you from their matches.`
+        : "Couples usually book whoever replies first — send your quote while it's fresh.",
     ],
     quote: draft.details,
-    cta: { label: "Reply with a quote", path: "/vendor-dashboard/enquiries" },
+    cta: { label: "Reply with a quote", path: matched ? "/vendor-dashboard/opportunities" : "/vendor-dashboard/enquiries" },
   });
 
   revalidatePath("/dashboard/quotes");
-  return { success: true };
+  return { success: true, quoteId: quote.id };
 }
 
-// Vendor responds to a pending quote request with a price, or declines it.
+// Vendor responds to a pending quote request with a priced, itemised quote,
+// or declines it. Amounts arrive in dollars; travel and deposit are stored in
+// cents and can't exceed the total (also a DB check).
+const quoteReplySchema = z
+  .object({
+    amount: z.number().positive("Enter a valid quote amount.").max(1_000_000),
+    coverageHours: z.number().min(0.5).max(72).nullable(),
+    travelFee: z.number().min(0).max(1_000_000).nullable(),
+    inclusions: z.array(z.string().trim().min(1).max(120)).max(20),
+    deliveryDays: z.number().int().min(0).max(365).nullable(),
+    deposit: z.number().min(0).max(1_000_000).nullable(),
+    cancellationTerms: z.string().trim().max(2000),
+    description: z.string().trim().max(2000),
+  })
+  .refine((d) => d.travelFee == null || d.travelFee <= d.amount, "Travel is part of the total, so it can't be more than it.")
+  .refine((d) => d.deposit == null || d.deposit <= d.amount, "The deposit can't be more than the total.");
+
+export type QuoteReply = z.input<typeof quoteReplySchema>;
+
 export async function respondToQuote(
   quoteId: string,
   action: "quote" | "decline",
-  quotedAmount: number | null,
+  reply: QuoteReply | null,
   vendorNote: string
 ): Promise<ActionState> {
   const supabase = await createClient();
@@ -118,30 +152,45 @@ export async function respondToQuote(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
-  if (
-    action === "quote" &&
-    (quotedAmount == null || !Number.isFinite(quotedAmount) || quotedAmount <= 0 || quotedAmount > 1_000_000)
-  ) {
-    return { error: "Enter a valid quote amount." };
+  if (typeof vendorNote !== "string" || vendorNote.length > 5000) return { error: "That note is too long." };
+
+  let update: Database["public"]["Tables"]["quote_requests"]["Update"];
+  if (action === "quote") {
+    const parsed = quoteReplySchema.safeParse(reply);
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check your quote." };
+    const r = parsed.data;
+    const cents = (n: number | null) => (n == null ? null : Math.round(n * 100));
+    update = {
+      status: "quoted",
+      quoted_amount: Math.round(r.amount * 100) / 100,
+      vendor_note: vendorNote || null,
+      coverage_hours: r.coverageHours,
+      travel_fee_cents: cents(r.travelFee),
+      inclusions: r.inclusions,
+      delivery_days: r.deliveryDays,
+      deposit_cents: cents(r.deposit),
+      cancellation_terms: r.cancellationTerms || null,
+      service_description: r.description || null,
+    };
+  } else if (action === "decline") {
+    update = { status: "declined", vendor_note: vendorNote || null };
+  } else {
+    return { error: "Unknown action." };
   }
-  if (vendorNote.length > 5000) return { error: "That note is too long." };
 
   const { data: quote, error } = await supabase
     .from("quote_requests")
-    .update({
-      status: action === "quote" ? "quoted" : "declined",
-      quoted_amount: action === "quote" ? quotedAmount : null,
-      vendor_note: vendorNote || null,
-    })
+    .update(update)
     // RLS limits this to participants, and the lockdown trigger only lets
     // the vendor set a price or decline.
     .eq("id", quoteId)
-    .select("vendor_name, event_type, event_date")
+    .select("vendor_name, event_type, event_date, event_id, quoted_amount")
     .single();
 
   if (error) return { error: friendlyError(error.message) };
 
   const clientEmail = (await quoteParticipantEmail(quoteId, "client_email")) ?? "";
+  const board = quote.event_id ? `/dashboard/events/${quote.event_id}` : null;
 
   const eventLabel = `${quote.event_type ?? "event"} on ${formatEventDate(quote.event_date)}`;
   notify(
@@ -149,10 +198,10 @@ export async function respondToQuote(
       ? {
           to: clientEmail,
           subject: `${quote.vendor_name} sent you a quote`,
-          heading: `${quote.vendor_name} quoted ${formatAmount(quotedAmount)}`,
+          heading: `${quote.vendor_name} quoted ${formatAmount(quote.quoted_amount)}`,
           lines: [`${quote.vendor_name} has replied to your quote request for your ${eventLabel}.`],
           quote: vendorNote,
-          cta: { label: "View quote", path: "/dashboard/quotes" },
+          cta: board ? { label: "Compare quotes", path: board } : { label: "View quote", path: "/dashboard/quotes" },
         }
       : {
           to: clientEmail,
@@ -160,10 +209,12 @@ export async function respondToQuote(
           heading: `${quote.vendor_name} declined your request`,
           lines: [
             `${quote.vendor_name} isn't able to take on your ${eventLabel}.`,
-            "There are plenty of other vendors on Evntly — you can request quotes from a few more in a couple of clicks.",
+            board
+              ? "Your event board has other matching vendors — you can invite the next best one in a click."
+              : "There are plenty of other vendors on Evntly — you can request quotes from a few more in a couple of clicks.",
           ],
           quote: vendorNote,
-          cta: { label: "Find another vendor", path: "/explore" },
+          cta: board ? { label: "Invite another vendor", path: board } : { label: "Find another vendor", path: "/explore" },
         }
   );
 

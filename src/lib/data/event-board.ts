@@ -19,8 +19,10 @@ import {
   type PaymentSummary,
 } from "@/lib/event-board";
 import { locateEvent } from "@/lib/data/events";
-import { loadMatchContext, loadMatchingSettings } from "@/lib/data/matching";
-import { categoryBudgetCents, matchCategory, type CategoryMatches, type MatchEvent, type ScoredMatch } from "@/lib/matching/engine";
+import { loadMatchingSettings, matchEventCategories } from "@/lib/data/matching";
+import type { ScoredMatch } from "@/lib/matching/engine";
+import type { QuoteDetailFields } from "@/components/quote-details";
+import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { sydneyDate } from "@/lib/event-dates";
 import type { TeamCategory, TeamMatch, TeamVendor } from "@/components/event-board/vendor-team";
 import type { Database } from "@/lib/supabase/database.types";
@@ -33,14 +35,15 @@ const CANDIDATE_LIMIT = 400;
 
 // Quote columns both an organiser and an admin may read (no emails).
 const QUOTE_COLUMNS =
-  "id, vendor_id, vendor_name, service_type, status, expires_at, quoted_amount, created_at, event_date, event_type, location, estimated_guests, budget_range, vendor_note, booking_id" as const;
+  "id, vendor_id, vendor_name, service_type, status, expires_at, quoted_amount, created_at, event_date, event_type, location, estimated_guests, budget_range, vendor_note, booking_id, match_score, coverage_hours, travel_fee_cents, deposit_cents, delivery_days, inclusions, cancellation_terms, service_description" as const;
 
 export type BoardQuoteRow = BoardQuote & {
   vendor_name: string | null;
   event_date: string;
   vendor_note: string | null;
   booking_id: string | null;
-};
+  match_score: number | null;
+} & QuoteDetailFields;
 
 export type BoardBookingView = ParticipantBooking & { payment: PaymentSummary };
 
@@ -136,30 +139,7 @@ export async function loadEventBoard(
   }
 
   // Smart matching (Stage A + B) per category, unless an admin switched it off.
-  const matches = new Map<string, CategoryMatches>();
-  const budgets = new Map<string, number | null>();
-  for (const service of event.required_services) {
-    budgets.set(
-      service,
-      categoryBudgetCents(service, event.budget_total, event.required_services, event.category_budgets as Record<string, unknown>)
-    );
-  }
-  if (settings.enabled && candidates.length) {
-    const ctx = await loadMatchContext(supabase, candidates.map((v) => v.id), event.event_date, settings.weights);
-    for (const service of event.required_services) {
-      const matchEvent: MatchEvent = {
-        eventType: event.event_type,
-        date: event.event_date,
-        startTime: event.start_time,
-        endTime: event.end_time,
-        suburb: event.suburb,
-        latitude: event.latitude,
-        longitude: event.longitude,
-        budgetCents: budgets.get(service) ?? null,
-      };
-      matches.set(service, matchCategory(candidates.filter((v) => v.service_type === service), service, matchEvent, ctx));
-    }
-  }
+  const { matches, budgets } = await matchEventCategories(supabase, event, candidates, settings);
   const matchFor = new Map<string, TeamMatch>();
   for (const m of matches.values()) {
     for (const s of [...m.eligible, ...m.unconfirmed]) matchFor.set(s.vendorId, toTeamMatch(s));
@@ -253,8 +233,23 @@ export async function loadEventBoard(
       .slice(0, 12)
       .map(toTeamVendor);
 
+    // Quote requests in this category: still open, priced (for comparison),
+    // and the latest one that fell through (declined / expired) with no
+    // replacement yet — the board offers to invite the next best match.
+    const inService = quotes.filter((q) => q.service_type === service);
+    const effective = inService.map((q) => ({ q, s: effectiveQuoteStatus(q) }));
+    const openRequests = effective.filter((e) => e.s === "pending" || e.s === "quoted").length;
+    const lost = effective.find((e) => e.s === "declined" || e.s === "expired");
+    const quoted = effective
+      .filter((e) => e.s === "quoted")
+      .map((e) => ({ ...e.q, vendor_name: e.q.vendor_name ?? known.get(e.q.vendor_id ?? "")?.name ?? "Vendor" }))
+      .sort((a, b) => Number(a.quoted_amount ?? 0) - Number(b.quoted_amount ?? 0));
+
     return {
       service,
+      openRequests,
+      quoted,
+      lost: lost && openRequests === 0 ? { name: lost.q.vendor_name ?? "A vendor", kind: lost.s as "declined" | "expired" } : null,
       availableCount: availableByService.get(service) ?? 0,
       confirmedCount: m ? m.eligible.length : null,
       budgetCents: budgets.get(service) ?? null,

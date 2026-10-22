@@ -1554,12 +1554,16 @@ export type Database = {
           booking_id: string | null
           budget_range: string
           call_time_window: string | null
+          cancellation_terms: string | null
           client_email: string
           client_name: string | null
           client_reminder_sent_at: string | null
           client_user_id: string | null
+          coverage_hours: number | null
           created_at: string
           created_by: string | null
+          delivery_days: number | null
+          deposit_cents: number | null
           details: string | null
           estimated_guests: number
           estimated_hours: number | null
@@ -1569,13 +1573,18 @@ export type Database = {
           expires_at: string | null
           expiry_notice_sent_at: string | null
           id: string
+          inclusions: string[]
           location: string
+          match_reason: string | null
+          match_score: number | null
           origin: string | null
           quoted_amount: number | null
           request_call: boolean | null
+          service_description: string | null
           service_type: string | null
           status: string
           stripe_session_id: string | null
+          travel_fee_cents: number | null
           updated_at: string
           vendor_email: string
           vendor_id: string
@@ -1588,12 +1597,16 @@ export type Database = {
           booking_id?: string | null
           budget_range: string
           call_time_window?: string | null
+          cancellation_terms?: string | null
           client_email: string
           client_name?: string | null
           client_reminder_sent_at?: string | null
           client_user_id?: string | null
+          coverage_hours?: number | null
           created_at?: string
           created_by?: string | null
+          delivery_days?: number | null
+          deposit_cents?: number | null
           details?: string | null
           estimated_guests: number
           estimated_hours?: number | null
@@ -1603,13 +1616,18 @@ export type Database = {
           expires_at?: string | null
           expiry_notice_sent_at?: string | null
           id?: string
+          inclusions?: string[]
           location: string
+          match_reason?: string | null
+          match_score?: number | null
           origin?: string | null
           quoted_amount?: number | null
           request_call?: boolean | null
+          service_description?: string | null
           service_type?: string | null
           status: string
           stripe_session_id?: string | null
+          travel_fee_cents?: number | null
           updated_at?: string
           vendor_email?: string
           vendor_id: string
@@ -1622,12 +1640,16 @@ export type Database = {
           booking_id?: string | null
           budget_range?: string
           call_time_window?: string | null
+          cancellation_terms?: string | null
           client_email?: string
           client_name?: string | null
           client_reminder_sent_at?: string | null
           client_user_id?: string | null
+          coverage_hours?: number | null
           created_at?: string
           created_by?: string | null
+          delivery_days?: number | null
+          deposit_cents?: number | null
           details?: string | null
           estimated_guests?: number
           estimated_hours?: number | null
@@ -1637,13 +1659,18 @@ export type Database = {
           expires_at?: string | null
           expiry_notice_sent_at?: string | null
           id?: string
+          inclusions?: string[]
           location?: string
+          match_reason?: string | null
+          match_score?: number | null
           origin?: string | null
           quoted_amount?: number | null
           request_call?: boolean | null
+          service_description?: string | null
           service_type?: string | null
           status?: string
           stripe_session_id?: string | null
+          travel_fee_cents?: number | null
           updated_at?: string
           vendor_email?: string
           vendor_id?: string
@@ -2471,12 +2498,16 @@ export type Database = {
           booking_id: string | null
           budget_range: string
           call_time_window: string | null
+          cancellation_terms: string | null
           client_email: string
           client_name: string | null
           client_reminder_sent_at: string | null
           client_user_id: string | null
+          coverage_hours: number | null
           created_at: string
           created_by: string | null
+          delivery_days: number | null
+          deposit_cents: number | null
           details: string | null
           estimated_guests: number
           estimated_hours: number | null
@@ -2486,13 +2517,18 @@ export type Database = {
           expires_at: string | null
           expiry_notice_sent_at: string | null
           id: string
+          inclusions: string[]
           location: string
+          match_reason: string | null
+          match_score: number | null
           origin: string | null
           quoted_amount: number | null
           request_call: boolean | null
+          service_description: string | null
           service_type: string | null
           status: string
           stripe_session_id: string | null
+          travel_fee_cents: number | null
           updated_at: string
           vendor_email: string
           vendor_id: string
