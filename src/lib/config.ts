@@ -63,9 +63,13 @@ export const THEME_COLOR_DARK = "#101014";
 export const THEME_COLOR_LIGHT = "#ffffff";
 
 // Canonical production origin — used for metadataBase, sitemap/robots URLs,
-// and anywhere an absolute link is required (OG tags, share links). Update
-// this if/when a custom domain is attached to the Vercel project.
-export const SITE_URL = "https://evntly-tau.vercel.app";
+// and anywhere an absolute link is required (OG tags, share links).
+export const SITE_URL = "https://evntlyapp.com";
+
+// The original Vercel address. It still serves the site, and auth emails
+// requested from it must link back to it (the PKCE sign-in cookie belongs
+// to the address the person started on).
+export const LEGACY_SITE_URL = "https://evntly-tau.vercel.app";
 
 // events.guest_count is one of these labels (the plan wizard's buckets).
 export const GUEST_BUCKETS = ["Under 80", "80 – 150", "Over 150"] as const;

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { SITE_URL } from "@/lib/config";
+import { LEGACY_SITE_URL, SITE_URL } from "@/lib/config";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 
@@ -18,6 +18,7 @@ async function appOrigin() {
   const trusted = new Set(
     [
       SITE_URL,
+      LEGACY_SITE_URL,
       "http://localhost:3000",
       process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
       process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
