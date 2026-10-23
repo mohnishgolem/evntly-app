@@ -19,7 +19,7 @@ export async function SiteHeader() {
   const unread = await getUnreadMessageCount();
 
   return (
-    <header className="glass-material sticky top-0 z-50 border-b border-border/60 print:hidden">
+    <header className="glass-material sticky top-0 z-50 border-b border-border/60 pt-[env(safe-area-inset-top)] print:hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <Link href="/" aria-label="Evntly home" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">

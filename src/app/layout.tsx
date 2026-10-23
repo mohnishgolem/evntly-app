@@ -80,7 +80,11 @@ export const metadata: Metadata = {
 };
 
 // Browser chrome / installed-app title bar follows the system theme.
+// viewport-fit=cover makes env(safe-area-inset-*) report the notch and home
+// indicator (they're 0 without it), so the header and phone tab bar can pad
+// around them in the installed app.
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: THEME_COLOR_DARK },
     { media: "(prefers-color-scheme: light)", color: THEME_COLOR_LIGHT },

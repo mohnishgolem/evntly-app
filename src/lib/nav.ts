@@ -98,10 +98,11 @@ export const CUSTOMER_DASHBOARD_TABS: NavItem[] = [
 ];
 
 // Phone tab bar for signed-in customers (below md; the header covers wider
-// screens). Four destinations, per Apple's 3–5 tab guidance.
+// screens). Four destinations, per Apple's 3–5 tab guidance. Home is the
+// landing page; the dashboard (overview, quotes, bookings) sits under Events.
 export const CUSTOMER_TAB_BAR: NavItem[] = [
-  { href: "/dashboard", label: "Home", icon: Home, exact: true, match: ["/saved", "/profile"] },
-  { href: "/dashboard/events", label: "Events", icon: CalendarDays, match: ["/plan"] },
+  { href: "/", label: "Home", icon: Home, exact: true },
+  { href: "/dashboard/events", label: "Events", icon: CalendarDays, match: ["/plan", "/dashboard"] },
   { href: "/explore", label: "Explore", icon: Search, match: ["/vendor", "/bundles"] },
   { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
 ];

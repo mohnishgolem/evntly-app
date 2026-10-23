@@ -6,7 +6,9 @@ import { activeHref, NAV_SETS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 // iOS-style bottom tab bar for phones. A same-height spacer keeps the last
-// bit of every page (and the footer) clear of it.
+// bit of every page (and the footer) clear of it. The bar sits above the
+// home indicator (safe-area inset, at least 8px) and is inset from the
+// sides so the outer tabs clear the screen's rounded corners.
 export function TabBar({ unread = 0 }: { unread?: number }) {
   const pathname = usePathname();
   const items = NAV_SETS.customerTabBar;
@@ -14,10 +16,10 @@ export function TabBar({ unread = 0 }: { unread?: number }) {
 
   return (
     <>
-      <div aria-hidden className="h-[calc(3.5rem+env(safe-area-inset-bottom))] md:hidden print:hidden" />
+      <div aria-hidden className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))] md:hidden print:hidden" />
       <nav
         aria-label="Main"
-        className="glass-material fixed inset-x-0 bottom-0 z-40 border-t border-border/60 pb-[env(safe-area-inset-bottom)] md:hidden print:hidden"
+        className="glass-material fixed inset-x-0 bottom-0 z-40 border-t border-border/60 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden print:hidden"
       >
         <ul className="mx-auto grid h-14 max-w-md grid-cols-4">
           {items.map((item) => {

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   ADMIN_NAV,
   CUSTOMER_DASHBOARD_TABS,
+  CUSTOMER_TAB_BAR,
   VENDOR_BUSINESS_TABS,
   VENDOR_ENQUIRY_TABS,
   VENDOR_NAV,
@@ -98,5 +99,23 @@ describe("every nav link has a page", () => {
   it.each([...new Set(all)])("%s", (href) => {
     const page = join(process.cwd(), "src/app", href, "page.tsx");
     expect(existsSync(page)).toBe(true);
+  });
+});
+
+describe("customer phone tab bar", () => {
+  it("Home goes to the landing page, not the dashboard", () => {
+    expect(CUSTOMER_TAB_BAR[0]).toMatchObject({ label: "Home", href: "/" });
+    expect(activeHref("/", CUSTOMER_TAB_BAR)).toBe("/");
+  });
+
+  it("highlights Events across the dashboard and planning", () => {
+    for (const path of ["/dashboard", "/dashboard/quotes", "/dashboard/bookings", "/dashboard/events/e1", "/plan"]) {
+      expect(activeHref(path, CUSTOMER_TAB_BAR)).toBe("/dashboard/events");
+    }
+  });
+
+  it("keeps Explore and Messages", () => {
+    expect(activeHref("/vendor/v1", CUSTOMER_TAB_BAR)).toBe("/explore");
+    expect(activeHref("/messages/c1", CUSTOMER_TAB_BAR)).toBe("/messages");
   });
 });
