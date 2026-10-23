@@ -7,7 +7,7 @@ import { Logo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { navRole } from "@/lib/nav";
 import { getVendorAttention } from "@/lib/data/vendor-attention";
-import { VendorHeaderActions } from "@/components/site/vendor-header-actions";
+import { MessagesButton, VendorHeaderActions } from "@/components/site/vendor-header-actions";
 
 // Rendered on the server with the session already known, so the menu for
 // the user's role is in the first paint — no flash of the wrong navigation.
@@ -31,9 +31,9 @@ export async function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {(role === "customer" || role === "vendor") && <MessagesButton unread={unread} />}
           {role === "vendor" && (
             <VendorHeaderActions
-              unread={unread}
               notificationCount={attention?.notificationCount ?? 0}
               items={attention?.items ?? []}
             />

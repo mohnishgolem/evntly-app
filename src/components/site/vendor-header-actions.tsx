@@ -34,32 +34,36 @@ function CountDot({ count, label }: { count: number; label: string }) {
   );
 }
 
-// Vendors only: Messages and a notifications bell in the header, so neither
-// needs a sixth tab. The bell lists what's waiting on the vendor (from
+// Header Messages button for signed-in customers and vendors.
+export function MessagesButton({ unread }: { unread: number }) {
+  return (
+    <Button
+      variant="ghost"
+      className="relative size-11 rounded-full p-0"
+      nativeButton={false}
+      aria-label={unread > 0 ? `Messages, ${unread} unread` : "Messages"}
+      render={
+        <Link href="/messages">
+          <MessageCircle className="size-[22px]" strokeWidth={1.75} aria-hidden />
+          <CountDot count={unread} label="unread" />
+        </Link>
+      }
+    />
+  );
+}
+
+// Vendors only: a notifications bell next to Messages, so neither needs a
+// sixth tab. The bell lists what's waiting on the vendor (from
 // getVendorAttention) — there's no separate notifications store.
 export function VendorHeaderActions({
-  unread,
   notificationCount,
   items,
 }: {
-  unread: number;
   notificationCount: number;
   items: AttentionItem[];
 }) {
   return (
     <>
-      <Button
-        variant="ghost"
-        className="relative size-11 rounded-full p-0"
-        nativeButton={false}
-        aria-label={unread > 0 ? `Messages, ${unread} unread` : "Messages"}
-        render={
-          <Link href="/messages">
-            <MessageCircle className="size-[22px]" strokeWidth={1.75} aria-hidden />
-            <CountDot count={unread} label="unread" />
-          </Link>
-        }
-      />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
