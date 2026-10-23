@@ -66,10 +66,11 @@ export async function signup(
   const supabase = await createClient();
   // The confirmation link goes through /auth/callback, which exchanges its
   // one-time code for a session — linking to the bare site left people
-  // confirmed but signed out, with no message.
+  // confirmed but signed out, with no message. Customers then land on the
+  // home page; vendors go on to set up their listing.
   const confirmUrl = new URL("/auth/callback", await appOrigin());
   confirmUrl.searchParams.set("flow", "signup");
-  confirmUrl.searchParams.set("next", role === "vendor" ? "/vendor-signup" : "/dashboard");
+  confirmUrl.searchParams.set("next", role === "vendor" ? "/vendor-signup" : "/");
 
   // full_name lives in Supabase Auth's user_metadata — the existing `users`
   // table (inherited from the prior schema) has no name column of its own.
@@ -97,7 +98,7 @@ export async function signup(
     return { needsEmailConfirmation: true };
   }
 
-  redirect(role === "vendor" ? "/vendor-signup" : "/dashboard");
+  redirect(role === "vendor" ? "/vendor-signup" : "/");
 }
 
 const loginSchema = z.object({

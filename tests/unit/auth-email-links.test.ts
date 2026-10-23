@@ -57,14 +57,14 @@ beforeEach(() => {
 });
 
 describe("sign-up confirmation link", () => {
-  it("sends customers through the callback to their dashboard", async () => {
+  it("sends customers through the callback to the home page", async () => {
     expect(await signup(null, form("customer"))).toEqual({ needsEmailConfirmation: true });
     const to = redirectTo();
     // An untrusted Origin header never ends up in the email.
     expect(to.origin).toBe(SITE_URL);
     expect(to.pathname).toBe("/auth/callback");
     expect(to.searchParams.get("flow")).toBe("signup");
-    expect(to.searchParams.get("next")).toBe("/dashboard");
+    expect(to.searchParams.get("next")).toBe("/");
   });
 
   it("sends vendors on to the listing setup", async () => {
@@ -78,7 +78,7 @@ describe("auth callback without a session", () => {
     (await GET(new Request(`https://evntly.example/auth/callback?${query}`))).headers.get("location");
 
   it("signs a confirmed sign-up straight in", async () => {
-    expect(await location("code=abc&flow=signup&next=/dashboard")).toBe("https://evntly.example/dashboard");
+    expect(await location("code=abc&flow=signup&next=/")).toBe("https://evntly.example/");
   });
 
   it("tells people opening the confirmation in another browser that they're confirmed", async () => {
