@@ -34,6 +34,7 @@ async function updateListing(
   if (!data?.length) return { error: "Listing not found." };
 
   revalidatePath("/vendor-dashboard/calendar");
+  revalidatePath("/vendor-dashboard/business");
   revalidatePath(`/vendor/${listingId}`);
   return { success: true };
 }

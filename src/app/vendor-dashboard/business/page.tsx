@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Clock, ShieldCheck, XCircle, PauseCircle, ImagePlus } from "lucide-react";
-import { getCurrentUser } from "@/lib/data/user";
+import { Clock, ShieldCheck, XCircle, PauseCircle, ImagePlus, Eye, PencilLine, Images, Tags, CalendarDays } from "lucide-react";
+import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { ListingPauseToggle } from "@/components/listing-pause-toggle";
 
 export const metadata: Metadata = {
-  title: "My Business",
+  title: "Listings",
   robots: { index: false, follow: false },
 };
 
@@ -21,8 +21,7 @@ const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: st
 };
 
 export default async function VendorBusinessPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/business");
+  await requireVendor("/vendor-dashboard/business");
 
   const supabase = await createClient();
   const { data: listings } = await supabase
@@ -50,12 +49,12 @@ export default async function VendorBusinessPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">My Business</h1>
+      <h1 className="mb-1 text-2xl font-bold">Listings</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Your listings, portfolio and bundles — what customers see.
+        What customers see: your details, photos, pricing and availability.
       </p>
 
-      <DashboardNav tabs="vendorBusinessTabs" label="Business sections" />
+      <DashboardNav tabs="vendorListingsTabs" label="Listing sections" />
 
       <div className="space-y-4">
         {listings.map((listing) => {
@@ -74,20 +73,42 @@ export default async function VendorBusinessPage() {
                   <Icon className="h-4 w-4" /> {meta.label}
                 </span>
               </div>
-              <div className="mt-3 flex gap-4">
-                <Link
-                  href={`/vendor-dashboard/edit/${listing.id}`}
-                  className="text-sm underline underline-offset-2"
-                >
-                  Edit listing
-                </Link>
-                {listing.status === "approved" && (
+              {listing.available === false && listing.status === "approved" && (
+                <p className="mt-2 text-sm text-warning">Paused: customers can see it but can&apos;t request quotes.</p>
+              )}
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  { href: `/vendor-dashboard/edit/${listing.id}`, icon: PencilLine, label: "Edit details" },
+                  { href: "/vendor-dashboard/portfolio", icon: Images, label: "Photos & videos" },
+                  { href: "/vendor-dashboard/pricing", icon: Tags, label: "Pricing & packages" },
+                  { href: "/vendor-dashboard/calendar", icon: CalendarDays, label: "Availability" },
+                ].map((a) => (
                   <Link
-                    href={`/vendor/${listing.id}`}
-                    className="text-sm underline underline-offset-2"
+                    key={a.label}
+                    href={a.href}
+                    className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    View public listing
+                    <a.icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+                    {a.label}
                   </Link>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {listing.status === "approved" && (
+                  <>
+                    <Link
+                      href={`/vendor/${listing.id}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium underline underline-offset-2 sm:min-h-9"
+                    >
+                      <Eye className="size-4" aria-hidden /> Preview as a customer
+                    </Link>
+                    <ListingPauseToggle listingId={listing.id} accepting={listing.available !== false} />
+                  </>
+                )}
+                {listing.status === "pending_review" && (
+                  <p className="text-sm text-muted-foreground">
+                    It goes live once our team approves it. We&apos;ll email you.
+                  </p>
                 )}
               </div>
               {!listingsWithPhotos.has(listing.id) && (

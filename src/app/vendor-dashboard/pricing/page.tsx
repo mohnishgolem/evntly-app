@@ -36,7 +36,7 @@ export default async function VendorPricingPage() {
         Where you work and what you charge. Evntly uses these to match you with events that suit you, and shows customers
         an estimate before they ask for a quote.
       </p>
-      <DashboardNav tabs="vendorBusinessTabs" />
+      <DashboardNav tabs="vendorListingsTabs" label="Listing sections" />
 
       <div className="space-y-10">
         {(listings ?? []).map((l) => (

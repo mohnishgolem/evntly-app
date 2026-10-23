@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { getVendorPackages, getPendingInvitesForVendor } from "@/lib/data/bundles";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { CreateBundleForm } from "@/components/create-bundle-form";
@@ -18,8 +17,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default async function VendorBundlesPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/bundles");
+  const session = await requireVendor("/vendor-dashboard/bundles");
 
   const [myPackages, invites] = await Promise.all([
     getVendorPackages(session.user.id),
@@ -33,7 +31,7 @@ export default async function VendorBundlesPage() {
         Team up with other vendors on a combined package customers can book together.
       </p>
 
-      <DashboardNav tabs="vendorBusinessTabs" />
+      <DashboardNav tabs="vendorListingsTabs" label="Listing sections" />
 
       {invites.length > 0 && (
         <section className="mb-8">

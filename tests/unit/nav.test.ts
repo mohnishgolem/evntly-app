@@ -5,8 +5,9 @@ import {
   ADMIN_NAV,
   CUSTOMER_DASHBOARD_TABS,
   CUSTOMER_TAB_BAR,
-  VENDOR_BUSINESS_TABS,
-  VENDOR_ENQUIRY_TABS,
+  VENDOR_BOOKINGS_TABS,
+  VENDOR_LEADS_TABS,
+  VENDOR_LISTINGS_TABS,
   VENDOR_NAV,
   activeHref,
   drawerSections,
@@ -47,11 +48,10 @@ describe("drawer menus by role", () => {
     expect(hrefs("guest")).toEqual(["/", "/explore", "/bundles", "/plan"]);
   });
 
-  it("vendors keep quotes and bookings separate, and never see admin", () => {
+  it("vendors get their five destinations plus Messages, and never admin", () => {
     const links = hrefs("vendor");
-    expect(links).toContain("/vendor-dashboard/quotes");
-    expect(links).toContain("/vendor-dashboard/bookings");
-    expect(links).toContain("/vendor-dashboard/enquiries");
+    for (const h of VENDOR_NAV.map((i) => i.href)) expect(links).toContain(h);
+    expect(links).toContain("/messages");
     expect(links.some((h) => h.startsWith("/admin"))).toBe(false);
   });
 
@@ -67,12 +67,11 @@ describe("active item", () => {
   it("keeps the section lit on detail pages", () => {
     expect(activeHref("/dashboard/events/abc", CUSTOMER_DASHBOARD_TABS)).toBe("/dashboard/events");
     expect(activeHref("/vendor-dashboard/edit/abc", VENDOR_NAV)).toBe("/vendor-dashboard/business");
-    expect(activeHref("/messages/xyz", VENDOR_NAV)).toBe("/vendor-dashboard/enquiries");
   });
 
   it("does not light section roots for their children", () => {
     expect(activeHref("/dashboard/quotes", CUSTOMER_DASHBOARD_TABS)).toBe("/dashboard/quotes");
-    expect(activeHref("/vendor-dashboard/quotes", VENDOR_NAV)).toBe("/vendor-dashboard/quotes");
+    expect(activeHref("/vendor-dashboard/quotes", VENDOR_LEADS_TABS)).toBe("/vendor-dashboard/quotes");
     expect(activeHref("/admin/support", ADMIN_NAV)).toBe("/admin/support");
   });
 
@@ -93,8 +92,9 @@ describe("every nav link has a page", () => {
   const all = [
     ...(["guest", "customer", "vendor", "admin"] as const).flatMap(hrefs),
     ...CUSTOMER_DASHBOARD_TABS.map((i) => i.href),
-    ...VENDOR_ENQUIRY_TABS.map((i) => i.href),
-    ...VENDOR_BUSINESS_TABS.map((i) => i.href),
+    ...VENDOR_LEADS_TABS.map((i) => i.href),
+    ...VENDOR_LISTINGS_TABS.map((i) => i.href),
+    ...VENDOR_BOOKINGS_TABS.map((i) => i.href),
   ];
   it.each([...new Set(all)])("%s", (href) => {
     const page = join(process.cwd(), "src/app", href, "page.tsx");
@@ -117,5 +117,46 @@ describe("customer phone tab bar", () => {
   it("keeps Explore and Messages", () => {
     expect(activeHref("/vendor/v1", CUSTOMER_TAB_BAR)).toBe("/explore");
     expect(activeHref("/messages/c1", CUSTOMER_TAB_BAR)).toBe("/messages");
+  });
+});
+
+describe("vendor navigation", () => {
+  it("has exactly five tabs in order, with Listings in the centre", () => {
+    expect(VENDOR_NAV.map((i) => i.label)).toEqual(["Home", "Leads", "Listings", "Bookings", "Profile"]);
+    expect(VENDOR_NAV[2].label).toBe("Listings");
+  });
+
+  it("keeps Messages out of the tabs (it lives in the header)", () => {
+    expect(VENDOR_NAV.some((i) => i.href.startsWith("/messages"))).toBe(false);
+    expect(activeHref("/messages", VENDOR_NAV)).toBeUndefined();
+  });
+
+  it.each([
+    ["/vendor-dashboard", "/vendor-dashboard"],
+    ["/vendor-dashboard/earnings", "/vendor-dashboard"],
+    ["/vendor-dashboard/enquiries", "/vendor-dashboard/enquiries"],
+    ["/vendor-dashboard/quotes", "/vendor-dashboard/enquiries"],
+    ["/vendor-dashboard/opportunities", "/vendor-dashboard/enquiries"],
+    ["/vendor-dashboard/event-feed", "/vendor-dashboard/enquiries"],
+    ["/vendor-dashboard/business", "/vendor-dashboard/business"],
+    ["/vendor-dashboard/edit/abc", "/vendor-dashboard/business"],
+    ["/vendor-dashboard/portfolio", "/vendor-dashboard/business"],
+    ["/vendor-dashboard/pricing", "/vendor-dashboard/business"],
+    ["/vendor-dashboard/bundles", "/vendor-dashboard/business"],
+    ["/vendor-dashboard/bookings", "/vendor-dashboard/bookings"],
+    ["/vendor-dashboard/calendar", "/vendor-dashboard/bookings"],
+    ["/bookings/b1", "/vendor-dashboard/bookings"],
+    ["/vendor-dashboard/profile", "/vendor-dashboard/profile"],
+    ["/vendor-dashboard/payouts", "/vendor-dashboard/profile"],
+    ["/profile", "/vendor-dashboard/profile"],
+    ["/dashboard/settings/notifications", "/vendor-dashboard/profile"],
+  ])("%s lights %s", (path, tab) => {
+    expect(activeHref(path, VENDOR_NAV)).toBe(tab);
+  });
+
+  it("does not change customer or admin navigation", () => {
+    expect(CUSTOMER_TAB_BAR.map((i) => i.label)).toEqual(["Home", "Events", "Explore", "Messages"]);
+    expect(drawerSections("admin")[0].items).toBe(ADMIN_NAV);
+    expect(hrefs("customer").some((h) => h.startsWith("/vendor-dashboard"))).toBe(false);
   });
 });

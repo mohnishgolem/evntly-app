@@ -2,18 +2,20 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
+  CalendarClock,
   CalendarDays,
   ChevronRight,
   Clock,
+  Eye,
   FileText,
   ImagePlus,
   Inbox,
-  MessageCircle,
   PartyPopper,
+  PencilLine,
   type LucideIcon,
 } from "lucide-react";
-import { getCurrentUser, getUnreadMessageCount } from "@/lib/data/user";
-import { getVendorQuotes } from "@/lib/data/vendor-quotes";
+import { getCurrentUser } from "@/lib/data/user";
+import { getVendorAttention } from "@/lib/data/vendor-attention";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { sydneyDate } from "@/lib/event-dates";
@@ -24,6 +26,9 @@ export const metadata: Metadata = {
   title: "Vendor dashboard",
   robots: { index: false, follow: false },
 };
+
+const money = (dollars: number) =>
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(dollars);
 
 function Stat({
   href,
@@ -53,16 +58,27 @@ function Stat({
   );
 }
 
-// What needs the vendor today: new enquiries first, then quotes waiting on
-// customers, upcoming bookings and unread messages.
-export default async function VendorOverviewPage() {
+function QuickAction({ href, icon: Icon, label }: { href: string; icon: LucideIcon; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-11 items-center gap-2.5 rounded-xl border border-border px-3.5 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Icon className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+      {label}
+    </Link>
+  );
+}
+
+// Home: what needs the vendor today, then how the business is doing, then
+// shortcuts. Every number comes from the vendor's own rows; nothing is
+// estimated or filled in.
+export default async function VendorHomePage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/vendor-dashboard");
 
-  const supabase = await createClient();
-  const { data: listings } = await supabase.rpc("my_service_providers").select("id, name, status");
-
-  if (!listings || listings.length === 0) {
+  const attention = await getVendorAttention();
+  if (!attention) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-2xl font-bold">You don&apos;t have a listing yet</h1>
@@ -74,31 +90,32 @@ export default async function VendorOverviewPage() {
     );
   }
 
+  const { listings, enquiries, quotes, upcoming, needsConfirm, underReview, missingPhotos, unread } = attention;
+
+  // Earnings summary, same rules as Analytics: earned = completed bookings
+  // this Australian financial year; booked = confirmed and still to come.
+  const supabase = await createClient();
   const today = sydneyDate();
-  const [{ enquiries, quotes }, unread, { data: bookings }, { data: portfolioRows }] = await Promise.all([
-    getVendorQuotes(),
-    getUnreadMessageCount(),
-    supabase
-      .from("bookings")
-      .select("id, provider_name, event_date, event_time, status, client_label")
-      .eq("provider_owner_user_id", session.user.id)
-      .in("status", ["pending", "confirmed"])
-      .gte("event_date", today)
-      .order("event_date", { ascending: true })
-      .limit(5),
-    supabase.from("portfolio_items").select("provider_id").in("provider_id", listings.map((l) => l.id)),
-  ]);
+  const fyStartYear = Number(today.slice(5, 7)) >= 7 ? Number(today.slice(0, 4)) : Number(today.slice(0, 4)) - 1;
+  const { data: earningRows, error: earningsError } = await supabase
+    .from("bookings")
+    .select("status, total_price, event_date")
+    .eq("provider_owner_user_id", session.user.id)
+    .in("status", ["completed", "confirmed"]);
+  const earnedFy = (earningRows ?? [])
+    .filter((b) => b.status === "completed" && b.event_date >= `${fyStartYear}-07-01` && b.event_date <= `${fyStartYear + 1}-06-30`)
+    .reduce((t, b) => t + Number(b.total_price ?? 0), 0);
+  const bookedAhead = (earningRows ?? [])
+    .filter((b) => b.status === "confirmed" && b.event_date >= today)
+    .reduce((t, b) => t + Number(b.total_price ?? 0), 0);
 
   const awaitingCustomer = quotes.filter((q) => effectiveQuoteStatus(q) === "quoted");
-  const needsConfirm = (bookings ?? []).filter((b) => b.status === "pending");
-  const withPhotos = new Set((portfolioRows ?? []).map((r) => r.provider_id));
-  const missingPhotos = listings.filter((l) => !withPhotos.has(l.id));
-  const underReview = listings.filter((l) => l.status === "pending_review");
-  const allClear = enquiries.length === 0 && needsConfirm.length === 0 && unread === 0;
+  const allClear = attention.items.length === 0 && unread === 0;
+  const primary = listings[0];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Overview</h1>
+      <h1 className="mb-1 text-2xl font-bold">Home</h1>
       <p className="mb-6 text-sm text-muted-foreground">What needs your attention today.</p>
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -109,27 +126,28 @@ export default async function VendorOverviewPage() {
           label="New enquiries"
           urgent={enquiries.length > 0}
         />
-        <Stat
-          href="/vendor-dashboard/quotes"
-          icon={FileText}
-          value={awaitingCustomer.length}
-          label="Quotes awaiting customer"
-        />
+        <Stat href="/vendor-dashboard/quotes" icon={FileText} value={awaitingCustomer.length} label="Quotes awaiting customer" />
         <Stat
           href="/vendor-dashboard/bookings"
           icon={CalendarDays}
-          value={bookings?.length ?? 0}
+          value={upcoming.length}
           label="Upcoming bookings"
           urgent={needsConfirm.length > 0}
         />
-        <Stat href="/messages" icon={MessageCircle} value={unread} label="Unread messages" urgent={unread > 0} />
+        <Stat
+          href="/vendor-dashboard/bookings"
+          icon={CalendarClock}
+          value={needsConfirm.length}
+          label="Waiting for you to confirm"
+          urgent={needsConfirm.length > 0}
+        />
       </div>
 
       <section aria-labelledby="attention" className="mb-8">
         <h2 id="attention" className="mb-3 text-lg font-semibold">
           Needs attention
         </h2>
-        {allClear && missingPhotos.length === 0 && underReview.length === 0 ? (
+        {allClear ? (
           <p className="flex items-center gap-2 rounded-2xl border border-border px-4 py-4 text-sm text-muted-foreground">
             <PartyPopper className="size-4" aria-hidden /> You&apos;re all caught up.
           </p>
@@ -192,7 +210,7 @@ export default async function VendorOverviewPage() {
                   href="/messages"
                   className="flex items-center gap-3 px-4 py-3.5 outline-none hover:bg-muted/60 focus-visible:bg-muted/60"
                 >
-                  <MessageCircle className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                  <Inbox className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
                   <span className="flex-1 text-sm font-medium">
                     {unread} unread message{unread === 1 ? "" : "s"}
                   </span>
@@ -227,8 +245,8 @@ export default async function VendorOverviewPage() {
         )}
       </section>
 
-      {(bookings?.length ?? 0) > 0 && (
-        <section aria-labelledby="upcoming">
+      {upcoming.length > 0 && (
+        <section aria-labelledby="upcoming" className="mb-8">
           <div className="mb-3 flex items-center justify-between">
             <h2 id="upcoming" className="text-lg font-semibold">
               Upcoming bookings
@@ -238,21 +256,86 @@ export default async function VendorOverviewPage() {
             </Link>
           </div>
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
-            {bookings!.map((b) => (
-              <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{b.client_label ?? "Customer"}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {b.event_date}
-                    {b.event_time ? ` · ${b.event_time}` : ""}
+            {upcoming.slice(0, 5).map((b) => (
+              <li key={b.id}>
+                <Link
+                  href={`/bookings/${b.id}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm outline-none hover:bg-muted/60 focus-visible:bg-muted/60"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{b.client_label ?? "Customer"}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {b.event_date}
+                      {b.event_time ? ` · ${b.event_time}` : ""}
+                    </span>
                   </span>
-                </span>
-                <span className="shrink-0 text-xs font-medium capitalize text-muted-foreground">{b.status}</span>
+                  <span className="shrink-0 text-xs font-medium capitalize text-muted-foreground">{b.status}</span>
+                </Link>
               </li>
             ))}
           </ul>
         </section>
       )}
+
+      <section aria-labelledby="business" className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 id="business" className="text-lg font-semibold">
+            Your business
+          </h2>
+          <Link href="/vendor-dashboard/earnings" className="text-sm font-medium underline underline-offset-2">
+            Analytics
+          </Link>
+        </div>
+        {earningsError ? (
+          <p className="rounded-2xl border border-border px-4 py-4 text-sm text-muted-foreground">
+            We couldn&apos;t load your earnings just now. Refresh to try again.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-border p-4">
+              <p className="text-2xl font-bold tabular-nums">{money(earnedFy)}</p>
+              <p className="text-sm text-muted-foreground">
+                Earned FY {fyStartYear}–{String(fyStartYear + 1).slice(2)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border p-4">
+              <p className="text-2xl font-bold tabular-nums">{money(bookedAhead)}</p>
+              <p className="text-sm text-muted-foreground">Confirmed, still to come</p>
+            </div>
+          </div>
+        )}
+
+        <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border text-sm">
+          {listings.map((l) => (
+            <li key={l.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-6">
+              <span className="truncate font-medium">{l.name}</span>
+              <span className="text-muted-foreground">
+                {l.review_count ? `★ ${Number(l.rating ?? 0).toFixed(1)} (${l.review_count})` : "No reviews yet"}
+              </span>
+              <span className="text-muted-foreground">
+                {l.acceptance_rate != null ? `${Math.round(l.acceptance_rate * 100)}% replied` : "Reply rate: not enough requests yet"}
+              </span>
+              <span className="text-muted-foreground">
+                {l.avg_response_hours != null ? `Replies in ~${Math.round(l.avg_response_hours)}h` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="actions">
+        <h2 id="actions" className="mb-3 text-lg font-semibold">
+          Quick actions
+        </h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <QuickAction href={`/vendor-dashboard/edit/${primary.id}`} icon={PencilLine} label="Edit listing" />
+          <QuickAction href="/vendor-dashboard/portfolio" icon={ImagePlus} label="Add photos or videos" />
+          <QuickAction href="/vendor-dashboard/calendar" icon={CalendarDays} label="Update availability" />
+          {primary.status === "approved" && (
+            <QuickAction href={`/vendor/${primary.id}`} icon={Eye} label="View as a customer" />
+          )}
+        </div>
+      </section>
     </div>
   );
 }

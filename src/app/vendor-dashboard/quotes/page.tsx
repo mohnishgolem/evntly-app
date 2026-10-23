@@ -1,27 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { getVendorQuotes } from "@/lib/data/vendor-quotes";
+import { getMyConversationIds } from "@/lib/data/vendor-attention";
 import { VendorQuoteCards } from "@/components/vendor-quote-cards";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 
 export const metadata: Metadata = {
   title: "Quotes",
   robots: { index: false, follow: false },
 };
 
+// Quotes live inside Leads: sent prices waiting on the customer first, then
+// how the rest ended up (accepted, declined, expired).
 export default async function VendorQuotesPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/quotes");
+  await requireVendor("/vendor-dashboard/quotes");
 
-  const { quotes, enquiries } = await getVendorQuotes();
+  const [{ quotes, enquiries }, conversationIds] = await Promise.all([getVendorQuotes(), getMyConversationIds()]);
+  const open = quotes.filter((q) => effectiveQuoteStatus(q) === "quoted");
+  const closed = quotes.filter((q) => effectiveQuoteStatus(q) !== "quoted");
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Quotes</h1>
+      <h1 className="mb-1 text-2xl font-bold">Leads</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Prices you&apos;ve sent, and how each request ended up.
       </p>
+
+      <DashboardNav tabs="vendorLeadsTabs" label="Lead types" />
 
       {enquiries.length > 0 && (
         <Link
@@ -39,11 +46,28 @@ export default async function VendorQuotesPage() {
       )}
 
       {quotes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No quotes yet. When you reply to an enquiry with a price, it moves here.
+        <p className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+          No quotes yet. When you reply to a request with a price, it moves here.
         </p>
       ) : (
-        <VendorQuoteCards quotes={quotes} />
+        <div className="space-y-8">
+          {open.length > 0 && (
+            <section aria-labelledby="open-quotes">
+              <h2 id="open-quotes" className="mb-3 text-sm font-semibold text-muted-foreground">
+                Waiting on the customer ({open.length})
+              </h2>
+              <VendorQuoteCards quotes={open} conversationIds={conversationIds} />
+            </section>
+          )}
+          {closed.length > 0 && (
+            <section aria-labelledby="closed-quotes">
+              <h2 id="closed-quotes" className="mb-3 text-sm font-semibold text-muted-foreground">
+                Accepted, declined or expired ({closed.length})
+              </h2>
+              <VendorQuoteCards quotes={closed} conversationIds={conversationIds} />
+            </section>
+          )}
+        </div>
       )}
     </div>
   );

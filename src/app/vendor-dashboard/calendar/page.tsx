@@ -5,6 +5,7 @@ import { VendorCalendar } from "@/components/vendor-calendar";
 import { CalendarSync } from "@/components/calendar-sync";
 import { CalendarFreshness } from "@/components/calendar-freshness";
 import { SITE_URL } from "@/lib/config";
+import { DashboardNav } from "@/components/dashboard-nav";
 
 export const metadata: Metadata = {
   title: "Calendar",
@@ -34,10 +35,12 @@ export default async function VendorCalendarPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Calendar</h1>
+      <h1 className="mb-1 text-2xl font-bold">Bookings</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Your bookings at a glance, and the days you&apos;re not available.
       </p>
+
+      <DashboardNav tabs="vendorBookingsTabs" label="Booking views" />
 
       {listings && listings.length > 0 && <CalendarFreshness listings={listings} />}
 

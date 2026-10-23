@@ -26,12 +26,14 @@ export function NavList({
   items,
   variant,
   unread = 0,
+  leads = 0,
   onNavigate,
   label,
 }: {
   items: NavItem[];
   variant: keyof typeof VARIANTS;
   unread?: number;
+  leads?: number;
   onNavigate?: () => void;
   label?: string;
 }) {
@@ -44,7 +46,7 @@ export function NavList({
       {items.map((item) => {
         const active = item.href === current;
         const Icon = item.icon;
-        const count = item.badge === "unread" ? unread : 0;
+        const count = item.badge === "unread" ? unread : item.badge === "leads" ? leads : 0;
         return (
           <li key={item.href}>
             <Link
@@ -62,7 +64,7 @@ export function NavList({
               {count > 0 && (
                 <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-foreground">
                   {count > 99 ? "99+" : count}
-                  <span className="sr-only"> unread</span>
+                  <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                 </span>
               )}
             </Link>

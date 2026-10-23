@@ -31,7 +31,7 @@ export default async function SmartOpportunitiesPage() {
         Customers whose event fits your area, prices and calendar, and who chose you from their matches.
       </p>
 
-      <DashboardNav tabs="vendorEnquiryTabs" label="Enquiry types" />
+      <DashboardNav tabs="vendorLeadsTabs" label="Lead types" />
 
       <dl className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[

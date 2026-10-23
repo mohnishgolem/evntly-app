@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { categoryLabel } from "@/lib/config";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { ApplyToEventForm } from "@/components/apply-to-event-form";
 import { DashboardNav } from "@/components/dashboard-nav";
@@ -13,8 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function VendorEventFeedPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/event-feed");
+  const session = await requireVendor("/vendor-dashboard/event-feed");
 
   const supabase = await createClient();
 
@@ -41,7 +39,7 @@ export default async function VendorEventFeedPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-1 text-2xl font-bold">Event Feed</h1>
-        <DashboardNav tabs="vendorEnquiryTabs" />
+        <DashboardNav tabs="vendorLeadsTabs" label="Lead types" />
         <p className="text-sm text-muted-foreground">
           Your listing needs to be approved before you can apply to events.
         </p>
@@ -69,7 +67,7 @@ export default async function VendorEventFeedPage() {
         pitch and a price.
       </p>
 
-      <DashboardNav tabs="vendorEnquiryTabs" />
+      <DashboardNav tabs="vendorLeadsTabs" label="Lead types" />
 
       {!listings || listings.length === 0 ? (
         <p className="text-sm text-muted-foreground">No open events right now. Check back soon.</p>

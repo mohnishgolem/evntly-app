@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { VendorQuoteResponse } from "@/components/vendor-quote-response";
 import { BlockUserButton } from "@/components/block-user";
 import { cn } from "@/lib/utils";
@@ -19,9 +21,17 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expired",
 };
 
-// Quote request cards for the vendor's Enquiries (pending) and Quotes
-// (priced) pages.
-export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
+// Quote request cards for the vendor's Leads pages: New requests (pending)
+// and Quotes (priced). `conversationIds` are the vendor's existing
+// conversations; a card links to its customer's thread only when one exists.
+export function VendorQuoteCards({
+  quotes,
+  conversationIds = [],
+}: {
+  quotes: VendorQuote[];
+  conversationIds?: string[];
+}) {
+  const threads = new Set(conversationIds);
   return (
     <div className="space-y-4">
       {quotes.map((q) => {
@@ -83,11 +93,27 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
 
             {status !== "pending" && q.quoted_amount != null && <QuoteDetails quote={q} />}
             {status === "pending" && <VendorQuoteResponse quoteId={q.id} estimatedHours={q.estimated_hours} />}
-            {(status === "pending" || status === "quoted") && (
-              <div className="mt-3 flex justify-end">
-                <BlockUserButton name={q.client_name ?? "this customer"} quoteId={q.id} />
-              </div>
-            )}
+            {(() => {
+              const thread = q.vendor_id && q.client_user_id ? `${q.vendor_id}:${q.client_user_id}` : null;
+              const canMessage = !!thread && threads.has(thread);
+              const canBlock = status === "pending" || status === "quoted";
+              if (!canMessage && !canBlock) return null;
+              return (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  {canMessage ? (
+                    <Link
+                      href={`/messages/${encodeURIComponent(thread!)}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium underline underline-offset-2"
+                    >
+                      <MessageCircle className="size-4" aria-hidden /> Message {q.client_name ?? "customer"}
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                  {canBlock && <BlockUserButton name={q.client_name ?? "this customer"} quoteId={q.id} />}
+                </div>
+              );
+            })()}
           </div>
         );
       })}

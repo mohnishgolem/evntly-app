@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Clock, ShieldCheck } from "lucide-react";
 import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardNav } from "@/components/dashboard-nav";
 import { PayoutActions } from "@/components/payments/payout-actions";
 import { formatAud } from "@/lib/payments/money";
 import { milestoneStage } from "@/lib/payments/status";
@@ -45,7 +44,9 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Payouts</h1>
       <p className="mb-6 text-sm text-muted-foreground">How customers&apos; payments reach your bank account.</p>
-      <DashboardNav tabs="vendorBusinessTabs" label="Business sections" />
+      <Link href="/vendor-dashboard/profile" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ChevronLeft className="size-4" aria-hidden /> Profile
+      </Link>
 
       <section className="mb-6 rounded-2xl border border-border p-5">
         <div className="mb-3 flex items-center gap-2">

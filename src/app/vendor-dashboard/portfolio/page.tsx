@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/data/user";
+import { requireVendor } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { DashboardNav } from "@/components/dashboard-nav";
@@ -13,8 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function VendorPortfolioPage() {
-  const session = await getCurrentUser();
-  if (!session) redirect("/login?next=/vendor-dashboard/portfolio");
+  const session = await requireVendor("/vendor-dashboard/portfolio");
 
   const supabase = await createClient();
   const { data: listing } = await supabase
@@ -48,7 +46,7 @@ export default async function VendorPortfolioPage() {
         Photos customers see on your {listing.name} listing.
       </p>
 
-      <DashboardNav tabs="vendorBusinessTabs" />
+      <DashboardNav tabs="vendorListingsTabs" label="Listing sections" />
       <PortfolioUploader providerId={listing.id} userId={session.user.id} items={items ?? []} />
     </div>
   );

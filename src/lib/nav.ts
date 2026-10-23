@@ -22,7 +22,6 @@ import {
   Tags,
   UserRound,
   Users,
-  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,8 +38,8 @@ export type NavItem = {
   match?: string[];
   /** Highlight only on an exact path match (for section roots like /dashboard). */
   exact?: boolean;
-  /** Shows the unread-message count. */
-  badge?: "unread";
+  /** Shows a count: unread messages, or (vendors) new leads awaiting a reply. */
+  badge?: "unread" | "leads";
 };
 
 export type NavSection = { title?: string; items: NavItem[] };
@@ -108,50 +107,64 @@ export const CUSTOMER_TAB_BAR: NavItem[] = [
 ];
 
 // ── Vendor ───────────────────────────────────────────────────────────────
-// Enquiries = new requests waiting on the vendor (quote requests still
-// pending, Event Feed leads, messages). Quotes = requests the vendor has
-// priced. Same quote_requests rows, split by status.
+// Five destinations, the same on every screen size: bottom tab bar on
+// phones, an icon rail on tablets, the sidebar on desktops. Messages and
+// notifications live in the header, not here. Listings stays in the centre.
 export const VENDOR_NAV: NavItem[] = [
-  { href: "/vendor-dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
+  // Not `exact`: vendor pages without a tab of their own (Analytics) fall
+  // back to Home, since the longest matching href wins.
+  { href: "/vendor-dashboard", label: "Home", icon: Home },
   {
     href: "/vendor-dashboard/enquiries",
-    label: "Enquiries",
+    label: "Leads",
     icon: Inbox,
-    match: ["/vendor-dashboard/opportunities", "/vendor-dashboard/event-feed", "/messages"],
-    badge: "unread",
+    match: ["/vendor-dashboard/quotes", "/vendor-dashboard/opportunities", "/vendor-dashboard/event-feed"],
+    badge: "leads",
   },
-  { href: "/vendor-dashboard/quotes", label: "Quotes", icon: FileText },
-  { href: "/vendor-dashboard/bookings", label: "Bookings", icon: ClipboardList },
-  { href: "/vendor-dashboard/calendar", label: "Calendar", icon: CalendarDays },
   {
     href: "/vendor-dashboard/business",
-    label: "My Business",
-    icon: Briefcase,
+    label: "Listings",
+    icon: LayoutGrid,
     match: [
       "/vendor-dashboard/edit",
       "/vendor-dashboard/pricing",
       "/vendor-dashboard/portfolio",
       "/vendor-dashboard/bundles",
-      "/vendor-dashboard/payouts",
     ],
   },
-  { href: "/vendor-dashboard/earnings", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings, match: ["/profile"] },
+  {
+    href: "/vendor-dashboard/bookings",
+    label: "Bookings",
+    icon: CalendarDays,
+    match: ["/vendor-dashboard/calendar", "/bookings"],
+  },
+  {
+    href: "/vendor-dashboard/profile",
+    label: "Profile",
+    icon: UserRound,
+    match: ["/vendor-dashboard/payouts", "/profile", "/dashboard/settings"],
+  },
 ];
 
-export const VENDOR_ENQUIRY_TABS: NavItem[] = [
+// Leads: everything before a booking — new requests, priced quotes (quotes
+// are managed here, not in their own tab), smart matches and the Event Feed.
+export const VENDOR_LEADS_TABS: NavItem[] = [
+  { href: "/vendor-dashboard/enquiries", label: "New requests", icon: Inbox, badge: "leads" },
+  { href: "/vendor-dashboard/quotes", label: "Quotes", icon: FileText },
   { href: "/vendor-dashboard/opportunities", label: "Smart matches", icon: Sparkles },
-  { href: "/vendor-dashboard/enquiries", label: "Quote requests", icon: FileText },
-  { href: "/vendor-dashboard/event-feed", label: "Event Feed", icon: Inbox },
-  { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/vendor-dashboard/event-feed", label: "Event Feed", icon: Search },
 ];
 
-export const VENDOR_BUSINESS_TABS: NavItem[] = [
+export const VENDOR_LISTINGS_TABS: NavItem[] = [
   { href: "/vendor-dashboard/business", label: "Listings", icon: Store, match: ["/vendor-dashboard/edit"] },
-  { href: "/vendor-dashboard/pricing", label: "Service & pricing", icon: Tags },
-  { href: "/vendor-dashboard/portfolio", label: "Portfolio", icon: LayoutGrid },
+  { href: "/vendor-dashboard/portfolio", label: "Photos & videos", icon: LayoutGrid },
+  { href: "/vendor-dashboard/pricing", label: "Pricing & packages", icon: Tags },
   { href: "/vendor-dashboard/bundles", label: "Bundles", icon: Package },
-  { href: "/vendor-dashboard/payouts", label: "Payouts", icon: Wallet },
+];
+
+export const VENDOR_BOOKINGS_TABS: NavItem[] = [
+  { href: "/vendor-dashboard/bookings", label: "Bookings", icon: ClipboardList },
+  { href: "/vendor-dashboard/calendar", label: "Calendar & availability", icon: CalendarDays },
 ];
 
 // ── Admin ────────────────────────────────────────────────────────────────
@@ -177,8 +190,9 @@ export const NAV_SETS = {
   customerTabs: CUSTOMER_DASHBOARD_TABS,
   customerTabBar: CUSTOMER_TAB_BAR,
   vendor: VENDOR_NAV,
-  vendorEnquiryTabs: VENDOR_ENQUIRY_TABS,
-  vendorBusinessTabs: VENDOR_BUSINESS_TABS,
+  vendorLeadsTabs: VENDOR_LEADS_TABS,
+  vendorListingsTabs: VENDOR_LISTINGS_TABS,
+  vendorBookingsTabs: VENDOR_BOOKINGS_TABS,
   admin: ADMIN_NAV,
 } satisfies Record<string, NavItem[]>;
 
@@ -193,7 +207,10 @@ export function drawerSections(role: NavRole): NavSection[] {
       return [{ items: MARKETPLACE_NAV }, { title: "Account", items: CUSTOMER_ACCOUNT_NAV }];
     case "vendor":
       return [
-        { title: "Your business", items: VENDOR_NAV },
+        {
+          title: "Your business",
+          items: [...VENDOR_NAV, { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" }],
+        },
         { title: "Marketplace", items: MARKETPLACE_NAV.slice(0, 3) },
       ];
     case "admin":

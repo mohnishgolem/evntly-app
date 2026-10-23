@@ -27,17 +27,18 @@ export default async function MessagesPage() {
     getVapidPublicKey(),
     getUnreadMessageCount(),
   ]);
-  // Vendors reach messages through Enquiries; customers through their
-  // dashboard — keep that section's tabs (and the vendor sidebar) here.
+  // Customers reach messages through their dashboard, so keep its tabs.
+  // Vendors open Messages from the header icon; they keep their sidebar.
   const isVendor = session.profile?.role === "vendor";
 
   return (
     <SidebarFrame
-      sidebar={isVendor ? <AppSidebar title="Your business" nav="vendor" unread={unread} /> : null}
+      rail={isVendor}
+      sidebar={isVendor ? <AppSidebar title="Your business" nav="vendor" rail unread={unread} /> : null}
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Messages</h1>
-        <DashboardNav tabs={isVendor ? "vendorEnquiryTabs" : "customerTabs"} />
+        {!isVendor && <DashboardNav tabs="customerTabs" />}
         <PushToggle publicKey={pushPublicKey} compact />
         {!threads || threads.length === 0 ? (
           <p className="text-sm text-muted-foreground">No conversations yet.</p>

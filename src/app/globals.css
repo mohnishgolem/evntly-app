@@ -296,3 +296,21 @@
 .hero-video::-webkit-media-controls {
   display: none !important;
 }
+
+/* iOS Safari gives native date/time inputs a fixed intrinsic width that
+   ignores width: 100%, so they spill out of their column and overlap each
+   other (Plan page, quote and booking forms). Dropping the native
+   appearance lets them size like other inputs; the picker still opens. */
+@layer base {
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
