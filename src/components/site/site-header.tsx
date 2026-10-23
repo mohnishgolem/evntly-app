@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser, getUnreadMessageCount } from "@/lib/data/user";
 import { Button } from "@/components/ui/button";
-import { UserMenu } from "@/components/site/user-menu";
 import { NavDrawer } from "@/components/site/nav-drawer";
 import { HeaderLinks } from "@/components/site/header-links";
 import { Logo } from "@/components/site/logo";
@@ -39,16 +38,7 @@ export async function SiteHeader() {
               items={attention?.items ?? []}
             />
           )}
-          {session ? (
-            <div className="hidden md:block">
-              <UserMenu
-                role={role}
-                email={session.user.email ?? ""}
-                displayName={session.displayName}
-                unread={unread}
-              />
-            </div>
-          ) : (
+          {!session && (
             <div className="hidden items-center gap-2 md:flex">
               <Button variant="ghost" nativeButton={false} render={<Link href="/login">Log in</Link>} />
               <Button nativeButton={false} render={<Link href="/signup">Sign up</Link>} />
