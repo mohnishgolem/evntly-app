@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 // home indicator (safe-area inset, at least 8px) and is inset from the
 // sides so the outer tabs clear the screen's rounded corners.
 export function TabBar({
-  nav = "customerTabBar",
+  nav = "customer",
   unread = 0,
   leads = 0,
 }: {
-  nav?: Extract<NavSetName, "customerTabBar" | "vendor">;
+  nav?: Extract<NavSetName, "customer" | "vendor">;
   unread?: number;
   leads?: number;
 }) {

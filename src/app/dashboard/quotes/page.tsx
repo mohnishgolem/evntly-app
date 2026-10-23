@@ -7,9 +7,10 @@ import { QuoteList } from "@/components/quote-list";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
+import { getMyConversationIds } from "@/lib/data/conversations";
 
 export const metadata: Metadata = {
-  title: "Your quote requests",
+  title: "Requests & quotes",
   robots: { index: false, follow: false },
 };
 
@@ -20,7 +21,10 @@ export default async function CustomerQuotesPage() {
 
   const supabase = await createClient();
   // Masked read: emails blanked, newest first (see my_quote_requests).
-  const { data: quotes } = await supabase.rpc("my_quote_requests", { as_role: "client" });
+  const [{ data: quotes }, conversationIds] = await Promise.all([
+    supabase.rpc("my_quote_requests", { as_role: "client" }),
+    getMyConversationIds(),
+  ]);
 
   // Dead ends (vendor declined, or let the request expire) get three other
   // vendors in the same category, so the organiser has somewhere to go next.
@@ -41,12 +45,13 @@ export default async function CustomerQuotesPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Your quote requests</h1>
+      <h1 className="mb-1 text-2xl font-bold">Bookings</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Track quotes you&apos;ve asked vendors for, and accept the ones you like.
+        Requests &amp; quotes: what you&apos;ve asked vendors for. Nothing here is booked until you
+        accept a quote and the vendor confirms.
       </p>
 
-      <DashboardNav tabs="customerTabs" />
+      <DashboardNav tabs="customerBookingsTabs" label="Booking sections" />
 
       {!quotes || quotes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">
@@ -56,7 +61,7 @@ export default async function CustomerQuotesPage() {
           </Link>
         </div>
       ) : (
-        <QuoteList quotes={quotes} alternatives={alternatives} />
+        <QuoteList quotes={quotes} alternatives={alternatives} conversationIds={conversationIds} />
       )}
     </div>
   );

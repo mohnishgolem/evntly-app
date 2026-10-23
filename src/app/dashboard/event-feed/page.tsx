@@ -70,7 +70,7 @@ export default async function EventFeedPage() {
         Post your event publicly and let vendors come to you with a pitch and a price.
       </p>
 
-      <DashboardNav tabs="customerTabs" />
+      <DashboardNav tabs="customerEventsTabs" label="Event sections" />
 
       {!latestEvent ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

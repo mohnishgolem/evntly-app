@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { requireVendor } from "@/lib/data/user";
-import { getMyConversationIds } from "@/lib/data/vendor-attention";
+import { getMyConversationIds } from "@/lib/data/conversations";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { sydneyDate } from "@/lib/event-dates";
 import { createClient } from "@/lib/supabase/server";

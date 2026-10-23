@@ -31,12 +31,12 @@ export default async function CustomerBundlesPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Your bundle bookings</h1>
+      <h1 className="mb-1 text-2xl font-bold">Bookings</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Multi-vendor bundles you&apos;ve booked, with a group chat for every vendor involved.
       </p>
 
-      <DashboardNav tabs="customerTabs" />
+      <DashboardNav tabs="customerBookingsTabs" label="Booking sections" />
 
       {!bookings || bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">

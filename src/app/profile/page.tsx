@@ -10,11 +10,13 @@ import {
   ShieldCheck,
   Settings,
   FileText,
-  Mail,
   Store,
   LogOut,
   Ban,
   KeyRound,
+  Bell,
+  CircleHelp,
+  Lock,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -119,7 +121,8 @@ export default async function ProfilePage() {
 
       <div className="mb-6 overflow-hidden rounded-2xl bg-secondary">
         <Row icon={Settings} label="Account settings" href="/dashboard/settings" />
-        <Row icon={FileText} label="My Quote Requests" href="/dashboard/quotes" />
+        <Row icon={Bell} label="Notification preferences" href="/dashboard/settings/notifications" />
+        <Row icon={Heart} label="Saved vendors" href="/saved" />
         <Row icon={KeyRound} label="Security (two-factor)" href="/profile/security" />
         <Row icon={Ban} label="Blocked people" href="/profile/blocked" />
         {vendorListing ? (
@@ -130,8 +133,9 @@ export default async function ProfilePage() {
       </div>
 
       <div className="mb-6 overflow-hidden rounded-2xl bg-secondary">
-        <Row icon={FileText} label="Terms & Conditions" href="/terms" />
-        <Row icon={Mail} label="Contact us" href="mailto:hello@evntlyapp.com" last />
+        <Row icon={CircleHelp} label="Help & support" href="mailto:hello@evntlyapp.com" />
+        <Row icon={Lock} label="Privacy policy" href="/privacy-policy" />
+        <Row icon={FileText} label="Terms & Conditions" href="/terms" last />
       </div>
 
       <form action={logout} className="overflow-hidden rounded-2xl bg-secondary">

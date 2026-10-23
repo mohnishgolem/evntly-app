@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser, getUnreadMessageCount } from "@/lib/data/user";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { navRole } from "@/lib/nav";
 import { AppSidebar, SidebarFrame } from "@/components/site/app-sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { maskContactInfo } from "@/lib/contact-reveal";
@@ -27,18 +27,24 @@ export default async function MessagesPage() {
     getVapidPublicKey(),
     getUnreadMessageCount(),
   ]);
-  // Customers reach messages through their dashboard, so keep its tabs.
-  // Vendors open Messages from the header icon; they keep their sidebar.
+  // Messages opens from the header button; customers and vendors keep their
+  // own sidebar (desktop) or rail (tablet) here.
   const isVendor = session.profile?.role === "vendor";
+  const isCustomer = navRole(session.profile?.role, true) === "customer";
 
   return (
     <SidebarFrame
-      rail={isVendor}
-      sidebar={isVendor ? <AppSidebar title="Your business" nav="vendor" rail unread={unread} /> : null}
+      rail={isVendor || isCustomer}
+      sidebar={
+        isVendor ? (
+          <AppSidebar title="Your business" nav="vendor" rail unread={unread} />
+        ) : isCustomer ? (
+          <AppSidebar title="Your planning" nav="customer" rail />
+        ) : null
+      }
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Messages</h1>
-        {!isVendor && <DashboardNav tabs="customerTabs" />}
         <PushToggle publicKey={pushPublicKey} compact />
         {!threads || threads.length === 0 ? (
           <p className="text-sm text-muted-foreground">No conversations yet.</p>

@@ -52,7 +52,7 @@ export default async function MyEventsPage() {
       </div>
       <p className="mb-6 text-sm text-muted-foreground">Every event you&apos;re planning, each with its own board.</p>
 
-      <DashboardNav tabs="customerTabs" />
+      <DashboardNav tabs="customerEventsTabs" label="Event sections" />
 
       {error ? (
         <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm">

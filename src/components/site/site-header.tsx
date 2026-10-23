@@ -7,7 +7,8 @@ import { Logo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { navRole } from "@/lib/nav";
 import { getVendorAttention } from "@/lib/data/vendor-attention";
-import { MessagesButton, VendorHeaderActions } from "@/components/site/vendor-header-actions";
+import { MessagesButton, NotificationsBell } from "@/components/site/header-actions";
+import { getCustomerAttention } from "@/lib/data/customer-attention";
 
 // Rendered on the server with the session already known, so the menu for
 // the user's role is in the first paint — no flash of the wrong navigation.
@@ -18,7 +19,8 @@ export async function SiteHeader() {
   const role = navRole(session?.profile?.role, !!session);
 
   const unread = await getUnreadMessageCount();
-  const attention = role === "vendor" ? await getVendorAttention() : null;
+  const attention =
+    role === "vendor" ? await getVendorAttention() : role === "customer" ? await getCustomerAttention() : null;
 
   return (
     <header className="glass-material sticky top-0 z-50 border-b border-border/60 pt-[env(safe-area-inset-top)] print:hidden">
@@ -32,10 +34,12 @@ export async function SiteHeader() {
 
         <div className="flex items-center gap-1.5">
           {(role === "customer" || role === "vendor") && <MessagesButton unread={unread} />}
-          {role === "vendor" && (
-            <VendorHeaderActions
+          {(role === "customer" || role === "vendor") && (
+            <NotificationsBell
               notificationCount={attention?.notificationCount ?? 0}
               items={attention?.items ?? []}
+              homeHref={role === "vendor" ? "/vendor-dashboard" : "/dashboard"}
+              homeLabel={role === "vendor" ? "Home" : "My Events"}
             />
           )}
           {!session && (

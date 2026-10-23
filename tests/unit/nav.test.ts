@@ -3,8 +3,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ADMIN_NAV,
-  CUSTOMER_DASHBOARD_TABS,
-  CUSTOMER_TAB_BAR,
+  CUSTOMER_BOOKINGS_TABS,
+  CUSTOMER_EVENTS_TABS,
+  CUSTOMER_NAV,
   VENDOR_BOOKINGS_TABS,
   VENDOR_LEADS_TABS,
   VENDOR_LISTINGS_TABS,
@@ -28,20 +29,19 @@ describe("navRole", () => {
 });
 
 describe("drawer menus by role", () => {
-  it("customers get no standalone quotes, bookings or admin links", () => {
+  it("customers get their planning links and never vendor or admin links", () => {
     const links = hrefs("customer");
     expect(links).toEqual(
-      expect.arrayContaining(["/", "/explore", "/bundles", "/plan", "/dashboard", "/profile", "/dashboard/settings"]),
+      expect.arrayContaining(["/", "/explore", "/bundles", "/plan", "/dashboard", "/dashboard/quotes", "/profile", "/dashboard/settings"]),
     );
     for (const h of links) {
-      expect(h).not.toMatch(/quotes|bookings|^\/admin|vendor-dashboard/);
+      expect(h).not.toMatch(/^\/admin|vendor-dashboard/);
     }
   });
 
-  it("customers still reach quotes and bookings from the dashboard", () => {
-    const tabs = CUSTOMER_DASHBOARD_TABS.map((t) => t.href);
-    expect(tabs).toContain("/dashboard/quotes");
-    expect(tabs).toContain("/dashboard/bookings");
+  it("customers reach requests, quotes and confirmed bookings in Bookings", () => {
+    const tabs = CUSTOMER_BOOKINGS_TABS.map((t) => t.href);
+    expect(tabs).toEqual(["/dashboard/quotes", "/dashboard/bookings", "/dashboard/bundles"]);
   });
 
   it("guests see only marketplace links", () => {
@@ -65,12 +65,13 @@ describe("drawer menus by role", () => {
 
 describe("active item", () => {
   it("keeps the section lit on detail pages", () => {
-    expect(activeHref("/dashboard/events/abc", CUSTOMER_DASHBOARD_TABS)).toBe("/dashboard/events");
+    expect(activeHref("/dashboard/events/abc", CUSTOMER_EVENTS_TABS)).toBe("/dashboard/events");
     expect(activeHref("/vendor-dashboard/edit/abc", VENDOR_NAV)).toBe("/vendor-dashboard/business");
   });
 
   it("does not light section roots for their children", () => {
-    expect(activeHref("/dashboard/quotes", CUSTOMER_DASHBOARD_TABS)).toBe("/dashboard/quotes");
+    expect(activeHref("/dashboard/quotes", CUSTOMER_BOOKINGS_TABS)).toBe("/dashboard/quotes");
+    expect(activeHref("/dashboard/events", CUSTOMER_EVENTS_TABS)).toBe("/dashboard/events");
     expect(activeHref("/vendor-dashboard/quotes", VENDOR_LEADS_TABS)).toBe("/vendor-dashboard/quotes");
     expect(activeHref("/admin/support", ADMIN_NAV)).toBe("/admin/support");
   });
@@ -91,7 +92,8 @@ describe("active item", () => {
 describe("every nav link has a page", () => {
   const all = [
     ...(["guest", "customer", "vendor", "admin"] as const).flatMap(hrefs),
-    ...CUSTOMER_DASHBOARD_TABS.map((i) => i.href),
+    ...CUSTOMER_EVENTS_TABS.map((i) => i.href),
+    ...CUSTOMER_BOOKINGS_TABS.map((i) => i.href),
     ...VENDOR_LEADS_TABS.map((i) => i.href),
     ...VENDOR_LISTINGS_TABS.map((i) => i.href),
     ...VENDOR_BOOKINGS_TABS.map((i) => i.href),
@@ -102,21 +104,44 @@ describe("every nav link has a page", () => {
   });
 });
 
-describe("customer phone tab bar", () => {
-  it("Home goes to the landing page, not the dashboard", () => {
-    expect(CUSTOMER_TAB_BAR[0]).toMatchObject({ label: "Home", href: "/" });
-    expect(activeHref("/", CUSTOMER_TAB_BAR)).toBe("/");
+describe("customer navigation", () => {
+  it("has exactly five tabs in order, with My Events in the centre", () => {
+    expect(CUSTOMER_NAV.map((i) => i.label)).toEqual(["Home", "Explore", "My Events", "Bookings", "Profile"]);
+    expect(CUSTOMER_NAV[2].label).toBe("My Events");
   });
 
-  it("highlights Events across the dashboard and planning", () => {
-    for (const path of ["/dashboard", "/dashboard/quotes", "/dashboard/bookings", "/dashboard/events/e1", "/plan"]) {
-      expect(activeHref(path, CUSTOMER_TAB_BAR)).toBe("/dashboard/events");
-    }
+  it("Home goes to the landing page", () => {
+    expect(CUSTOMER_NAV[0]).toMatchObject({ href: "/", exact: true });
+    expect(activeHref("/", CUSTOMER_NAV)).toBe("/");
   });
 
-  it("keeps Explore and Messages", () => {
-    expect(activeHref("/vendor/v1", CUSTOMER_TAB_BAR)).toBe("/explore");
-    expect(activeHref("/messages/c1", CUSTOMER_TAB_BAR)).toBe("/messages");
+  it("keeps Messages out of the tabs (it lives in the header)", () => {
+    expect(CUSTOMER_NAV.some((i) => i.href.startsWith("/messages"))).toBe(false);
+    expect(activeHref("/messages/c1", CUSTOMER_NAV)).toBeUndefined();
+  });
+
+  it.each([
+    ["/", "/"],
+    ["/explore", "/explore"],
+    ["/vendor/v1", "/explore"],
+    ["/bundles/b1", "/explore"],
+    ["/saved", "/explore"],
+    ["/dashboard", "/dashboard"],
+    ["/dashboard/events", "/dashboard"],
+    ["/dashboard/events/e1", "/dashboard"],
+    ["/dashboard/events/e1/day", "/dashboard"],
+    ["/dashboard/event-feed", "/dashboard"],
+    ["/plan", "/dashboard"],
+    ["/dashboard/quotes", "/dashboard/quotes"],
+    ["/dashboard/bookings", "/dashboard/quotes"],
+    ["/dashboard/bundles", "/dashboard/quotes"],
+    ["/bookings/b1", "/dashboard/quotes"],
+    ["/profile", "/profile"],
+    ["/profile/security", "/profile"],
+    ["/dashboard/settings", "/profile"],
+    ["/dashboard/settings/notifications", "/profile"],
+  ])("%s lights %s", (path, tab) => {
+    expect(activeHref(path, CUSTOMER_NAV)).toBe(tab);
   });
 });
 
@@ -154,8 +179,8 @@ describe("vendor navigation", () => {
     expect(activeHref(path, VENDOR_NAV)).toBe(tab);
   });
 
-  it("does not change customer or admin navigation", () => {
-    expect(CUSTOMER_TAB_BAR.map((i) => i.label)).toEqual(["Home", "Events", "Explore", "Messages"]);
+  it("does not change admin navigation or leak vendor links to customers", () => {
+    expect(CUSTOMER_NAV.map((i) => i.label)).toEqual(["Home", "Explore", "My Events", "Bookings", "Profile"]);
     expect(drawerSections("admin")[0].items).toBe(ADMIN_NAV);
     expect(hrefs("customer").some((h) => h.startsWith("/vendor-dashboard"))).toBe(false);
   });

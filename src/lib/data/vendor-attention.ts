@@ -6,7 +6,7 @@ import { sydneyDate } from "@/lib/event-dates";
 
 export type AttentionItem = {
   key: string;
-  kind: "enquiry" | "confirm" | "review" | "photos";
+  kind: "enquiry" | "confirm" | "review" | "photos" | "quote" | "booking" | "waiting";
   title: string;
   detail?: string;
   href: string;
@@ -95,12 +95,3 @@ export const getVendorAttention = cache(async function getVendorAttention() {
   };
 });
 
-/**
- * Conversation ids the signed-in user is part of. A conversation page 404s
- * until it has a message, so Leads and Bookings only link to one that exists.
- */
-export const getMyConversationIds = cache(async function getMyConversationIds(): Promise<string[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("my_conversations");
-  return (data ?? []).map((c) => c.conversation_id);
-});

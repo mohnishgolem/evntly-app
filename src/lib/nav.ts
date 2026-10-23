@@ -1,5 +1,9 @@
 import {
   BarChart3,
+  CalendarCheck,
+  CalendarHeart,
+  Compass,
+  Heart,
   Briefcase,
   CalendarDays,
   CreditCard,
@@ -61,11 +65,28 @@ export function isNavItemActive(pathname: string, item: NavItem) {
   return [item.href, ...(item.match ?? [])].some((p) => matches(pathname, p));
 }
 
-/** The one item to highlight in a list: the longest matching href wins. */
+/**
+ * How specifically an item matches: the length of its longest route that
+ * matches the path (0 = not active). Lets a narrow route claim a page from
+ * a broader one, e.g. /dashboard/settings → Profile, not My Events (/dashboard).
+ */
+function matchStrength(pathname: string, item: NavItem) {
+  if (item.exact) return pathname === item.href ? item.href.length : 0;
+  return Math.max(0, ...[item.href, ...(item.match ?? [])].filter((p) => matches(pathname, p)).map((p) => p.length));
+}
+
+/** The one item to highlight in a list: the most specific match wins. */
 export function activeHref(pathname: string, items: NavItem[]) {
-  return items
-    .filter((item) => isNavItemActive(pathname, item))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  let best: NavItem | undefined;
+  let bestStrength = 0;
+  for (const item of items) {
+    const strength = matchStrength(pathname, item);
+    if (strength > bestStrength) {
+      best = item;
+      bestStrength = strength;
+    }
+  }
+  return best?.href;
 }
 
 // ── Marketplace (header links for everyone) ─────────────────────────────
@@ -77,33 +98,46 @@ export const MARKETPLACE_NAV: NavItem[] = [
 ];
 
 // ── Customer ─────────────────────────────────────────────────────────────
-// Quotes and bookings are deliberately not top-level: they live inside the
-// dashboard (CUSTOMER_DASHBOARD_TABS) and on each event's page.
+// Five destinations on every screen size: bottom tab bar on phones, icon
+// rail on tablets, sidebar on desktops. My Events stays in the centre.
+// Messages and notifications live in the header, not here.
+export const CUSTOMER_NAV: NavItem[] = [
+  { href: "/", label: "Home", icon: Home, exact: true },
+  { href: "/explore", label: "Explore", icon: Compass, match: ["/vendor", "/bundles", "/saved"] },
+  { href: "/dashboard", label: "My Events", icon: CalendarHeart, match: ["/plan"] },
+  {
+    href: "/dashboard/quotes",
+    label: "Bookings",
+    icon: CalendarCheck,
+    match: ["/dashboard/bookings", "/dashboard/bundles", "/bookings"],
+  },
+  { href: "/profile", label: "Profile", icon: UserRound, match: ["/dashboard/settings"] },
+];
+
+// My Events: the planning hub, every event (each opens its board), and
+// events posted for vendors to pitch on.
+export const CUSTOMER_EVENTS_TABS: NavItem[] = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard/events", label: "All events", icon: CalendarHeart },
+  { href: "/dashboard/event-feed", label: "Posted to vendors", icon: Inbox },
+];
+
+// Bookings, in two clearly separate parts: requests and quotes (nothing is
+// booked yet) and confirmed bookings. Bundle bookings sit alongside.
+export const CUSTOMER_BOOKINGS_TABS: NavItem[] = [
+  { href: "/dashboard/quotes", label: "Requests & quotes", icon: FileText },
+  { href: "/dashboard/bookings", label: "Confirmed bookings", icon: CalendarCheck },
+  { href: "/dashboard/bundles", label: "Bundle bookings", icon: Package },
+];
+
+// Drawer "Account" section for customers.
 export const CUSTOMER_ACCOUNT_NAV: NavItem[] = [
-  { href: "/dashboard", label: "My Dashboard", icon: LayoutDashboard, match: ["/saved"] },
+  { href: "/dashboard", label: "My Events", icon: CalendarHeart, match: ["/plan"] },
+  { href: "/dashboard/quotes", label: "Bookings", icon: CalendarCheck, match: ["/dashboard/bookings", "/dashboard/bundles"] },
   { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
+  { href: "/saved", label: "Saved vendors", icon: Heart },
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
-];
-
-export const CUSTOMER_DASHBOARD_TABS: NavItem[] = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/events", label: "My Events", icon: CalendarDays },
-  { href: "/dashboard/quotes", label: "Quotes", icon: FileText },
-  { href: "/dashboard/bookings", label: "Bookings", icon: ClipboardList },
-  { href: "/dashboard/bundles", label: "Bundles", icon: Package },
-  { href: "/dashboard/event-feed", label: "Event Feed", icon: Inbox },
-  { href: "/messages", label: "Messages", icon: MessageCircle },
-];
-
-// Phone tab bar for signed-in customers (below md; the header covers wider
-// screens). Four destinations, per Apple's 3–5 tab guidance. Home is the
-// landing page; the dashboard (overview, quotes, bookings) sits under Events.
-export const CUSTOMER_TAB_BAR: NavItem[] = [
-  { href: "/", label: "Home", icon: Home, exact: true },
-  { href: "/dashboard/events", label: "Events", icon: CalendarDays, match: ["/plan", "/dashboard"] },
-  { href: "/explore", label: "Explore", icon: Search, match: ["/vendor", "/bundles"] },
-  { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
 ];
 
 // ── Vendor ───────────────────────────────────────────────────────────────
@@ -187,8 +221,9 @@ export const ADMIN_NAV: NavItem[] = [
 // (DashboardNav, AppSidebar), never the arrays: the icons are component
 // functions and can't cross the server/client boundary.
 export const NAV_SETS = {
-  customerTabs: CUSTOMER_DASHBOARD_TABS,
-  customerTabBar: CUSTOMER_TAB_BAR,
+  customer: CUSTOMER_NAV,
+  customerEventsTabs: CUSTOMER_EVENTS_TABS,
+  customerBookingsTabs: CUSTOMER_BOOKINGS_TABS,
   vendor: VENDOR_NAV,
   vendorLeadsTabs: VENDOR_LEADS_TABS,
   vendorListingsTabs: VENDOR_LISTINGS_TABS,

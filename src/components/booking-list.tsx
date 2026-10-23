@@ -28,13 +28,17 @@ export function BookingList({
   jobCardByBooking,
   reviewedBookingIds,
   payments,
+  conversationIds = [],
 }: {
   bookings: Booking[];
+  /** The viewer's existing conversations; a booking links to its thread only when one exists. */
+  conversationIds?: string[];
   jobCardByBooking: Map<string, JobCardResult>;
   reviewedBookingIds: Set<string>;
   /** Payment status per booking id, shown under the price (Event Board). */
   payments?: Map<string, PaymentSummary>;
 }) {
+  const threads = new Set(conversationIds);
   return (
     <div className="space-y-4">
       {bookings.map((b) => (
@@ -66,6 +70,14 @@ export function BookingList({
             </Link>
             {b.status !== "cancelled" && b.status !== "completed" && (
               <CancelBookingButton bookingId={b.id} />
+            )}
+            {b.client_user_id && threads.has(`${b.provider_id}:${b.client_user_id}`) && (
+              <Link
+                href={`/messages/${encodeURIComponent(`${b.provider_id}:${b.client_user_id}`)}`}
+                className="text-sm underline underline-offset-2"
+              >
+                Message vendor
+              </Link>
             )}
             {(b.status === "confirmed" || b.status === "completed") && (
               <Link

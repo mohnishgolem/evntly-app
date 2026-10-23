@@ -31,10 +31,14 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 export function QuoteList({
   quotes,
   alternatives = {},
+  conversationIds = [],
 }: {
   quotes: Quote[];
   alternatives?: Record<string, SimilarVendor[]>;
+  /** The customer's existing conversations; a quote links to its thread only when one exists. */
+  conversationIds?: string[];
 }) {
+  const threads = new Set(conversationIds);
   return (
     <div className="space-y-4">
       {quotes.map((q) => {
@@ -141,6 +145,14 @@ export function QuoteList({
                 <QuoteDetails quote={q} />
                 <QuoteActions quoteId={q.id} />
               </div>
+            )}
+            {q.vendor_id && q.client_user_id && threads.has(`${q.vendor_id}:${q.client_user_id}`) && (
+              <Link
+                href={`/messages/${encodeURIComponent(`${q.vendor_id}:${q.client_user_id}`)}`}
+                className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-2 sm:min-h-0"
+              >
+                Message {q.vendor_name ?? "vendor"}
+              </Link>
             )}
           </div>
         );

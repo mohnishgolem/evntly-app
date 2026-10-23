@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CalendarClock, ChevronRight, Clock, ImagePlus, Inbox, MessageCircle } from "lucide-react";
+import { Bell, CalendarCheck, CalendarClock, ChevronRight, Clock, FileText, ImagePlus, Inbox, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,13 @@ const KIND_ICON = {
   confirm: CalendarClock,
   review: Clock,
   photos: ImagePlus,
+  quote: FileText,
+  booking: CalendarCheck,
+  waiting: Clock,
 } as const;
+
+const URGENT: AttentionItem["kind"][] = ["enquiry", "quote"];
+const WARN: AttentionItem["kind"][] = ["confirm"];
 
 const MAX_ITEMS = 6;
 
@@ -34,7 +40,8 @@ function CountDot({ count, label }: { count: number; label: string }) {
   );
 }
 
-// Header Messages button for signed-in customers and vendors.
+// Header buttons for signed-in customers and vendors: Messages, and a
+// notifications bell, so neither needs a tab.
 export function MessagesButton({ unread }: { unread: number }) {
   return (
     <Button
@@ -52,15 +59,18 @@ export function MessagesButton({ unread }: { unread: number }) {
   );
 }
 
-// Vendors only: a notifications bell next to Messages, so neither needs a
-// sixth tab. The bell lists what's waiting on the vendor (from
-// getVendorAttention) — there's no separate notifications store.
-export function VendorHeaderActions({
+// The bell lists what's waiting (getVendorAttention / getCustomerAttention);
+// there's no separate notifications store, so it's always current.
+export function NotificationsBell({
   notificationCount,
   items,
+  homeHref,
+  homeLabel,
 }: {
   notificationCount: number;
   items: AttentionItem[];
+  homeHref: string;
+  homeLabel: string;
 }) {
   return (
     <>
@@ -97,7 +107,7 @@ export function VendorHeaderActions({
                         <Icon
                           className={cn(
                             "mt-0.5 size-[18px] shrink-0",
-                            item.kind === "enquiry" ? "text-primary" : item.kind === "confirm" ? "text-warning" : "text-muted-foreground"
+                            URGENT.includes(item.kind) ? "text-primary" : WARN.includes(item.kind) ? "text-warning" : "text-muted-foreground"
                           )}
                           strokeWidth={1.75}
                           aria-hidden
@@ -116,8 +126,8 @@ export function VendorHeaderActions({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             render={
-              <Link href="/vendor-dashboard" className="justify-between text-sm font-medium">
-                {items.length > MAX_ITEMS ? `See all ${items.length} on Home` : "Go to Home"}
+              <Link href={homeHref} className="justify-between text-sm font-medium">
+                {items.length > MAX_ITEMS ? `See all ${items.length} in ${homeLabel}` : `Go to ${homeLabel}`}
                 <ChevronRight className="size-4" aria-hidden />
               </Link>
             }

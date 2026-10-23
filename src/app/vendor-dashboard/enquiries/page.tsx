@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireVendor } from "@/lib/data/user";
 import { getVendorQuotes } from "@/lib/data/vendor-quotes";
-import { getMyConversationIds } from "@/lib/data/vendor-attention";
+import { getMyConversationIds } from "@/lib/data/conversations";
 import { VendorQuoteCards } from "@/components/vendor-quote-cards";
 import { DashboardNav } from "@/components/dashboard-nav";
 
