@@ -4,14 +4,17 @@ import type { Database } from "@/lib/supabase/database.types";
 import { LAUNCH_CATEGORIES, LAUNCH_CITY, isLaunchCategory } from "@/lib/config";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 import { PORTFOLIO_COLUMNS, REVIEW_COLUMNS } from "@/lib/public-columns";
+import { sampleListingsHidden } from "@/lib/sample-listings";
 
 export async function getFeaturedVendors(limit = 8) {
   const supabase = await createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("service_providers")
     .select(PUBLIC_VENDOR_COLUMNS)
     .eq("status", "approved")
-    .in("service_type", LAUNCH_CATEGORIES)
+    .in("service_type", LAUNCH_CATEGORIES);
+  if (sampleListingsHidden()) query = query.eq("is_demo", false);
+  const { data } = await query
     // Real vendors before sample listings, then founding vendors, then
     // newest. Rating isn't a useful default until there are real reviews.
     .order("is_demo", { ascending: true })
@@ -39,6 +42,9 @@ export async function searchVendors(filters: VendorFilters = {}) {
     .eq("status", "approved")
     .in("service_type", LAUNCH_CATEGORIES);
 
+  if (sampleListingsHidden()) {
+    query = query.eq("is_demo", false);
+  }
   if (filters.category) {
     query = query.eq("service_type", filters.category);
   }
@@ -106,6 +112,7 @@ export type SimilarVendor = { id: string; name: string; hourly_rate: number; cit
 /**
  * Up to `limit` approved vendors in a category, founding first then newest —
  * the fallback suggestions when a quote request expires or is declined.
+ * Never suggests sample listings: they can't answer a quote request.
  * Takes any client so the cron route (service role) can use it too.
  */
 export async function findSimilarVendors(
@@ -120,7 +127,7 @@ export async function findSimilarVendors(
     .select("id, name, hourly_rate, city")
     .eq("status", "approved")
     .eq("service_type", serviceType)
-    .order("is_demo", { ascending: true })
+    .eq("is_demo", false)
     .order("founding_vendor", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .order("id")

@@ -17,6 +17,7 @@ import {
 import { scanMessageAttachment } from "@/lib/attachment-scan";
 import type { User } from "@supabase/supabase-js";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
 
 const MAX_MESSAGE_LENGTH = 5000;
 
@@ -96,12 +97,13 @@ export async function sendVendorMessage(
   // fill_leakage_event_recipient does the same for blocked attempts.
   const { data: vendor } = await supabase
     .from("service_providers")
-    .select("id")
+    .select("id, is_demo")
     .eq("id", vendorId)
     .eq("status", "approved")
     .maybeSingle();
 
   if (!vendor) return { error: "This vendor isn't accepting messages." };
+  if (vendor.is_demo) return { error: SAMPLE_LISTING_CONTACT_ERROR };
 
   const conversationId = conversationIdFor(vendorId, user.id);
 

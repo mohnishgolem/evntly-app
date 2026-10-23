@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PACKAGE_COLUMNS, PARTICIPANT_COLUMNS } from "@/lib/public-columns";
+import { sampleListingsHidden } from "@/lib/sample-listings";
 
 export async function getActiveBundles() {
   const supabase = await createClient();
@@ -7,10 +8,9 @@ export async function getActiveBundles() {
   // their initiating vendor, same as /explore does for listings. Without
   // this, an unapproved vendor's bundle would be publicly bookable before
   // any admin has reviewed them.
-  const { data: approvedVendors } = await supabase
-    .from("service_providers")
-    .select("id")
-    .eq("status", "approved");
+  let vendorQuery = supabase.from("service_providers").select("id").eq("status", "approved");
+  if (sampleListingsHidden()) vendorQuery = vendorQuery.eq("is_demo", false);
+  const { data: approvedVendors } = await vendorQuery;
   const approvedIds = (approvedVendors ?? []).map((v) => v.id);
   if (approvedIds.length === 0) return [];
 

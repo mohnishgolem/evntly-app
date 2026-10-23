@@ -1,0 +1,108 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createClient } from "@supabase/supabase-js";
+
+// Sign-up confirmation and expired-link handling. Sign-up goes through the
+// REAL Supabase client with only the network faked, so the test sees the
+// redirect_to Supabase Auth actually receives.
+const calls: string[] = [];
+const fakeFetch = vi.fn(async (input: RequestInfo | URL) => {
+  calls.push(String(input));
+  // Email confirmation on: a user comes back without a session.
+  return new Response(JSON.stringify({ id: "u1", email: "new@example.invalid" }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+});
+
+let exchangeError: { message: string } | null = null;
+const client = createClient("https://example.supabase.co", "anon-test-key", {
+  auth: { persistSession: false, autoRefreshToken: false, flowType: "implicit" },
+  global: { fetch: fakeFetch as unknown as typeof fetch },
+});
+vi.spyOn(client.auth, "exchangeCodeForSession").mockImplementation(async () => ({ error: exchangeError }) as never);
+vi.spyOn(client.auth.mfa, "getAuthenticatorAssuranceLevel").mockImplementation(
+  async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }) as never
+);
+
+vi.mock("@/lib/supabase/server", () => ({ createClient: async () => client }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next/headers", () => ({ headers: async () => new Headers({ origin: "https://evil.example" }) }));
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: vi.fn(async () => true),
+  clientIp: vi.fn(async () => "1.2.3.4"),
+  RATE_LIMIT_ERROR: "Too many attempts.",
+}));
+
+const { signup } = await import("@/lib/actions/auth");
+const { GET } = await import("@/app/auth/callback/route");
+const { SITE_URL } = await import("@/lib/config");
+const { authNotice } = await import("@/lib/auth-notices");
+
+function form(role: "customer" | "vendor") {
+  const f = new FormData();
+  f.set("fullName", "New Person");
+  f.set("email", "new@example.invalid");
+  f.set("password", "a-long-password");
+  f.set("role", role);
+  f.set("agreedToTerms", "on");
+  return f;
+}
+
+const redirectTo = () => new URL(new URL(calls.find((u) => u.includes("/auth/v1/signup"))!).searchParams.get("redirect_to")!);
+
+beforeEach(() => {
+  calls.length = 0;
+  exchangeError = null;
+});
+
+describe("sign-up confirmation link", () => {
+  it("sends customers through the callback to their dashboard", async () => {
+    expect(await signup(null, form("customer"))).toEqual({ needsEmailConfirmation: true });
+    const to = redirectTo();
+    // An untrusted Origin header never ends up in the email.
+    expect(to.origin).toBe(SITE_URL);
+    expect(to.pathname).toBe("/auth/callback");
+    expect(to.searchParams.get("flow")).toBe("signup");
+    expect(to.searchParams.get("next")).toBe("/dashboard");
+  });
+
+  it("sends vendors on to the listing setup", async () => {
+    await signup(null, form("vendor"));
+    expect(redirectTo().searchParams.get("next")).toBe("/vendor-signup");
+  });
+});
+
+describe("auth callback without a session", () => {
+  const location = async (query: string) =>
+    (await GET(new Request(`https://evntly.example/auth/callback?${query}`))).headers.get("location");
+
+  it("signs a confirmed sign-up straight in", async () => {
+    expect(await location("code=abc&flow=signup&next=/dashboard")).toBe("https://evntly.example/dashboard");
+  });
+
+  it("tells people opening the confirmation in another browser that they're confirmed", async () => {
+    exchangeError = { message: "code verifier missing" };
+    expect(await location("code=abc&flow=signup&next=/dashboard")).toBe("https://evntly.example/login?notice=email-confirmed");
+  });
+
+  it("offers a new reset link when a reset link is reused or expired", async () => {
+    expect(await location("error=access_denied&error_code=otp_expired&next=/reset-password")).toBe(
+      "https://evntly.example/login?notice=link-expired"
+    );
+  });
+
+  it("falls back to a generic message", async () => {
+    exchangeError = { message: "bad code" };
+    expect(await location("code=abc")).toBe("https://evntly.example/login?notice=signin-failed");
+  });
+});
+
+describe("login notices", () => {
+  it("only shows known messages", () => {
+    expect(authNotice("email-confirmed")?.text).toMatch(/confirmed/);
+    expect(authNotice("<script>")).toBeNull();
+    expect(authNotice("toString")).toBeNull();
+    expect(authNotice(undefined)).toBeNull();
+  });
+});

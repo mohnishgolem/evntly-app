@@ -64,6 +64,12 @@ export async function signup(
     return { error: RATE_LIMIT_ERROR };
   }
   const supabase = await createClient();
+  // The confirmation link goes through /auth/callback, which exchanges its
+  // one-time code for a session — linking to the bare site left people
+  // confirmed but signed out, with no message.
+  const confirmUrl = new URL("/auth/callback", await appOrigin());
+  confirmUrl.searchParams.set("flow", "signup");
+  confirmUrl.searchParams.set("next", role === "vendor" ? "/vendor-signup" : "/dashboard");
 
   // full_name lives in Supabase Auth's user_metadata — the existing `users`
   // table (inherited from the prior schema) has no name column of its own.
@@ -74,7 +80,10 @@ export async function signup(
     password,
     // terms_version: they ticked the Terms box; the new-user trigger records
     // it with a server-side timestamp.
-    options: { data: { full_name: fullName, role, terms_version: TERMS_VERSION } },
+    options: {
+      data: { full_name: fullName, role, terms_version: TERMS_VERSION },
+      emailRedirectTo: confirmUrl.toString(),
+    },
   });
 
   if (error) {

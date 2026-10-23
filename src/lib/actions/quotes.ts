@@ -8,6 +8,7 @@ import { categoryLabel } from "@/lib/config";
 import { quoteParticipantEmail } from "@/lib/supabase/admin";
 import { z } from "zod";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
 import type { Database } from "@/lib/supabase/database.types";
 
 export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
@@ -66,6 +67,9 @@ export async function requestQuote(
   }
   draft = parsedDraft.data;
   if (!(await checkRateLimit("quoteUser", user.id))) return { error: RATE_LIMIT_ERROR };
+
+  const { data: target } = await supabase.from("service_providers").select("is_demo").eq("id", vendorId).maybeSingle();
+  if (target?.is_demo) return { error: SAMPLE_LISTING_CONTACT_ERROR };
 
   // Vendor details come from the DB, never the caller — this is a server
   // action, so a client-supplied email would let anyone point the quote (and

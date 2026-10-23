@@ -16,6 +16,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SampleBadge } from "@/components/sample-badge";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { formatAbn } from "@/lib/abn";
+import { sampleListingsHidden } from "@/lib/sample-listings";
 
 export async function generateMetadata({
   params,
@@ -24,7 +25,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const vendor = await getVendorById(id);
-  if (!vendor) return {};
+  // Hidden sample listings 404 for the public; don't leak their name in the title.
+  if (!vendor || (vendor.is_demo && sampleListingsHidden())) return {};
 
   const city = vendor.city || LAUNCH_CITY;
   const title = `${vendor.name} — ${categoryLabel(vendor.service_type)} in ${city}`;
@@ -58,6 +60,8 @@ export default async function VendorDetailPage({
     getVendorReviews(id),
     getCurrentUser(),
   ]);
+  // Hidden sample listings stay viewable by admins for internal testing.
+  if (vendor.is_demo && sampleListingsHidden() && session?.profile?.role !== "admin") notFound();
 
   // Auto-tag a quote request to the customer's most recent planned event, so
   // it shows up on that event's board — no picker UI for multiple events yet.
@@ -181,8 +185,7 @@ export default async function VendorDetailPage({
           {vendor.is_demo && (
             <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">
               This is a sample listing that shows how vendor profiles work on Evntly. It isn&apos;t a
-              real business, its photos are stock images, and quote requests to it won&apos;t be
-              answered.
+              real business, its photos are stock images, and it can&apos;t take quote requests.
             </p>
           )}
           {portfolio.length > 0 && (
@@ -249,22 +252,31 @@ export default async function VendorDetailPage({
               <p className="mb-4 text-sm text-muted-foreground">Currently unavailable</p>
             )}
             <div className="space-y-2">
-              <ContactVendor
-                isAuthenticated={!!session}
-                vendorId={vendor.id}
-                vendorName={vendor.name}
-              />
-              <RequestQuote
-                isAuthenticated={!!session}
-                vendorId={vendor.id}
-                vendorName={vendor.name}
-                eventId={latestEventId}
-                availability={{
-                  accepting: vendor.available !== false,
-                  unavailableDates: vendor.unavailable_dates ?? [],
-                  weeklyDaysOff: vendor.weekly_unavailable_days ?? [],
-                }}
-              />
+              {vendor.is_demo ? (
+                <p className="text-sm text-muted-foreground">
+                  Sample listings can&apos;t take quote requests or messages. Browse real vendors on
+                  Explore.
+                </p>
+              ) : (
+                <>
+                  <ContactVendor
+                    isAuthenticated={!!session}
+                    vendorId={vendor.id}
+                    vendorName={vendor.name}
+                  />
+                  <RequestQuote
+                    isAuthenticated={!!session}
+                    vendorId={vendor.id}
+                    vendorName={vendor.name}
+                    eventId={latestEventId}
+                    availability={{
+                      accepting: vendor.available !== false,
+                      unavailableDates: vendor.unavailable_dates ?? [],
+                      weeklyDaysOff: vendor.weekly_unavailable_days ?? [],
+                    }}
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>
