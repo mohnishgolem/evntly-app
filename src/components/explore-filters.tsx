@@ -64,12 +64,15 @@ export function ExploreFilters() {
 
       {/* Category tabs — icon above label, selected state shown with an
           underline sitting on the row's divider, matching Airbnb's
-          category nav rather than a row of filled pill buttons. */}
-      <div className="scrollbar-hide -mx-4 flex gap-7 overflow-x-auto border-b border-border px-4">
+          category nav rather than a row of filled pill buttons. Sideways
+          scrolling only: the divider is an inset shadow (not a border the
+          tabs overlap), so nothing spills past the row vertically and iOS
+          has nothing to scroll up and down. */}
+      <div className="scrollbar-hide -mx-4 flex gap-7 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 shadow-[inset_0_-1px_0_var(--color-border)]">
         <button
           onClick={() => setParam("category", "")}
           className={cn(
-            "-mb-px flex shrink-0 flex-col items-center gap-2 border-b-2 pt-1 pb-3 transition-colors",
+            "flex shrink-0 flex-col items-center gap-2 border-b-2 pt-1 pb-3 transition-colors",
             !category
               ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -83,7 +86,7 @@ export function ExploreFilters() {
             key={c.value}
             onClick={() => setParam("category", c.value)}
             className={cn(
-              "-mb-px flex shrink-0 flex-col items-center gap-2 border-b-2 pt-1 pb-3 transition-colors",
+              "flex shrink-0 flex-col items-center gap-2 border-b-2 pt-1 pb-3 transition-colors",
               category === c.value
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
