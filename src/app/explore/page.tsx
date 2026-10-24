@@ -51,6 +51,12 @@ export default async function ExplorePage({
     searchVendors({ q, category, eventType: event, minPrice, maxPrice }),
     getCurrentUser(),
   ]);
+  // A place search with no match (e.g. "Parramatta" when nobody lists that
+  // suburb) still shows vendors in the category — most travel across Sydney.
+  const fallback =
+    vendors.length === 0 && q
+      ? (await searchVendors({ category, eventType: event, minPrice, maxPrice })).slice(0, 10)
+      : [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -63,6 +69,7 @@ export default async function ExplorePage({
 
       <ExploreResults
         vendors={vendors}
+        fallback={fallback}
         savedVendorIds={session?.profile?.saved_providers ?? []}
         isAuthenticated={!!session}
       />
