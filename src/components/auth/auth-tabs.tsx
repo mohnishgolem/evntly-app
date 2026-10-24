@@ -30,7 +30,8 @@ export function AuthTabs({
       value={tab}
       onValueChange={(v) => {
         setTab(v as "signup" | "login");
-        router.replace(v === "signup" ? "/signup" : "/login");
+        const path = v === "signup" ? "/signup" : "/login";
+        router.replace(next ? `${path}?next=${encodeURIComponent(next)}` : path);
       }}
       className="w-full"
     >
@@ -41,7 +42,7 @@ export function AuthTabs({
         <TabsTrigger value="login">Log in</TabsTrigger>
       </TabsList>
       <TabsContent value="signup" className="pt-6">
-        <SignupForm defaultRole={defaultRole} />
+        <SignupForm defaultRole={defaultRole} next={next} />
       </TabsContent>
       <TabsContent value="login" className="pt-6">
         <LoginForm next={next} />
@@ -56,17 +57,17 @@ const APPLE_SIGN_IN_ENABLED = false;
 
 // Shown on both the signup and login forms — the call's ask was social
 // sign-in "on all form variations", not just one.
-function SocialButtons({ role }: { role?: "customer" | "vendor" }) {
+function SocialButtons({ role, next }: { role?: "customer" | "vendor"; next?: string }) {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <form action={signInWithOAuth.bind(null, "google", role)} className="flex-1">
+        <form action={signInWithOAuth.bind(null, "google", role, next)} className="flex-1">
           <Button type="submit" variant="outline" className="w-full gap-2">
             <GoogleIcon /> Google
           </Button>
         </form>
         {APPLE_SIGN_IN_ENABLED && (
-          <form action={signInWithOAuth.bind(null, "apple", role)} className="flex-1">
+          <form action={signInWithOAuth.bind(null, "apple", role, next)} className="flex-1">
             <Button type="submit" variant="outline" className="w-full gap-2">
               <AppleIcon /> Apple
             </Button>
@@ -82,7 +83,7 @@ function SocialButtons({ role }: { role?: "customer" | "vendor" }) {
   );
 }
 
-function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
+function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor"; next?: string }) {
   const [state, formAction, pending] = useActionState(signup, initialState);
   const [role, setRole] = useState(defaultRole);
 
@@ -120,10 +121,11 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
         </button>
       </div>
 
-      <SocialButtons role={role} />
+      <SocialButtons role={role} next={next} />
 
       <form action={formAction} className="space-y-4">
       <input type="hidden" name="role" value={role} />
+      {next && <input type="hidden" name="next" value={next} />}
 
       <div className="space-y-1.5">
         <Label htmlFor="fullName">Full name</Label>
@@ -181,7 +183,7 @@ function LoginForm({ next }: { next?: string }) {
 
   return (
     <div className="space-y-4">
-      <SocialButtons />
+      <SocialButtons next={next} />
       <form action={formAction} className="space-y-4">
         {next && <input type="hidden" name="next" value={next} />}
         <div className="space-y-1.5">

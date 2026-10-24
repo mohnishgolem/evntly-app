@@ -71,6 +71,26 @@ describe("sign-up confirmation link", () => {
     await signup(null, form("vendor"));
     expect(redirectTo().searchParams.get("next")).toBe("/vendor-signup");
   });
+
+  it("brings customers back to where they started (vendor page or plan)", async () => {
+    const f = form("customer");
+    f.set("next", "/vendor/abc?x=1");
+    await signup(null, f);
+    expect(redirectTo().searchParams.get("next")).toBe("/vendor/abc?x=1");
+  });
+
+  it("ignores next for vendors and off-site next values", async () => {
+    const v = form("vendor");
+    v.set("next", "/dashboard");
+    await signup(null, v);
+    expect(redirectTo().searchParams.get("next")).toBe("/vendor-signup");
+
+    calls.length = 0;
+    const c = form("customer");
+    c.set("next", "//evil.example");
+    await signup(null, c);
+    expect(redirectTo().searchParams.get("next")).toBe("/");
+  });
 });
 
 describe("auth callback without a session", () => {
