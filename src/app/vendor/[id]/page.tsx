@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Star, MapPin, ShieldCheck, Clock, Building2 } from "lucide-react";
-import { getVendorById, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
+import { getVendorById, getVendorPackages, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
+import { formatAud } from "@/lib/payments/money";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { categoryLabel, LAUNCH_CITY, SITE_URL } from "@/lib/config";
@@ -55,8 +56,9 @@ export default async function VendorDetailPage({
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 
-  const [portfolio, reviews, session] = await Promise.all([
+  const [portfolio, packages, reviews, session] = await Promise.all([
     getVendorPortfolio(id),
+    getVendorPackages(id),
     getVendorReviews(id),
     getCurrentUser(),
   ]);
@@ -188,6 +190,39 @@ export default async function VendorDetailPage({
               real business, its photos are stock images, and it can&apos;t take quote requests.
             </p>
           )}
+          {packages.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-lg font-semibold">Packages</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {packages.map((p) => (
+                  <div key={p.id} className="rounded-2xl border border-border p-4">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3 className="font-semibold">{p.name}</h3>
+                      <span className="shrink-0 font-semibold">{formatAud(p.price_cents)}</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {[
+                        p.included_hours ? `${p.included_hours} hrs included` : null,
+                        p.extra_hour_cents ? `${formatAud(p.extra_hour_cents)} per extra hour` : null,
+                        p.deposit_percent ? `${p.deposit_percent}% deposit` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {p.description && <p className="mt-2 text-sm text-foreground/90">{p.description}</p>}
+                    {p.inclusions.length > 0 && (
+                      <ul className="mt-2 list-inside list-disc text-sm text-muted-foreground">
+                        {p.inclusions.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {portfolio.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold">
