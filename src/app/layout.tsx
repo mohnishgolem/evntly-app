@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { ErrorReporter } from "@/components/error-reporter";
@@ -27,6 +28,21 @@ export const logoFont = localFont({
   weight: "400",
 });
 
+// iPhone screens as [width, height, pixel ratio] in CSS px, newest first;
+// images in public/splash are the wordmark on black, like the app icon.
+const SPLASH_SCREENS: [number, number, number][] = [
+  [440, 956, 3], // 16/17 Pro Max
+  [430, 932, 3], // 14 Pro Max, 15/16 Plus, 15 Pro Max
+  [402, 874, 3], // 16/17 Pro, 17
+  [393, 852, 3], // 14 Pro, 15, 15 Pro, 16
+  [428, 926, 3], // 12/13 Pro Max, 14 Plus
+  [390, 844, 3], // 12, 13, 14
+  [375, 812, 3], // X, XS, 11 Pro, 12/13 mini
+  [414, 896, 3], // XS Max, 11 Pro Max
+  [414, 896, 2], // XR, 11
+  [375, 667, 2], // SE, 8
+];
+
 const DEFAULT_DESCRIPTION =
   `Book photographers, decorators, DJs, celebrants and more for your wedding, birthday or corporate event in ${LAUNCH_CITY}.`;
 
@@ -49,6 +65,12 @@ export const metadata: Metadata = {
     capable: true,
     title: "Evntly",
     statusBarStyle: "black-translucent",
+    // Launch screen while the app loads — without these iOS shows plain
+    // white. Matched by exact screen size, so one per iPhone size.
+    startupImage: SPLASH_SCREENS.map(([w, h, dpr]) => ({
+      url: `/splash/splash-${w * dpr}x${h * dpr}.png`,
+      media: `(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`,
+    })),
   },
   keywords: [
     "event vendors",
@@ -105,14 +127,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
       <body className="min-h-full flex flex-col">
+        {/* Session-dependent pieces sit behind Suspense so the server can
+            send the page shell (styles, scripts, header bar) straight away
+            instead of holding every byte until the session queries finish —
+            in the installed app that wait was a blank white screen. */}
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
-        <MobileTabBar />
+        <Suspense>
+          <MobileTabBar />
+        </Suspense>
         <Analytics />
         <ErrorReporter />
         <PageViewTracker />
-        <LegalGate />
+        <Suspense>
+          <LegalGate />
+        </Suspense>
       </body>
     </html>
   );

@@ -35,7 +35,10 @@ export async function updateSession(request: NextRequest, requestHeaders?: Heade
   // Refresh the session (and cookies) if needed. Note: no route protection
   // here — Evntly's public pages (home, explore, vendor detail) must never
   // redirect to login. Auth is checked at the point of the gated action.
-  await supabase.auth.getUser();
+  // getClaims() verifies the JWT locally against the project's (cached)
+  // signing keys and only calls Supabase Auth when the token needs a
+  // refresh — getUser() was a network round-trip on every page load.
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }

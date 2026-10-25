@@ -35,6 +35,10 @@ export function fakeSupabase(opts: {
   const client = {
     auth: {
       getUser: vi.fn(async () => ({ data: { user: opts.user ?? null } })),
+      // getCurrentUser reads the verified JWT claims instead of getUser().
+      getClaims: vi.fn(async () => ({
+        data: opts.user ? { claims: { sub: opts.user.id, email: opts.user.email, user_metadata: {} } } : null,
+      })),
       mfa: {
         getAuthenticatorAssuranceLevel: vi.fn(async () => ({
           data: { currentLevel: opts.aal ?? "aal1", nextLevel: opts.nextAal ?? opts.aal ?? "aal1" },
