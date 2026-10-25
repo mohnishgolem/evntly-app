@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { logout } from "@/lib/actions/auth";
 import { acceptLegalDocuments } from "@/lib/actions/legal";
+import { clearAppShellCache } from "@/components/app-shell-cache";
 import { LEGAL_DOCUMENT_TITLE, legalDocumentHref } from "@/lib/legal/meta";
 import { MARKETING_CONSENT_LABEL } from "@/lib/legal/versions";
 import type { LegalDocumentKey } from "@/lib/legal/types";
@@ -62,6 +63,8 @@ export function LegalPrompt({
       if (res?.error) setError(res.error);
       else {
         setDone(true);
+        // The cached home page still has this prompt in it.
+        clearAppShellCache();
         router.refresh();
       }
     });
@@ -122,7 +125,7 @@ export function LegalPrompt({
           </p>
         )}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <form action={logout}>
+          <form action={logout} data-clear-app-cache>
             <Button type="submit" variant="ghost" size="lg" className="w-full sm:w-auto" disabled={pending}>
               Log out
             </Button>

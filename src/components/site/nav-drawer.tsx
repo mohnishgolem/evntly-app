@@ -157,7 +157,7 @@ export function NavDrawer({
 
           <div className="border-t border-drawer-border px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {signedIn ? (
-              <form action={logout}>
+              <form action={logout} data-clear-app-cache>
                 <button
                   type="submit"
                   className="flex h-12 w-full items-center gap-3.5 rounded-xl px-3 text-[17px] font-medium text-drawer-danger outline-none transition-colors hover:bg-drawer-hover focus-visible:ring-2 focus-visible:ring-ring"

@@ -159,7 +159,7 @@ export default async function VendorProfilePage() {
         ]}
       />
 
-      <form action={logout}>
+      <form action={logout} data-clear-app-cache>
         <button
           type="submit"
           className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold text-destructive outline-none transition-colors hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring"

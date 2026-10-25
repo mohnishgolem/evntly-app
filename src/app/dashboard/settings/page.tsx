@@ -69,7 +69,7 @@ export default async function SettingsPage() {
         <ChevronRight className="size-4 text-muted-foreground/60" />
       </Link>
 
-      <form action={logout} className="mt-6 overflow-hidden rounded-2xl bg-secondary">
+      <form action={logout} data-clear-app-cache className="mt-6 overflow-hidden rounded-2xl bg-secondary">
         <button
           type="submit"
           className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-destructive transition-colors hover:bg-accent"
