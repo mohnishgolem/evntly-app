@@ -72,7 +72,9 @@ create table public.legal_consents (
   context text not null
     check (context in ('signup', 'signup_google', 'terms_update', 'vendor_onboarding',
                        'settings', 'legacy_backfill')),
-  created_at timestamptz not null default now()
+  -- clock_timestamp(), not now(): rows written in one transaction (e.g. a
+  -- grant then a withdrawal) must still sort in the order they happened.
+  created_at timestamptz not null default clock_timestamp()
 );
 
 create index legal_consents_user_doc_idx on public.legal_consents (user_id, document, created_at desc);

@@ -34,7 +34,7 @@ begin
   begin
     select count(*) into n from public.legal_consents;
     res := res || ('FAIL 2b anon read consents: ' || n);
-  exception when others then res := res || ('ok 2b anon denied consents');
+  exception when others then res := res || 'ok 2b anon denied consents'::text;
   end;
   reset role;
 
@@ -42,20 +42,20 @@ begin
   perform set_config('request.jwt.claims', cc, true); set local role authenticated;
   begin
     perform public.record_signup_consents(v_cust::text, 'customer', true);
-    res := res || 'FAIL 3a user called record_signup_consents';
-  exception when others then res := res || 'ok 3a record_signup_consents denied to users';
+    res := res || 'FAIL 3a user called record_signup_consents'::text;
+  exception when others then res := res || 'ok 3a record_signup_consents denied to users'::text;
   end;
   begin
     insert into public.legal_consents (user_id, document, version, status, context)
     values (v_cust::text, 'customer_terms', '2026-10-24', 'accepted', 'signup');
-    res := res || 'FAIL 3b direct insert allowed';
-  exception when others then res := res || 'ok 3b direct insert denied';
+    res := res || 'FAIL 3b direct insert allowed'::text;
+  exception when others then res := res || 'ok 3b direct insert denied'::text;
   end;
   -- 4. No acceptance yet → quote request blocked.
   begin
     insert into public.quote_requests (vendor_id, client_email, event_date, event_type, location, estimated_guests, budget_range, status)
     values (pa, 'lc-cust@example.invalid', d, 'Birthday', 'Parramatta', 50, '$1,000', 'pending');
-    res := res || 'FAIL 4 quote without acceptance';
+    res := res || 'FAIL 4 quote without acceptance'::text;
   exception when others then
     res := res || (case when sqlerrm like 'LEGAL_ACCEPTANCE_REQUIRED%' then 'ok 4 quote blocked: ' || sqlerrm else 'FAIL 4 wrong error: ' || sqlerrm end);
   end;
@@ -76,8 +76,8 @@ begin
   -- 6. Append-only even for the owner role.
   begin
     update public.legal_consents set version = '2020-01-01' where user_id = v_cust::text;
-    res := res || 'FAIL 6 update allowed';
-  exception when others then res := res || 'ok 6 append-only: ' || sqlerrm;
+    res := res || 'FAIL 6 update allowed'::text;
+  exception when others then res := res || ('ok 6 append-only: ' || sqlerrm);
   end;
 
   -- 7. Accepted → quote allowed; status shows accepted; other user can't see rows.
@@ -95,19 +95,19 @@ begin
   begin
     insert into public.service_providers (name, service_type, hourly_rate, owner_email, available)
     values ('LC Listing', 'photographer', 100, 'lc-cust@example.invalid', true);
-    res := res || 'FAIL 8a listing without vendor agreement';
+    res := res || 'FAIL 8a listing without vendor agreement'::text;
   exception when others then
     res := res || (case when sqlerrm like 'LEGAL_ACCEPTANCE_REQUIRED: vendor_agreement%' then 'ok 8a listing blocked' else 'FAIL 8a ' || sqlerrm end);
   end;
   begin
     perform public.record_legal_acceptance(array['vendor_agreement', 'vendor_fee_schedule'], 'signup');
-    res := res || 'FAIL 8b user chose context signup';
-  exception when others then res := res || 'ok 8b users cannot claim signup context';
+    res := res || 'FAIL 8b user chose context signup'::text;
+  exception when others then res := res || 'ok 8b users cannot claim signup context'::text;
   end;
   perform public.record_legal_acceptance(array['vendor_agreement', 'vendor_fee_schedule'], 'vendor_onboarding');
   insert into public.service_providers (name, service_type, hourly_rate, owner_email, available)
   values ('LC Listing', 'photographer', 100, 'lc-cust@example.invalid', true);
-  res := res || 'ok 8c listing allowed after vendor acceptance';
+  res := res || 'ok 8c listing allowed after vendor acceptance'::text;
   -- 9. Marketing withdrawal is recorded as a new row.
   perform public.set_marketing_consent(false, 'settings');
   select marketing_granted into b from public.my_legal_status() where document = 'marketing_emails';
@@ -133,8 +133,8 @@ begin
   begin
     insert into public.quote_requests (vendor_id, client_email, event_date, event_type, location, estimated_guests, budget_range, status)
     values (pa, 'lc-cust@example.invalid', d + 1, 'Birthday', 'Parramatta', 50, '$1,000', 'pending');
-    res := res || 'FAIL 12b quote allowed on old terms';
-  exception when others then res := res || 'ok 12b blocked until re-accepted';
+    res := res || 'FAIL 12b quote allowed on old terms'::text;
+  exception when others then res := res || 'ok 12b blocked until re-accepted'::text;
   end;
   perform public.record_legal_acceptance(array['customer_terms'], 'terms_update');
   select count(*) into n from public.my_legal_status() where required and not accepted;
@@ -143,8 +143,8 @@ begin
   -- 14. Old accept_terms revoked.
   begin
     perform public.accept_terms('2026-12-01');
-    res := res || 'FAIL 14 accept_terms still callable';
-  exception when others then res := res || 'ok 14 accept_terms revoked';
+    res := res || 'FAIL 14 accept_terms still callable'::text;
+  exception when others then res := res || 'ok 14 accept_terms revoked'::text;
   end;
   reset role;
 
@@ -152,8 +152,8 @@ begin
   -- 13. Payment plans blocked while payments are off.
   begin
     insert into public.payment_plans (booking_id, customer_user_id, vendor_user_id, plan_type, total_cents)
-    values ('x', v_cust::text, v_other::text, 'single', 100);
-    res := res || 'FAIL 13 payment plan allowed';
+    values ('x', v_cust, v_other, 'single', 100);
+    res := res || 'FAIL 13 payment plan allowed'::text;
   exception when others then
     res := res || (case when sqlerrm like 'Online payments%' then 'ok 13 payment plan blocked: ' || sqlerrm else 'FAIL 13 ' || sqlerrm end);
   end;
