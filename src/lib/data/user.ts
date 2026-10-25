@@ -4,13 +4,23 @@ import { createClient } from "@/lib/supabase/server";
 
 // cache(): the header, the Terms prompt and the page all ask for the session
 // on the same request — fetch it once.
+//
+// The session comes from getClaims(): the JWT is verified locally against
+// the project's signing keys (ES256, cached in memory), so no round-trip to
+// Supabase Auth before the profile query. Only id, email and user_metadata
+// are read from it.
 export const getCurrentUser = cache(async function getCurrentUser() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  if (!user) return null;
+  if (!claims?.sub) return null;
+
+  const user = {
+    id: claims.sub,
+    email: claims.email,
+    user_metadata: (claims.user_metadata ?? {}) as Record<string, unknown>,
+  };
 
   const { data: profile } = await supabase
     .from("users")
@@ -19,7 +29,7 @@ export const getCurrentUser = cache(async function getCurrentUser() {
     .maybeSingle();
 
   const displayName =
-    (user.user_metadata?.full_name as string | undefined) ?? null;
+    (user.user_metadata.full_name as string | undefined) ?? null;
 
   return { user, profile, displayName };
 });

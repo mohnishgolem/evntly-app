@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import Image from "next/image";
 import { ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VendorCard } from "@/components/vendor-card";
+import { HeroVideo } from "@/components/hero-video";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { getFeaturedVendors, launchCity } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
@@ -12,9 +14,7 @@ const HERO_SCENARIOS = ["Weddings", "Birthdays", "Corporate events", "Engagement
 
 const listFormat = new Intl.ListFormat("en-AU", { style: "long", type: "conjunction" });
 
-export default async function HomePage() {
-  const [vendors, session] = await Promise.all([getFeaturedVendors(8), getCurrentUser()]);
-  const savedVendorIds = session?.profile?.saved_providers ?? [];
+export default function HomePage() {
   // The strategy's focus categories only — all 11 crowded the hero on
   // phones. "More" goes to Explore, which lists every category.
   const featuredCategories = VENDOR_CATEGORIES.filter((c) => FEATURED_CATEGORIES.includes(c.value));
@@ -33,17 +33,7 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        <video
-          src="/videos/hero-celebrations.mp4"
-          poster="/images/hero-celebrations-poster.jpg"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-hidden="true"
-          className="hero-video absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
-        />
+        <HeroVideo src="/videos/hero-celebrations.mp4" poster="/images/hero-celebrations-poster.jpg" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
 
         <div className="relative mx-auto max-w-3xl text-center">
@@ -95,68 +85,102 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-4">
-        {vendors.length > 0 && (
-          <section className="mt-12">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Explore vendors near you</h2>
-              <Link
-                href="/explore?view=map"
-                className="flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:text-primary"
-              >
-                Open full map <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Discover event vendors available in your area
-            </p>
-            <div className="relative h-72 overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-              <VendorMapLoader vendors={vendors} embedded />
-              <Link
-                href="/explore?view=map"
-                className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-background shadow-lg transition-colors hover:bg-foreground/90"
-              >
-                <MapPin className="h-4 w-4" /> Open full map
-              </Link>
-            </div>
-          </section>
-        )}
+      {/* The hero needs no data, so it paints straight away; vendors stream in. */}
+      <Suspense fallback={<HomeVendorsSkeleton />}>
+        <HomeVendors />
+      </Suspense>
+    </div>
+  );
+}
 
-        {vendors.length > 0 ? (
-          <section className="mt-12">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Featured vendors in {launchCity}</h2>
-              <Link
-                href="/explore"
-                className="flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:text-primary"
-              >
-                Show all <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {vendors.map((v) => (
-                <VendorCard
-                  key={v.id}
-                  vendor={v}
-                  saved={savedVendorIds.includes(v.id)}
-                  isAuthenticated={!!session}
-                />
-              ))}
-            </div>
-          </section>
-        ) : (
-          <section className="mt-16 rounded-2xl border border-dashed border-border py-16 text-center">
-            <p className="text-lg font-semibold">No vendors listed yet</p>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              We&apos;re curating our first {launchCity} vendors. Check back soon, or{" "}
-              <Link href="/signup?role=vendor" className="underline underline-offset-2">
-                list your business
-              </Link>
-              .
-            </p>
-          </section>
-        )}
-      </div>
+async function HomeVendors() {
+  const [vendors, session] = await Promise.all([getFeaturedVendors(8), getCurrentUser()]);
+  const savedVendorIds = session?.profile?.saved_providers ?? [];
+
+  return (
+    <div className="mx-auto max-w-6xl px-4">
+      {vendors.length > 0 && (
+        <section className="mt-12">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-xl font-bold">Explore vendors near you</h2>
+            <Link
+              href="/explore?view=map"
+              className="flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:text-primary"
+            >
+              Open full map <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Discover event vendors available in your area
+          </p>
+          <div className="relative h-72 overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+            <VendorMapLoader vendors={vendors} embedded />
+            <Link
+              href="/explore?view=map"
+              className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-background shadow-lg transition-colors hover:bg-foreground/90"
+            >
+              <MapPin className="h-4 w-4" /> Open full map
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {vendors.length > 0 ? (
+        <section className="mt-12">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-xl font-bold">Featured vendors in {launchCity}</h2>
+            <Link
+              href="/explore"
+              className="flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:text-primary"
+            >
+              Show all <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {vendors.map((v) => (
+              <VendorCard
+                key={v.id}
+                vendor={v}
+                saved={savedVendorIds.includes(v.id)}
+                isAuthenticated={!!session}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="mt-16 rounded-2xl border border-dashed border-border py-16 text-center">
+          <p className="text-lg font-semibold">No vendors listed yet</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            We&apos;re curating our first {launchCity} vendors. Check back soon, or{" "}
+            <Link href="/signup?role=vendor" className="underline underline-offset-2">
+              list your business
+            </Link>
+            .
+          </p>
+        </section>
+      )}
+    </div>
+  );
+}
+
+// Same footprint as the map and first row of cards, so nothing jumps when
+// they arrive.
+function HomeVendorsSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl px-4" aria-hidden>
+      <section className="mt-12">
+        <div className="mb-2 h-7 w-56 rounded-md bg-muted" />
+        <div className="mb-4 h-5 w-72 max-w-full rounded-md bg-muted/60" />
+        <div className="h-72 animate-pulse rounded-3xl bg-muted" />
+      </section>
+      <section className="mt-12">
+        <div className="mb-5 h-7 w-64 rounded-md bg-muted" />
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
