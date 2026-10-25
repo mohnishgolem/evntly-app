@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          admin_note: string | null
+          completed_at: string | null
+          id: string
+          reason: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          completed_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          completed_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      legal_consents: {
+        Row: {
+          context: string
+          created_at: string
+          document: string
+          id: string
+          status: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          context: string
+          created_at?: string
+          document: string
+          id?: string
+          status: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          document?: string
+          id?: string
+          status?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      legal_document_versions: {
+        Row: {
+          document: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          document: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          document?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -2458,6 +2536,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_account_deletion: { Args: never; Returns: undefined }
+      my_legal_status: {
+        Args: never
+        Returns: {
+          accepted: boolean
+          accepted_at: string | null
+          current_version: string
+          document: string
+          marketing_granted: boolean | null
+          required: boolean
+        }[]
+      }
+      record_legal_acceptance: {
+        Args: { p_context: string; p_documents: string[] }
+        Returns: undefined
+      }
+      record_signup_consents: {
+        Args: { p_marketing: boolean; p_role: string; p_user_id: string }
+        Returns: undefined
+      }
+      request_account_deletion: { Args: { p_reason: string }; Returns: string }
+      set_marketing_consent: {
+        Args: { p_context: string; p_granted: boolean }
+        Returns: undefined
+      }
       accept_event_application: {
         Args: { p_application_id: string }
         Returns: Json

@@ -46,6 +46,7 @@ function form(role: "customer" | "vendor") {
   f.set("password", "a-long-password");
   f.set("role", role);
   f.set("agreedToTerms", "on");
+  if (role === "vendor") f.set("agreedToVendorAgreement", "on");
   return f;
 }
 

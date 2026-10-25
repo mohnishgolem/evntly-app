@@ -4,6 +4,7 @@ import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyLegalError } from "@/lib/legal/status";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -160,7 +161,7 @@ export async function bookBundle(packageId: string, draft: BookBundleDraft): Pro
     p_event_address: draft.eventAddress,
     p_notes: draft.notes ?? "",
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   revalidatePath("/dashboard/bundles");
   redirect("/dashboard/bundles");

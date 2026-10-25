@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { TERMS_VERSION } from "@/lib/config";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -9,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LEGACY_SITE_URL, SITE_URL } from "@/lib/config";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+import { recordSignupConsents } from "@/lib/actions/legal";
 
 // Origin for links Supabase emails or redirects to (OAuth callback, password
 // reset). Taken from the request only when it's one of ours — never echo an
@@ -33,8 +32,12 @@ const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["customer", "vendor"]),
   agreedToTerms: z
-    .string()
-    .refine((v) => v === "on", "You must agree to the Terms & Conditions"),
+    .string({ error: "You must agree to the Terms & Conditions to create an account" })
+    .refine((v) => v === "on", "You must agree to the Terms & Conditions to create an account"),
+  // Vendors only (checked below): the Vendor Service Agreement + fee schedule.
+  agreedToVendorAgreement: z.string().nullable(),
+  // Optional and unticked by default; separate from the Terms.
+  marketingOptIn: z.string().nullable(),
 });
 
 export type AuthFormState = {
@@ -53,7 +56,9 @@ export async function signup(
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role") ?? "customer",
-    agreedToTerms: formData.get("agreedToTerms"),
+    agreedToTerms: formData.get("agreedToTerms") ?? undefined,
+    agreedToVendorAgreement: formData.get("agreedToVendorAgreement"),
+    marketingOptIn: formData.get("marketingOptIn"),
   });
 
   if (!parsed.success) {
@@ -61,6 +66,10 @@ export async function signup(
   }
 
   const { fullName, email, password, role } = parsed.data;
+  if (role === "vendor" && parsed.data.agreedToVendorAgreement !== "on") {
+    return { fieldErrors: { agreedToVendorAgreement: ["You must agree to the Vendor Service Agreement to list a business"] } };
+  }
+  const marketing = parsed.data.marketingOptIn === "on";
   if (!(await checkRateLimit("signupIp", await clientIp()))) {
     return { error: RATE_LIMIT_ERROR };
   }
@@ -80,10 +89,10 @@ export async function signup(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    // terms_version: they ticked the Terms box; the new-user trigger records
-    // it with a server-side timestamp.
+    // Acceptance isn't sent in auth metadata (the client controls that);
+    // it's recorded below through the service role, after validation.
     options: {
-      data: { full_name: fullName, role, terms_version: TERMS_VERSION },
+      data: { full_name: fullName, role },
       emailRedirectTo: confirmUrl.toString(),
     },
   });
@@ -91,6 +100,8 @@ export async function signup(
   if (error) {
     return { error: error.message };
   }
+
+  if (data.user) await recordSignupConsents(data.user.id, role, marketing);
 
   // When email confirmation is required, signUp succeeds but returns no
   // session — redirecting to a protected page would just bounce the user
@@ -231,14 +242,4 @@ export async function updatePassword(
   }
 
   redirect("/dashboard");
-}
-
-// Records acceptance of the current Terms (Google sign-ins, accounts from
-// before acceptance was recorded, and everyone after a Terms update).
-export async function acceptCurrentTerms(): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("accept_terms", { p_version: TERMS_VERSION });
-  if (error) return { error: "Couldn't save that. Please try again." };
-  revalidatePath("/", "layout");
-  return {};
 }

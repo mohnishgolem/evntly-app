@@ -18,6 +18,7 @@ import { scanMessageAttachment } from "@/lib/attachment-scan";
 import type { User } from "@supabase/supabase-js";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
+import { friendlyLegalError } from "@/lib/legal/status";
 
 const MAX_MESSAGE_LENGTH = 5000;
 
@@ -125,7 +126,7 @@ export async function sendVendorMessage(
   if (isPaymentGuardRejection(error)) {
     return recordBlockedPayment(supabase, { id: user.id, email: user.email }, conversationId, content);
   }
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   if (shouldEmail) await notifyNewMessage(message.id, displayName(user), content, conversationId);
 
@@ -192,7 +193,7 @@ export async function sendReply(
   if (isPaymentGuardRejection(error)) {
     return recordBlockedPayment(supabase, { id: user.id, email: user.email }, conversationId, trimmed);
   }
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   // Check the file for contact details after responding; until the scan
   // finishes the other party sees "checking attachment" instead of the file.

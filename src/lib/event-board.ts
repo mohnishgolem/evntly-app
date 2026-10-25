@@ -299,7 +299,7 @@ export type PaymentSummary = {
 export function paymentSummary(plan: BoardPlan | undefined, milestones: BoardMilestone[]): PaymentSummary {
   const empty = { paidCents: 0, releasedCents: 0, totalCents: plan?.total_cents ?? 0 };
   if (!plan || plan.status === "cancelled") {
-    return { label: "No payment plan yet", tone: "neutral", actionDue: false, ...empty };
+    return { label: "Pay the vendor directly", tone: "neutral", actionDue: false, ...empty };
   }
   if (plan.status === "proposed") {
     return { label: "Payment plan to review", tone: "attention", actionDue: true, ...empty };

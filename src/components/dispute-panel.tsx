@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -262,7 +263,14 @@ function LiveDispute({ dispute: d, readOnly }: { dispute: DisputeView; readOnly:
                 </Button>
               ))}
           </div>
-          <p className="text-xs text-muted-foreground">Evntly aims to respond within 3 business days.</p>
+          <p className="text-xs text-muted-foreground">
+            Evntly aims to respond within 3 business days. We can help you both reach an outcome, but we can&apos;t
+            reverse payments made directly to a vendor. See our{" "}
+            <Link href="/cancellation-refund-dispute-policy" className="underline underline-offset-2">
+              dispute policy
+            </Link>
+            .
+          </p>
         </div>
       )}
     </div>

@@ -23,6 +23,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/vendor-signup`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/privacy-policy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE_URL}/cancellation-refund-dispute-policy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE_URL}/vendor-agreement`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE_URL}/legal`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const vendorRoutes: MetadataRoute.Sitemap = (vendors ?? []).map((v) => ({

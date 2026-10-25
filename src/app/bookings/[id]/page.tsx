@@ -10,6 +10,7 @@ import { categoryLabel } from "@/lib/config";
 import { formatEventDate } from "@/lib/email";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { BookingPayments, type PaymentMilestone } from "@/components/payments/booking-payments";
+import { DirectPaymentNotice } from "@/components/payments/direct-payment-notice";
 import { VendorBookingActions } from "@/components/vendor-booking-actions";
 import { DisputePanel } from "@/components/dispute-panel";
 import { loadBookingDisputes } from "@/lib/data/disputes";
@@ -162,6 +163,10 @@ export default async function BookingPage({
 
       <DisputePanel bookingId={booking.id} role={role} disputes={disputes} canOpen={canDispute} />
 
+      {/* Online payments are switched off at launch: customers pay vendors
+          directly. Only show Evntly's payment plans once payments are on
+          (or for a plan made while they were on). */}
+      {status.enabled || plan ? (
       <BookingPayments
         role={role}
         bookingId={booking.id}
@@ -181,6 +186,9 @@ export default async function BookingPage({
         paymentsEnabled={status.enabled}
         vendorReady={vendorReady}
       />
+      ) : (
+        <DirectPaymentNotice role={role} />
+      )}
     </div>
   );
 }

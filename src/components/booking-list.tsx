@@ -66,7 +66,7 @@ export function BookingList({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Link href={`/bookings/${b.id}`} className="text-sm font-medium underline underline-offset-2">
-              Booking & payments
+              View booking
             </Link>
             {b.status !== "cancelled" && b.status !== "completed" && (
               <CancelBookingButton bookingId={b.id} />

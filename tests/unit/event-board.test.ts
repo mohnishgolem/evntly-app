@@ -204,7 +204,7 @@ describe("payment summary", () => {
   });
 
   it("asks the customer to act on a proposed plan or an unpaid deposit", () => {
-    expect(paymentSummary(undefined, []).label).toBe("No payment plan yet");
+    expect(paymentSummary(undefined, []).label).toBe("Pay the vendor directly");
     expect(paymentSummary({ ...plan, status: "proposed" }, [])).toMatchObject({ actionDue: true });
     expect(paymentSummary(plan, [ms({ kind: "deposit" })])).toMatchObject({ label: "Deposit due", actionDue: true });
   });

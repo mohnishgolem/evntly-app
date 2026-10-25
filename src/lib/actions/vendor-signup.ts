@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 import { isValidAbn, normalizeAbn } from "@/lib/abn";
 import { isLaunchCategory, isVendorCategory } from "@/lib/config";
+import { VENDOR_DOCUMENTS } from "@/lib/legal/versions";
+import { friendlyLegalError } from "@/lib/legal/status";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -19,7 +21,8 @@ export type VendorSignupDraft = {
   locationsServiced: string[];
   eventTypes: string[];
   phone?: string;
-  // Edit form only (optional at signup): shown on booking invoices.
+  // Required for new listings (Vendor Service Agreement s3); shown on
+  // booking invoices.
   abn?: string;
   gstRegistered?: boolean;
 };
@@ -41,7 +44,9 @@ async function resolveCoordinates(draft: VendorSignupDraft) {
 }
 
 export async function submitVendorListing(
-  draft: VendorSignupDraft
+  draft: VendorSignupDraft,
+  // The wizard's required "I agree to the Vendor Service Agreement" box.
+  agreement: { acceptedVendorAgreement: boolean } = { acceptedVendorAgreement: false }
 ): Promise<VendorSignupState> {
   const supabase = await createClient();
   const {
@@ -57,6 +62,15 @@ export async function submitVendorListing(
     return { error: "Pick one of the listed categories." };
   }
 
+  // Vendor Service Agreement s3: a valid ABN is required to list.
+  const abn = normalizeAbn(draft.abn);
+  if (!abn || !isValidAbn(abn)) {
+    return { error: "Enter a valid 11-digit ABN. You can check it at abr.business.gov.au." };
+  }
+  if (agreement.acceptedVendorAgreement !== true) {
+    return { error: "Please agree to the Vendor Service Agreement to submit your listing." };
+  }
+
   const { data: existing } = await supabase
     .rpc("my_service_providers")
     .select("id")
@@ -66,6 +80,14 @@ export async function submitVendorListing(
   if (existing) {
     redirect("/vendor-dashboard");
   }
+
+  // Recorded (server timestamp, append-only) before the listing exists; the
+  // database refuses new listings without it.
+  const { error: legalError } = await supabase.rpc("record_legal_acceptance", {
+    p_documents: [...VENDOR_DOCUMENTS],
+    p_context: "vendor_onboarding",
+  });
+  if (legalError) return { error: "We couldn't record your agreement. Please try again." };
 
   const coordinates = await resolveCoordinates(draft);
   const { error } = await supabase.from("service_providers").insert({
@@ -80,11 +102,13 @@ export async function submitVendorListing(
     locations_serviced: draft.locationsServiced,
     event_types: draft.eventTypes,
     phone: draft.phone || null,
+    abn,
+    gst_registered: !!draft.gstRegistered,
     status: "pending_review",
     available: true,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   // Keep nav routing in sync: a customer account that creates a listing
   // (not just one that signed up as "I'm a vendor") still needs isVendor

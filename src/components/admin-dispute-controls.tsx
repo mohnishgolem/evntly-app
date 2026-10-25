@@ -69,7 +69,7 @@ export function AdminDisputeControls({ disputeId, status }: { disputeId: string;
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="resolution">Note to both parties</Label>
-            <Textarea id="resolution" rows={3} maxLength={4000} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you found and what happens next (refunds are handled on the Payments page)." />
+            <Textarea id="resolution" rows={3} maxLength={4000} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you found and what happens next. Evntly can't refund direct payments — record what the parties agreed." />
           </div>
           <Button size="lg" disabled={pending || !outcome || note.trim().length < 10} onClick={() => run(() => adminUpdateDispute({ disputeId, status: "resolved", outcome, note }), "Resolved — both parties notified.")}>
             {pending && <Loader2 className="animate-spin" aria-hidden />} Resolve dispute

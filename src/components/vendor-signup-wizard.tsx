@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SuburbPicker } from "@/components/suburb-picker";
@@ -10,8 +12,9 @@ import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import { submitVendorListing, type VendorSignupDraft } from "@/lib/actions/vendor-signup";
 import { CheckCircle2, Clock } from "lucide-react";
+import { isValidAbn } from "@/lib/abn";
 
-const STEPS = ["Business", "Services", "Pricing", "Locations"] as const;
+const STEPS = ["Business", "Services", "Pricing", "Locations", "Agreement"] as const;
 const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
 
 export function VendorSignupWizard() {
@@ -28,14 +31,18 @@ export function VendorSignupWizard() {
     locationsServiced: [],
     eventTypes: [],
     phone: "",
+    abn: "",
+    gstRegistered: false,
   });
   const [locationInput, setLocationInput] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   const canAdvance = [
     !!draft.businessName,
     !!draft.serviceType && draft.eventTypes.length > 0,
     draft.hourlyRate > 0,
     !!draft.city && draft.locationsServiced.length > 0,
+    isValidAbn(draft.abn) && agreed,
   ][step];
 
   function addLocation() {
@@ -49,7 +56,7 @@ export function VendorSignupWizard() {
   function submit() {
     setError(null);
     startTransition(async () => {
-      const res = await submitVendorListing(draft);
+      const res = await submitVendorListing(draft, { acceptedVendorAgreement: agreed });
       if (res?.error) setError(res.error);
       else setSubmitted(true);
     });
@@ -242,6 +249,71 @@ export function VendorSignupWizard() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="space-y-4">
+          <h1 className="mb-1 text-xl font-bold">Your business and our agreement</h1>
+          <div className="space-y-1.5">
+            <Label htmlFor="abn">ABN</Label>
+            <Input
+              id="abn"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="11 digits"
+              value={draft.abn ?? ""}
+              onChange={(e) => setDraft((d) => ({ ...d, abn: e.target.value }))}
+              aria-invalid={!!draft.abn && !isValidAbn(draft.abn)}
+              aria-describedby="abn-help"
+            />
+            <p id="abn-help" className="text-xs text-muted-foreground">
+              {draft.abn && !isValidAbn(draft.abn)
+                ? "That doesn't look like a valid ABN. Check it at abr.business.gov.au."
+                : "Required to list on Evntly. It's shown on your listing and on booking invoices."}
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <Checkbox
+              aria-labelledby="gst-label"
+              id="gst"
+              checked={!!draft.gstRegistered}
+              onCheckedChange={(v) => setDraft((d) => ({ ...d, gstRegistered: v === true }))}
+            />
+            <Label id="gst-label" htmlFor="gst" className="text-sm leading-snug font-normal">
+              I&apos;m registered for GST
+            </Label>
+          </div>
+
+          <div className="rounded-2xl bg-secondary p-4 text-sm">
+            <p className="mb-2 font-medium">As an Evntly vendor, you agree to:</p>
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+              <li>keep your listing, photos and prices accurate, and show whether prices include GST;</li>
+              <li>hold the licences and permits your services need (public liability insurance is strongly recommended);</li>
+              <li>give clear quotes, including your deposit and cancellation terms, and honour accepted bookings;</li>
+              <li>take payment directly from customers — Evntly doesn&apos;t hold booking payments;</li>
+              <li>use customers&apos; details only for their enquiry or booking.</li>
+            </ul>
+            <p className="mt-2 text-muted-foreground">
+              Listing is currently free: no subscription, commission or booking fees.
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <Checkbox aria-labelledby="vendor-agreement-label" id="vendor-agreement" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} />
+            <Label id="vendor-agreement-label" htmlFor="vendor-agreement" className="text-sm leading-snug font-normal text-muted-foreground">
+              <span>
+                I agree to the{" "}
+                <Link href="/vendor-agreement" target="_blank" className="font-medium text-foreground underline underline-offset-2">
+                  Vendor Service Agreement
+                </Link>{" "}
+                and its{" "}
+                <Link href="/vendor-agreement#schedule-1" target="_blank" className="font-medium text-foreground underline underline-offset-2">
+                  fee schedule
+                </Link>
+                , and I&apos;m authorised to agree on behalf of this business.
+              </span>
+            </Label>
           </div>
         </div>
       )}

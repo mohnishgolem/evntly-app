@@ -10,6 +10,7 @@ import { z } from "zod";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
 import type { Database } from "@/lib/supabase/database.types";
+import { friendlyLegalError } from "@/lib/legal/status";
 
 export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
 
@@ -22,7 +23,7 @@ const ORIGINS: QuoteOrigin[] = ["vendor_profile", "event_board", "smart_match"];
 function friendlyError(message: string) {
   return /has expired/i.test(message) && !/Ask the vendor/.test(message)
     ? "This quote request has expired. Refresh to see the latest."
-    : message;
+    : friendlyLegalError(message);
 }
 
 export type QuoteRequestDraft = {
@@ -279,7 +280,7 @@ export async function cancelQuote(quoteId: string): Promise<ActionState> {
     // RLS + the lockdown trigger restrict cancelling to the customer.
     .eq("id", quoteId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error.message) };
 
   revalidatePath("/dashboard/quotes");
   return { success: true };

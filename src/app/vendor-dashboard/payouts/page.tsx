@@ -40,6 +40,24 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
     0
   );
 
+  // While online payments are off (launch), customers pay vendors directly:
+  // don't show payout setup or "held" totals that would suggest otherwise.
+  if (!status.enabled && !plans?.length) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <h1 className="mb-1 text-2xl font-bold">Payments</h1>
+        <Link href="/vendor-dashboard/profile" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4" aria-hidden /> Profile
+        </Link>
+        <p className="rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
+          Customers pay you directly, using the payment details and terms you give them. Evntly doesn&apos;t take,
+          hold or release booking payments, and listing on Evntly is currently free. If we introduce online payments,
+          we&apos;ll update the Vendor Service Agreement and ask you to accept it before anything changes.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Payouts</h1>

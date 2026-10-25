@@ -6,6 +6,7 @@ import { notify, formatEventDate, formatAmount } from "@/lib/email";
 import { categoryLabel } from "@/lib/config";
 import { APPLICATION_COLUMNS } from "@/lib/public-columns";
 import { applicationEmails } from "@/lib/supabase/admin";
+import { friendlyLegalError } from "@/lib/legal/status";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -84,7 +85,7 @@ export async function publishEventToFeed(eventId: string): Promise<ActionState> 
     status: "open",
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   revalidatePath("/dashboard/event-feed");
   return { success: true };
@@ -120,7 +121,7 @@ export async function closeEventListing(listingId: string): Promise<ActionState>
     .update({ status: "closed" })
     .eq("id", listingId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
 
   revalidatePath("/dashboard/event-feed");
   return { success: true };
@@ -188,7 +189,7 @@ export async function applyToEventListing(
     // DB constraint catching a race the pre-check above could miss (e.g. a
     // double-click), not just the normal "already applied" path above.
     if (error.code === "23505") return { error: "You've already applied to this event." };
-    return { error: error.message };
+    return { error: friendlyLegalError(error.message) };
   }
 
   const [organiserEmail] = await applicationEmails([application.id], "organiser_email");
@@ -245,7 +246,7 @@ export async function respondToApplication(
       .eq("id", applicationId)
       .select("id");
 
-    if (error) return { error: error.message };
+    if (error) return { error: friendlyLegalError(error.message) };
     if (!declined?.length) return { error: "Not your event listing." };
 
     await notifyApplicationsDeclined([applicationId], listing.event_type, listing.event_date);
@@ -260,7 +261,7 @@ export async function respondToApplication(
   const { data: result, error } = await supabase.rpc("accept_event_application", {
     p_application_id: applicationId,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyLegalError(error.message) };
   const declinedIds = ((result as { declined?: string[] } | null)?.declined ?? []);
 
   const [vendorEmail] = await applicationEmails([applicationId], "vendor_email");

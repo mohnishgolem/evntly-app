@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { login, signup, signInWithOAuth, type AuthFormState } from "@/lib/actions/auth";
 import { GoogleIcon, AppleIcon } from "@/components/auth/social-icons";
+import { MARKETING_CONSENT_LABEL } from "@/lib/legal/versions";
 
 const initialState: AuthFormState = null;
 
@@ -149,22 +150,70 @@ function SignupForm({ defaultRole }: { defaultRole: "customer" | "vendor" }) {
         )}
       </div>
 
-      <div className="flex items-start gap-2">
-        <Checkbox id="agreedToTerms" name="agreedToTerms" required />
-        <Label htmlFor="agreedToTerms" className="text-sm leading-snug font-normal text-muted-foreground">
-          I agree to Evntly&apos;s{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
-            Terms &amp; Conditions
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy-policy" className="underline underline-offset-2 hover:text-foreground">
+      {/* Separate, unticked choices: required Terms (and Vendor Agreement for
+          vendors), a Privacy notice, and optional marketing. */}
+      <fieldset className="space-y-3">
+        <legend className="sr-only">Agreements</legend>
+        <div className="flex items-start gap-2">
+          <Checkbox aria-labelledby="agreedToTerms-label" id="agreedToTerms" name="agreedToTerms" required aria-describedby="privacy-notice" />
+          <Label id="agreedToTerms-label" htmlFor="agreedToTerms" className="text-sm leading-snug font-normal text-muted-foreground">
+            <span>
+              I agree to Evntly&apos;s{" "}
+              <Link href="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                Terms &amp; Conditions
+              </Link>{" "}
+              and{" "}
+              <Link href="/cancellation-refund-dispute-policy" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                Cancellation, Refund &amp; Dispute Policy
+              </Link>
+              . I&apos;m 18 or older.
+            </span>
+          </Label>
+        </div>
+        {state?.fieldErrors?.agreedToTerms && (
+          <p className="text-sm text-destructive">{state.fieldErrors.agreedToTerms[0]}</p>
+        )}
+
+        {role === "vendor" && (
+          <>
+            <div className="flex items-start gap-2">
+              <Checkbox aria-labelledby="agreedToVendorAgreement-label" id="agreedToVendorAgreement" name="agreedToVendorAgreement" required />
+              <Label id="agreedToVendorAgreement-label" htmlFor="agreedToVendorAgreement" className="text-sm leading-snug font-normal text-muted-foreground">
+                <span>
+                  I agree to the{" "}
+                  <Link href="/vendor-agreement" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                    Vendor Service Agreement
+                  </Link>
+                  , including the{" "}
+                  <Link href="/vendor-agreement#schedule-1" target="_blank" className="underline underline-offset-2 hover:text-foreground">
+                    fee schedule
+                  </Link>{" "}
+                  (listing is currently free).
+                </span>
+              </Label>
+            </div>
+            {state?.fieldErrors?.agreedToVendorAgreement && (
+              <p className="text-sm text-destructive">{state.fieldErrors.agreedToVendorAgreement[0]}</p>
+            )}
+          </>
+        )}
+
+        <div className="flex items-start gap-2">
+          <Checkbox aria-labelledby="marketingOptIn-label" id="marketingOptIn" name="marketingOptIn" />
+          <Label id="marketingOptIn-label" htmlFor="marketingOptIn" className="text-sm leading-snug font-normal text-muted-foreground">
+            {MARKETING_CONSENT_LABEL}
+          </Label>
+        </div>
+
+        <p id="privacy-notice" className="text-xs leading-relaxed text-muted-foreground">
+          We&apos;ll use your details to run your account and connect you with{" "}
+          {role === "vendor" ? "customers" : "vendors"}, as explained in our{" "}
+          <Link href="/privacy-policy" target="_blank" className="underline underline-offset-2 hover:text-foreground">
             Privacy Policy
           </Link>
-        </Label>
-      </div>
-      {state?.fieldErrors?.agreedToTerms && (
-        <p className="text-sm text-destructive">{state.fieldErrors.agreedToTerms[0]}</p>
-      )}
+          . Some providers we use process data overseas.
+        </p>
+      </fieldset>
 
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
@@ -185,7 +234,7 @@ function LoginForm({ next }: { next?: string }) {
       <form action={formAction} className="space-y-4">
         {next && <input type="hidden" name="next" value={next} />}
         <div className="space-y-1.5">
-          <Label htmlFor="login-email">Email</Label>
+          <Label id="login-email-label" htmlFor="login-email">Email</Label>
           <Input id="login-email" name="email" type="email" placeholder="you@example.com" required />
           {state?.fieldErrors?.email && (
             <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
@@ -193,7 +242,7 @@ function LoginForm({ next }: { next?: string }) {
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="login-password">Password</Label>
+            <Label id="login-password-label" htmlFor="login-password">Password</Label>
             <Link
               href="/forgot-password"
               className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"

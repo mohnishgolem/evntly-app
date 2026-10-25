@@ -135,7 +135,7 @@ export default async function ProfilePage() {
       <div className="mb-6 overflow-hidden rounded-2xl bg-secondary">
         <Row icon={CircleHelp} label="Help & support" href="mailto:hello@evntlyapp.com" />
         <Row icon={Lock} label="Privacy policy" href="/privacy-policy" />
-        <Row icon={FileText} label="Terms & Conditions" href="/terms" last />
+        <Row icon={FileText} label="Legal documents" href="/legal" last />
       </div>
 
       <form action={logout} className="overflow-hidden rounded-2xl bg-secondary">

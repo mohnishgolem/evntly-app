@@ -9,10 +9,16 @@ export function SiteFooter() {
           <Logo />
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <Link href="/terms" className="hover:text-foreground">
-              Terms of Service
+              Terms &amp; Conditions
             </Link>
             <Link href="/privacy-policy" className="hover:text-foreground">
               Privacy Policy
+            </Link>
+            <Link href="/cancellation-refund-dispute-policy" className="hover:text-foreground">
+              Cancellations &amp; refunds
+            </Link>
+            <Link href="/vendor-agreement" className="hover:text-foreground">
+              Vendor Agreement
             </Link>
             <a href="mailto:hello@evntlyapp.com" className="hover:text-foreground">
               Contact
@@ -23,7 +29,7 @@ export function SiteFooter() {
           </nav>
         </div>
         <p className="text-xs text-muted-foreground">
-          ABN 49 193 658 959 · Sydney, Australia
+          Sai Mohnish Golem trading as Evntly · ABN 49 193 658 959 · Sydney, Australia
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           © {new Date().getFullYear()} Evntly. All rights reserved.

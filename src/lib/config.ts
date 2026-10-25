@@ -130,7 +130,4 @@ export function categoryColor(value: string) {
   return CATEGORY_COLORS[value] ?? "#e8604a";
 }
 
-// Version of the Terms & Conditions users accept — the "Last updated" date on
-// /terms. Bump it when the Terms change materially: everyone whose recorded
-// version differs is asked to accept again (see <TermsGate>).
-export const TERMS_VERSION = "2026-10-20";
+// Legal document versions live in src/lib/legal/versions.ts.

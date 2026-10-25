@@ -612,7 +612,7 @@ function RowActions({ eventId, vendor: v }: { eventId: string; vendor: TeamVendo
             size="lg"
             variant={v.payment?.actionDue ? "default" : "outline"}
             nativeButton={false}
-            render={<Link href={`/bookings/${v.bookingId}`}>{v.payment?.actionDue ? "Review & pay" : "Booking & payments"}</Link>}
+            render={<Link href={`/bookings/${v.bookingId}`}>{v.payment?.actionDue ? "Review & pay" : "View booking"}</Link>}
           />
         );
         break;

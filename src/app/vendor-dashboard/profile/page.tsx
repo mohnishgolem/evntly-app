@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
 import { categoryLabel } from "@/lib/config";
 import { formatAbn } from "@/lib/abn";
+import { getPaymentsStatus } from "@/lib/payments/server";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -76,9 +77,10 @@ export default async function VendorProfilePage() {
   const session = await requireVendor("/vendor-dashboard/profile");
 
   const supabase = await createClient();
-  const [{ data: listings }, { data: stripe }] = await Promise.all([
+  const [{ data: listings }, { data: stripe }, payments] = await Promise.all([
     supabase.rpc("my_service_providers").select("id, name, service_type, status, verified, abn").order("created_at"),
     supabase.from("stripe_accounts").select("transfers_active").eq("user_id", session.user.id).maybeSingle(),
+    getPaymentsStatus(),
   ]);
   const primary = listings?.[0];
   const name = session.displayName || session.user.email;
@@ -135,8 +137,9 @@ export default async function VendorProfilePage() {
           {
             href: "/vendor-dashboard/payouts",
             icon: CreditCard,
-            label: "Payments & payouts",
-            detail: stripe?.transfers_active ? "Payouts set up" : "Not set up yet",
+            label: "Payments",
+            // Online payments are off at launch: customers pay vendors directly.
+            detail: payments.enabled ? (stripe?.transfers_active ? "Payouts set up" : "Not set up yet") : "Paid directly by customers",
           },
           { href: "/dashboard/settings/notifications", icon: Bell, label: "Notifications", detail: "Email and push" },
           { href: "/dashboard/settings", icon: Settings, label: "Settings" },
