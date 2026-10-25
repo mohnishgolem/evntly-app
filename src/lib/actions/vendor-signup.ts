@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notify } from "@/lib/email";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 import { isValidAbn, normalizeAbn } from "@/lib/abn";
 import { isLaunchCategory, isVendorCategory } from "@/lib/config";
@@ -114,8 +116,27 @@ export async function submitVendorListing(
   // (not just one that signed up as "I'm a vendor") still needs isVendor
   // checks in the header to send them to /vendor-dashboard.
   await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
+  await emailAdminsNewListing(draft.businessName, draft.serviceType, draft.city);
 
   redirect("/vendor-dashboard");
+}
+
+// New vendors wait for approval before anyone can see them, so tell the
+// admins straight away instead of relying on someone checking /admin.
+async function emailAdminsNewListing(name: string, serviceType: string, city: string) {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: admins } = await admin.from("users").select("email").eq("role", "admin");
+  for (const { email } of admins ?? []) {
+    notify({
+      to: email,
+      category: "enquiries",
+      subject: `New vendor to approve: ${name}`,
+      heading: "A new vendor is waiting for approval",
+      lines: [`${name} (${serviceType}${city ? `, ${city}` : ""}) just submitted a listing.`],
+      cta: { label: "Review approvals", path: "/admin/approvals" },
+    });
+  }
 }
 
 export async function updateVendorListing(

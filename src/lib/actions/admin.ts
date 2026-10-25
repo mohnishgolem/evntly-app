@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminSession } from "@/lib/data/user";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notify } from "@/lib/email";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -34,8 +36,35 @@ export async function setVendorStatus(
 
   if (error) return { error: error.message };
 
+  // The vendor dashboard promises "we'll email you when it's live".
+  if (status === "approved") await emailListingLive(vendorId);
+
   revalidatePath("/admin", "layout");
   return { success: true };
+}
+
+// owner_email isn't readable with the admin's own session (column SELECT is
+// revoked), so look it up with the service role.
+async function emailListingLive(vendorId: string) {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: v } = await admin
+    .from("service_providers")
+    .select("name, owner_email, is_demo")
+    .eq("id", vendorId)
+    .maybeSingle();
+  if (!v || v.is_demo) return;
+  notify({
+    to: v.owner_email,
+    category: "bookings",
+    subject: `${v.name} is live on Evntly`,
+    heading: "Your listing is live",
+    lines: [
+      `${v.name} has been approved and customers can now find you on Explore and send you quote requests.`,
+      "Add portfolio photos and keep your calendar up to date: complete listings get more requests.",
+    ],
+    cta: { label: "Open your dashboard", path: "/vendor-dashboard" },
+  });
 }
 
 export async function setFoundingVendor(

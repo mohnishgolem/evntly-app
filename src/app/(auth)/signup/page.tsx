@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ role?: string }>;
+  searchParams: Promise<{ role?: string; next?: string }>;
 }) {
-  const { role } = await searchParams;
+  const { role, next } = await searchParams;
 
   return (
     <div className="mx-auto flex max-w-sm flex-col justify-center px-4 py-16">
@@ -19,7 +19,7 @@ export default async function SignupPage({
       <p className="mb-6 text-sm text-muted-foreground">
         Create your account to plan an event or list your business.
       </p>
-      <AuthTabs defaultTab="signup" defaultRole={role === "vendor" ? "vendor" : "customer"} />
+      <AuthTabs defaultTab="signup" defaultRole={role === "vendor" ? "vendor" : "customer"} next={next} />
     </div>
   );
 }

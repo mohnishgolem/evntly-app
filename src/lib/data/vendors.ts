@@ -5,6 +5,7 @@ import { LAUNCH_CATEGORIES, LAUNCH_CITY, isLaunchCategory } from "@/lib/config";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
 import { PORTFOLIO_COLUMNS, REVIEW_COLUMNS } from "@/lib/public-columns";
 import { sampleListingsHidden } from "@/lib/sample-listings";
+import { cleanSearchTerm } from "@/lib/search-term";
 
 export async function getFeaturedVendors(limit = 8) {
   const supabase = await createClient();
@@ -51,10 +52,11 @@ export async function searchVendors(filters: VendorFilters = {}) {
   if (filters.eventType) {
     query = query.contains("event_types", [filters.eventType]);
   }
-  if (filters.q) {
-    query = query.or(
-      `name.ilike.%${filters.q}%,description.ilike.%${filters.q}%,city.ilike.%${filters.q}%`
-    );
+  const q = cleanSearchTerm(filters.q);
+  if (q) {
+    // Double-quoted so dots and spaces in the term stay part of the value.
+    const like = `"%${q}%"`;
+    query = query.or(`name.ilike.${like},description.ilike.${like},city.ilike.${like}`);
   }
   if (filters.minPrice != null) {
     query = query.gte("hourly_rate", filters.minPrice);
@@ -89,6 +91,21 @@ export async function getVendorPortfolio(providerId: string) {
     .select(PORTFOLIO_COLUMNS)
     .eq("provider_id", providerId)
     .order("sort_order", { ascending: true, nullsFirst: false });
+
+  return data ?? [];
+}
+
+// Fixed-price packages a vendor sets up under Service & pricing. RLS only
+// returns active packages on approved listings to the public.
+export async function getVendorPackages(providerId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("vendor_packages")
+    .select("id, name, description, price_cents, included_hours, extra_hour_cents, inclusions, deposit_percent")
+    .eq("provider_id", providerId)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("price_cents", { ascending: true });
 
   return data ?? [];
 }

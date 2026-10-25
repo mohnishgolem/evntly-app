@@ -70,17 +70,20 @@ export async function signup(
     return { fieldErrors: { agreedToVendorAgreement: ["You must agree to the Vendor Service Agreement to list a business"] } };
   }
   const marketing = parsed.data.marketingOptIn === "on";
+  // Customers go back to where they started (the vendor they wanted a quote
+  // from, or /dashboard to claim a plan from /plan); vendors set up a listing.
+  const next =
+    role === "vendor" ? "/vendor-signup" : safeNextPath(formData.get("next")?.toString(), "/");
   if (!(await checkRateLimit("signupIp", await clientIp()))) {
     return { error: RATE_LIMIT_ERROR };
   }
   const supabase = await createClient();
   // The confirmation link goes through /auth/callback, which exchanges its
   // one-time code for a session — linking to the bare site left people
-  // confirmed but signed out, with no message. Customers then land on the
-  // home page; vendors go on to set up their listing.
+  // confirmed but signed out, with no message.
   const confirmUrl = new URL("/auth/callback", await appOrigin());
   confirmUrl.searchParams.set("flow", "signup");
-  confirmUrl.searchParams.set("next", role === "vendor" ? "/vendor-signup" : "/");
+  confirmUrl.searchParams.set("next", next);
 
   // full_name lives in Supabase Auth's user_metadata — the existing `users`
   // table (inherited from the prior schema) has no name column of its own.
@@ -110,7 +113,7 @@ export async function signup(
     return { needsEmailConfirmation: true };
   }
 
-  redirect(role === "vendor" ? "/vendor-signup" : "/");
+  redirect(next);
 }
 
 const loginSchema = z.object({
@@ -159,11 +162,18 @@ export async function login(
 // role is only forced on brand-new sign-ups (from the signup form's
 // customer/vendor toggle) — the login form omits it so a returning vendor's
 // role is never stomped back to "customer" by the callback route.
-export async function signInWithOAuth(provider: "google" | "apple", role?: "customer" | "vendor") {
+export async function signInWithOAuth(
+  provider: "google" | "apple",
+  role?: "customer" | "vendor",
+  next?: string
+) {
   const supabase = await createClient();
   const origin = await appOrigin();
   const callback = new URL(`${origin}/auth/callback`);
   if (role) callback.searchParams.set("role", role);
+  // The callback follows `next` before it handles role=vendor, so vendors
+  // never get one — they still need to land on /vendor-signup.
+  if (next && role !== "vendor") callback.searchParams.set("next", safeNextPath(next));
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,

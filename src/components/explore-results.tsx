@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { List, MapIcon } from "lucide-react";
 import { VendorCard } from "@/components/vendor-card";
@@ -12,10 +13,12 @@ type Vendor = PublicVendor;
 
 export function ExploreResults({
   vendors,
+  fallback = [],
   savedVendorIds = [],
   isAuthenticated = false,
 }: {
   vendors: Vendor[];
+  fallback?: Vendor[];
   savedVendorIds?: string[];
   isAuthenticated?: boolean;
 }) {
@@ -24,12 +27,43 @@ export function ExploreResults({
     searchParams.get("view") === "map" ? "map" : "list"
   );
 
+  if (vendors.length === 0 && fallback.length > 0) {
+    return (
+      <div className="mt-6">
+        <div className="mb-5 rounded-2xl border border-border bg-muted/40 p-4">
+          <p className="font-semibold">No vendors list “{searchParams.get("q")}” yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Most vendors travel across Sydney — check their service area, or{" "}
+            <Link href="/plan" className="font-medium text-foreground underline underline-offset-2">
+              post your event
+            </Link>{" "}
+            and let vendors come to you.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {fallback.map((v) => (
+            <VendorCard
+              key={v.id}
+              vendor={v}
+              saved={savedVendorIds.includes(v.id)}
+              isAuthenticated={isAuthenticated}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (vendors.length === 0) {
     return (
       <div className="mt-12 rounded-2xl border border-dashed border-border py-16 text-center">
         <p className="text-lg font-semibold">No vendors match those filters</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-          Try a different category or clear your search.
+          Try a different category or clear your search, or{" "}
+          <Link href="/plan" className="font-medium text-foreground underline underline-offset-2">
+            post your event
+          </Link>{" "}
+          so vendors can send you quotes.
         </p>
       </div>
     );
