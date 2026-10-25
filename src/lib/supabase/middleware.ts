@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest, requestHeaders?: Heade
   // getClaims() verifies the JWT locally against the project's (cached)
   // signing keys and only calls Supabase Auth when the token needs a
   // refresh — getUser() was a network round-trip on every page load.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return supabaseResponse;
+  return { response: supabaseResponse, signedIn: !!data?.claims?.sub };
 }
