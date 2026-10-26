@@ -22,16 +22,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 // Quote request cards for the vendor's Leads pages: New requests (pending)
-// and Quotes (priced). `conversationIds` are the vendor's existing
-// conversations; a card links to its customer's thread only when one exists.
-export function VendorQuoteCards({
-  quotes,
-  conversationIds = [],
-}: {
-  quotes: VendorQuote[];
-  conversationIds?: string[];
-}) {
-  const threads = new Set(conversationIds);
+// and Quotes (priced). Each card can open a conversation with its customer.
+export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
   return (
     <div className="space-y-4">
       {quotes.map((q) => {
@@ -95,7 +87,7 @@ export function VendorQuoteCards({
             {status === "pending" && <VendorQuoteResponse quoteId={q.id} estimatedHours={q.estimated_hours} />}
             {(() => {
               const thread = q.vendor_id && q.client_user_id ? `${q.vendor_id}:${q.client_user_id}` : null;
-              const canMessage = !!thread && threads.has(thread);
+              const canMessage = !!thread;
               const canBlock = status === "pending" || status === "quoted";
               if (!canMessage && !canBlock) return null;
               return (

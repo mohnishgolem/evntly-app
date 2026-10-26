@@ -73,6 +73,23 @@ export function MessageThread({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // New messages from the other side: re-fetch the thread every few seconds
+  // while it's on screen, and straight away when the app comes back to the
+  // foreground. A refresh goes through the same masked RPC as the first load,
+  // so nothing bypasses the contact-detail rules; the draft being typed is
+  // client state and survives it.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = window.setInterval(refresh, 8000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [router]);
+
   // Revoke the last preview's object URL when the thread unmounts.
   const previewRef = useRef<string | null>(null);
   useEffect(() => () => {

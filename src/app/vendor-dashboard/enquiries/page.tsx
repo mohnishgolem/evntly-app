@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { requireVendor } from "@/lib/data/user";
 import { getVendorQuotes } from "@/lib/data/vendor-quotes";
-import { getMyConversationIds } from "@/lib/data/conversations";
 import { VendorQuoteCards } from "@/components/vendor-quote-cards";
 import { DashboardNav } from "@/components/dashboard-nav";
 
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 export default async function VendorEnquiriesPage() {
   await requireVendor("/vendor-dashboard/enquiries");
 
-  const [{ enquiries }, conversationIds] = await Promise.all([getVendorQuotes(), getMyConversationIds()]);
+  const { enquiries } = await getVendorQuotes();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -29,7 +28,7 @@ export default async function VendorEnquiriesPage() {
           You&apos;re all caught up. New quote requests will appear here.
         </p>
       ) : (
-        <VendorQuoteCards quotes={enquiries} conversationIds={conversationIds} />
+        <VendorQuoteCards quotes={enquiries} />
       )}
     </div>
   );

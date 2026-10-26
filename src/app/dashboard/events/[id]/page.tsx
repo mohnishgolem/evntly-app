@@ -112,19 +112,6 @@ export default async function EventBoardPage({
   ];
 
   const activeBookings = bookings.filter((b) => b.status !== "cancelled");
-  // A thread only exists after a first message; otherwise the vendor's
-  // profile (with Contact Vendor) is the way in.
-  let threadVendorIds = new Set<string>();
-  if (activeBookings.length > 0) {
-    const { data: existing } = await supabase
-      .from("messages")
-      .select("provider_id")
-      .in(
-        "conversation_id",
-        activeBookings.map((b) => conversationIdFor(b.provider_id, session.user.id))
-      );
-    threadVendorIds = new Set((existing ?? []).map((m) => m.provider_id).filter((pid): pid is string => !!pid));
-  }
 
   const eventDone = activeBookings.length > 0 && activeBookings.every((b) => b.status === "completed");
   const initialOpen =
@@ -261,11 +248,7 @@ export default async function EventBoardPage({
             {activeBookings.map((b) => (
               <Link
                 key={b.id}
-                href={
-                  threadVendorIds.has(b.provider_id)
-                    ? `/messages/${encodeURIComponent(conversationIdFor(b.provider_id, session.user.id))}`
-                    : `/vendor/${b.provider_id}`
-                }
+                href={`/messages/${encodeURIComponent(conversationIdFor(b.provider_id, session.user.id))}`}
                 className="flex min-h-12 items-center justify-between px-4 py-3 text-sm hover:bg-accent"
               >
                 {b.provider_name ?? "Vendor"}

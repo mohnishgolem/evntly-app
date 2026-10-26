@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireVendor } from "@/lib/data/user";
 import { getVendorQuotes } from "@/lib/data/vendor-quotes";
-import { getMyConversationIds } from "@/lib/data/conversations";
 import { VendorQuoteCards } from "@/components/vendor-quote-cards";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 export default async function VendorQuotesPage() {
   await requireVendor("/vendor-dashboard/quotes");
 
-  const [{ quotes, enquiries }, conversationIds] = await Promise.all([getVendorQuotes(), getMyConversationIds()]);
+  const { quotes, enquiries } = await getVendorQuotes();
   const open = quotes.filter((q) => effectiveQuoteStatus(q) === "quoted");
   const closed = quotes.filter((q) => effectiveQuoteStatus(q) !== "quoted");
 
@@ -56,7 +55,7 @@ export default async function VendorQuotesPage() {
               <h2 id="open-quotes" className="mb-3 text-sm font-semibold text-muted-foreground">
                 Waiting on the customer ({open.length})
               </h2>
-              <VendorQuoteCards quotes={open} conversationIds={conversationIds} />
+              <VendorQuoteCards quotes={open} />
             </section>
           )}
           {closed.length > 0 && (
@@ -64,7 +63,7 @@ export default async function VendorQuotesPage() {
               <h2 id="closed-quotes" className="mb-3 text-sm font-semibold text-muted-foreground">
                 Accepted, declined or expired ({closed.length})
               </h2>
-              <VendorQuoteCards quotes={closed} conversationIds={conversationIds} />
+              <VendorQuoteCards quotes={closed} />
             </section>
           )}
         </div>

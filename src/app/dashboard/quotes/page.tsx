@@ -7,7 +7,6 @@ import { QuoteList } from "@/components/quote-list";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
-import { getMyConversationIds } from "@/lib/data/conversations";
 
 export const metadata: Metadata = {
   title: "Requests & quotes",
@@ -21,10 +20,7 @@ export default async function CustomerQuotesPage() {
 
   const supabase = await createClient();
   // Masked read: emails blanked, newest first (see my_quote_requests).
-  const [{ data: quotes }, conversationIds] = await Promise.all([
-    supabase.rpc("my_quote_requests", { as_role: "client" }),
-    getMyConversationIds(),
-  ]);
+  const { data: quotes } = await supabase.rpc("my_quote_requests", { as_role: "client" });
 
   // Dead ends (vendor declined, or let the request expire) get three other
   // vendors in the same category, so the organiser has somewhere to go next.
@@ -61,7 +57,7 @@ export default async function CustomerQuotesPage() {
           </Link>
         </div>
       ) : (
-        <QuoteList quotes={quotes} alternatives={alternatives} conversationIds={conversationIds} />
+        <QuoteList quotes={quotes} alternatives={alternatives} />
       )}
     </div>
   );

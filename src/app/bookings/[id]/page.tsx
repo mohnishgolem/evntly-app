@@ -15,6 +15,7 @@ import { VendorBookingActions } from "@/components/vendor-booking-actions";
 import { DisputePanel } from "@/components/dispute-panel";
 import { loadBookingDisputes } from "@/lib/data/disputes";
 import { sydneyDate } from "@/lib/event-dates";
+import { conversationIdFor } from "@/lib/messages";
 
 export const metadata: Metadata = {
   title: "Booking",
@@ -143,7 +144,7 @@ export default async function BookingPage({
         {role !== "admin" && (
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
             <Link
-              href={role === "vendor" ? "/messages" : `/messages/${booking.provider_id}:${session.user.id}`}
+              href={`/messages/${encodeURIComponent(conversationIdFor(booking.provider_id, booking.client_user_id ?? session.user.id))}`}
               className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 hover:bg-muted"
             >
               <MessageCircle className="size-4" aria-hidden /> Messages

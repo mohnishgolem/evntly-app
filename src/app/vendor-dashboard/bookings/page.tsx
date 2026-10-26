@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { requireVendor } from "@/lib/data/user";
-import { getMyConversationIds } from "@/lib/data/conversations";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { sydneyDate } from "@/lib/event-dates";
 import { createClient } from "@/lib/supabase/server";
@@ -42,8 +41,7 @@ async function loadBookings(userId: string) {
 export default async function VendorBookingsPage() {
   const session = await requireVendor("/vendor-dashboard/bookings");
 
-  const [bookings, conversationIds] = await Promise.all([loadBookings(session.user.id), getMyConversationIds()]);
-  const threads = new Set(conversationIds);
+  const bookings = await loadBookings(session.user.id);
 
   const jobCards = await Promise.all(
     bookings
@@ -131,7 +129,7 @@ export default async function VendorBookingsPage() {
                               Invoice
                             </Link>
                           )}
-                          {thread && threads.has(thread) && (
+                          {thread && b.status !== "cancelled" && (
                             <Link
                               href={`/messages/${encodeURIComponent(thread)}`}
                               className="inline-flex min-h-11 items-center gap-1.5 underline underline-offset-2 sm:min-h-0"

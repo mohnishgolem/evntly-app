@@ -1,10 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { updateBookingStatus } from "@/lib/actions/bookings";
 
+// Confirm or cancel. Completing a booking isn't here: the vendor marks the
+// job done on its job card (from the event date) and the customer confirms.
 export function VendorBookingActions({
   bookingId,
   status,
@@ -14,31 +16,32 @@ export function VendorBookingActions({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  function act(action: "confirm" | "complete" | "cancel") {
+  function act(action: "confirm" | "cancel") {
+    setError(null);
     startTransition(async () => {
-      await updateBookingStatus(bookingId, action);
+      const res = await updateBookingStatus(bookingId, action);
+      if (res?.error) setError(res.error);
       router.refresh();
     });
   }
 
-  if (status === "cancelled" || status === "completed") return null;
+  if (status !== "pending" && status !== "confirmed") return null;
 
   return (
-    <div className="mt-3 flex gap-2">
-      {status === "pending" && (
-        <Button size="sm" disabled={pending} onClick={() => act("confirm")}>
-          Confirm booking
+    <div className="mt-3">
+      <div className="flex gap-2">
+        {status === "pending" && (
+          <Button size="sm" disabled={pending} onClick={() => act("confirm")}>
+            Confirm booking
+          </Button>
+        )}
+        <Button size="sm" variant="outline" disabled={pending} onClick={() => act("cancel")}>
+          Cancel
         </Button>
-      )}
-      {status === "confirmed" && (
-        <Button size="sm" disabled={pending} onClick={() => act("complete")}>
-          Mark completed
-        </Button>
-      )}
-      <Button size="sm" variant="outline" disabled={pending} onClick={() => act("cancel")}>
-        Cancel
-      </Button>
+      </div>
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

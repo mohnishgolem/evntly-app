@@ -2737,6 +2737,17 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: string
       }
+      conversation_context: {
+        Args: { p_conversation_id: string }
+        Returns: {
+          booked: boolean
+          can_message: boolean
+          counterpart_name: string
+          i_am_vendor: boolean
+          provider_id: string
+          provider_name: string
+        }[]
+      }
       conversation_is_booked: {
         Args: { p_conversation_id: string; p_provider_id: string }
         Returns: boolean

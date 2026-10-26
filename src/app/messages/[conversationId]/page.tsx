@@ -42,12 +42,15 @@ export default async function MessageThreadPage({
   const supabase = await createClient();
   const [{ data: messages }, { data: thread }, { data: blockState }] = await Promise.all([
     supabase.rpc("conversation_messages", { p_conversation_id: conversationId }),
-    supabase.rpc("my_conversations").eq("conversation_id", conversationId).maybeSingle(),
+    supabase.rpc("conversation_context", { p_conversation_id: conversationId }).maybeSingle(),
     supabase.rpc("conversation_block_state", { p_conversation_id: conversationId }),
   ]);
 
-  // Both RPCs only return the caller's own conversations.
-  if (!messages || messages.length === 0 || !thread) notFound();
+  // Both RPCs only return conversations the caller is part of. A
+  // conversation with no messages yet still opens (from a quote, booking or
+  // vendor page) when the caller is allowed to start it: a customer with an
+  // approved listing, or either side once there's a quote or booking.
+  if (!messages || !thread || (messages.length === 0 && !thread.can_message)) notFound();
 
   const unreadIds = messages.filter((m) => !m.read && !m.from_me).map((m) => m.id);
   if (unreadIds.length > 0) {

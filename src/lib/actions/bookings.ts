@@ -8,28 +8,33 @@ import { releaseDepositForBooking } from "@/lib/payments/server";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
+// Completion isn't a vendor action: the vendor marks the job done on its job
+// card and the customer's confirmation completes the booking (see
+// lib/actions/job-cards.ts). The database enforces the same transitions.
 const VENDOR_TRANSITIONS: Record<string, string> = {
   confirm: "confirmed",
-  complete: "completed",
   cancel: "cancelled",
 };
 
 export async function updateBookingStatus(
   bookingId: string,
-  action: "confirm" | "complete" | "cancel"
+  action: "confirm" | "cancel"
 ): Promise<ActionState> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
+  // Server actions take whatever the browser sends; only known actions.
+  const status = VENDOR_TRANSITIONS[action];
+  if (!status) return { error: "That isn't something you can do to a booking." };
 
   // RLS + the bookings lockdown trigger limit status changes to the vendor
-  // (and confirm/complete/cancel); confirming also opens the job card
-  // (create_job_card_on_confirm trigger).
+  // (pending -> confirmed/cancelled, confirmed -> cancelled); confirming also
+  // opens the job card (create_job_card_on_confirm trigger).
   const { data: booking, error } = await supabase
     .from("bookings")
-    .update({ status: VENDOR_TRANSITIONS[action] })
+    .update({ status })
     .eq("id", bookingId)
     .eq("provider_owner_user_id", user.id)
     .select("id, provider_name, event_date")
@@ -56,11 +61,6 @@ export async function updateBookingStatus(
         subject: `${booking.provider_name} confirmed your booking for ${when}`,
         heading: "Your booking is confirmed",
         line: `${booking.provider_name} has confirmed your booking for ${when}. You can track everything for the day from your dashboard.`,
-      },
-      complete: {
-        subject: `How was ${booking.provider_name}?`,
-        heading: "Your booking is complete",
-        line: `${booking.provider_name} has marked your booking on ${when} as complete. A quick review helps other people planning events find great vendors.`,
       },
       cancel: {
         subject: `${booking.provider_name} cancelled your booking for ${when}`,

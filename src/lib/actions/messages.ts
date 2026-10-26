@@ -163,16 +163,23 @@ export async function sendReply(
   }
   if (!(await checkRateLimit("messageUser", user.id))) return { error: RATE_LIMIT_ERROR };
 
-  // RLS only returns rows from conversations the caller is part of, so an
-  // empty result covers both "doesn't exist" and "not yours".
-  const { data: existing } = await supabase
+  // The conversation id is "<providerId>:<customerUserId>". An existing
+  // message carries who started it; the first message of a conversation
+  // (from a quote, booking or vendor page) works it out from the id. Either
+  // way the database (fill_message_recipient) decides whether the caller may
+  // write here: a participant, and for a first message a quote or booking
+  // between them, or a customer writing to an approved listing.
+  const [providerId, customerId, ...rest] = conversationId.split(":");
+  if (!providerId || !customerId || rest.length > 0) return { error: "Conversation not found." };
+
+  const { data: first } = await supabase
     .from("messages")
     .select("provider_id, customer_initiated")
     .eq("conversation_id", conversationId)
+    .order("created_at")
     .limit(1)
     .maybeSingle();
-
-  if (!existing) return { error: "Conversation not found." };
+  const existing = first ?? { provider_id: providerId, customer_initiated: user.id === customerId };
 
   const shouldEmail = !(await sentRecently(supabase, conversationId, user.id));
 

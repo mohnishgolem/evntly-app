@@ -8,7 +8,6 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
-import { getMyConversationIds } from "@/lib/data/conversations";
 import { sydneyDate } from "@/lib/event-dates";
 
 export const metadata: Metadata = {
@@ -22,14 +21,13 @@ export default async function CustomerBookingsPage() {
   if (!session) redirect("/login?next=/dashboard/bookings");
 
   const supabase = await createClient();
-  const [{ data: bookings, error }, { data: myReviews }, conversationIds] = await Promise.all([
+  const [{ data: bookings, error }, { data: myReviews }] = await Promise.all([
     supabase
       .from("bookings")
       .select(BOOKING_COLUMNS)
       .eq("client_user_id", session.user.id)
       .order("event_date", { ascending: false }),
     supabase.from("reviews").select("booking_id").eq("reviewer_user_id", session.user.id),
-    getMyConversationIds(),
   ]);
   if (error) throw new Error(error.message);
 
@@ -92,7 +90,6 @@ export default async function CustomerBookingsPage() {
                 bookings={g.rows}
                 jobCardByBooking={jobCardByBooking}
                 reviewedBookingIds={reviewedBookingIds}
-                conversationIds={conversationIds}
               />
             </section>
           ))}
