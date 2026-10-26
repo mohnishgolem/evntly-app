@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fetchUnreadMessageCount } from "@/lib/actions/messages";
 import { Bell, CalendarCheck, CalendarClock, ChevronRight, Clock, FileText, ImagePlus, Inbox, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,7 +44,37 @@ function CountDot({ count, label }: { count: number; label: string }) {
 
 // Header buttons for signed-in customers and vendors: Messages, and a
 // notifications bell, so neither needs a tab.
-export function MessagesButton({ unread }: { unread: number }) {
+// Starts from the count rendered with the page, then re-checks every 30s
+// while the app is on screen and whenever it comes back to the foreground.
+export function useLiveUnread(initial: number) {
+  const [unread, setUnread] = useState(initial);
+  // A fresh server render (navigation, refresh) brings a newer count.
+  const [rendered, setRendered] = useState(initial);
+  if (initial !== rendered) {
+    setRendered(initial);
+    setUnread(initial);
+  }
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      if (document.visibilityState !== "visible") return;
+      fetchUnreadMessageCount()
+        .then((n) => !cancelled && setUnread(n))
+        .catch(() => {});
+    };
+    const timer = window.setInterval(check, 30_000);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, []);
+  return unread;
+}
+
+export function MessagesButton({ unread: initialUnread }: { unread: number }) {
+  const unread = useLiveUnread(initialUnread);
   return (
     <Button
       variant="ghost"

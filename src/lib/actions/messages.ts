@@ -19,6 +19,7 @@ import type { User } from "@supabase/supabase-js";
 import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
 import { friendlyLegalError } from "@/lib/legal/status";
+import { getUnreadMessageCount } from "@/lib/data/user";
 
 const MAX_MESSAGE_LENGTH = 5000;
 
@@ -233,4 +234,10 @@ export async function sendReply(
   revalidatePath(`/messages/${encodeURIComponent(conversationId)}`);
   revalidatePath("/messages");
   return { success: true };
+}
+
+// The header's unread badge re-checks this while the app is open, so a
+// message that arrives on another page shows up without navigating.
+export async function fetchUnreadMessageCount(): Promise<number> {
+  return getUnreadMessageCount();
 }
