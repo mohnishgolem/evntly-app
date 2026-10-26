@@ -411,7 +411,7 @@ export function VendorCalendar({
         {upcoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">No upcoming bookings for {listing.name}.</p>
         ) : (
-          <ul className="divide-y divide-border rounded-2xl border border-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {upcoming.map((b) => (
               <li key={b.id}>
                 <button

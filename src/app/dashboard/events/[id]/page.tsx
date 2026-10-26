@@ -244,7 +244,7 @@ export default async function EventBoardPage({
           <h2 id="message-heading" className="mb-4 text-xl font-bold tracking-tight">
             Message your vendors
           </h2>
-          <div className="divide-y divide-border rounded-2xl border border-border">
+          <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {activeBookings.map((b) => (
               <Link
                 key={b.id}

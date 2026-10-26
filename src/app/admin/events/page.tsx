@@ -72,7 +72,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
       ) : !events?.length ? (
         <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No events found.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-2xl border border-border">
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
           {events.map((e) => (
             <li key={e.id}>
               <Link href={`/admin/events/${e.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-muted/60">
