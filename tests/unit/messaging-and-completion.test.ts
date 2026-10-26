@@ -84,6 +84,8 @@ describe("starting a conversation", () => {
       provider_id: LISTING,
       customer_initiated: false,
       content: "Hi, thanks for booking",
+      // Stored unread, or the badge never counts it (read = NULL isn't "not read").
+      read: false,
     });
     expect(notify).toHaveBeenCalledOnce();
   });

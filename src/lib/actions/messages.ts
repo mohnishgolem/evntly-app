@@ -119,6 +119,8 @@ export async function sendVendorMessage(
       provider_id: vendorId,
       content,
       customer_initiated: true,
+      // Unread until the recipient opens it (the badge counts read = false).
+      read: false,
     })
     .select("id")
     .single();
@@ -192,6 +194,7 @@ export async function sendReply(
       provider_id: existing.provider_id,
       content: trimmed,
       customer_initiated: existing.customer_initiated,
+      read: false,
       attachment_file_uri: attachment?.path ?? null,
       attachment_type: attachment?.type ?? null,
     })
