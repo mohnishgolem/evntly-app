@@ -81,19 +81,35 @@ export function JobCardPanel({
 
   return (
     <div className="mt-3 rounded-xl bg-secondary p-3">
-      <div className="mb-3 flex items-center gap-1">
-        {STEPS.map((s, i) => (
-          <div key={s.key} className="flex flex-1 items-center gap-1">
-            <div
-              className={cn(
-                "flex h-6 flex-1 items-center justify-center rounded-full text-[11px] font-medium",
-                i <= stepIndex ? "bg-primary text-primary-foreground" : "bg-muted-foreground/15 text-muted-foreground"
-              )}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
+      {/* A read-only tracker — the steps are taken with the buttons below. */}
+      <div className="mb-3">
+        <p className="mb-1.5 flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+          <span className="font-medium tracking-wide uppercase">Progress</span>
+          <span>
+            Step {stepIndex + 1} of {STEPS.length}: {STEPS[stepIndex]?.label}
+          </span>
+        </p>
+        <ol aria-label="Job progress" className="grid grid-cols-4 gap-1">
+          {STEPS.map((s, i) => (
+            <li key={s.key}>
+              <div
+                aria-hidden
+                className={cn("h-1.5 rounded-full", i <= stepIndex ? "bg-primary" : "bg-muted-foreground/20")}
+              />
+              <span
+                className={cn(
+                  "mt-1 block text-[11px]",
+                  i === stepIndex ? "font-medium text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {s.label}
+                <span className="sr-only">
+                  {i < stepIndex ? " (done)" : i === stepIndex ? " (current step)" : " (not yet)"}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -118,11 +134,11 @@ export function JobCardPanel({
         )}
         {viewer === "vendor" && notStarted && !eventReached && (
           <p className="text-sm text-muted-foreground">
-            You can mark the job done from {formatDay(jobCard.event_date)}.
+            Next: mark the job done on the event day, {formatDay(jobCard.event_date)}.
           </p>
         )}
         {viewer === "vendor" && jobCard.status === "delivered" && (
-          <p className="text-sm text-muted-foreground">Waiting for the customer to confirm.</p>
+          <p className="text-sm text-muted-foreground">Next: waiting for the customer to confirm.</p>
         )}
         {viewer === "organiser" && jobCard.status === "delivered" && (
           <ConfirmStep
@@ -140,7 +156,7 @@ export function JobCardPanel({
         )}
         {viewer === "organiser" && notStarted && (
           <p className="text-sm text-muted-foreground">
-            After the event, your vendor marks the job done and you&apos;ll confirm it here.
+            Next: after the event, your vendor marks the job done and you&apos;ll confirm it here.
           </p>
         )}
         {jobCard.status === "confirmed" && (
