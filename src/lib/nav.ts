@@ -6,6 +6,7 @@ import {
   Heart,
   Briefcase,
   CalendarDays,
+  CircleHelp,
   CreditCard,
   ClipboardList,
   FileText,
@@ -233,18 +234,26 @@ export const NAV_SETS = {
 
 export type NavSetName = keyof typeof NAV_SETS;
 
+// Help & Guides: in every account menu (and for guests), after the account
+// links. /how-it-works lights it up too.
+export const HELP_NAV_ITEM: NavItem = { href: "/help", label: "Help & Guides", icon: CircleHelp, match: ["/how-it-works"] };
+
 /** Drawer contents for a role. */
 export function drawerSections(role: NavRole): NavSection[] {
   switch (role) {
     case "guest":
-      return [{ items: MARKETPLACE_NAV }];
+      return [{ items: [...MARKETPLACE_NAV, HELP_NAV_ITEM] }];
     case "customer":
-      return [{ items: MARKETPLACE_NAV }, { title: "Account", items: CUSTOMER_ACCOUNT_NAV }];
+      return [{ items: MARKETPLACE_NAV }, { title: "Account", items: [...CUSTOMER_ACCOUNT_NAV, HELP_NAV_ITEM] }];
     case "vendor":
       return [
         {
           title: "Your business",
-          items: [...VENDOR_NAV, { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" }],
+          items: [
+            ...VENDOR_NAV,
+            { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
+            HELP_NAV_ITEM,
+          ],
         },
         { title: "Marketplace", items: MARKETPLACE_NAV.slice(0, 3) },
       ];
@@ -254,7 +263,7 @@ export function drawerSections(role: NavRole): NavSection[] {
         { title: "Marketplace", items: MARKETPLACE_NAV },
         {
           title: "Account",
-          items: CUSTOMER_ACCOUNT_NAV.filter((i) => i.href !== "/dashboard"),
+          items: [...CUSTOMER_ACCOUNT_NAV.filter((i) => i.href !== "/dashboard"), HELP_NAV_ITEM],
         },
       ];
   }

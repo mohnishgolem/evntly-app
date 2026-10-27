@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { respondToQuote } from "@/lib/actions/quotes";
+import { HelpTip } from "@/components/help/help-tip";
 
 /** "" → null; "$1,200" → 1200; junk → NaN (caught before sending). */
 function num(raw: string) {
@@ -129,7 +130,13 @@ export function VendorQuoteResponse({ quoteId, estimatedHours }: { quoteId: stri
             <Textarea id={id("desc")} rows={2} maxLength={2000} value={form.description} onChange={set("description")} />
           </div>
           <div className="space-y-1">
-            <Label htmlFor={id("cancel")}>Cancellation terms</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor={id("cancel")}>Cancellation terms</Label>
+              <HelpTip label="About cancellation terms" article="cancel-a-booking">
+                What happens to the deposit and price if either side cancels. Customers are asked to read these before
+                accepting, and they apply if the booking is cancelled.
+              </HelpTip>
+            </div>
             <Textarea
               id={id("cancel")}
               rows={2}

@@ -18,6 +18,7 @@ import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { loadBookingDisputes } from "@/lib/data/disputes";
 import { sydneyDate } from "@/lib/event-dates";
 import { conversationIdFor } from "@/lib/messages";
+import { HelpTip } from "@/components/help/help-tip";
 
 export const metadata: Metadata = {
   title: "Booking",
@@ -148,7 +149,13 @@ export default async function BookingPage({
               <MapPin className="size-4" aria-hidden /> {booking.event_address}
             </span>
           )}
-          <span className="capitalize">Status: {booking.status}</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="capitalize">Status: {booking.status}</span>
+            <HelpTip label="What booking statuses mean" article="booking-statuses">
+              Pending: waiting for the vendor to confirm. Confirmed: the date is locked in. Completed: the vendor marked
+              the job done and the customer confirmed it. Cancelled: called off by either side.
+            </HelpTip>
+          </span>
         </div>
         {role !== "admin" && (
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -173,8 +180,12 @@ export default async function BookingPage({
 
       {jobCard && (
         <section aria-labelledby="job-heading" className="mb-8">
-          <h2 id="job-heading" className="text-lg font-semibold">
+          <h2 id="job-heading" className="flex items-center gap-1.5 text-lg font-semibold">
             Job progress
+            <HelpTip label="How job progress works" article="event-day-and-completion">
+              The vendor marks the job done from the event date. The booking is completed once the customer confirms
+              it went as agreed — if it didn&apos;t, report a problem instead.
+            </HelpTip>
           </h2>
           <JobCardPanel
             jobCard={jobCard}
