@@ -1,2 +1,11 @@
-# False positive: generic-api-key matched `auth || p256dh.length > 200` (a length check, not a secret)
+# Reviewed false positives only. Each line is a commit-pinned fingerprint, so a
+# new occurrence anywhere else (or a real key on these lines later) still fails.
+# Comments here must not quote the matched code, or this file gets flagged too.
+
+# push.ts: generic-api-key took the Web Push `keys.auth` field name plus a
+# length check in savePushSubscription's input validation for a key. No secret.
 632cd5dc6f224abaae94bf6c476b413f2f0a77f2:src/lib/actions/push.ts:generic-api-key:24
+
+# The first version of this file quoted that same code in its comment and was
+# flagged for it (same false positive, now reworded above).
+0737f6bedfe83368fe73d0fb611d0ae236cdfe2f:.gitleaksignore:generic-api-key:1

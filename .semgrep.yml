@@ -1,11 +1,25 @@
 rules:
+  # The service-role client is only ever used through named imports
+  # (`import { createAdminClient } ...`), so match any reference to the module
+  # (default/named/namespace/side-effect import, dynamic import, require,
+  # relative paths) rather than a single import shape.
   - id: evntly-service-role-in-client
     message: The service-role client bypasses RLS and must never be imported from a client component.
     severity: ERROR
     languages: [typescript]
     paths:
-      include: ["src/components/**", "src/app/**/*client*"]
-    pattern: import $X from "@/lib/supabase/admin"
+      # Anchored to the repo root (Semgrepignore v2 / gitignore semantics).
+      include: ["/src/components/**", "/src/app/**/*client*"]
+    pattern-regex: |-
+      ['"`][^'"`\n]*lib/supabase/admin(?:\.ts)?['"`]
+  # Path conventions miss client components that live elsewhere, so also flag
+  # any file whose directive prologue is "use client".
+  - id: evntly-service-role-in-use-client-file
+    message: The service-role client bypasses RLS and must never be imported from a "use client" module.
+    severity: ERROR
+    languages: [typescript]
+    pattern-regex: |-
+      (?s)\A(?:\s|//[^\n]*\n|/\*.*?\*/)*['"]use client['"].*?['"`][^'"`\n]*lib/supabase/admin(?:\.ts)?['"`]
   - id: evntly-unvalidated-redirect
     message: Redirect target comes from the request — wrap it in safeNextPath().
     severity: ERROR
