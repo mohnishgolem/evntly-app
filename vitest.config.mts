@@ -8,9 +8,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
       // Next.js provides this at build time; tests run outside Next.
-      "server-only": path.resolve(__dirname, "tests/stubs/server-only.ts"),
+      "server-only": path.resolve(import.meta.dirname, "tests/stubs/server-only.ts"),
     },
   },
 });
