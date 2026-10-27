@@ -1,0 +1,2 @@
+# False positive: generic-api-key matched `auth || p256dh.length > 200` (a length check, not a secret)
+632cd5dc6f224abaae94bf6c476b413f2f0a77f2:src/lib/actions/push.ts:generic-api-key:24
