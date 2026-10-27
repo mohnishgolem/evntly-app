@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { QuoteActions } from "@/components/quote-actions";
 import { QuoteDetails } from "@/components/quote-details";
+import { HelpTip } from "@/components/help/help-tip";
 import { cn } from "@/lib/utils";
 import { categoryPlural } from "@/lib/config";
 import {
@@ -72,6 +73,10 @@ export function QuoteList({
                   <Clock className="h-4 w-4" />
                 )}
                 {meta.label}
+                <HelpTip label="What quote statuses mean" article="quote-statuses">
+                  Requests expire 7 days after they&apos;re sent, or on the event date if sooner. When the vendor sends a
+                  price you get a fresh 7 days to accept it. Accepting creates a booking the vendor then confirms.
+                </HelpTip>
               </span>
             </div>
 

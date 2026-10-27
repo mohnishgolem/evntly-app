@@ -8,6 +8,12 @@ export function SiteFooter() {
         <div className="mb-6 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <Logo />
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <Link href="/how-it-works" className="hover:text-foreground">
+              How it works
+            </Link>
+            <Link href="/help" className="hover:text-foreground">
+              Help &amp; Guides
+            </Link>
             <Link href="/terms" className="hover:text-foreground">
               Terms &amp; Conditions
             </Link>

@@ -44,8 +44,8 @@ describe("drawer menus by role", () => {
     expect(tabs).toEqual(["/dashboard/quotes", "/dashboard/bookings", "/dashboard/bundles"]);
   });
 
-  it("guests see only marketplace links", () => {
-    expect(hrefs("guest")).toEqual(["/", "/explore", "/bundles", "/plan"]);
+  it("guests see only marketplace links and Help & Guides", () => {
+    expect(hrefs("guest")).toEqual(["/", "/explore", "/bundles", "/plan", "/help"]);
   });
 
   it("vendors get their five destinations plus Messages, and never admin", () => {
