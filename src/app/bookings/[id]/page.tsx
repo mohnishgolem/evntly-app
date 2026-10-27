@@ -13,6 +13,8 @@ import { BookingPayments, type PaymentMilestone } from "@/components/payments/bo
 import { DirectPaymentNotice } from "@/components/payments/direct-payment-notice";
 import { VendorBookingActions } from "@/components/vendor-booking-actions";
 import { DisputePanel } from "@/components/dispute-panel";
+import { JobCardPanel } from "@/components/job-card-panel";
+import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { loadBookingDisputes } from "@/lib/data/disputes";
 import { sydneyDate } from "@/lib/event-dates";
 import { conversationIdFor } from "@/lib/messages";
@@ -107,7 +109,14 @@ export default async function BookingPage({
   }
 
   const totalCents = Math.round(Number(booking.total_price ?? 0) * 100);
-  const disputes = await loadBookingDisputes(booking.id, session.user.id);
+  // The job card holds the completion steps (vendor marks the job done,
+  // customer confirms). Emails about those steps link here, so it has to be
+  // on this page, not only in the booking lists.
+  const showJobCard = role !== "admin" && (booking.status === "confirmed" || booking.status === "completed");
+  const [disputes, { jobCard, checklist }] = await Promise.all([
+    loadBookingDisputes(booking.id, session.user.id),
+    showJobCard ? getJobCardForBooking(booking.id) : Promise.resolve({ jobCard: null, checklist: [] }),
+  ]);
   // Same window the open_booking_dispute RPC enforces.
   const canDispute = booking.status !== "declined" && booking.event_date >= sydneyDate(-90);
   const backHref = role === "vendor" ? "/vendor-dashboard/bookings" : role === "admin" ? "/admin/payments" : "/dashboard/bookings";
@@ -161,6 +170,19 @@ export default async function BookingPage({
         )}
         {role === "vendor" && <VendorBookingActions bookingId={booking.id} status={booking.status} />}
       </header>
+
+      {jobCard && (
+        <section aria-labelledby="job-heading" className="mb-8">
+          <h2 id="job-heading" className="text-lg font-semibold">
+            Job progress
+          </h2>
+          <JobCardPanel
+            jobCard={jobCard}
+            checklist={checklist}
+            viewer={role === "vendor" ? "vendor" : "organiser"}
+          />
+        </section>
+      )}
 
       <DisputePanel bookingId={booking.id} role={role} disputes={disputes} canOpen={canDispute} />
 
