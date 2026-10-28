@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, CheckCircle2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
@@ -16,7 +16,13 @@ export const metadata: Metadata = {
 };
 
 
-export default async function CustomerBookingsPage() {
+export default async function CustomerBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ accepted?: string }>;
+}) {
+  // ?accepted=1: the customer just accepted a quote (QuoteActions).
+  const justAccepted = (await searchParams).accepted === "1";
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/bookings");
 
@@ -70,6 +76,17 @@ export default async function CustomerBookingsPage() {
       </p>
 
       <DashboardNav tabs="customerBookingsTabs" label="Booking sections" />
+
+      {justAccepted && (
+        <div role="status" className="mb-6 rounded-xl border border-success/30 bg-success/5 px-4 py-3 text-sm">
+          <p className="flex items-center gap-2 font-medium">
+            <CheckCircle2 className="size-4 text-success" aria-hidden /> Quote accepted — your booking request is in
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            The vendor now confirms the booking. We&apos;ll email you as soon as they do.
+          </p>
+        </div>
+      )}
 
       {all.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-12 text-center">
