@@ -2,6 +2,7 @@
 
 import { earliestEventDate } from "@/lib/event-dates";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { CalendarCheck, CheckCircle2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -117,13 +118,13 @@ export function BookVendor({
   const [open, setOpen] = useState(() => !!autoOpen && state.kind === "bookable");
 
   // ?book=1 is a one-shot intent from the sign-up round trip: drop it so a
-  // refresh or Back doesn't pop the form open again.
+  // refresh or Back doesn't pop the form open again. Through the router —
+  // a bare history.replaceState is undone when a server action re-renders.
+  const router = useRouter();
+  const pathname = usePathname();
   useEffect(() => {
-    if (!autoOpen) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("book");
-    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
-  }, [autoOpen]);
+    if (autoOpen) router.replace(pathname, { scroll: false });
+  }, [autoOpen, pathname, router]);
 
   const bookPath = `/vendor/${vendorId}?book=1`;
   const signupHref = `/signup?next=${encodeURIComponent(bookPath)}`;

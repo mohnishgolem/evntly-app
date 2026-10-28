@@ -93,7 +93,8 @@ export default async function VendorDetailPage({
       supabase.rpc("my_service_providers").select("id").eq("id", id).maybeSingle(),
       supabase
         .rpc("my_quote_requests", { as_role: "client" })
-        .select("id, status, event_date")
+        // RPC results can only be ordered by selected columns.
+        .select("id, status, event_date, created_at")
         .eq("vendor_id", id)
         .in("status", ["pending", "quoted"])
         .order("created_at", { ascending: false })
