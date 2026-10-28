@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BUNDLES_PUBLIC } from "@/lib/config";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { getActiveBundles } from "@/lib/data/bundles";
@@ -7,6 +8,8 @@ export const metadata: Metadata = {
   title: "Vendor bundles",
   description:
     "Browse discounted event vendor bundles — multiple vendors teamed up into one package.",
+  // Off the public navigation for launch (BUNDLES_PUBLIC); still reachable by link.
+  ...(BUNDLES_PUBLIC ? {} : { robots: { index: false, follow: false } }),
 };
 
 export default async function BundlesPage() {

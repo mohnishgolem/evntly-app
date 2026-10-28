@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
-import { safeNextPath } from "@/lib/safe-redirect";
+import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
+import { BookingReturnNote } from "@/components/auth/booking-return-note";
 import { authNotice } from "@/lib/auth-notices";
 import Link from "next/link";
 
@@ -38,6 +39,7 @@ export default async function LoginPage({
           )}
         </div>
       )}
+      {isBookingReturn(next) && <BookingReturnNote />}
       <AuthTabs defaultTab="login" next={next} />
     </div>
   );

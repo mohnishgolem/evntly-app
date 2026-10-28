@@ -29,6 +29,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { BUNDLES_PUBLIC } from "@/lib/config";
 
 // Single source of truth for every navigation surface: the dark drawer,
 // the account dropdown, the desktop sidebars and the in-page tab rows.
@@ -94,7 +95,7 @@ export function activeHref(pathname: string, items: NavItem[]) {
 export const MARKETPLACE_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/explore", label: "Explore Vendors", icon: Search, match: ["/vendor"] },
-  { href: "/bundles", label: "Bundles", icon: Package },
+  ...(BUNDLES_PUBLIC ? [{ href: "/bundles", label: "Bundles", icon: Package }] : []),
   { href: "/plan", label: "Start Planning", icon: Sparkles },
 ];
 
@@ -128,7 +129,7 @@ export const CUSTOMER_EVENTS_TABS: NavItem[] = [
 export const CUSTOMER_BOOKINGS_TABS: NavItem[] = [
   { href: "/dashboard/quotes", label: "Requests & quotes", icon: FileText },
   { href: "/dashboard/bookings", label: "Confirmed bookings", icon: CalendarCheck },
-  { href: "/dashboard/bundles", label: "Bundle bookings", icon: Package },
+  ...(BUNDLES_PUBLIC ? [{ href: "/dashboard/bundles", label: "Bundle bookings", icon: Package }] : []),
 ];
 
 // Drawer "Account" section for customers.
@@ -194,7 +195,7 @@ export const VENDOR_LISTINGS_TABS: NavItem[] = [
   { href: "/vendor-dashboard/business", label: "Listings", icon: Store, match: ["/vendor-dashboard/edit"] },
   { href: "/vendor-dashboard/portfolio", label: "Photos & videos", icon: LayoutGrid },
   { href: "/vendor-dashboard/pricing", label: "Pricing & packages", icon: Tags },
-  { href: "/vendor-dashboard/bundles", label: "Bundles", icon: Package },
+  ...(BUNDLES_PUBLIC ? [{ href: "/vendor-dashboard/bundles", label: "Bundles", icon: Package }] : []),
 ];
 
 export const VENDOR_BOOKINGS_TABS: NavItem[] = [
@@ -203,13 +204,14 @@ export const VENDOR_BOOKINGS_TABS: NavItem[] = [
 ];
 
 // ── Admin ────────────────────────────────────────────────────────────────
-// Only sections that exist. Bookings and Settings are added when built.
+// Only sections that exist. Settings is added when built.
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
+  { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck },
   { href: "/admin/matching", label: "Matching", icon: Sparkles },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/disputes", label: "Disputes", icon: Scale },
@@ -255,7 +257,7 @@ export function drawerSections(role: NavRole): NavSection[] {
             HELP_NAV_ITEM,
           ],
         },
-        { title: "Marketplace", items: MARKETPLACE_NAV.slice(0, 3) },
+        { title: "Marketplace", items: MARKETPLACE_NAV.filter((i) => i.href === "/" || i.href === "/explore") },
       ];
     case "admin":
       return [

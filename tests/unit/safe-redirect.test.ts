@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeNextPath } from "@/lib/safe-redirect";
+import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
 
 describe("safeNextPath (open-redirect protection)", () => {
   it.each([
@@ -28,5 +28,20 @@ describe("safeNextPath (open-redirect protection)", () => {
 
   it("uses the supplied fallback", () => {
     expect(safeNextPath(null, "/")).toBe("/");
+  });
+});
+
+describe("isBookingReturn", () => {
+  it("recognises a return to a vendor's booking form", () => {
+    expect(isBookingReturn("/vendor/abc?book=1")).toBe(true);
+    expect(isBookingReturn("/vendor/abc?ref=x&book=1")).toBe(true);
+  });
+
+  it("ignores other paths and anything off-site", () => {
+    expect(isBookingReturn("/vendor/abc")).toBe(false);
+    expect(isBookingReturn("/vendor/abc?book=10")).toBe(false);
+    expect(isBookingReturn("/dashboard?book=1")).toBe(false);
+    expect(isBookingReturn("//evil.com/vendor/abc?book=1")).toBe(false);
+    expect(isBookingReturn(undefined)).toBe(false);
   });
 });

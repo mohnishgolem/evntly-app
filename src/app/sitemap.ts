@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { LAUNCH_CATEGORIES, SITE_URL } from "@/lib/config";
+import { BUNDLES_PUBLIC, LAUNCH_CATEGORIES, SITE_URL } from "@/lib/config";
 import { helpArticles } from "@/lib/help/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -13,13 +13,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq("status", "approved")
       .eq("is_demo", false)
       .in("service_type", LAUNCH_CATEGORIES),
-    supabase.from("combined_packages").select("id, updated_at").eq("status", "active"),
+    BUNDLES_PUBLIC
+      ? supabase.from("combined_packages").select("id, updated_at").eq("status", "active")
+      : Promise.resolve({ data: [] as { id: string; updated_at: string | null }[] }),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/explore`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${SITE_URL}/bundles`, changeFrequency: "daily", priority: 0.7 },
+    ...(BUNDLES_PUBLIC ? [{ url: `${SITE_URL}/bundles`, changeFrequency: "daily" as const, priority: 0.7 }] : []),
     { url: `${SITE_URL}/plan`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE_URL}/vendor-signup`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/how-it-works`, changeFrequency: "monthly", priority: 0.6 },

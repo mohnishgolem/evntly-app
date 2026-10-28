@@ -32,7 +32,7 @@ describe("drawer menus by role", () => {
   it("customers get their planning links and never vendor or admin links", () => {
     const links = hrefs("customer");
     expect(links).toEqual(
-      expect.arrayContaining(["/", "/explore", "/bundles", "/plan", "/dashboard", "/dashboard/quotes", "/profile", "/dashboard/settings"]),
+      expect.arrayContaining(["/", "/explore", "/plan", "/dashboard", "/dashboard/quotes", "/profile", "/dashboard/settings"]),
     );
     for (const h of links) {
       expect(h).not.toMatch(/^\/admin|vendor-dashboard/);
@@ -41,11 +41,18 @@ describe("drawer menus by role", () => {
 
   it("customers reach requests, quotes and confirmed bookings in Bookings", () => {
     const tabs = CUSTOMER_BOOKINGS_TABS.map((t) => t.href);
-    expect(tabs).toEqual(["/dashboard/quotes", "/dashboard/bookings", "/dashboard/bundles"]);
+    expect(tabs).toEqual(["/dashboard/quotes", "/dashboard/bookings"]);
   });
 
   it("guests see only marketplace links and Help & Guides", () => {
-    expect(hrefs("guest")).toEqual(["/", "/explore", "/bundles", "/plan", "/help"]);
+    expect(hrefs("guest")).toEqual(["/", "/explore", "/plan", "/help"]);
+  });
+
+  it("keeps Bundles out of every menu while BUNDLES_PUBLIC is off", () => {
+    for (const role of ["guest", "customer", "vendor", "admin"] as const) {
+      for (const h of hrefs(role)) expect(h).not.toMatch(/bundles/);
+    }
+    expect(VENDOR_LISTINGS_TABS.some((t) => t.href.includes("bundles"))).toBe(false);
   });
 
   it("vendors get their five destinations plus Messages, and never admin", () => {

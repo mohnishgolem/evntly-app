@@ -34,7 +34,8 @@ vi.mock("@/lib/supabase/admin", () => ({ quoteParticipantEmail: vi.fn(), message
 
 const { getFeaturedVendors, searchVendors, findSimilarVendors } = await import("@/lib/data/vendors");
 const { getActiveBundles } = await import("@/lib/data/bundles");
-const { requestQuote } = await import("@/lib/actions/quotes");
+const { requestQuote, cancelQuote } = await import("@/lib/actions/quotes");
+const { notify } = await import("@/lib/email");
 const { SAMPLE_LISTING_CONTACT_ERROR } = await import("@/lib/sample-listings");
 
 const vendorReads = () => calls.filter((c) => c.url.includes("/rest/v1/service_providers"));
@@ -86,11 +87,61 @@ describe("contacting a sample listing", () => {
     expect(calls.some((c) => c.url.includes("quote_requests"))).toBe(false);
   });
 
+  // Keys are matched against the URL in insertion order, so the RPCs
+  // (rpc/my_service_providers, rpc/my_quote_requests) come first.
+  function realVendor({ own = [], open = [] }: { own?: unknown[]; open?: unknown[] } = {}) {
+    replies["rpc/my_service_providers"] = own;
+    replies["rpc/my_quote_requests"] = open;
+    replies["rest/v1/service_providers"] = [{ is_demo: false }];
+    replies["rest/v1/quote_requests"] = [{ id: "q1", service_type: "photographer" }];
+  }
+  const inserts = () => calls.filter((c) => c.url.includes("rest/v1/quote_requests") && c.method === "POST");
+
   it("still lets real vendors through to the insert", async () => {
-    replies["service_providers"] = [{ is_demo: false }];
-    replies["quote_requests"] = [{ id: "q1", service_type: "photographer" }];
+    realVendor();
     const res = await requestQuote("v-real", draft);
     expect(res?.error).toBeUndefined();
-    expect(calls.find((c) => c.url.includes("quote_requests"))?.method).toBe("POST");
+    expect(inserts()).toHaveLength(1);
+  });
+
+  it("refuses a vendor booking their own listing", async () => {
+    realVendor({ own: [{ id: "v-real" }] });
+    const res = await requestQuote("v-real", draft);
+    expect(res?.error).toMatch(/your own listing/);
+    expect(inserts()).toHaveLength(0);
+    const own = calls.find((c) => c.url.includes("rpc/my_service_providers"));
+    expect(own?.url).toContain("id=eq.v-real");
+  });
+
+  it("refuses a second open request to the same vendor for the same date", async () => {
+    realVendor({ open: [{ id: "q0" }] });
+    const res = await requestQuote("v-real", draft);
+    expect(res?.error).toMatch(/already sent this vendor a request/);
+    expect(inserts()).toHaveLength(0);
+    const check = calls.find((c) => c.url.includes("rpc/my_quote_requests"));
+    expect(check?.url).toContain("vendor_id=eq.v-real");
+    expect(check?.url).toContain("event_date=eq.2099-01-10");
+    expect(check?.url).toContain("status=in.(pending,quoted)");
+  });
+});
+
+describe("withdrawing a request", () => {
+  it("only cancels an open request, and tells the vendor", async () => {
+    replies["rest/v1/quote_requests"] = [{ event_type: "Wedding", event_date: "2099-01-10" }];
+    vi.mocked(notify).mockClear();
+    expect(await cancelQuote("q1")).toEqual({ success: true });
+    const patch = calls.find((c) => c.url.includes("rest/v1/quote_requests") && c.method === "PATCH");
+    expect(patch?.url).toContain("id=eq.q1");
+    expect(patch?.url).toContain("status=in.(pending,quoted)");
+    expect(patch?.body).toEqual({ status: "cancelled" });
+    expect(notify).toHaveBeenCalledOnce();
+  });
+
+  it("explains when the request is no longer open", async () => {
+    replies["rest/v1/quote_requests"] = [];
+    vi.mocked(notify).mockClear();
+    const res = await cancelQuote("q1");
+    expect(res?.error).toMatch(/can't be withdrawn/);
+    expect(notify).not.toHaveBeenCalled();
   });
 });
