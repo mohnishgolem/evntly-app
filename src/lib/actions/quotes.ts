@@ -294,14 +294,32 @@ export async function cancelQuote(quoteId: string): Promise<ActionState> {
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: "Not logged in." };
 
-  const { error } = await supabase
+  const { data: cancelled, error } = await supabase
     .from("quote_requests")
     .update({ status: "cancelled" })
-    // RLS + the lockdown trigger restrict cancelling to the customer.
-    .eq("id", quoteId);
+    // RLS + the lockdown trigger restrict cancelling to the customer; only
+    // open requests can be withdrawn (an accepted one has a booking).
+    .eq("id", quoteId)
+    .in("status", OPEN_QUOTE_STATUSES)
+    .select("event_type, event_date")
+    .maybeSingle();
 
   if (error) return { error: friendlyError(error.message) };
+  if (!cancelled) return { error: "This request can't be withdrawn any more. Refresh to see the latest." };
+
+  // The vendor may be partway through a quote; tell them it's off.
+  notify({
+    category: "enquiries",
+    to: (await quoteParticipantEmail(quoteId, "vendor_email")) ?? "",
+    subject: `Request withdrawn: ${cancelled.event_type ?? "event"} on ${formatEventDate(cancelled.event_date)}`,
+    heading: "A customer withdrew their request",
+    lines: [
+      `The customer no longer needs a quote for the ${cancelled.event_type?.toLowerCase() ?? "event"} on ${formatEventDate(cancelled.event_date)}. You don't need to do anything.`,
+    ],
+    cta: { label: "View your leads", path: "/vendor-dashboard/enquiries" },
+  });
 
   revalidatePath("/dashboard/quotes");
+  revalidatePath("/vendor-dashboard", "layout");
   return { success: true };
 }

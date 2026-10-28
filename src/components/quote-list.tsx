@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
-import { QuoteActions } from "@/components/quote-actions";
+import { QuoteActions, WithdrawRequest } from "@/components/quote-actions";
 import { QuoteDetails } from "@/components/quote-details";
 import { HelpTip } from "@/components/help/help-tip";
 import { cn } from "@/lib/utils";
@@ -86,6 +86,7 @@ export function QuoteList({
                 request expires {timeLeft}.
               </p>
             )}
+            {status === "pending" && <WithdrawRequest quoteId={q.id} vendorName={q.vendor_name ?? "the vendor"} />}
 
             {status === "expired" && (
               <p className="mt-2 text-sm text-muted-foreground">

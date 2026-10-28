@@ -204,13 +204,14 @@ export const VENDOR_BOOKINGS_TABS: NavItem[] = [
 ];
 
 // ── Admin ────────────────────────────────────────────────────────────────
-// Only sections that exist. Bookings and Settings are added when built.
+// Only sections that exist. Settings is added when built.
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
+  { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck },
   { href: "/admin/matching", label: "Matching", icon: Sparkles },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/disputes", label: "Disputes", icon: Scale },

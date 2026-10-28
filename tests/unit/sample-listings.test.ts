@@ -34,7 +34,8 @@ vi.mock("@/lib/supabase/admin", () => ({ quoteParticipantEmail: vi.fn(), message
 
 const { getFeaturedVendors, searchVendors, findSimilarVendors } = await import("@/lib/data/vendors");
 const { getActiveBundles } = await import("@/lib/data/bundles");
-const { requestQuote } = await import("@/lib/actions/quotes");
+const { requestQuote, cancelQuote } = await import("@/lib/actions/quotes");
+const { notify } = await import("@/lib/email");
 const { SAMPLE_LISTING_CONTACT_ERROR } = await import("@/lib/sample-listings");
 
 const vendorReads = () => calls.filter((c) => c.url.includes("/rest/v1/service_providers"));
@@ -121,5 +122,26 @@ describe("contacting a sample listing", () => {
     expect(check?.url).toContain("vendor_id=eq.v-real");
     expect(check?.url).toContain("event_date=eq.2099-01-10");
     expect(check?.url).toContain("status=in.(pending,quoted)");
+  });
+});
+
+describe("withdrawing a request", () => {
+  it("only cancels an open request, and tells the vendor", async () => {
+    replies["rest/v1/quote_requests"] = [{ event_type: "Wedding", event_date: "2099-01-10" }];
+    vi.mocked(notify).mockClear();
+    expect(await cancelQuote("q1")).toEqual({ success: true });
+    const patch = calls.find((c) => c.url.includes("rest/v1/quote_requests") && c.method === "PATCH");
+    expect(patch?.url).toContain("id=eq.q1");
+    expect(patch?.url).toContain("status=in.(pending,quoted)");
+    expect(patch?.body).toEqual({ status: "cancelled" });
+    expect(notify).toHaveBeenCalledOnce();
+  });
+
+  it("explains when the request is no longer open", async () => {
+    replies["rest/v1/quote_requests"] = [];
+    vi.mocked(notify).mockClear();
+    const res = await cancelQuote("q1");
+    expect(res?.error).toMatch(/can't be withdrawn/);
+    expect(notify).not.toHaveBeenCalled();
   });
 });
