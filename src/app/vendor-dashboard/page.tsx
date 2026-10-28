@@ -5,6 +5,8 @@ import {
   CalendarClock,
   CalendarDays,
   ChevronRight,
+  CheckCircle2,
+  Circle,
   Clock,
   Eye,
   FileText,
@@ -21,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { sydneyDate } from "@/lib/event-dates";
 import { quoteExpiresSoon, quoteTimeLeft, effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { cn } from "@/lib/utils";
+import { completenessPercent, profileChecklist, type ChecklistItem } from "@/lib/profile-completeness";
 
 export const metadata: Metadata = {
   title: "Vendor dashboard",
@@ -55,6 +58,46 @@ function Stat({
       <span className="text-2xl font-bold tabular-nums">{value}</span>
       <span className="text-sm text-muted-foreground">{label}</span>
     </Link>
+  );
+}
+
+// Profile strength for the main listing: a short to-do list until it's
+// complete, then it disappears.
+function ProfileStrength({ name, items }: { name: string; items: ChecklistItem[] }) {
+  const percent = completenessPercent(items);
+  if (percent === 100) return null;
+  return (
+    <section aria-labelledby="profile-strength" className="mb-8 rounded-2xl border border-border p-5">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h2 id="profile-strength" className="text-lg font-semibold">
+          Finish your profile
+        </h2>
+        <span className="text-sm font-medium tabular-nums text-muted-foreground">{percent}% complete</span>
+      </div>
+      <div className="mb-3 h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={`${name} profile completeness`}>
+        <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${percent}%` }} />
+      </div>
+      <p className="mb-3 text-sm text-muted-foreground">Complete profiles get more enquiries. Each step takes a minute or two.</p>
+      <ul className="space-y-1">
+        {items.map((i) => (
+          <li key={i.key}>
+            {i.done ? (
+              <span className="flex items-center gap-2.5 px-1 py-1.5 text-sm text-muted-foreground line-through">
+                <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden />
+                {i.label}
+                <span className="sr-only"> (done)</span>
+              </span>
+            ) : (
+              <Link href={i.href} className="flex min-h-10 items-center gap-2.5 rounded-lg px-1 py-1.5 text-sm font-medium outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring">
+                <Circle className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="flex-1">{i.label}</span>
+                <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -109,6 +152,15 @@ export default async function VendorHomePage() {
     .filter((b) => b.status === "confirmed" && b.event_date >= today)
     .reduce((t, b) => t + Number(b.total_price ?? 0), 0);
 
+  const [{ data: details }, { count: photoCount }, { count: packageCount }] = await Promise.all([
+    supabase.rpc("my_service_providers").select("bio, abn, locations_serviced, event_types").eq("id", listings[0].id).maybeSingle(),
+    supabase.from("portfolio_items").select("id", { count: "exact", head: true }).eq("provider_id", listings[0].id),
+    supabase.from("vendor_packages").select("id", { count: "exact", head: true }).eq("provider_id", listings[0].id).eq("active", true),
+  ]);
+  const checklist = details
+    ? profileChecklist({ id: listings[0].id, ...details, photoCount: photoCount ?? 0, packageCount: packageCount ?? 0 })
+    : [];
+
   const awaitingCustomer = quotes.filter((q) => effectiveQuoteStatus(q) === "quoted");
   const allClear = attention.items.length === 0 && unread === 0;
   const primary = listings[0];
@@ -117,6 +169,8 @@ export default async function VendorHomePage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Home</h1>
       <p className="mb-6 text-sm text-muted-foreground">What needs your attention today.</p>
+
+      {checklist.length > 0 && <ProfileStrength name={listings[0].name} items={checklist} />}
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat

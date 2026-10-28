@@ -4,7 +4,7 @@ import { Users } from "lucide-react";
 import { getBundleWithParticipants } from "@/lib/data/bundles";
 import { getCurrentUser } from "@/lib/data/user";
 import { BookBundleForm } from "@/components/book-bundle-form";
-import { SITE_URL } from "@/lib/config";
+import { BUNDLES_PUBLIC, SITE_URL } from "@/lib/config";
 
 export async function generateMetadata({
   params,
@@ -27,6 +27,8 @@ export async function generateMetadata({
     alternates: { canonical: url },
     openGraph: { title, description, url },
     twitter: { card: "summary_large_image", title, description },
+    // Off the public navigation for launch (BUNDLES_PUBLIC); still reachable by link.
+    ...(BUNDLES_PUBLIC ? {} : { robots: { index: false, follow: false } }),
   };
 }
 

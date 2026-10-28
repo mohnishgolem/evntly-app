@@ -153,12 +153,11 @@ export function helpArticles(ctx: HelpContext): HelpArticle[] {
       summary: "Browse, filter and save vendors in Explore.",
       audience: "customer",
       topic: "getting-started",
-      keywords: ["explore", "search", "browse", "filter", "map", "saved", "favourite", "bundles", "sample"],
+      keywords: ["explore", "search", "browse", "filter", "map", "saved", "favourite", "sample"],
       action: { label: "Explore vendors", href: "/explore" },
       blocks: [
         "**Explore** lists approved vendors. Filter by category, price and location, or switch to the map.",
         "Open a vendor to see their photos, packages, prices, reviews and service area. Tap the heart to keep them in **Saved vendors**.",
-        "**Bundles** are packages put together by several vendors who work together. You can book a bundle from its page.",
         { note: "Listings marked **Sample listing** aren't real businesses — they show what a listing looks like and can't be contacted or booked." },
       ],
       related: ["request-a-quote", "plan-an-event"],
@@ -485,10 +484,10 @@ export function helpArticles(ctx: HelpContext): HelpArticle[] {
     {
       slug: "manage-your-listing",
       title: "Manage your listing",
-      summary: "Edit details, photos, pricing and bundles, or pause your listing.",
+      summary: "Edit details, photos and pricing, or pause your listing.",
       audience: "vendor",
       topic: "listing",
-      keywords: ["edit", "photos", "videos", "portfolio", "pricing", "packages", "bundles", "pause", "hide"],
+      keywords: ["edit", "photos", "videos", "portfolio", "pricing", "packages", "pause", "hide"],
       action: { label: "Your listings", href: "/vendor-dashboard/business" },
       blocks: [
         {
@@ -496,7 +495,6 @@ export function helpArticles(ctx: HelpContext): HelpArticle[] {
             "**Listings** — edit your details, or pause your listing to stop new requests for a while.",
             "**Photos & videos** — upload your portfolio. Good photos make the biggest difference.",
             "**Pricing & packages** — set your rates and packages so customers see what to expect.",
-            "**Bundles** — team up with other vendors on a combined package. A bundle goes live once every invited vendor accepts.",
           ],
         },
       ],

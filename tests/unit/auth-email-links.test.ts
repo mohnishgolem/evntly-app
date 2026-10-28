@@ -104,7 +104,23 @@ describe("auth callback without a session", () => {
 
   it("tells people opening the confirmation in another browser that they're confirmed", async () => {
     exchangeError = { message: "code verifier missing" };
-    expect(await location("code=abc&flow=signup&next=/dashboard")).toBe("https://evntly.example/login?notice=email-confirmed");
+    expect(await location("code=abc&flow=signup&next=/dashboard")).toBe(
+      "https://evntly.example/login?notice=email-confirmed&next=%2Fdashboard"
+    );
+  });
+
+  it("keeps a booking intent through a confirmation opened in another browser", async () => {
+    exchangeError = { message: "code verifier missing" };
+    const to = new URL((await location(`code=abc&flow=signup&next=${encodeURIComponent("/vendor/v1?book=1")}`))!);
+    expect(to.pathname).toBe("/login");
+    expect(to.searchParams.get("next")).toBe("/vendor/v1?book=1");
+  });
+
+  it("never carries an off-site next to the login page", async () => {
+    exchangeError = { message: "code verifier missing" };
+    const to = new URL((await location("code=abc&flow=signup&next=//evil.com"))!);
+    expect(to.origin).toBe("https://evntly.example");
+    expect(to.searchParams.get("next")).toBe("/dashboard");
   });
 
   it("offers a new reset link when a reset link is reused or expired", async () => {

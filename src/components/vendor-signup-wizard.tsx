@@ -71,6 +71,13 @@ export function VendorSignupWizard() {
           Thanks for signing up! We review new listings within 24–48 hours — you&apos;ll appear in
           search once approved.
         </p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          While you wait, add photos of your work and your packages — they&apos;re the first thing customers look at.
+        </p>
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+          <Button nativeButton={false} render={<Link href="/vendor-dashboard/portfolio">Add photos</Link>} />
+          <Button variant="outline" nativeButton={false} render={<Link href="/vendor-dashboard">Go to your dashboard</Link>} />
+        </div>
       </div>
     );
   }

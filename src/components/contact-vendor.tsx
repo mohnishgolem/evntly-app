@@ -33,9 +33,10 @@ export function ContactVendor({
     return (
       <Button
         size="lg"
+        variant="outline"
         className="w-full"
         nativeButton={false}
-        render={<Link href={`/signup?next=/vendor/${vendorId}`}>Sign up to send a message</Link>}
+        render={<Link href={`/signup?next=${encodeURIComponent(`/vendor/${vendorId}`)}`}>Ask a question first</Link>}
       />
     );
   }
@@ -44,8 +45,8 @@ export function ContactVendor({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="lg" className="w-full">
-            <MessageCircle /> Contact vendor
+          <Button size="lg" variant="outline" className="w-full">
+            <MessageCircle /> Message vendor
           </Button>
         }
       />

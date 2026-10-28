@@ -86,11 +86,40 @@ describe("contacting a sample listing", () => {
     expect(calls.some((c) => c.url.includes("quote_requests"))).toBe(false);
   });
 
+  // Keys are matched against the URL in insertion order, so the RPCs
+  // (rpc/my_service_providers, rpc/my_quote_requests) come first.
+  function realVendor({ own = [], open = [] }: { own?: unknown[]; open?: unknown[] } = {}) {
+    replies["rpc/my_service_providers"] = own;
+    replies["rpc/my_quote_requests"] = open;
+    replies["rest/v1/service_providers"] = [{ is_demo: false }];
+    replies["rest/v1/quote_requests"] = [{ id: "q1", service_type: "photographer" }];
+  }
+  const inserts = () => calls.filter((c) => c.url.includes("rest/v1/quote_requests") && c.method === "POST");
+
   it("still lets real vendors through to the insert", async () => {
-    replies["service_providers"] = [{ is_demo: false }];
-    replies["quote_requests"] = [{ id: "q1", service_type: "photographer" }];
+    realVendor();
     const res = await requestQuote("v-real", draft);
     expect(res?.error).toBeUndefined();
-    expect(calls.find((c) => c.url.includes("quote_requests"))?.method).toBe("POST");
+    expect(inserts()).toHaveLength(1);
+  });
+
+  it("refuses a vendor booking their own listing", async () => {
+    realVendor({ own: [{ id: "v-real" }] });
+    const res = await requestQuote("v-real", draft);
+    expect(res?.error).toMatch(/your own listing/);
+    expect(inserts()).toHaveLength(0);
+    const own = calls.find((c) => c.url.includes("rpc/my_service_providers"));
+    expect(own?.url).toContain("id=eq.v-real");
+  });
+
+  it("refuses a second open request to the same vendor for the same date", async () => {
+    realVendor({ open: [{ id: "q0" }] });
+    const res = await requestQuote("v-real", draft);
+    expect(res?.error).toMatch(/already sent this vendor a request/);
+    expect(inserts()).toHaveLength(0);
+    const check = calls.find((c) => c.url.includes("rpc/my_quote_requests"));
+    expect(check?.url).toContain("vendor_id=eq.v-real");
+    expect(check?.url).toContain("event_date=eq.2099-01-10");
+    expect(check?.url).toContain("status=in.(pending,quoted)");
   });
 });

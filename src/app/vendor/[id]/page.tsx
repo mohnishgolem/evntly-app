@@ -8,7 +8,9 @@ import { createClient } from "@/lib/supabase/server";
 import { categoryLabel, LAUNCH_CITY, SITE_URL } from "@/lib/config";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
-import { RequestQuote } from "@/components/request-quote";
+import { BookVendor, type OpenRequest } from "@/components/request-quote";
+import { getPaymentsStatus } from "@/lib/payments/server";
+import { navRole } from "@/lib/nav";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
@@ -49,18 +51,24 @@ export async function generateMetadata({
 
 export default async function VendorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ book?: string }>;
 }) {
   const { id } = await params;
+  // ?book=1: the customer pressed "Book this vendor" before signing in;
+  // reopen the booking form now they're back.
+  const autoOpenBooking = (await searchParams).book === "1";
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 
-  const [portfolio, packages, reviews, session] = await Promise.all([
+  const [portfolio, packages, reviews, session, payments] = await Promise.all([
     getVendorPortfolio(id),
     getVendorPackages(id),
     getVendorReviews(id),
     getCurrentUser(),
+    getPaymentsStatus(),
   ]);
   // Hidden sample listings stay viewable by admins for internal testing.
   if (vendor.is_demo && sampleListingsHidden() && session?.profile?.role !== "admin") notFound();
@@ -68,17 +76,41 @@ export default async function VendorDetailPage({
   // Auto-tag a quote request to the customer's most recent planned event, so
   // it shows up on that event's board — no picker UI for multiple events yet.
   let latestEventId: string | undefined;
+  // Vendors can't book their own listing; a customer who already has an
+  // open request here is pointed at it instead of sending a duplicate.
+  let isOwnListing = false;
+  let openRequest: OpenRequest | null = null;
   if (session?.user.email) {
     const supabase = await createClient();
-    const { data: latestEvent } = await supabase
-      .from("events")
-      .select("id")
-      .eq("organiser_user_id", session.user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data: latestEvent }, { data: own }, { data: open }] = await Promise.all([
+      supabase
+        .from("events")
+        .select("id")
+        .eq("organiser_user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.rpc("my_service_providers").select("id").eq("id", id).maybeSingle(),
+      supabase
+        .rpc("my_quote_requests", { as_role: "client" })
+        .select("id, status, event_date")
+        .eq("vendor_id", id)
+        .in("status", ["pending", "quoted"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
     latestEventId = latestEvent?.id;
+    isOwnListing = !!own;
+    if (open) openRequest = { id: open.id, status: open.status, eventDate: open.event_date };
   }
+  const role = navRole(session?.profile?.role, !!session);
+  const fromPackage = packages.length ? Math.min(...packages.map((p) => p.price_cents)) : null;
+  const priceLabel = vendor.hourly_rate
+    ? `From $${vendor.hourly_rate}/hr`
+    : fromPackage != null
+      ? `Packages from ${formatAud(fromPackage)}`
+      : "Price on request";
 
   const vendorUrl = `${SITE_URL}/vendor/${vendor.id}`;
   const jsonLd = {
@@ -277,40 +309,49 @@ export default async function VendorDetailPage({
 
         <div>
           <div className="sticky top-[calc(6rem+env(safe-area-inset-top))] rounded-2xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <p className="mb-1 text-2xl font-bold">
-              ${vendor.hourly_rate}
-              <span className="text-base font-normal text-muted-foreground"> / hr</span>
-            </p>
-            {vendor.available ? (
-              <p className="mb-4 text-sm text-success">Available for bookings</p>
+            {vendor.hourly_rate ? (
+              <p className="mb-1 text-2xl font-bold">
+                ${vendor.hourly_rate}
+                <span className="text-base font-normal text-muted-foreground"> / hr</span>
+              </p>
             ) : (
-              <p className="mb-4 text-sm text-muted-foreground">Currently unavailable</p>
+              <p className="mb-1 text-xl font-bold">{priceLabel}</p>
+            )}
+            {vendor.hourly_rate && fromPackage != null && (
+              <p className="text-sm text-muted-foreground">Packages from {formatAud(fromPackage)}</p>
+            )}
+            {vendor.is_demo ? (
+              <p className="mb-4 text-sm text-muted-foreground">Sample listing</p>
+            ) : vendor.available !== false ? (
+              <p className="mb-4 text-sm text-success">Taking bookings · check your date when you book</p>
+            ) : (
+              <p className="mb-4 text-sm text-muted-foreground">Not taking new bookings right now</p>
             )}
             <div className="space-y-2">
-              {vendor.is_demo ? (
-                <p className="text-sm text-muted-foreground">
-                  Sample listings can&apos;t take quote requests or messages. Browse real vendors on
-                  Explore.
-                </p>
-              ) : (
-                <>
-                  <ContactVendor
-                    isAuthenticated={!!session}
-                    vendorId={vendor.id}
-                    vendorName={vendor.name}
-                  />
-                  <RequestQuote
-                    isAuthenticated={!!session}
-                    vendorId={vendor.id}
-                    vendorName={vendor.name}
-                    eventId={latestEventId}
-                    availability={{
-                      accepting: vendor.available !== false,
-                      unavailableDates: vendor.unavailable_dates ?? [],
-                      weeklyDaysOff: vendor.weekly_unavailable_days ?? [],
-                    }}
-                  />
-                </>
+              <BookVendor
+                isAuthenticated={!!session}
+                isOwnListing={isOwnListing}
+                isSample={!!vendor.is_demo}
+                vendorId={vendor.id}
+                vendorName={vendor.name}
+                eventId={latestEventId}
+                availability={{
+                  accepting: vendor.available !== false,
+                  unavailableDates: vendor.unavailable_dates ?? [],
+                  weeklyDaysOff: vendor.weekly_unavailable_days ?? [],
+                }}
+                openRequest={openRequest}
+                autoOpen={autoOpenBooking}
+                priceLabel={priceLabel}
+                paymentsEnabled={payments.enabled}
+                hasTabBar={role === "customer" || role === "vendor"}
+              />
+              {!vendor.is_demo && !isOwnListing && (
+                <ContactVendor
+                  isAuthenticated={!!session}
+                  vendorId={vendor.id}
+                  vendorName={vendor.name}
+                />
               )}
             </div>
           </div>

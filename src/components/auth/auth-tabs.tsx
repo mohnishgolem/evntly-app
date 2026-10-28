@@ -93,7 +93,9 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
       <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-6 text-center text-sm">
         <p className="mb-1 font-medium">Check your email</p>
         <p className="text-muted-foreground">
-          We sent a confirmation link — click it to activate your account, then log in.
+          {next
+            ? "We sent a confirmation link. Open it on this device and you'll pick up right where you left off."
+            : "We sent a confirmation link — click it to activate your account, then log in."}
         </p>
       </div>
     );

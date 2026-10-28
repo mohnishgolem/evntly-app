@@ -56,6 +56,12 @@ export function isLaunchCategory(value: string): value is VendorCategory {
 
 export const LAUNCH_CITY = "Sydney";
 
+// Bundles (multi-vendor packages) are off the public navigation for launch:
+// they need several real vendors to team up first, and none has been booked.
+// The pages, tables and vendor tools stay in place — flip this to bring the
+// links back.
+export const BUNDLES_PUBLIC = false;
+
 // Browser chrome / installed-app colours: the app's dark and light page
 // backgrounds (globals.css --background). The app icon itself is
 // public/icons/* and public/apple-touch-icon.png — the white wordmark on black.

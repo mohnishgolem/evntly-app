@@ -14,6 +14,9 @@ import { friendlyLegalError } from "@/lib/legal/status";
 
 export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
 
+const OPEN_QUOTE_STATUSES = ["pending", "quoted"];
+const OWN_LISTING_ERROR = "This is your own listing, so you can't book it.";
+
 /** Where a quote request came from (quote_requests.origin). */
 export type QuoteOrigin = "vendor_profile" | "event_board" | "smart_match";
 const ORIGINS: QuoteOrigin[] = ["vendor_profile", "event_board", "smart_match"];
@@ -71,6 +74,23 @@ export async function requestQuote(
 
   const { data: target } = await supabase.from("service_providers").select("is_demo").eq("id", vendorId).maybeSingle();
   if (target?.is_demo) return { error: SAMPLE_LISTING_CONTACT_ERROR };
+
+  // Vendors can't book their own listing (fill_quote_request_vendor refuses
+  // it too, once that migration is applied).
+  const { data: ownListing } = await supabase.rpc("my_service_providers").select("id").eq("id", vendorId).maybeSingle();
+  if (ownListing) return { error: OWN_LISTING_ERROR };
+
+  // One open request per vendor and date: a double-tap or a second visit
+  // shouldn't send the vendor the same enquiry twice.
+  const { data: open } = await supabase
+    .rpc("my_quote_requests", { as_role: "client" })
+    .select("id")
+    .eq("vendor_id", vendorId)
+    .eq("event_date", draft.eventDate)
+    .in("status", OPEN_QUOTE_STATUSES)
+    .limit(1)
+    .maybeSingle();
+  if (open) return { error: "You've already sent this vendor a request for that date. Check Bookings for their reply." };
 
   // Vendor details come from the DB, never the caller — this is a server
   // action, so a client-supplied email would let anyone point the quote (and

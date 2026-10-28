@@ -53,5 +53,8 @@ export async function GET(request: Request) {
       : searchParams.get("error_code") === "otp_expired" || next === "/reset-password"
         ? "link-expired"
         : "signin-failed";
-  return NextResponse.redirect(`${origin}/login?notice=${notice}`);
+  // Keep where they were headed (e.g. back to a vendor's booking form) so
+  // logging in from the notice still lands there.
+  const back = next && next !== "/reset-password" ? `&next=${encodeURIComponent(safeNextPath(next))}` : "";
+  return NextResponse.redirect(`${origin}/login?notice=${notice}${back}`);
 }

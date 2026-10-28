@@ -18,3 +18,10 @@ export function safeNextPath(next: string | null | undefined, fallback = "/dashb
     return fallback;
   }
 }
+
+/** True when `next` returns to a vendor's booking form (/vendor/:id?book=1). */
+export function isBookingReturn(next: string | null | undefined): boolean {
+  if (!next) return false;
+  const path = safeNextPath(next, "");
+  return /^\/vendor\/[^/?#]+\?(.*&)?book=1(&|#|$)/.test(path);
+}
