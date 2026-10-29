@@ -410,11 +410,36 @@ export async function handleChargeRefunded(charge: Stripe.Charge) {
   });
 }
 
+/**
+ * Finds the milestone a dispute is about. Stripe can send the dispute before
+ * checkout.session.completed has stored the charge id on the milestone, so
+ * fall back to the milestone id put on the PaymentIntent at checkout. Throws
+ * (so Stripe retries) if that milestone can't be found; returns null for
+ * charges that aren't Evntly milestone payments.
+ */
+async function milestoneForDispute(admin: Admin, dispute: Stripe.Dispute) {
+  const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge.id;
+  const { data: byCharge } = await admin
+    .from("payment_milestones")
+    .select("id, plan_id, name")
+    .eq("charge_id", chargeId)
+    .maybeSingle();
+  if (byCharge) return byCharge;
+
+  const piId = typeof dispute.payment_intent === "string" ? dispute.payment_intent : dispute.payment_intent?.id;
+  if (!piId) return null;
+  const pi = await getStripe()!.paymentIntents.retrieve(piId);
+  const milestoneId = pi.metadata?.milestone_id;
+  if (!milestoneId) return null;
+  const { data: m } = await admin.from("payment_milestones").select("id, plan_id, name").eq("id", milestoneId).maybeSingle();
+  if (!m) throw new Error(`Dispute ${dispute.id} is for milestone ${milestoneId}, which wasn't found`);
+  return m;
+}
+
 /** A card dispute (chargeback): freeze the milestone and alert admins. */
 export async function handleChargeDispute(dispute: Stripe.Dispute) {
   const admin = requireAdmin();
-  const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge.id;
-  const { data: m } = await admin.from("payment_milestones").select("id, plan_id, name").eq("charge_id", chargeId).maybeSingle();
+  const m = await milestoneForDispute(admin, dispute);
   if (!m) return;
   await admin.from("payment_milestones").update({ work_status: "disputed" }).eq("id", m.id);
   await logPaymentEvent(admin, m.plan_id, m.id, "system", "chargeback_opened", { reason: dispute.reason, dispute_id: dispute.id });
@@ -479,15 +504,26 @@ export async function refundMilestone(milestoneId: string, reason: string): Prom
   if (!m?.payment_intent_id || m.funding_status !== "funded") return { error: "Only funded payments can be refunded." };
   if (m.payout_status === "processing") return { error: "A payout is in progress — try again in a minute." };
 
+  let refund: Stripe.Refund;
   try {
     if (m.payout_status === "paid" && m.transfer_id) {
       await stripe.transfers.createReversal(m.transfer_id, {}, { idempotencyKey: `reverse-${m.id}` });
       await admin.from("payment_milestones").update({ payout_status: "reversed" }).eq("id", m.id);
     }
-    const refund = await stripe.refunds.create(
+    refund = await stripe.refunds.create(
       { payment_intent: m.payment_intent_id, reason: "requested_by_customer", metadata: { milestone_id: m.id } },
       { idempotencyKey: `refund-${m.id}` }
     );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await logPaymentEvent(admin, m.plan_id, m.id, "admin", "refund_failed", { error: message.slice(0, 500) });
+    return { error: message };
+  }
+
+  // The money has moved. From here on nothing may report the refund as
+  // failed: bookkeeping problems are logged, and the charge.refunded webhook
+  // reconciles the row if this write didn't land.
+  try {
     await admin
       .from("payment_milestones")
       .update({ funding_status: "refunded", refund_id: refund.id, work_status: "cancelled" })
@@ -499,12 +535,10 @@ export async function refundMilestone(milestoneId: string, reason: string): Prom
       heading: "Your payment has been refunded",
       lines: [`${formatAud(m.amount_cents)} for "${m.name}" has been refunded to your card. It usually arrives in 5–10 business days.`],
     });
-    return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    await logPaymentEvent(admin, m.plan_id, m.id, "admin", "refund_failed", { error: message.slice(0, 500) });
-    return { error: message };
+    await recordError({ source: "server", message: `Post-refund bookkeeping failed for ${m.id}: ${String(err)}` });
   }
+  return {};
 }
 
 // ── Notifications ───────────────────────────────────────────────────────
