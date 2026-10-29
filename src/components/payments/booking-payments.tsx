@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, FileText, Lock, ShieldCheck } from "lucide-react";
+import { CalendarDays, FileText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PlanEditor } from "@/components/payments/plan-editor";
+import { PaySheet } from "@/components/payments/pay-sheet";
 import {
   disputeMilestone,
-  payMilestone,
   respondToPaymentPlan,
   reviewMilestone,
   updateMilestoneWork,
@@ -255,12 +255,11 @@ function MilestoneCard({
   const canDispute = role !== "admin" && planLive && !closed && m.payout_status !== "processing" && m.funding_status === "funded";
   const vendorGets = m.amount_cents - Math.round((m.amount_cents * commissionBps) / 10_000);
 
-  function run(fn: () => Promise<{ error?: string; url?: string } | null>) {
+  function run(fn: () => Promise<{ error?: string } | null>) {
     setError(null);
     startTransition(async () => {
       const res = await fn();
       if (res?.error) setError(res.error);
-      else if (res?.url) window.location.assign(res.url);
       else {
         setMode(null);
         setNote("");
@@ -388,9 +387,7 @@ function MilestoneCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {canPay &&
             (paymentsEnabled && vendorReady ? (
-              <Button size="sm" disabled={pending} onClick={() => run(() => payMilestone(m.id))}>
-                <Lock /> Pay {formatAud(m.amount_cents)}
-              </Button>
+              <PaySheet milestoneId={m.id} name={m.name} amountCents={m.amount_cents} />
             ) : (
               <span className="text-sm text-muted-foreground">
                 {paymentsEnabled ? "Payment opens once the vendor finishes payout setup." : "Online payment isn't switched on yet."}
