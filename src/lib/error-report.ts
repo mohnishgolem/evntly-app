@@ -6,8 +6,10 @@ import { sendEmail } from "@/lib/email";
 // Self-hosted error monitoring. Server errors arrive from onRequestError
 // (src/instrumentation.ts), browser errors from /api/client-errors. Each is
 // stored in public.error_events (service role only) and grouped by a
-// fingerprint; the first occurrence of a fingerprint in 24 hours emails the
-// admins. Reporting must never throw or slow the user down noticeably.
+// fingerprint. The database hands out one alert per fingerprint per Sydney
+// day, capped at ALERT_DAILY_CAP a day, so a burst of errors can't flood
+// Resend (which also sends auth emails). Reporting must never throw or slow
+// the user down noticeably.
 
 export type ErrorReport = {
   source: "server" | "client";
@@ -19,7 +21,7 @@ export type ErrorReport = {
   userAgent?: string | null;
 };
 
-const ALERT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const ALERT_DAILY_CAP = 20;
 
 /** Drop query strings (reset codes, tokens) and secret path segments. */
 export function scrubPath(path: string | null | undefined) {
@@ -57,20 +59,19 @@ export async function recordError(report: ErrorReport) {
       fingerprint: errorFingerprint(report),
     };
 
-    const since = new Date(Date.now() - ALERT_WINDOW_MS).toISOString();
-    const { data: recent } = await admin
-      .from("error_events")
-      .select("id")
-      .eq("fingerprint", row.fingerprint)
-      .gte("created_at", since)
-      .limit(1);
-
     const { error } = await admin.from("error_events").insert(row);
     if (error) {
       console.error("[error-report] insert failed:", error.message);
       return;
     }
-    if (recent && recent.length > 0) return;
+
+    // Fails closed: if the claim errors, skip the email rather than risk a flood.
+    const { data: claimed, error: claimError } = await admin.rpc("claim_error_alert", {
+      p_fingerprint: row.fingerprint,
+      p_daily_cap: ALERT_DAILY_CAP,
+    });
+    if (claimError) console.error("[error-report] alert claim failed:", claimError.message);
+    if (claimed !== true) return;
 
     const { data: admins } = await admin.from("users").select("email").eq("role", "admin");
     await Promise.all(

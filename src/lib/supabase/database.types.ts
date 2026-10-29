@@ -702,6 +702,24 @@ export type Database = {
         }
         Relationships: []
       }
+      error_alerts: {
+        Row: {
+          alert_day: string
+          created_at: string
+          fingerprint: string
+        }
+        Insert: {
+          alert_day: string
+          created_at?: string
+          fingerprint: string
+        }
+        Update: {
+          alert_day?: string
+          created_at?: string
+          fingerprint?: string
+        }
+        Relationships: []
+      }
       error_events: {
         Row: {
           created_at: string
@@ -2692,6 +2710,10 @@ export type Database = {
       booked_vendor_ids_on: { Args: { p_date: string }; Returns: string[] }
       check_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
+      }
+      claim_error_alert: {
+        Args: { p_daily_cap?: number; p_fingerprint: string }
         Returns: boolean
       }
       claim_milestone_payout: {
