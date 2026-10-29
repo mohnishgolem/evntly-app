@@ -39,7 +39,7 @@ vi.mock("@/lib/error-report", () => ({ recordError: (r: unknown) => recordError(
 
 const { setStripeForTesting } = await import("@/lib/payments/stripe");
 setStripeForTesting(stripe);
-const { releaseMilestone, createMilestoneCheckout, refundMilestone } = await import("@/lib/payments/server");
+const { releaseMilestone, createMilestoneCheckout, refundMilestone, removeStripeCustomerData } = await import("@/lib/payments/server");
 const { POST } = await import("@/app/api/stripe/webhook/route");
 
 function db(results: Parameters<typeof fakeSupabase>[0]["results"]) {
@@ -258,13 +258,44 @@ describe("createMilestoneCheckout", () => {
     );
   });
 
+  const savedCustomer = () => {
+    stripeRoutes["GET /v1/customers/cus_saved"] = () => ({ json: { id: "cus_saved", object: "customer" } });
+  };
+
   it("reuses the customer's Stripe record so their saved cards show", async () => {
     db({ ...payable(), stripe_customers: { data: { customer_id: "cus_saved" } } });
+    savedCustomer();
     stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
 
     await createMilestoneCheckout(milestone.id, "cust-1");
     expect(stripeCalls.some((c) => c.path === "/v1/customers")).toBe(false);
     expect(sessionBody().get("customer")).toBe("cus_saved");
+  });
+
+  // The live database can hold an id made with the test key; with live keys
+  // Stripe doesn't know it, and reusing it would make every payment fail.
+  it("replaces a stored customer id that Stripe doesn't know (test id under live keys)", async () => {
+    db({ ...payable(), stripe_customers: { data: { customer_id: "cus_testmode" } } });
+    stripeRoutes["GET /v1/customers/cus_testmode"] = () => ({
+      status: 404,
+      json: { error: { code: "resource_missing", message: "No such customer", type: "invalid_request_error" } },
+    });
+    stripeRoutes["POST /v1/customers"] = () => ({ json: { id: "cus_live", object: "customer" } });
+    stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
+
+    await createMilestoneCheckout(milestone.id, "cust-1");
+    expect(sessionBody().get("customer")).toBe("cus_live");
+    expect(current.writes).toContainEqual(
+      expect.objectContaining({ table: "stripe_customers", op: "upsert", payload: { user_id: "cust-1", customer_id: "cus_live" } })
+    );
+  });
+
+  it("doesn't create a duplicate customer when Stripe is briefly unreachable", async () => {
+    db({ ...payable(), stripe_customers: { data: { customer_id: "cus_saved" } } });
+    stripeRoutes["GET /v1/customers/cus_saved"] = () => ({ status: 500, json: { error: { message: "Server error", type: "api_error" } } });
+
+    await expect(createMilestoneCheckout(milestone.id, "cust-1")).rejects.toThrow();
+    expect(stripeCalls.some((c) => c.method === "POST")).toBe(false);
   });
 
   it("reopens the same form instead of starting a second payment", async () => {
@@ -284,11 +315,13 @@ describe("createMilestoneCheckout", () => {
     });
     stripeRoutes["POST /v1/checkout/sessions/cs_old/expire"] = () => ({ json: { id: "cs_old", object: "checkout.session", status: "expired" } });
     stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
+    savedCustomer();
 
     expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_new_secret_abc" });
     expect(stripeCalls.map((c) => `${c.method} ${c.path}`)).toEqual([
       "GET /v1/checkout/sessions/cs_old",
       "POST /v1/checkout/sessions/cs_old/expire",
+      "GET /v1/customers/cus_saved",
       "POST /v1/checkout/sessions",
     ]);
   });
@@ -480,5 +513,43 @@ describe("refundMilestone", () => {
     const res = await refundMilestone(milestone.id, "Customer cancelled");
     expect(res.error).toContain("already refunded");
     expect(refundEvents()).toEqual(["refund_failed"]);
+  });
+});
+
+describe("removeStripeCustomerData (account deletion)", () => {
+  it("deletes the Stripe customer, which removes their saved cards, and forgets the mapping", async () => {
+    db({ stripe_customers: { data: { customer_id: "cus_1" } } });
+    stripeRoutes["DELETE /v1/customers/cus_1"] = () => ({ json: { id: "cus_1", object: "customer", deleted: true } });
+
+    expect(await removeStripeCustomerData("cust-1")).toEqual({ removed: true });
+    expect(stripeCalls.map((c) => `${c.method} ${c.path}`)).toEqual(["DELETE /v1/customers/cus_1"]);
+    expect(current.writes).toContainEqual(expect.objectContaining({ table: "stripe_customers", op: "delete" }));
+    // Payment history stays: nothing touches the payment tables.
+    expect(current.writes.some((w) => w.table.startsWith("payment_"))).toBe(false);
+  });
+
+  it("does nothing when the customer never saved a card", async () => {
+    db({ stripe_customers: { data: null } });
+    expect(await removeStripeCustomerData("cust-1")).toEqual({ removed: false });
+    expect(stripeCalls).toHaveLength(0);
+  });
+
+  it("forgets a customer Stripe no longer has (deleted, or made with the other key)", async () => {
+    db({ stripe_customers: { data: { customer_id: "cus_gone" } } });
+    stripeRoutes["DELETE /v1/customers/cus_gone"] = () => ({
+      status: 404,
+      json: { error: { code: "resource_missing", message: "No such customer", type: "invalid_request_error" } },
+    });
+    expect(await removeStripeCustomerData("cust-1")).toEqual({ removed: true });
+    expect(current.writes).toContainEqual(expect.objectContaining({ table: "stripe_customers", op: "delete" }));
+  });
+
+  it("keeps the mapping and reports the error if Stripe refuses", async () => {
+    db({ stripe_customers: { data: { customer_id: "cus_1" } } });
+    stripeRoutes["DELETE /v1/customers/cus_1"] = () => ({ status: 500, json: { error: { message: "Server error", type: "api_error" } } });
+    const res = await removeStripeCustomerData("cust-1");
+    expect(res.removed).toBe(false);
+    expect(res.error).toBeTruthy();
+    expect(current.writes).toHaveLength(0);
   });
 });
