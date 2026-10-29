@@ -4,6 +4,7 @@ import { getVendorPackages, getPendingInvitesForVendor } from "@/lib/data/bundle
 import { DashboardNav } from "@/components/dashboard-nav";
 import { CreateBundleForm } from "@/components/create-bundle-form";
 import { PackageInviteActions } from "@/components/package-invite-actions";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Your bundles",
@@ -41,7 +42,7 @@ export default async function VendorBundlesPage() {
               <div key={inv.id} className="rounded-2xl border border-border p-4">
                 <p className="font-medium">{inv.combined_package_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  Proposed by {inv.proposed_by} · Your share: ${inv.component_price}
+                  Proposed by {inv.proposed_by} · Your share: {formatAudDollars(inv.component_price)}
                 </p>
                 <PackageInviteActions participantId={inv.id} />
               </div>
@@ -70,7 +71,7 @@ export default async function VendorBundlesPage() {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {p.participant_count || 1} vendors · ${p.total_price}
+                  {p.participant_count || 1} vendors · {formatAudDollars(p.total_price)}
                 </p>
               </div>
             ))}

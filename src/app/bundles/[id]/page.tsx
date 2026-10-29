@@ -5,6 +5,7 @@ import { getBundleWithParticipants } from "@/lib/data/bundles";
 import { getCurrentUser } from "@/lib/data/user";
 import { BookBundleForm } from "@/components/book-bundle-form";
 import { BUNDLES_PUBLIC, SITE_URL } from "@/lib/config";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export async function generateMetadata({
   params,
@@ -61,7 +62,7 @@ export default async function BundleDetailPage({
           {participants.map((p) => (
             <div key={p.id} className="flex items-center justify-between px-4 py-3">
               <span className="text-sm font-medium">{p.vendor_name ?? "Vendor"}</span>
-              <span className="text-sm text-muted-foreground">${p.component_price}</span>
+              <span className="text-sm text-muted-foreground">{formatAudDollars(p.component_price)}</span>
             </div>
           ))}
         </div>
@@ -69,10 +70,10 @@ export default async function BundleDetailPage({
 
       <div className="mt-8 rounded-2xl border border-border p-5">
         <p className="mb-1 text-2xl font-bold">
-          ${price}
+          {formatAudDollars(price)}
           {!!pkg.bundle_discount_amount && (
             <span className="ml-2 text-base font-normal text-muted-foreground line-through">
-              ${pkg.total_price}
+              {formatAudDollars(pkg.total_price)}
             </span>
           )}
         </p>

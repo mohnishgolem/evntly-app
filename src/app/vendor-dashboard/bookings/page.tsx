@@ -9,6 +9,7 @@ import { VendorBookingActions } from "@/components/vendor-booking-actions";
 import { JobCardPanel } from "@/components/job-card-panel";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { BOOKING_COLUMNS } from "@/lib/public-columns";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Bookings",
@@ -106,7 +107,7 @@ export default async function VendorBookingsPage() {
                               {b.event_date}
                               {b.event_address ? ` · ${b.event_address}` : ""}
                             </p>
-                            {!!b.total_price && <p className="text-sm font-semibold">${b.total_price}</p>}
+                            {!!b.total_price && <p className="text-sm font-semibold">{formatAudDollars(b.total_price)}</p>}
                             {b.notes && <p className="mt-1 text-sm">{b.notes}</p>}
                           </div>
                           <span className={`text-sm font-medium capitalize ${STATUS_COLOR[b.status] ?? ""}`}>

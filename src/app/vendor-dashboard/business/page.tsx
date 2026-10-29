@@ -7,6 +7,7 @@ import { categoryLabel } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { ListingPauseToggle } from "@/components/listing-pause-toggle";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Listings",
@@ -66,7 +67,7 @@ export default async function VendorBusinessPage() {
                 <div>
                   <h2 className="text-lg font-semibold">{listing.name}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {categoryLabel(listing.service_type)} · ${listing.hourly_rate}/hr
+                    {categoryLabel(listing.service_type)} · {formatAudDollars(listing.hourly_rate)}/hr
                   </p>
                 </div>
                 <span className={`flex items-center gap-1.5 text-sm font-medium ${meta.color}`}>

@@ -22,6 +22,7 @@ import { formatAbn } from "@/lib/abn";
 import { sampleListingsHidden } from "@/lib/sample-listings";
 import { cookies } from "next/headers";
 import { BOOK_INTENT_COOKIE } from "@/lib/booking-intent";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export async function generateMetadata({
   params,
@@ -37,7 +38,7 @@ export async function generateMetadata({
   const title = `${vendor.name} — ${categoryLabel(vendor.service_type)} in ${city}`;
   const description =
     vendor.bio ||
-    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}, from $${vendor.hourly_rate}/hr on Evntly.`;
+    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}, from ${formatAudDollars(vendor.hourly_rate)}/hr on Evntly.`;
   const url = `${SITE_URL}/vendor/${id}`;
 
   return {
@@ -109,7 +110,7 @@ export default async function VendorDetailPage({
   const role = navRole(session?.profile?.role, !!session);
   const fromPackage = packages.length ? Math.min(...packages.map((p) => p.price_cents)) : null;
   const priceLabel = vendor.hourly_rate
-    ? `From $${vendor.hourly_rate}/hr`
+    ? `From ${formatAudDollars(vendor.hourly_rate)}/hr`
     : fromPackage != null
       ? `Packages from ${formatAud(fromPackage)}`
       : "Price on request";
@@ -122,7 +123,7 @@ export default async function VendorDetailPage({
     description: vendor.bio ?? undefined,
     image: vendor.avatar_url ?? undefined,
     url: vendorUrl,
-    priceRange: vendor.hourly_rate ? `$${vendor.hourly_rate}/hr` : undefined,
+    priceRange: vendor.hourly_rate ? `${formatAudDollars(vendor.hourly_rate)}/hr` : undefined,
     address: vendor.city
       ? { "@type": "PostalAddress", addressLocality: vendor.city, addressCountry: "AU" }
       : undefined,
@@ -313,7 +314,7 @@ export default async function VendorDetailPage({
           <div className="sticky top-[calc(6rem+env(safe-area-inset-top))] rounded-2xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             {vendor.hourly_rate ? (
               <p className="mb-1 text-2xl font-bold">
-                ${vendor.hourly_rate}
+                {formatAudDollars(vendor.hourly_rate)}
                 <span className="text-base font-normal text-muted-foreground"> / hr</span>
               </p>
             ) : (

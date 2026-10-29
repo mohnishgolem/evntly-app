@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { cn } from "@/lib/utils";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Bookings",
@@ -134,7 +135,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                     </p>
                     <p className="truncate text-sm text-muted-foreground">
                       {r.event_type} · {r.event_date}
-                      {r.quoted_amount != null ? ` · $${r.quoted_amount}` : ""} · sent {day(r.created_at)}
+                      {r.quoted_amount != null ? ` · ${formatAudDollars(r.quoted_amount)}` : ""} · sent {day(r.created_at)}
                       {r.origin && r.origin !== "vendor_profile" ? ` · ${r.origin.replace("_", " ")}` : ""}
                     </p>
                   </div>
@@ -157,7 +158,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                   </p>
                   <p className="truncate text-sm text-muted-foreground">
                     {b.event_date}
-                    {b.total_price != null ? ` · $${b.total_price}` : ""} · booked {day(b.created_at)}
+                    {b.total_price != null ? ` · ${formatAudDollars(b.total_price)}` : ""} · booked {day(b.created_at)}
                   </p>
                 </div>
                 <span className={cn("shrink-0 text-sm font-medium", STATUS_CLASS[b.status ?? ""])}>

@@ -11,6 +11,7 @@ import {
 import type { VendorQuote } from "@/lib/data/vendor-quotes";
 import { QuoteDetails } from "@/components/quote-details";
 import { reasonForVendor } from "@/lib/matching/engine";
+import { formatAudDollars } from "@/lib/payments/money";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Needs your response",
@@ -72,7 +73,7 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
               >
                 {status === "pending"
                   ? `Reply ${timeLeft.replace(/^in /, "within ")} or this request expires.`
-                  : `Your quote of $${q.quoted_amount} is open for the customer to accept — expires ${timeLeft}.`}
+                  : `Your quote of ${formatAudDollars(q.quoted_amount)} is open for the customer to accept — expires ${timeLeft}.`}
               </p>
             )}
             {status === "expired" && (

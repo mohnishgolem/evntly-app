@@ -3,6 +3,7 @@ import { BUNDLES_PUBLIC } from "@/lib/config";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { getActiveBundles } from "@/lib/data/bundles";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Vendor bundles",
@@ -43,10 +44,10 @@ export default async function BundlesPage() {
                   <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{b.description}</p>
                 )}
                 <p className="mt-3 text-lg font-bold">
-                  ${price}
+                  {formatAudDollars(price)}
                   {!!b.bundle_discount_amount && (
                     <span className="ml-2 text-sm font-normal text-muted-foreground line-through">
-                      ${b.total_price}
+                      {formatAudDollars(b.total_price)}
                     </span>
                   )}
                 </p>

@@ -101,10 +101,19 @@ export function BookingPayments({
 
       <p className="flex items-start gap-2 rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
-        <span>
-          Payments go to Evntly and are held until the work is approved, then released to the vendor. Card details are
-          handled by Stripe — Evntly never sees them.
-        </span>
+        {/* A plan from before online payments were switched off (e.g. a test
+            booking) stays visible as a record, but nothing here can be paid. */}
+        {paymentsEnabled ? (
+          <span>
+            Payments go to Evntly and are held until the work is approved, then released to the vendor. Card details are
+            handled by Stripe — Evntly never sees them.
+          </span>
+        ) : (
+          <span>
+            Online payments are switched off. {role === "vendor" ? "Your customer pays you" : "You pay the vendor"} directly,
+            on the terms in the quote. The payment records below are kept for reference only.
+          </span>
+        )}
       </p>
 
       {!plan || editing || (role === "vendor" && plan.status === "changes_requested") ? (

@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/config";
 import { sendPushToUser } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAllowed, normalisePrefs, type NotificationCategory, type NotificationPrefs } from "@/lib/notification-prefs";
+import { formatAudDollars } from "@/lib/payments/money";
 
 // Transactional notification emails. Sending is scheduled with after() so a
 // slow or failing email provider never delays or fails the user's action —
@@ -174,5 +175,5 @@ export function formatEventDate(date: string | null | undefined) {
 }
 
 export function formatAmount(amount: number | null | undefined) {
-  return amount == null ? "" : `$${Number(amount).toLocaleString("en-AU")}`;
+  return formatAudDollars(amount);
 }

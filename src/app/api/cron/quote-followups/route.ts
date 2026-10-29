@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { findSimilarVendors } from "@/lib/data/vendors";
 import { notify, formatEventDate, formatAmount } from "@/lib/email";
 import { SITE_URL, categoryPlural } from "@/lib/config";
+import { formatAudDollars } from "@/lib/payments/money";
 
 // Called every 15 minutes by pg_cron (pg_net) — see the quote_followups
 // migration. Authenticated with a shared secret stored in app_settings,
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
         `Your quote request for your ${(q.event_type ?? "event").toLowerCase()} on ${formatEventDate(q.event_date)} has expired.`,
         similar.length
           ? `Other ${q.service_type ? categoryPlural(q.service_type) : "vendors"} you could ask: ${similar
-              .map((v) => `${v.name} ($${v.hourly_rate}/hr) ${SITE_URL}/vendor/${v.id}`)
+              .map((v) => `${v.name} (${formatAudDollars(v.hourly_rate)}/hr) ${SITE_URL}/vendor/${v.id}`)
               .join(" · ")}`
           : "Browse other vendors on Evntly and request a few more quotes.",
       ],

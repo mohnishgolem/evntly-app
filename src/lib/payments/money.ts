@@ -26,6 +26,16 @@ export function formatAud(cents: number) {
   }).format(dollars);
 }
 
+/**
+ * "$1,000" / "$1,234.50" from a dollar amount (quotes, rates and booking
+ * totals are stored in dollars; numeric columns can arrive as strings).
+ */
+export function formatAudDollars(amount: number | string | null | undefined) {
+  if (amount == null || amount === "") return "";
+  const n = Number(amount);
+  return Number.isFinite(n) ? formatAud(Math.round(n * 100)) : "";
+}
+
 /** Parses "1,234.5" / "$1234" into cents; null when not a positive amount. */
 export function parseDollarsToCents(input: string): number | null {
   const cleaned = input.replace(/[$,\s]/g, "");

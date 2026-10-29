@@ -14,6 +14,7 @@ import {
 } from "@/lib/quote-expiry";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SimilarVendor } from "@/lib/data/vendors";
+import { formatAudDollars } from "@/lib/payments/money";
 
 // Follow-up bookkeeping columns aren't part of what the list shows (and the
 // my_quote_requests RPC doesn't return them).
@@ -93,7 +94,7 @@ export function QuoteList({
             {status === "expired" && (
               <p className="mt-2 text-sm text-muted-foreground">
                 {q.quoted_amount != null
-                  ? `The $${q.quoted_amount} quote wasn't accepted in time.`
+                  ? `The ${formatAudDollars(q.quoted_amount)} quote wasn't accepted in time.`
                   : `${q.vendor_name ?? "The vendor"} didn't reply in time.`}{" "}
                 <Link
                   href={`/vendor/${q.vendor_id}`}
@@ -116,7 +117,7 @@ export function QuoteList({
                       href={`/vendor/${v.id}`}
                       className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
                     >
-                      {v.name} <span className="text-muted-foreground">· ${v.hourly_rate}/hr</span>
+                      {v.name} <span className="text-muted-foreground">· {formatAudDollars(v.hourly_rate)}/hr</span>
                     </Link>
                   ))}
                 </div>
@@ -127,7 +128,7 @@ export function QuoteList({
               <div className="mt-3 rounded-xl bg-secondary p-3">
                 <p className="text-sm">
                   Quoted price:{" "}
-                  <span className="font-semibold">${q.quoted_amount}</span>
+                  <span className="font-semibold">{formatAudDollars(q.quoted_amount)}</span>
                 </p>
                 {timeLeft && (
                   <p

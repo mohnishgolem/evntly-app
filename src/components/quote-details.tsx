@@ -1,6 +1,8 @@
 // The itemised parts of a quote, shown wherever a quote is (vendor's own
 // cards, the customer's quote list, the comparison sheet). Server-safe.
 
+import { formatAudDollars } from "@/lib/payments/money";
+
 export type QuoteDetailFields = {
   quoted_amount: number | null;
   coverage_hours: number | null;
@@ -13,7 +15,7 @@ export type QuoteDetailFields = {
 };
 
 export const money = (dollars: number) =>
-  `$${dollars.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  formatAudDollars(dollars);
 
 export function hasQuoteDetails(q: QuoteDetailFields) {
   return (

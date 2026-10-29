@@ -40,5 +40,5 @@ export async function updateSession(request: NextRequest, requestHeaders?: Heade
   // refresh — getUser() was a network round-trip on every page load.
   const { data } = await supabase.auth.getClaims();
 
-  return { response: supabaseResponse, signedIn: !!data?.claims?.sub };
+  return { response: supabaseResponse, signedIn: !!data?.claims?.sub, supabase };
 }
