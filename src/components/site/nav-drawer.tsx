@@ -77,7 +77,7 @@ export function NavDrawer({
         // Signed-in users get this menu at every width (it replaced the
         // laptop account dropdown); guests have header links from 1200px.
         className={cn(
-          "relative inline-flex size-11 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+          "relative inline-flex size-11 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted",
           !signedIn && "desk:hidden",
         )}
       >

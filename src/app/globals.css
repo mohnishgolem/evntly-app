@@ -228,15 +228,17 @@
    Never used as a blanket background (per HIG: glass reads as chrome, not content). */
 .glass-material {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(1.6);
+  /* Prefixed first, standard last: the CSS build merges the pair and keeps
+     the last one, and Chrome ignores the -webkit- form (no blur at all). */
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
 }
 
 @media (prefers-reduced-transparency: reduce) {
   .glass-material {
     background: var(--background);
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
