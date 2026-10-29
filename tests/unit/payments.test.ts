@@ -228,8 +228,8 @@ describe("createMilestoneCheckout", () => {
     expect((await createMilestoneCheckout(milestone.id, "cust-1")).error).toMatch(/switched on/);
   });
 
-  // In-app payment: the form is Stripe's embedded Checkout, shown in a sheet
-  // on the booking page, tied to the customer so saved cards show up.
+  // In-app payment: Evntly's sheet around Stripe's Payment Element (Checkout
+  // Elements), tied to the customer so saved cards show up.
   const payable = (overrides: object = {}) => ({
     app_settings: settings,
     payment_milestones: { data: { ...milestone, kind: "deposit", funding_status: "unfunded", checkout_session_id: null, ...overrides } },
@@ -247,8 +247,8 @@ describe("createMilestoneCheckout", () => {
 
     expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_new_secret_abc" });
     const body = sessionBody();
-    expect(body.get("ui_mode")).toBe("embedded_page");
-    expect(body.get("redirect_on_completion")).toBe("never");
+    expect(body.get("ui_mode")).toBe("elements");
+    expect(body.get("redirect_on_completion")).toBeNull();
     expect(body.get("customer")).toBe("cus_1");
     expect(body.get("saved_payment_method_options[payment_method_save]")).toBe("enabled");
     expect(body.get("success_url")).toBeNull();
@@ -270,17 +270,17 @@ describe("createMilestoneCheckout", () => {
   it("reopens the same form instead of starting a second payment", async () => {
     db({ ...payable({ checkout_session_id: "cs_open" }), stripe_customers: { data: { customer_id: "cus_saved" } } });
     stripeRoutes["GET /v1/checkout/sessions/cs_open"] = () => ({
-      json: { id: "cs_open", object: "checkout.session", status: "open", ui_mode: "embedded_page", client_secret: "cs_open_secret" },
+      json: { id: "cs_open", object: "checkout.session", status: "open", ui_mode: "elements", client_secret: "cs_open_secret" },
     });
 
     expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_open_secret" });
     expect(stripeCalls.some((c) => c.method === "POST")).toBe(false);
   });
 
-  it("closes an open page from the old redirect checkout so it can't also be paid", async () => {
+  it.each(["hosted_page", "embedded_page"])("closes an open %s session from an older form so it can't also be paid", async (uiMode) => {
     db({ ...payable({ checkout_session_id: "cs_old" }), stripe_customers: { data: { customer_id: "cus_saved" } } });
     stripeRoutes["GET /v1/checkout/sessions/cs_old"] = () => ({
-      json: { id: "cs_old", object: "checkout.session", status: "open", ui_mode: "hosted_page", url: "https://checkout.stripe.com/x" },
+      json: { id: "cs_old", object: "checkout.session", status: "open", ui_mode: uiMode, client_secret: "cs_old_secret" },
     });
     stripeRoutes["POST /v1/checkout/sessions/cs_old/expire"] = () => ({ json: { id: "cs_old", object: "checkout.session", status: "expired" } });
     stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });

@@ -258,8 +258,10 @@ async function ensureStripeCustomer(admin: Admin, stripe: Stripe, userId: string
 }
 
 /**
- * Creates (or reuses) the in-app Stripe Checkout form for one milestone and
- * returns its client secret; the booking page shows it in a payment sheet.
+ * Creates (or reuses) the Checkout Session behind the in-app payment sheet
+ * and returns its client secret. The sheet draws Evntly's own summary and
+ * buttons around Stripe's Payment Element (Checkout Elements), so card
+ * details still go only to Stripe.
  * The caller must already have checked the user is signed in; this checks
  * they're the customer on the plan and that the milestone can be paid now.
  */
@@ -301,13 +303,14 @@ export async function createMilestoneCheckout(
     return { error: "The vendor is still setting up payouts. We've let them know — try again soon." };
   }
 
-  // Reuse an open session so double-clicks don't create two payments. An
-  // open session from the old redirect page is closed first, so only the
-  // session recorded on the milestone can ever be paid.
+  // Reuse an open session so double-clicks, retries after a declined card
+  // and reopening the sheet never create a second payment. An open session
+  // from an older form (the redirect page or embedded form) is closed first,
+  // so only the session recorded on the milestone can ever be paid.
   if (m.checkout_session_id) {
     const existing = await stripe.checkout.sessions.retrieve(m.checkout_session_id).catch(() => null);
     if (existing?.status === "open") {
-      if (existing.ui_mode === "embedded_page" && existing.client_secret) return { clientSecret: existing.client_secret };
+      if (existing.ui_mode === "elements" && existing.client_secret) return { clientSecret: existing.client_secret };
       await stripe.checkout.sessions.expire(existing.id);
     }
   }
@@ -322,10 +325,8 @@ export async function createMilestoneCheckout(
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    ui_mode: "embedded_page",
-    // The booking page shows its own confirmation; payment state still
-    // changes only from the webhook.
-    redirect_on_completion: "never",
+    // Payment state still changes only from the webhook.
+    ui_mode: "elements",
     customer: customerId,
     // Shows cards saved earlier and offers to save this one.
     saved_payment_method_options: { payment_method_save: "enabled" },

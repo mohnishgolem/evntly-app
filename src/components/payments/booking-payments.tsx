@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PlanEditor } from "@/components/payments/plan-editor";
-import { PaySheet } from "@/components/payments/pay-sheet";
+import { PaySheet, type PaySummary } from "@/components/payments/pay-sheet";
 import {
   disputeMilestone,
   respondToPaymentPlan,
@@ -71,6 +71,7 @@ export function BookingPayments({
   events,
   paymentsEnabled,
   vendorReady,
+  paySummary,
 }: {
   role: "vendor" | "customer" | "admin";
   bookingId: string;
@@ -83,6 +84,8 @@ export function BookingPayments({
   events: PaymentEventView[];
   paymentsEnabled: boolean;
   vendorReady: boolean;
+  /** Shown in the payment sheet's booking summary. */
+  paySummary: PaySummary;
 }) {
   const [editing, setEditing] = useState(false);
   const closed = bookingStatus === "cancelled";
@@ -155,6 +158,7 @@ export function BookingPayments({
                 planId={plan.id}
                 planLive={plan.status === "agreed" || plan.status === "active"}
                 paymentsEnabled={paymentsEnabled}
+                paySummary={paySummary}
                 vendorReady={vendorReady}
                 commissionBps={plan.commission_bps}
               />
@@ -230,6 +234,7 @@ function MilestoneCard({
   paymentsEnabled,
   vendorReady,
   commissionBps,
+  paySummary,
 }: {
   m: PaymentMilestone;
   role: "vendor" | "customer" | "admin";
@@ -238,6 +243,7 @@ function MilestoneCard({
   paymentsEnabled: boolean;
   vendorReady: boolean;
   commissionBps: number;
+  paySummary: PaySummary;
 }) {
   const router = useRouter();
   const stage = milestoneStage(m, role);
@@ -387,7 +393,7 @@ function MilestoneCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {canPay &&
             (paymentsEnabled && vendorReady ? (
-              <PaySheet milestoneId={m.id} name={m.name} amountCents={m.amount_cents} />
+              <PaySheet milestoneId={m.id} name={m.name} kind={m.kind} amountCents={m.amount_cents} summary={paySummary} />
             ) : (
               <span className="text-sm text-muted-foreground">
                 {paymentsEnabled ? "Payment opens once the vendor finishes payout setup." : "Online payment isn't switched on yet."}
