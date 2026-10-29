@@ -27,6 +27,7 @@ const fakeFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 const stripe = new Stripe("sk_test_fake", { httpClient: Stripe.createFetchHttpClient(fakeFetch), maxNetworkRetries: 0 });
 process.env.STRIPE_SECRET_KEY = "sk_test_fake";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
+process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_fake";
 
 // ── Supabase + side effects ─────────────────────────────────────────────
 let current: ReturnType<typeof fakeSupabase>;
@@ -204,7 +205,7 @@ describe("createMilestoneCheckout", () => {
 
   it("refuses anyone but the plan's customer", async () => {
     db({ app_settings: settings, payment_milestones: { data: { ...milestone, funding_status: "unfunded" } }, payment_plans: { data: plan } });
-    expect(await createMilestoneCheckout(milestone.id, "someone-else", "https://evntly-tau.vercel.app")).toEqual({
+    expect(await createMilestoneCheckout(milestone.id, "someone-else")).toEqual({
       error: "Payment not found.",
     });
     expect(stripeCalls).toHaveLength(0);
@@ -217,14 +218,79 @@ describe("createMilestoneCheckout", () => {
       payment_plans: { data: plan },
       stripe_accounts: { data: { transfers_active: false } },
     });
-    const res = await createMilestoneCheckout(milestone.id, "cust-1", "https://evntly-tau.vercel.app");
+    const res = await createMilestoneCheckout(milestone.id, "cust-1");
     expect(res.error).toMatch(/setting up payouts/);
     expect(stripeCalls).toHaveLength(0);
   });
 
   it("is off while payments are switched off", async () => {
     db({ app_settings: { data: [{ key: "payments_enabled", value: "false" }] } });
-    expect((await createMilestoneCheckout(milestone.id, "cust-1", "x")).error).toMatch(/switched on/);
+    expect((await createMilestoneCheckout(milestone.id, "cust-1")).error).toMatch(/switched on/);
+  });
+
+  // In-app payment: Evntly's sheet around Stripe's Payment Element (Checkout
+  // Elements), tied to the customer so saved cards show up.
+  const payable = (overrides: object = {}) => ({
+    app_settings: settings,
+    payment_milestones: { data: { ...milestone, kind: "deposit", funding_status: "unfunded", checkout_session_id: null, ...overrides } },
+    payment_plans: { data: plan },
+    stripe_accounts: { data: { transfers_active: true } },
+    bookings: { data: { id: "b-1", provider_name: "Lens & Light", event_date: "2027-07-10" } },
+  });
+  const created = { id: "cs_new", object: "checkout.session", client_secret: "cs_new_secret_abc" };
+  const sessionBody = () => stripeCalls.find((c) => c.method === "POST" && c.path === "/v1/checkout/sessions")!.body;
+
+  it("opens the in-app form and creates the customer's Stripe record on their first payment", async () => {
+    db({ ...payable(), stripe_customers: { data: null } });
+    stripeRoutes["POST /v1/customers"] = () => ({ json: { id: "cus_1", object: "customer" } });
+    stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
+
+    expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_new_secret_abc" });
+    const body = sessionBody();
+    expect(body.get("ui_mode")).toBe("elements");
+    expect(body.get("redirect_on_completion")).toBeNull();
+    expect(body.get("customer")).toBe("cus_1");
+    expect(body.get("saved_payment_method_options[payment_method_save]")).toBe("enabled");
+    expect(body.get("success_url")).toBeNull();
+    expect(body.get("payment_intent_data[metadata][milestone_id]")).toBe(milestone.id);
+    expect(current.writes).toContainEqual(
+      expect.objectContaining({ table: "stripe_customers", payload: { user_id: "cust-1", customer_id: "cus_1" } })
+    );
+  });
+
+  it("reuses the customer's Stripe record so their saved cards show", async () => {
+    db({ ...payable(), stripe_customers: { data: { customer_id: "cus_saved" } } });
+    stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
+
+    await createMilestoneCheckout(milestone.id, "cust-1");
+    expect(stripeCalls.some((c) => c.path === "/v1/customers")).toBe(false);
+    expect(sessionBody().get("customer")).toBe("cus_saved");
+  });
+
+  it("reopens the same form instead of starting a second payment", async () => {
+    db({ ...payable({ checkout_session_id: "cs_open" }), stripe_customers: { data: { customer_id: "cus_saved" } } });
+    stripeRoutes["GET /v1/checkout/sessions/cs_open"] = () => ({
+      json: { id: "cs_open", object: "checkout.session", status: "open", ui_mode: "elements", client_secret: "cs_open_secret" },
+    });
+
+    expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_open_secret" });
+    expect(stripeCalls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it.each(["hosted_page", "embedded_page"])("closes an open %s session from an older form so it can't also be paid", async (uiMode) => {
+    db({ ...payable({ checkout_session_id: "cs_old" }), stripe_customers: { data: { customer_id: "cus_saved" } } });
+    stripeRoutes["GET /v1/checkout/sessions/cs_old"] = () => ({
+      json: { id: "cs_old", object: "checkout.session", status: "open", ui_mode: uiMode, client_secret: "cs_old_secret" },
+    });
+    stripeRoutes["POST /v1/checkout/sessions/cs_old/expire"] = () => ({ json: { id: "cs_old", object: "checkout.session", status: "expired" } });
+    stripeRoutes["POST /v1/checkout/sessions"] = () => ({ json: created });
+
+    expect(await createMilestoneCheckout(milestone.id, "cust-1")).toEqual({ clientSecret: "cs_new_secret_abc" });
+    expect(stripeCalls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      "GET /v1/checkout/sessions/cs_old",
+      "POST /v1/checkout/sessions/cs_old/expire",
+      "POST /v1/checkout/sessions",
+    ]);
   });
 });
 

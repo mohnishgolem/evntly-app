@@ -208,6 +208,11 @@ export default async function BookingPage({
         eventDate={booking.event_date}
         totalCents={totalCents}
         commissionBps={plan?.commission_bps ?? status.commissionBps}
+        paySummary={{
+          vendorName: booking.provider_name ?? "the vendor",
+          service: categoryLabel(booking.service_type),
+          eventDate: formatEventDate(booking.event_date),
+        }}
         plan={plan}
         milestones={milestones}
         events={(eventRows ?? []).map((e) => ({

@@ -55,6 +55,10 @@ export async function getPaymentsStatus(): Promise<PaymentsStatus> {
   const commissionBps = Number.isInteger(bps) && bps >= 0 && bps <= 3000 ? bps : DEFAULT_COMMISSION_BPS;
   if (!key) return { enabled: false, testMode, commissionBps, reason: "Stripe isn't connected yet" };
   if (!process.env.STRIPE_WEBHOOK_SECRET) return { enabled: false, testMode, commissionBps, reason: "Stripe webhook secret missing" };
+  // The in-app payment form loads Stripe.js with the publishable key.
+  if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    return { enabled: false, testMode, commissionBps, reason: "Stripe publishable key missing" };
+  }
   if (settings.get("payments_enabled") !== "true") return { enabled: false, testMode, commissionBps, reason: "Payments are switched off" };
   return { enabled: true, testMode, commissionBps };
 }
@@ -239,16 +243,32 @@ async function completePlanIfDone(admin: Admin, planId: string) {
 
 // ── Customer payments (Checkout) ─────────────────────────────────────────
 
+/** Returns the customer's Stripe customer id, creating one the first time. Saved cards hang off it. */
+async function ensureStripeCustomer(admin: Admin, stripe: Stripe, userId: string, email: string | undefined) {
+  const { data: row } = await admin.from("stripe_customers").select("customer_id").eq("user_id", userId).maybeSingle();
+  if (row) return row.customer_id;
+  const customer = await stripe.customers.create(
+    { email, metadata: { evntly_user_id: userId } },
+    { idempotencyKey: `customer-${userId}` }
+  );
+  // A concurrent first payment may have stored the same id (the idempotency
+  // key makes Stripe return one customer), so a duplicate insert is fine.
+  await admin.from("stripe_customers").insert({ user_id: userId, customer_id: customer.id });
+  return customer.id;
+}
+
 /**
- * Creates (or reuses) a Stripe Checkout page for one milestone. The caller
- * must already have checked the user is signed in; this checks they're the
- * customer on the plan and that the milestone can be paid now.
+ * Creates (or reuses) the Checkout Session behind the in-app payment sheet
+ * and returns its client secret. The sheet draws Evntly's own summary and
+ * buttons around Stripe's Payment Element (Checkout Elements), so card
+ * details still go only to Stripe.
+ * The caller must already have checked the user is signed in; this checks
+ * they're the customer on the plan and that the milestone can be paid now.
  */
 export async function createMilestoneCheckout(
   milestoneId: string,
-  userId: string,
-  origin: string
-): Promise<{ url?: string; error?: string }> {
+  userId: string
+): Promise<{ clientSecret?: string; error?: string }> {
   const status = await getPaymentsStatus();
   if (!status.enabled) return { error: "Online payments aren't switched on yet." };
   const admin = requireAdmin();
@@ -283,10 +303,16 @@ export async function createMilestoneCheckout(
     return { error: "The vendor is still setting up payouts. We've let them know — try again soon." };
   }
 
-  // Reuse an open session so double-clicks don't create two payments.
+  // Reuse an open session so double-clicks, retries after a declined card
+  // and reopening the sheet never create a second payment. An open session
+  // from an older form (the redirect page or embedded form) is closed first,
+  // so only the session recorded on the milestone can ever be paid.
   if (m.checkout_session_id) {
     const existing = await stripe.checkout.sessions.retrieve(m.checkout_session_id).catch(() => null);
-    if (existing?.status === "open" && existing.url) return { url: existing.url };
+    if (existing?.status === "open") {
+      if (existing.ui_mode === "elements" && existing.client_secret) return { clientSecret: existing.client_secret };
+      await stripe.checkout.sessions.expire(existing.id);
+    }
   }
 
   const { data: booking } = await admin
@@ -295,13 +321,18 @@ export async function createMilestoneCheckout(
     .eq("id", plan.booking_id)
     .single();
   const { data: customer } = await admin.auth.admin.getUserById(userId);
+  const customerId = await ensureStripeCustomer(admin, stripe, userId, customer.user?.email ?? undefined);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    // Payment state still changes only from the webhook.
+    ui_mode: "elements",
+    customer: customerId,
+    // Shows cards saved earlier and offers to save this one.
+    saved_payment_method_options: { payment_method_save: "enabled" },
     // Methods come from the Stripe dashboard; exclude bank debits and
     // pay-later options, which can fail days after we've paid the vendor.
     excluded_payment_method_types: ["au_becs_debit", "payto", "pay_by_bank", "afterpay_clearpay", "zip", "klarna"],
-    customer_email: customer.user?.email ?? undefined,
     client_reference_id: m.id,
     line_items: [
       {
@@ -325,14 +356,13 @@ export async function createMilestoneCheckout(
       metadata: { milestone_id: m.id, plan_id: plan.id, booking_id: plan.booking_id },
     },
     metadata: { milestone_id: m.id, plan_id: plan.id },
-    success_url: `${origin}/bookings/${plan.booking_id}?paid={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/bookings/${plan.booking_id}`,
     expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
   });
 
   await admin.from("payment_milestones").update({ checkout_session_id: session.id }).eq("id", m.id);
   await logPaymentEvent(admin, plan.id, m.id, "customer", "checkout_started");
-  return { url: session.url ?? undefined };
+  if (!session.client_secret) throw new Error(`Session ${session.id} has no client secret`);
+  return { clientSecret: session.client_secret };
 }
 
 // ── Webhook handlers ─────────────────────────────────────────────────────

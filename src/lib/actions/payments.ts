@@ -21,7 +21,7 @@ import {
 } from "@/lib/payments/server";
 import { formatAud } from "@/lib/payments/money";
 
-export type PaymentActionState = { error?: string; success?: boolean; url?: string } | null;
+export type PaymentActionState = { error?: string; success?: boolean; url?: string; clientSecret?: string } | null;
 
 // Redirect targets for Stripe-hosted pages. Only our own origins: production,
 // this project's Vercel previews, and local dev.
@@ -255,10 +255,10 @@ export async function payMilestone(milestoneId: string): Promise<PaymentActionSt
   if (!user) return { error: "Please log in again." };
   if (!(await checkRateLimit("paymentUser", user.id))) return { error: RATE_LIMIT_ERROR };
   try {
-    return await createMilestoneCheckout(milestoneId, user.id, await trustedOrigin());
+    return await createMilestoneCheckout(milestoneId, user.id);
   } catch (err) {
     console.error("checkout failed", err);
-    return { error: "We couldn't open the payment page. Please try again." };
+    return { error: "We couldn't open the payment form. Please try again." };
   }
 }
 
