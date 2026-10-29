@@ -243,18 +243,51 @@ async function completePlanIfDone(admin: Admin, planId: string) {
 
 // ── Customer payments (Checkout) ─────────────────────────────────────────
 
-/** Returns the customer's Stripe customer id, creating one the first time. Saved cards hang off it. */
+/**
+ * Returns the customer's Stripe customer id, creating one the first time.
+ * Saved cards hang off it. A stored id that Stripe doesn't know (made with
+ * the test key, or deleted) is replaced, so switching from test to live
+ * keys can't leave a customer unable to pay.
+ */
 async function ensureStripeCustomer(admin: Admin, stripe: Stripe, userId: string, email: string | undefined) {
   const { data: row } = await admin.from("stripe_customers").select("customer_id").eq("user_id", userId).maybeSingle();
-  if (row) return row.customer_id;
+  if (row) {
+    const existing = await stripe.customers.retrieve(row.customer_id).catch((err: unknown) => {
+      if ((err as { code?: string }).code === "resource_missing") return null;
+      throw err;
+    });
+    if (existing && !existing.deleted) return row.customer_id;
+  }
   const customer = await stripe.customers.create(
     { email, metadata: { evntly_user_id: userId } },
-    { idempotencyKey: `customer-${userId}` }
+    { idempotencyKey: `customer-${userId}-${row?.customer_id ?? "first"}` }
   );
-  // A concurrent first payment may have stored the same id (the idempotency
-  // key makes Stripe return one customer), so a duplicate insert is fine.
-  await admin.from("stripe_customers").insert({ user_id: userId, customer_id: customer.id });
+  await admin.from("stripe_customers").upsert({ user_id: userId, customer_id: customer.id });
   return customer.id;
+}
+
+/**
+ * For account deletion: deletes the user's Stripe customer, which removes
+ * their saved cards, and forgets the mapping. Payment records are kept:
+ * Stripe retains the charges and refunds, and payment_milestones /
+ * payment_events keep Evntly's booking payment history.
+ */
+export async function removeStripeCustomerData(userId: string): Promise<{ removed: boolean; error?: string }> {
+  const admin = requireAdmin();
+  const { data: row } = await admin.from("stripe_customers").select("customer_id").eq("user_id", userId).maybeSingle();
+  if (!row) return { removed: false };
+  const stripe = getStripe();
+  if (!stripe) return { removed: false, error: "Stripe isn't connected, so saved cards can't be removed yet." };
+  try {
+    await stripe.customers.del(row.customer_id);
+  } catch (err) {
+    // Already gone, or made with the other (test/live) key: nothing to delete.
+    if ((err as { code?: string }).code !== "resource_missing") {
+      return { removed: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+  await admin.from("stripe_customers").delete().eq("user_id", userId);
+  return { removed: true };
 }
 
 /**

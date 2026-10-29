@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAllUsersForAdmin } from "@/lib/data/admin";
 import { AdminUserRoles } from "@/components/admin-user-roles";
 import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
+import { AdminRemoveSavedCards } from "@/components/admin-remove-saved-cards";
 
 export const metadata: Metadata = {
   title: "Customers",
@@ -20,7 +21,7 @@ export default async function AdminCustomersPage() {
     // Admin-readable via RLS (is_admin(), which requires aal2).
     supabase
       .from("account_deletion_requests")
-      .select("id, user_id, reason, requested_at")
+      .select("id, user_id, reason, requested_at, admin_note")
       .eq("status", "pending")
       .order("requested_at"),
   ]);
@@ -35,8 +36,8 @@ export default async function AdminCustomersPage() {
             Account deletion requests ({deletionRequests.length})
           </h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Check for open bookings or disputes, then delete or de-identify the account in line with the Privacy Policy
-            (completed manually for now).
+            Check for open bookings or disputes, remove any saved cards, then delete or de-identify the account in line
+            with the Privacy Policy (completed manually for now). Payment records are kept.
           </p>
           <ul className="space-y-2 text-sm">
             {deletionRequests.map((r) => (
@@ -44,6 +45,8 @@ export default async function AdminCustomersPage() {
                 <span className="font-medium">{emailById.get(r.user_id) ?? r.user_id}</span> ·{" "}
                 {new Date(r.requested_at).toLocaleDateString("en-AU")}
                 {r.reason && <span className="block text-muted-foreground">&ldquo;{r.reason}&rdquo;</span>}
+                {r.admin_note && <span className="block whitespace-pre-line text-muted-foreground">{r.admin_note}</span>}
+                <AdminRemoveSavedCards requestId={r.id} />
               </li>
             ))}
           </ul>

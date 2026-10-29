@@ -20,6 +20,8 @@ import { SampleBadge } from "@/components/sample-badge";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { formatAbn } from "@/lib/abn";
 import { sampleListingsHidden } from "@/lib/sample-listings";
+import { cookies } from "next/headers";
+import { BOOK_INTENT_COOKIE } from "@/lib/booking-intent";
 
 export async function generateMetadata({
   params,
@@ -51,15 +53,14 @@ export async function generateMetadata({
 
 export default async function VendorDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ book?: string }>;
 }) {
   const { id } = await params;
-  // ?book=1: the customer pressed "Book this vendor" before signing in;
-  // reopen the booking form now they're back.
-  const autoOpenBooking = (await searchParams).book === "1";
+  // The customer pressed "Book this vendor" before signing in: the proxy
+  // turned ?book=1 into this cookie, so reopen the booking form now they're
+  // back (see lib/booking-intent.ts).
+  const autoOpenBooking = (await cookies()).get(BOOK_INTENT_COOKIE)?.value === "1";
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 

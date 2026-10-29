@@ -2,7 +2,6 @@
 
 import { earliestEventDate } from "@/lib/event-dates";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { CalendarCheck, CheckCircle2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
+import { BOOK_INTENT_COOKIE, bookIntentPath } from "@/lib/booking-intent";
 import { EVENT_TYPES } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
@@ -117,14 +117,11 @@ export function BookVendor({
 
   const [open, setOpen] = useState(() => !!autoOpen && state.kind === "bookable");
 
-  // ?book=1 is a one-shot intent from the sign-up round trip: drop it so a
-  // refresh or Back doesn't pop the form open again. Through the router —
-  // a bare history.replaceState is undone when a server action re-renders.
-  const router = useRouter();
-  const pathname = usePathname();
+  // The booking intent from the sign-up round trip is one-shot: clear its
+  // cookie so a refresh or Back doesn't pop the form open again.
   useEffect(() => {
-    if (autoOpen) router.replace(pathname, { scroll: false });
-  }, [autoOpen, pathname, router]);
+    if (autoOpen) document.cookie = `${BOOK_INTENT_COOKIE}=; Max-Age=0; Path=${bookIntentPath(vendorId)}`;
+  }, [autoOpen, vendorId]);
 
   const bookPath = `/vendor/${vendorId}?book=1`;
   const signupHref = `/signup?next=${encodeURIComponent(bookPath)}`;

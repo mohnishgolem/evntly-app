@@ -17,6 +17,7 @@ import {
   notifyParty,
   refundMilestone,
   releaseMilestone,
+  removeStripeCustomerData,
   syncConnectedAccount,
 } from "@/lib/payments/server";
 import { formatAud } from "@/lib/payments/money";
@@ -322,6 +323,34 @@ export async function adminRetryPayout(milestoneId: string): Promise<PaymentActi
   const res = await releaseMilestone(milestoneId);
   revalidatePath("/admin/payments");
   return res.released ? { success: true } : { error: res.error ?? "Not releasable right now (check funding, approval and the vendor's Stripe account)." };
+}
+
+/**
+ * Account deletion step: removes the customer's saved cards from Stripe.
+ * Only for a pending deletion request; the result is noted on the request.
+ */
+export async function adminRemoveSavedCards(requestId: string): Promise<PaymentActionState> {
+  if (!(await requirePaymentsAdmin())) return { error: "Not authorized." };
+  if (!z.string().uuid().safeParse(requestId).success) return { error: "Request not found." };
+  const admin = createAdminClient();
+  if (!admin) return { error: "Server key missing." };
+  const { data: request } = await admin
+    .from("account_deletion_requests")
+    .select("id, user_id, admin_note")
+    .eq("id", requestId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (!request) return { error: "Request not found." };
+
+  const res = await removeStripeCustomerData(request.user_id);
+  if (res.error) return { error: res.error };
+  const note = `${new Date().toISOString().slice(0, 10)}: ${res.removed ? "Stripe customer and saved cards removed" : "no saved cards on file"}.`;
+  await admin
+    .from("account_deletion_requests")
+    .update({ admin_note: [request.admin_note, note].filter(Boolean).join("\n").slice(0, 2000) })
+    .eq("id", request.id);
+  revalidatePath("/admin/customers");
+  return { success: true };
 }
 
 export async function adminRefundMilestone(milestoneId: string, reason: string): Promise<PaymentActionState> {
