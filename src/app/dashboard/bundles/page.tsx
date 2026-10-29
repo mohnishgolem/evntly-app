@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { BUNDLE_BOOKING_COLUMNS } from "@/lib/public-columns";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Bundle bookings",
@@ -59,7 +60,7 @@ export default async function CustomerBundlesPage() {
                       {b.event_address ? ` · ${b.event_address}` : ""}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {b.vendor_count} vendors · ${b.total_amount}
+                      {b.vendor_count} vendors · {formatAudDollars(b.total_amount)}
                     </p>
                   </div>
                   <span className="text-sm font-medium capitalize text-muted-foreground">

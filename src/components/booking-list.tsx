@@ -5,6 +5,7 @@ import { JobCardPanel } from "@/components/job-card-panel";
 import type { getJobCardForBooking } from "@/lib/data/job-cards";
 import type { ParticipantBooking } from "@/lib/public-columns";
 import type { PaymentSummary } from "@/lib/event-board";
+import { formatAudDollars } from "@/lib/payments/money";
 
 type Booking = ParticipantBooking;
 type JobCardResult = Awaited<ReturnType<typeof getJobCardForBooking>>;
@@ -48,7 +49,7 @@ export function BookingList({
                 {b.event_date}
                 {b.event_address ? ` · ${b.event_address}` : ""}
               </p>
-              {!!b.total_price && <p className="text-sm font-semibold">${b.total_price}</p>}
+              {!!b.total_price && <p className="text-sm font-semibold">{formatAudDollars(b.total_price)}</p>}
               {payments?.get(b.id) && b.status !== "cancelled" && (
                 <p className={`text-sm font-medium ${PAYMENT_TONE[payments.get(b.id)!.tone]}`}>
                   {payments.get(b.id)!.label}

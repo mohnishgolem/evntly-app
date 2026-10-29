@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeSupabase } from "./fake-supabase";
-import { commissionCents, formatAud, parseDollarsToCents, suggestSplit, vendorPayoutCents } from "@/lib/payments/money";
+import { commissionCents, formatAud, formatAudDollars, parseDollarsToCents, suggestSplit, vendorPayoutCents } from "@/lib/payments/money";
 import { milestoneStage } from "@/lib/payments/status";
 
 // ── Real Stripe client, fake network ────────────────────────────────────
@@ -92,6 +92,15 @@ describe("money", () => {
     expect(() => commissionCents(10.5, 700)).toThrow();
     expect(() => commissionCents(100, 9000)).toThrow();
   });
+  it("formats dollar amounts the Australian way", () => {
+    expect(formatAudDollars(1000)).toBe("$1,000");
+    expect(formatAudDollars("1500.00")).toBe("$1,500");
+    expect(formatAudDollars(1234.5)).toBe("$1,234.50");
+    expect(formatAudDollars(140)).toBe("$140");
+    expect(formatAudDollars(null)).toBe("");
+    expect(formatAudDollars("not a number")).toBe("");
+  });
+
   it("parses dollars safely", () => {
     expect(parseDollarsToCents("$1,234.50")).toBe(123450);
     expect(parseDollarsToCents("10")).toBe(1000);

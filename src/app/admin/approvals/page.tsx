@@ -6,6 +6,7 @@ import { categoryLabel } from "@/lib/config";
 import { formatAbn } from "@/lib/abn";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
 import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Vendor approvals",
@@ -54,7 +55,7 @@ export default async function AdminApprovalsPage() {
             <div key={v.id} className="rounded-2xl border border-border p-5">
               <p className="font-semibold">{v.name}</p>
               <p className="text-sm text-muted-foreground">
-                {categoryLabel(v.service_type)} · {v.city} · ${v.hourly_rate}/hr
+                {categoryLabel(v.service_type)} · {v.city} · {formatAudDollars(v.hourly_rate)}/hr
               </p>
               <p className="break-all text-sm text-muted-foreground">
                 {v.owner_email}

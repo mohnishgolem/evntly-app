@@ -6,6 +6,7 @@ import { SampleBadge } from "@/components/sample-badge";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import type { PublicVendor } from "@/lib/vendor-columns";
+import { formatAudDollars } from "@/lib/payments/money";
 
 type Vendor = PublicVendor;
 
@@ -86,7 +87,7 @@ export function VendorCard({
           {vendor.city ? ` · ${vendor.city}` : ""}
         </p>
         <p className="mt-1.5 text-sm">
-          <span className="font-semibold">${vendor.hourly_rate}</span>
+          <span className="font-semibold">{formatAudDollars(vendor.hourly_rate)}</span>
           <span className="text-muted-foreground"> / hr</span>
         </p>
       </div>

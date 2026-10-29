@@ -18,12 +18,18 @@ import { BOOK_INTENT_COOKIE, BOOK_INTENT_MAX_AGE_SECONDS, bookIntentPath, bookIn
 //
 // /vendor/<id>?book=1 (back from sign-up to book) becomes a short-lived
 // cookie plus a redirect to the clean URL; see lib/booking-intent.ts.
+//
+// A /vendor/<id> page for a listing the visitor can't see (suspended,
+// pending, removed or a bad id) gets a real 404 here: the page itself
+// streams behind app/loading.tsx, so its notFound() could only send a 200.
+// The lookup uses the visitor's own session, so it matches what the page
+// would show (admins can still open any listing).
 export async function proxy(request: NextRequest) {
   const csp = buildCsp(generateNonce());
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const { response, signedIn } = await updateSession(request, requestHeaders);
+  const { response, signedIn, supabase } = await updateSession(request, requestHeaders);
 
   const { pathname, search } = request.nextUrl;
   const intent = request.method === "GET" || request.method === "HEAD" ? bookIntentRedirect(request.nextUrl) : null;
@@ -37,6 +43,18 @@ export async function proxy(request: NextRequest) {
       secure: request.nextUrl.protocol === "https:",
     });
     return redirect;
+  }
+
+  const vendorId = request.method === "GET" || request.method === "HEAD" ? vendorPageId(pathname) : null;
+  if (vendorId) {
+    const { data, error } = await supabase.from("service_providers").select("id").eq("id", vendorId).maybeSingle();
+    // On a query error (e.g. a malformed id) the page decides, as before.
+    if (!data && !error) {
+      const notFound = NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404, request: { headers: requestHeaders } });
+      response.cookies.getAll().forEach((c) => notFound.cookies.set(c));
+      notFound.headers.set("Content-Security-Policy", csp);
+      return notFound;
+    }
   }
 
   if (!signedIn && (request.method === "GET" || request.method === "HEAD") && isAccountOnly(pathname)) {
@@ -54,6 +72,12 @@ export async function proxy(request: NextRequest) {
 }
 
 const ACCOUNT_ONLY = ["/dashboard", "/messages", "/profile", "/saved", "/bookings", "/vendor-dashboard", "/admin"];
+
+/** The listing id for a vendor profile page (/vendor/<id>), else null. */
+function vendorPageId(pathname: string) {
+  const match = pathname.match(/^\/vendor\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 function isAccountOnly(pathname: string) {
   return ACCOUNT_ONLY.some((p) => pathname === p || pathname.startsWith(`${p}/`));

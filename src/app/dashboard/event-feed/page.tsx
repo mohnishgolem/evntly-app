@@ -10,6 +10,7 @@ import { EventApplicationActions } from "@/components/event-application-actions"
 import { DashboardNav } from "@/components/dashboard-nav";
 import type { Database } from "@/lib/supabase/database.types";
 import { APPLICATION_COLUMNS, type ParticipantApplication } from "@/lib/public-columns";
+import { formatAudDollars } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Event feed",
@@ -129,7 +130,7 @@ export default async function EventFeedPage() {
                             <div>
                               <p className="font-medium">{app.vendor_name ?? "Vendor"}</p>
                               <p className="text-sm text-muted-foreground">
-                                {categoryLabel(app.service_type)} · ${app.quoted_amount}
+                                {categoryLabel(app.service_type)} · {formatAudDollars(app.quoted_amount)}
                               </p>
                               {app.pitch && <p className="mt-1 text-sm">{app.pitch}</p>}
                             </div>
