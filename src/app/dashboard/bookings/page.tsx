@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarClock, CheckCircle2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
+import { getPaymentsStatus } from "@/lib/payments/server";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { BookingList } from "@/components/booking-list";
 import { getJobCardForBooking } from "@/lib/data/job-cards";
@@ -23,6 +24,7 @@ export default async function CustomerBookingsPage({
 }) {
   // ?accepted=1: the customer just accepted a quote (QuoteActions).
   const justAccepted = (await searchParams).accepted === "1";
+  const paymentsOn = justAccepted && (await getPaymentsStatus()).enabled;
   const session = await getCurrentUser();
   if (!session) redirect("/login?next=/dashboard/bookings");
 
@@ -84,6 +86,7 @@ export default async function CustomerBookingsPage({
           </p>
           <p className="mt-1 text-muted-foreground">
             The vendor now confirms the booking. We&apos;ll email you as soon as they do.
+            {!paymentsOn && " Then pay them directly, on the terms in their quote — Evntly doesn't take booking payments."}
           </p>
         </div>
       )}
