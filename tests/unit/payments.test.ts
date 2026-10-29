@@ -39,7 +39,7 @@ vi.mock("@/lib/error-report", () => ({ recordError: (r: unknown) => recordError(
 
 const { setStripeForTesting } = await import("@/lib/payments/stripe");
 setStripeForTesting(stripe);
-const { releaseMilestone, createMilestoneCheckout } = await import("@/lib/payments/server");
+const { releaseMilestone, createMilestoneCheckout, refundMilestone } = await import("@/lib/payments/server");
 const { POST } = await import("@/app/api/stripe/webhook/route");
 
 function db(results: Parameters<typeof fakeSupabase>[0]["results"]) {
@@ -366,5 +366,119 @@ describe("Stripe webhook", () => {
     const res = await POST(await signed(paidSession()));
     expect(await res.json()).toEqual({ received: true, duplicate: true });
     expect(current.writes).toHaveLength(0);
+  });
+});
+
+describe("chargebacks", () => {
+  async function signedDispute() {
+    const payload = JSON.stringify({
+      id: "evt_dispute",
+      object: "event",
+      type: "charge.dispute.created",
+      data: { object: { id: "dp_1", object: "dispute", charge: "ch_new", payment_intent: "pi_1", reason: "fraudulent" } },
+    });
+    const header = await stripe.webhooks.generateTestHeaderStringAsync({ payload, secret: "whsec_test_secret" });
+    return new Request("https://evntly.test/api/stripe/webhook", {
+      method: "POST",
+      headers: { "stripe-signature": header, "content-type": "application/json" },
+      body: payload,
+    }) as unknown as Parameters<typeof POST>[0];
+  }
+  const target = { id: milestone.id, plan_id: "plan-1", name: "Event night" };
+  const froze = () =>
+    current.writes.some(
+      (w) => w.table === "payment_milestones" && (w.payload as { work_status?: string })?.work_status === "disputed"
+    );
+
+  it("freezes the milestone when the charge is already on it", async () => {
+    db({ stripe_webhook_events: { data: null }, "payment_milestones?charge_id": { data: target } });
+    expect((await POST(await signedDispute())).status).toBe(200);
+    expect(froze()).toBe(true);
+    expect(stripeCalls).toHaveLength(0);
+    expect(recordError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining("Chargeback") }));
+  });
+
+  // Seen in the Stripe sandbox: the dispute arrived a second before
+  // checkout.session.completed, while the milestone had no charge id yet.
+  it("still freezes the milestone when the dispute arrives before the payment is recorded", async () => {
+    db({
+      stripe_webhook_events: { data: null },
+      "payment_milestones?charge_id": { data: null },
+      "payment_milestones?id": { data: target },
+    });
+    stripeRoutes["GET /v1/payment_intents/pi_1"] = () => ({
+      json: { id: "pi_1", object: "payment_intent", status: "succeeded", metadata: { milestone_id: milestone.id } },
+    });
+    expect((await POST(await signedDispute())).status).toBe(200);
+    expect(froze()).toBe(true);
+    expect(current.writes).toContainEqual(
+      expect.objectContaining({ table: "payment_events", payload: expect.objectContaining({ event: "chargeback_opened" }) })
+    );
+  });
+
+  it("ignores disputes on payments that aren't for a milestone", async () => {
+    db({ stripe_webhook_events: { data: null }, "payment_milestones?charge_id": { data: null } });
+    stripeRoutes["GET /v1/payment_intents/pi_1"] = () => ({ json: { id: "pi_1", object: "payment_intent", metadata: {} } });
+    expect((await POST(await signedDispute())).status).toBe(200);
+    expect(current.writes.some((w) => w.table === "payment_milestones" || w.table === "payment_events")).toBe(false);
+  });
+
+  it("asks Stripe to retry if the milestone named on the payment can't be found", async () => {
+    db({
+      stripe_webhook_events: { data: null },
+      "payment_milestones?charge_id": { data: null },
+      "payment_milestones?id": { data: null },
+    });
+    stripeRoutes["GET /v1/payment_intents/pi_1"] = () => ({
+      json: { id: "pi_1", object: "payment_intent", metadata: { milestone_id: milestone.id } },
+    });
+    expect((await POST(await signedDispute())).status).toBe(500);
+    expect(froze()).toBe(false);
+  });
+});
+
+describe("refundMilestone", () => {
+  const paidOut = {
+    ...milestone,
+    funding_status: "funded",
+    payout_status: "paid",
+    transfer_id: "tr_1",
+    payment_intent_id: "pi_1",
+  };
+  const refundEvents = () =>
+    current.writes
+      .filter((w) => w.table === "payment_events")
+      .map((w) => (w.payload as { event: string }).event);
+
+  it("pulls back the vendor's payout, then refunds the customer", async () => {
+    db({ payment_milestones: { data: paidOut }, payment_plans: { data: plan } });
+    stripeRoutes["POST /v1/transfers/tr_1/reversals"] = () => ({ json: { id: "trr_1", object: "transfer_reversal" } });
+    stripeRoutes["POST /v1/refunds"] = () => ({ json: { id: "re_1", object: "refund", status: "succeeded" } });
+    expect(await refundMilestone(milestone.id, "Customer cancelled")).toEqual({});
+    expect(stripeCalls.map((c) => `${c.method} ${c.path}`)).toEqual(["POST /v1/transfers/tr_1/reversals", "POST /v1/refunds"]);
+    expect(refundEvents()).toEqual(["refunded"]);
+  });
+
+  it("reports a completed refund as done even if the email afterwards fails", async () => {
+    db({ payment_milestones: { data: paidOut }, payment_plans: { data: plan } });
+    stripeRoutes["POST /v1/transfers/tr_1/reversals"] = () => ({ json: { id: "trr_1", object: "transfer_reversal" } });
+    stripeRoutes["POST /v1/refunds"] = () => ({ json: { id: "re_1", object: "refund", status: "succeeded" } });
+    notify.mockImplementationOnce(() => {
+      throw new Error("`after` was called outside a request scope");
+    });
+    expect(await refundMilestone(milestone.id, "Customer cancelled")).toEqual({});
+    expect(refundEvents()).toEqual(["refunded"]);
+    expect(recordError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining("Post-refund") }));
+  });
+
+  it("logs a failed refund when Stripe refuses it", async () => {
+    db({ payment_milestones: { data: { ...paidOut, payout_status: "not_started", transfer_id: null } } });
+    stripeRoutes["POST /v1/refunds"] = () => ({
+      status: 400,
+      json: { error: { message: "Charge already refunded", type: "invalid_request_error" } },
+    });
+    const res = await refundMilestone(milestone.id, "Customer cancelled");
+    expect(res.error).toContain("already refunded");
+    expect(refundEvents()).toEqual(["refund_failed"]);
   });
 });
