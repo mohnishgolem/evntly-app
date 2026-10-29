@@ -1,6 +1,8 @@
+import { cache } from "react";
 import Link from "next/link";
 import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
 import { QuoteActions, WithdrawRequest } from "@/components/quote-actions";
+import { getPaymentsStatus } from "@/lib/payments/server";
 import { QuoteDetails } from "@/components/quote-details";
 import { HelpTip } from "@/components/help/help-tip";
 import { cn } from "@/lib/utils";
@@ -145,6 +147,7 @@ export function QuoteList({
                   </p>
                 )}
                 <QuoteDetails quote={q} />
+                <AcceptPaymentNote vendorName={q.vendor_name ?? "the vendor"} />
                 <QuoteActions quoteId={q.id} />
               </div>
             )}
@@ -160,5 +163,21 @@ export function QuoteList({
         );
       })}
     </div>
+  );
+}
+
+const paymentsStatus = cache(getPaymentsStatus);
+
+// Shown before "Accept & book": accepting never charges anything, and while
+// online payments are off the customer pays the vendor directly.
+async function AcceptPaymentNote({ vendorName }: { vendorName: string }) {
+  const { enabled } = await paymentsStatus();
+  return (
+    <p className="mt-3 text-sm text-muted-foreground">
+      Accepting doesn&apos;t charge you anything.{" "}
+      {enabled
+        ? "Once the vendor confirms, your booking page shows how to pay."
+        : `You pay ${vendorName} directly, on the terms in this quote — Evntly doesn't take or hold booking payments.`}
+    </p>
   );
 }
