@@ -36,6 +36,11 @@ export const RATE_LIMITS = {
   clientErrorIp: { max: 20, windowSeconds: 10 * 60 },
   // Anonymous funnel page views (/api/track), per IP.
   pageViewIp: { max: 120, windowSeconds: 10 * 60 },
+  // Founding vendor beta: public waitlist form (per IP), feedback and
+  // unsubscribe (per user / per IP).
+  waitlistIp: { max: 5, windowSeconds: 60 * 60 },
+  betaFeedbackUser: { max: 20, windowSeconds: 60 * 60 },
+  unsubscribeIp: { max: 30, windowSeconds: 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 export const RATE_LIMIT_ERROR = "Too many attempts. Please wait a few minutes and try again.";

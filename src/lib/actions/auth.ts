@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LEGACY_SITE_URL, SITE_URL } from "@/lib/config";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
+import { isFoundingPath } from "@/lib/founding/sources";
 import { recordSignupConsents } from "@/lib/actions/legal";
 
 // Origin for links Supabase emails or redirects to (OAuth callback, password
@@ -72,8 +73,9 @@ export async function signup(
   const marketing = parsed.data.marketingOptIn === "on";
   // Customers go back to where they started (the vendor they wanted a quote
   // from, or /dashboard to claim a plan from /plan); vendors set up a listing.
-  const next =
-    role === "vendor" ? "/vendor-signup" : safeNextPath(formData.get("next")?.toString(), "/");
+  // Founding-vendor sign-ups return to their claim page instead.
+  const requested = safeNextPath(formData.get("next")?.toString(), "/");
+  const next = role === "vendor" ? (isFoundingPath(requested) ? requested : "/vendor-signup") : requested;
   if (!(await checkRateLimit("signupIp", await clientIp()))) {
     return { error: RATE_LIMIT_ERROR };
   }
@@ -171,9 +173,9 @@ export async function signInWithOAuth(
   const origin = await appOrigin();
   const callback = new URL(`${origin}/auth/callback`);
   if (role) callback.searchParams.set("role", role);
-  // The callback follows `next` before it handles role=vendor, so vendors
-  // never get one — they still need to land on /vendor-signup.
-  if (next && role !== "vendor") callback.searchParams.set("next", safeNextPath(next));
+  // Vendors land on /vendor-signup unless they came from the founding-vendor
+  // claim page (the callback sets their role first either way).
+  if (next && (role !== "vendor" || isFoundingPath(safeNextPath(next)))) callback.searchParams.set("next", safeNextPath(next));
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,

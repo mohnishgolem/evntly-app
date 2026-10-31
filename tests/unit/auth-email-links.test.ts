@@ -94,6 +94,25 @@ describe("sign-up confirmation link", () => {
   });
 });
 
+describe("founding vendor sign-ups", () => {
+  it("return vendors to their claim page (keeping the invite) instead of /vendor-signup", async () => {
+    const v = form("vendor");
+    v.set("next", "/founding-vendors/claim?invite=abc&src=instagram_bio");
+    await signup(null, v);
+    expect(redirectTo().searchParams.get("next")).toBe("/founding-vendors/claim?invite=abc&src=instagram_bio");
+  });
+
+  it("send vendor OAuth sign-ups from the claim page back there", async () => {
+    const location = async (query: string) =>
+      (await GET(new Request(`https://evntly.example/auth/callback?${query}`))).headers.get("location");
+    expect(await location(`code=abc&role=vendor&next=${encodeURIComponent("/founding-vendors/claim?src=instagram_dm")}`)).toBe(
+      "https://evntly.example/founding-vendors/claim?src=instagram_dm"
+    );
+    expect(await location("code=abc&role=vendor&next=/dashboard")).toBe("https://evntly.example/vendor-signup");
+    expect(await location("code=abc&role=vendor")).toBe("https://evntly.example/vendor-signup");
+  });
+});
+
 describe("auth callback without a session", () => {
   const location = async (query: string) =>
     (await GET(new Request(`https://evntly.example/auth/callback?${query}`))).headers.get("location");
