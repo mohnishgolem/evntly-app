@@ -647,3 +647,15 @@ end;
 $$;
 revoke all on function public.beta_unsubscribe(text) from public;
 grant execute on function public.beta_unsubscribe(text) to anon, authenticated;
+
+-- Supabase's default privileges grant EXECUTE on new functions to anon
+-- directly, which "revoke ... from public" doesn't undo. Only the places
+-- counter, link lookup and unsubscribe are for signed-out visitors.
+revoke execute on function public.claim_founding_vendor_place(text, text) from anon;
+revoke execute on function public.update_my_founding_application(text) from anon;
+revoke execute on function public.admin_decide_founding_application(uuid, text, text) from anon;
+revoke execute on function public.admin_set_beta_program(integer, integer, integer, integer) from anon;
+revoke execute on function public.admin_prepare_beta_invitation(uuid, text) from anon;
+revoke execute on function public.admin_record_beta_invitation(uuid, boolean, text, text) from anon;
+-- Trigger functions are never called directly; drop the default PUBLIC grant too.
+revoke all on function public.link_beta_application_to_listing() from public, anon, authenticated;
