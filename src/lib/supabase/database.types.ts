@@ -14,6 +14,240 @@ export type Database = {
   }
   public: {
     Tables: {
+      beta_applications: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          invitation_id: string | null
+          provider_id: string | null
+          source: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          invitation_id?: string | null
+          provider_id?: string | null
+          source?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          invitation_id?: string | null
+          provider_id?: string | null
+          source?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      beta_feedback: {
+        Row: {
+          area: string
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          page: string | null
+          rating: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          area?: string
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          page?: string | null
+          rating?: number | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          page?: string | null
+          rating?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      beta_invitations: {
+        Row: {
+          attempt_count: number
+          claimed_at: string | null
+          claimed_by: string | null
+          clicked_at: string | null
+          created_at: string
+          delivery_status: string | null
+          delivery_updated_at: string | null
+          expires_at: string | null
+          first_sent_at: string | null
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          last_sent_at: string | null
+          opened_at: string | null
+          resend_email_id: string | null
+          send_count: number
+          status: string
+          token_hash: string | null
+          updated_at: string
+          waitlist_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string | null
+          delivery_updated_at?: string | null
+          expires_at?: string | null
+          first_sent_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_sent_at?: string | null
+          opened_at?: string | null
+          resend_email_id?: string | null
+          send_count?: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          waitlist_id: string
+        }
+        Update: {
+          attempt_count?: number
+          claimed_at?: string | null
+          claimed_by?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string | null
+          delivery_updated_at?: string | null
+          expires_at?: string | null
+          first_sent_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_sent_at?: string | null
+          opened_at?: string | null
+          resend_email_id?: string | null
+          send_count?: number
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+          waitlist_id?: string
+        }
+        Relationships: []
+      }
+      beta_program: {
+        Row: {
+          batch_size_limit: number
+          capacity: number
+          daily_send_limit: number
+          id: number
+          invite_expiry_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          batch_size_limit?: number
+          capacity?: number
+          daily_send_limit?: number
+          id?: number
+          invite_expiry_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          batch_size_limit?: number
+          capacity?: number
+          daily_send_limit?: number
+          id?: number
+          invite_expiry_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      vendor_waitlist: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          consent_at: string | null
+          consent_note: string | null
+          created_at: string
+          email: string
+          email_normalized: string | null
+          first_name: string | null
+          id: string
+          invite_consent: boolean
+          source: string
+          suburb: string | null
+          unsubscribe_token: string
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          consent_at?: string | null
+          consent_note?: string | null
+          created_at?: string
+          email: string
+          email_normalized?: string | null
+          first_name?: string | null
+          id?: string
+          invite_consent?: boolean
+          source?: string
+          suburb?: string | null
+          unsubscribe_token?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          consent_at?: string | null
+          consent_note?: string | null
+          created_at?: string
+          email?: string
+          email_normalized?: string | null
+          first_name?: string | null
+          id?: string
+          invite_consent?: boolean
+          source?: string
+          suburb?: string | null
+          unsubscribe_token?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       account_deletion_requests: {
         Row: {
           admin_note: string | null
@@ -2572,6 +2806,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_decide_founding_application: {
+        Args: { p_application_id: string; p_decision: string; p_note?: string }
+        Returns: string
+      }
+      admin_prepare_beta_invitation: {
+        Args: { p_token_hash: string; p_waitlist_id: string }
+        Returns: {
+          email: string
+          expires_at: string
+          first_name: string | null
+          invitation_id: string
+          send_number: number
+          unsubscribe_token: string
+        }[]
+      }
+      admin_record_beta_invitation: {
+        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string }
+        Returns: undefined
+      }
+      admin_set_beta_program: {
+        Args: { p_batch_size_limit: number; p_capacity: number; p_daily_send_limit: number; p_invite_expiry_days: number }
+        Returns: undefined
+      }
+      beta_invite_lookup: {
+        Args: { p_token_hash: string }
+        Returns: { first_name: string | null; masked_email: string | null; state: string }[]
+      }
+      beta_unsubscribe: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
+      claim_founding_vendor_place: {
+        Args: { p_invite_token_hash?: string; p_source?: string }
+        Returns: { application_id: string; created: boolean; invite: string | null; status: string }[]
+      }
+      founding_vendor_places: {
+        Args: never
+        Returns: { approved: number; capacity: number; remaining: number }[]
+      }
+      update_my_founding_application: {
+        Args: { p_action: string }
+        Returns: string
+      }
       cancel_account_deletion: { Args: never; Returns: undefined }
       my_legal_status: {
         Args: never

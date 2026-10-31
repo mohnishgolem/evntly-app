@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Award,
   Store,
   Tags,
   UserRound,
@@ -208,6 +209,7 @@ export const VENDOR_BOOKINGS_TABS: NavItem[] = [
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
+  { href: "/admin/beta-vendors", label: "Beta Vendors", icon: Award },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },

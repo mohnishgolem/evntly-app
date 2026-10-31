@@ -24,6 +24,8 @@ import { sydneyDate } from "@/lib/event-dates";
 import { quoteExpiresSoon, quoteTimeLeft, effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { cn } from "@/lib/utils";
 import { completenessPercent, profileChecklist, type ChecklistItem } from "@/lib/profile-completeness";
+import { getMyFoundingStatus } from "@/lib/data/founding";
+import { CLAIM_PATH } from "@/lib/founding/sources";
 
 export const metadata: Metadata = {
   title: "Vendor dashboard",
@@ -101,6 +103,39 @@ function ProfileStrength({ name, items }: { name: string; items: ChecklistItem[]
   );
 }
 
+// Founding vendor beta: where the application stands, linking to the
+// status page (or the beta checklist once approved). Hidden for vendors who
+// never claimed a place, or who withdrew.
+async function FoundingCard() {
+  const status = await getMyFoundingStatus();
+  const app = status?.application;
+  if (!app || app.status === "withdrawn") return null;
+  const approved = app.status === "approved";
+  const text: Record<string, string> = {
+    started: "Finish setting up your listing to submit your founding vendor application.",
+    submitted: "Your founding vendor application is pending review.",
+    needs_changes: "We've asked for a few changes to your listing before approving your founding place.",
+    rejected: "We couldn't offer you a founding place this time.",
+    approved: "You're a founding vendor. Open your beta checklist and send us feedback.",
+  };
+  return (
+    <Link
+      href={approved ? "/vendor-dashboard/beta" : CLAIM_PATH}
+      className={cn(
+        "mb-8 flex items-center gap-3 rounded-2xl border p-4 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring",
+        approved || app.status === "needs_changes" ? "border-primary/40 bg-primary/5" : "border-border",
+      )}
+    >
+      <PartyPopper className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+      <span className="flex-1 text-sm">
+        <span className="block font-semibold">Founding vendor beta</span>
+        <span className="block text-muted-foreground">{text[app.status]}</span>
+      </span>
+      <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+    </Link>
+  );
+}
+
 function QuickAction({ href, icon: Icon, label }: { href: string; icon: LucideIcon; label: string }) {
   return (
     <Link
@@ -169,6 +204,8 @@ export default async function VendorHomePage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-bold">Home</h1>
       <p className="mb-6 text-sm text-muted-foreground">What needs your attention today.</p>
+
+      <FoundingCard />
 
       {checklist.length > 0 && <ProfileStrength name={listings[0].name} items={checklist} />}
 

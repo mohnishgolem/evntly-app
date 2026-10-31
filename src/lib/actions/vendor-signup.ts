@@ -9,6 +9,8 @@ import { isValidAbn, normalizeAbn } from "@/lib/abn";
 import { isLaunchCategory, isVendorCategory } from "@/lib/config";
 import { VENDOR_DOCUMENTS } from "@/lib/legal/versions";
 import { friendlyLegalError } from "@/lib/legal/status";
+import { emailApplicationReceived } from "@/lib/founding/notify";
+import { CLAIM_PATH } from "@/lib/founding/sources";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -116,8 +118,20 @@ export async function submitVendorListing(
   // (not just one that signed up as "I'm a vendor") still needs isVendor
   // checks in the header to send them to /vendor-dashboard.
   await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
-  await emailAdminsNewListing(draft.businessName, draft.serviceType, draft.city);
 
+  // Vendors who claimed a founding place first go back to their application
+  // (the insert moved it to "submitted" via a DB trigger).
+  const { data: beta } = await supabase
+    .from("beta_applications")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (beta?.status === "submitted") {
+    await emailApplicationReceived(user.email);
+    redirect(CLAIM_PATH);
+  }
+
+  await emailAdminsNewListing(draft.businessName, draft.serviceType, draft.city);
   redirect("/vendor-dashboard");
 }
 

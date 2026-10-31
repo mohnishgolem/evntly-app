@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/safe-redirect";
+import { isFoundingPath } from "@/lib/founding/sources";
 import type { AuthNoticeKey } from "@/lib/auth-notices";
 
 // Supabase redirects here after a Google/Apple OAuth sign-in, or after a
@@ -26,11 +27,6 @@ export async function GET(request: Request) {
       if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
         return NextResponse.redirect(`${origin}/login/mfa?next=${encodeURIComponent(safeNextPath(next))}`);
       }
-      if (next) {
-        // `next` comes from the URL, so only same-site paths are honoured —
-        // see safeNextPath (blocks e.g. next=@evil.com → https://site@evil.com).
-        return NextResponse.redirect(`${origin}${safeNextPath(next)}`);
-      }
       if (role === "vendor") {
         const {
           data: { user },
@@ -38,7 +34,14 @@ export async function GET(request: Request) {
         if (user) {
           await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
         }
-        return NextResponse.redirect(`${origin}/vendor-signup`);
+        // Founding-vendor sign-ups go back to their claim page.
+        const founding = !!next && isFoundingPath(safeNextPath(next));
+        return NextResponse.redirect(`${origin}${safeNextPath(founding ? next : "/vendor-signup")}`);
+      }
+      if (next) {
+        // `next` comes from the URL, so only same-site paths are honoured —
+        // see safeNextPath (blocks e.g. next=@evil.com → https://site@evil.com).
+        return NextResponse.redirect(`${origin}${safeNextPath(next)}`);
       }
       return NextResponse.redirect(`${origin}/dashboard`);
     }
