@@ -123,7 +123,7 @@ export async function sendInvitations(waitlistIds: string[]): Promise<AdminFound
   const status = inviteSendingStatus();
   if (!status.live) return { error: "Live sending is switched off (BETA_INVITES_LIVE isn't true). Send a test email instead." };
   const client = resend();
-  if (!client || !status.from) return { error: "Resend isn't configured (RESEND_API_KEY / EMAIL_FROM)." };
+  if (!client) return { error: "Resend isn't configured (RESEND_API_KEY is missing)." };
 
   const ids = [...new Set(waitlistIds)].filter((id) => /^[0-9a-f-]{36}$/.test(id));
   if (ids.length === 0) return { error: "Pick at least one contact." };
@@ -213,7 +213,7 @@ export async function sendTestInvitation(): Promise<AdminFoundingState> {
   if (!to) return { error: "Your account has no email address." };
   const status = inviteSendingStatus();
   const client = resend();
-  if (!client || !status.from) return { error: "Resend isn't configured (RESEND_API_KEY / EMAIL_FROM)." };
+  if (!client) return { error: "Resend isn't configured (RESEND_API_KEY is missing)." };
 
   const email = renderInviteEmail({
     firstName: (session.user.user_metadata.full_name as string | undefined) ?? "Mohnish",

@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { deliveryUpdateFor, verifyResendWebhook } from "@/lib/founding/resend-webhook";
+import { deliveryUpdateFor, shouldReplaceDeliveryStatus, verifyResendWebhook } from "@/lib/founding/resend-webhook";
 
-// Resend delivery events for founding-vendor invitations (delivered, bounced,
-// complained, opened, clicked). Signed with RESEND_WEBHOOK_SECRET; anything
-// unsigned is rejected. Events for other emails match no invitation and are
-// ignored. Opens/clicks only arrive if tracking is enabled on the domain.
+// Resend delivery events for founding-vendor invitations (sent, delivered,
+// delayed, bounced, complained, failed, opened, clicked). The Svix signature
+// is checked against the raw body with RESEND_WEBHOOK_SECRET: a bad or
+// missing signature gets 400. Other event types, and events for emails that
+// aren't invitations, get 200 and are ignored. Opens/clicks only arrive if
+// tracking is enabled on the domain. Nothing here logs the secret or bodies.
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) return new NextResponse("Not configured", { status: 503 });
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
     },
     body,
   );
-  if (!valid) return new NextResponse("Bad signature", { status: 401 });
+  if (!valid) return new NextResponse("Invalid signature", { status: 400 });
 
   let event: { type?: string; data?: { email_id?: string } };
   try {
@@ -39,12 +41,15 @@ export async function POST(request: NextRequest) {
 
   const { data: invitation } = await admin
     .from("beta_invitations")
-    .select("id, waitlist_id, opened_at, clicked_at")
+    .select("id, waitlist_id, opened_at, clicked_at, delivery_status")
     .eq("resend_email_id", emailId)
     .maybeSingle();
   if (!invitation) return NextResponse.json({ ignored: true });
 
   if ("delivery_status" in update) {
+    if (!shouldReplaceDeliveryStatus(invitation.delivery_status, update.delivery_status)) {
+      return NextResponse.json({ ok: true, kept: invitation.delivery_status });
+    }
     await admin
       .from("beta_invitations")
       .update({ delivery_status: update.delivery_status, delivery_updated_at: now, updated_at: now })

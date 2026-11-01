@@ -85,7 +85,7 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
       >
         <div className="mb-4 grid gap-1 rounded-2xl bg-secondary p-4 text-xs">
           <p>
-            Resend: {sending.resendConfigured ? "configured" : "NOT configured"} · Sender: {sending.from ?? "not set"} · Reply-to: {sending.replyTo}
+            Resend: {sending.resendConfigured ? "configured" : "NOT configured"} · Sender: {sending.from} · Reply-to: {sending.replyTo}
           </p>
           <p>
             Live sending: <strong>{sending.live ? "ON" : "off"}</strong> · Delivery webhook: {sending.webhookConfigured ? "configured" : "not set (no delivered/bounced/opened tracking)"}
