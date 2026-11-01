@@ -31,14 +31,18 @@ export function verifyResendWebhook(
   });
 }
 
+export type DeliveryStatus = "sent" | "delivered" | "delivery_delayed" | "bounced" | "complained" | "failed";
+
 export type InvitationDeliveryUpdate =
-  | { delivery_status: "delivered" | "delivery_delayed" | "bounced" | "complained" | "failed" }
+  | { delivery_status: DeliveryStatus }
   | { opened: true }
   | { clicked: true };
 
 /** Maps a Resend event type to what we record on the invitation, or null to ignore. */
 export function deliveryUpdateFor(type: string): InvitationDeliveryUpdate | null {
   switch (type) {
+    case "email.sent":
+      return { delivery_status: "sent" };
     case "email.delivered":
       return { delivery_status: "delivered" };
     case "email.delivery_delayed":
@@ -56,4 +60,20 @@ export function deliveryUpdateFor(type: string): InvitationDeliveryUpdate | null
     default:
       return null;
   }
+}
+
+// Resend doesn't guarantee event order. A later-stage status always wins, so a
+// late "sent" or "delivered" never hides a bounce or a spam complaint.
+const STAGE: Record<DeliveryStatus, number> = {
+  sent: 0,
+  delivery_delayed: 1,
+  delivered: 2,
+  failed: 3,
+  bounced: 3,
+  complained: 4,
+};
+
+export function shouldReplaceDeliveryStatus(current: string | null | undefined, next: DeliveryStatus) {
+  if (!current || !(current in STAGE)) return true;
+  return STAGE[next] >= STAGE[current as DeliveryStatus];
 }
