@@ -10,6 +10,8 @@ const respond = (body: unknown, status = 200) =>
   new Response(body === null ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 let resendStatus = 200;
+let cancelStatus = 200;
+let prepareCount = 0;
 let tableRows: Record<string, unknown[]> = {};
 let prepareError: string | null = null;
 const handler = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -24,13 +26,17 @@ const handler = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
   }
   calls.push({ url, method, body, headers: new Headers(init?.headers) });
+  if (/https:\/\/api\.resend\.com\/emails\/[^/]+\/cancel/.test(url)) {
+    return cancelStatus === 200 ? respond({ object: "email", id: url.split("/")[4] }) : respond({ name: "validation_error", message: "already sent" }, cancelStatus);
+  }
   if (url.startsWith("https://api.resend.com/emails")) {
     return resendStatus === 200 ? respond({ id: `re_${calls.length}` }) : respond({ name: "rate_limit_exceeded", message: "Too many requests" }, resendStatus);
   }
   if (url.includes("/rpc/claim_founding_vendor_place")) return respond([{ application_id: "app-1", status: "started", invite: "attached", created: true }]);
   if (url.includes("/rpc/admin_prepare_beta_invitation")) {
     if (prepareError) return respond({ code: "P0001", message: prepareError }, 400);
-    return respond([{ invitation_id: "inv-1", email: "jane@photo.com.au", first_name: "Jane", unsubscribe_token: "c".repeat(64), expires_at: "2026-11-15T00:00:00Z", send_number: 1 }]);
+    prepareCount++;
+    return respond([{ invitation_id: prepareCount > 1 ? `inv-${prepareCount}` : "inv-1", email: "jane@photo.com.au", first_name: "Jane", unsubscribe_token: "c".repeat(64), expires_at: "2026-11-15T00:00:00Z", send_number: 1 }]);
   }
   if (url.includes("/rpc/admin_prepare_beta_reminder")) {
     if (prepareError) return respond({ code: "P0001", message: prepareError }, 400);
@@ -81,7 +87,7 @@ vi.mock("@/lib/data/user", () => ({
 }));
 
 const { claimFoundingPlace, joinVendorWaitlist, unsubscribeFromInvites } = await import("@/lib/actions/founding");
-const { sendInvitations, sendReminders, sendDueReminders, sendTestInvitation, decideApplication, importWaitlist } = await import(
+const { sendInvitations, sendReminders, sendDueReminders, sendTestInvitation, decideApplication, importWaitlist, scheduleInvitationCampaign, cancelScheduledSends } = await import(
   "@/lib/actions/admin-founding"
 );
 
@@ -103,6 +109,8 @@ beforeEach(() => {
   resendStatus = 200;
   prepareError = null;
   tableRows = {};
+  cancelStatus = 200;
+  prepareCount = 0;
   vi.stubGlobal("fetch", fakeFetch);
   process.env.RESEND_API_KEY = "re_test_key";
   process.env.EMAIL_FROM = "Evntly <hello@evntlyapp.com>";
@@ -355,5 +363,71 @@ describe("reminders", () => {
     const payload = send.body as { to: string; subject: string };
     expect(payload.to).toBe("mohnish@evntlyapp.com");
     expect(payload.subject).toBe("[TEST] Following up on your Evntly invitation");
+  });
+});
+
+describe("scheduled campaign", () => {
+  const contacts = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `11111111-1111-4111-8111-${String(i).padStart(12, "0")}` }));
+  const tomorrow = () => {
+    const d = new Date(Date.now() + 2 * 86_400_000);
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  };
+
+  it("needs live sending and an admin", async () => {
+    tableRows = { vendor_waitlist: contacts(5), beta_invitations: [] };
+    const res = await scheduleInvitationCampaign({ date: tomorrow(), time: "10:00", count: 5, batchSize: 10, intervalMinutes: 10 });
+    expect(res?.error).toMatch(/switched off/);
+    expect(calls).toHaveLength(0);
+    adminSession = { admin: false, mfa: "n/a" };
+    expect((await scheduleInvitationCampaign({ date: tomorrow(), time: "10:00", count: 5, batchSize: 10, intervalMinutes: 10 }))?.error).toMatch(/Not authorized/);
+  });
+
+  it("books each batch with Resend at its Sydney time and records the scheduled time", { timeout: 20_000 }, async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    tableRows = { vendor_waitlist: contacts(12), beta_invitations: [] };
+    const date = tomorrow();
+    const res = await scheduleInvitationCampaign({ date, time: "10:00", count: 12, batchSize: 10, intervalMinutes: 10 });
+    expect(res?.message).toBe("Scheduled 12 of 12 invitations in 2 batches.");
+    const sends = resendCalls().map((c) => c.body as { scheduledAt?: string; scheduled_at?: string });
+    const times = sends.map((b) => b.scheduledAt ?? b.scheduled_at);
+    const { sydneyToUtc } = await import("@/lib/founding/schedule");
+    const t0 = sydneyToUtc(date, "10:00")!.toISOString();
+    const t1 = sydneyToUtc(date, "10:10")!.toISOString();
+    expect(times).toEqual([...Array(10).fill(t0), t1, t1]);
+    const keys = resendCalls().map((c) => c.headers.get("Idempotency-Key"));
+    expect(new Set(keys).size).toBe(12);
+    expect(rpc("admin_record_beta_invitation").map((c) => (c.body as { p_scheduled_for: string }).p_scheduled_for)).toEqual(times);
+  });
+
+  it("refuses a time in the past or less than 5 minutes away", async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    tableRows = { vendor_waitlist: contacts(3), beta_invitations: [] };
+    const res = await scheduleInvitationCampaign({ date: "2026-01-01", time: "10:00", count: 3, batchSize: 10, intervalMinutes: 10 });
+    expect(res?.error).toMatch(/5 minutes/);
+    expect(resendCalls()).toHaveLength(0);
+  });
+
+  it("skips contacts already invited or booked", async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    tableRows = {
+      vendor_waitlist: contacts(3),
+      beta_invitations: [{ waitlist_id: contacts(3)[0].id, status: "sent" }, { waitlist_id: contacts(3)[1].id, status: "failed" }],
+    };
+    await scheduleInvitationCampaign({ date: tomorrow(), time: "10:00", count: 10, batchSize: 10, intervalMinutes: 10 });
+    expect(rpc("admin_prepare_beta_invitation").map((c) => (c.body as { p_waitlist_id: string }).p_waitlist_id)).toEqual([contacts(3)[1].id, contacts(3)[2].id]);
+  });
+
+  it("cancels with Resend first, then frees the contact; leaves it alone if Resend refuses", async () => {
+    tableRows = { beta_invitations: [{ id: "inv-a", resend_email_id: "re_a", scheduled_for: "2099-01-01T00:00:00Z", waitlist_id: "w1" }] };
+    let res = await cancelScheduledSends();
+    expect(calls.some((c) => c.url === "https://api.resend.com/emails/re_a/cancel")).toBe(true);
+    expect(rpc("admin_cancel_beta_send")[0].body).toEqual({ p_invitation_id: "inv-a" });
+    expect(res?.message).toBe("Cancelled 1 of 1 scheduled email.");
+
+    calls.length = 0;
+    cancelStatus = 422;
+    res = await cancelScheduledSends();
+    expect(rpc("admin_cancel_beta_send")).toHaveLength(0);
+    expect(res?.details?.[0]).toMatch(/may still send/);
   });
 });

@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   decideApplication,
+  cancelScheduledSends,
   importWaitlist,
+  scheduleInvitationCampaign,
   sendDueReminders,
   sendInvitations,
   sendReminders,
@@ -21,6 +23,7 @@ import {
 } from "@/lib/actions/admin-founding";
 import type { RecruitmentRow } from "@/lib/data/admin-founding";
 import { VERDICT_LABEL, type ImportReport, type RowVerdict } from "@/lib/founding/import-check";
+import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { categoryLabel, isVendorCategory } from "@/lib/config";
 import { sourceLabel } from "@/lib/founding/sources";
 import { cn } from "@/lib/utils";
@@ -84,11 +87,13 @@ export function BetaSendingControls({
   maxBatch,
   invitable,
   remindersDue,
+  scheduled,
 }: {
   live: boolean;
   maxBatch: number;
   invitable: number;
   remindersDue: number;
+  scheduled: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -157,6 +162,7 @@ export function BetaSendingControls({
           {`Remind ${Math.min(count, remindersDue)} due`}
         </Button>
       </div>
+      <ScheduleCampaign live={live} maxBatch={maxBatch} invitable={invitable} scheduled={scheduled} onRun={run} pending={pending} />
       <p className="text-xs text-muted-foreground">
         Reminders are never automatic: one per invitation, 3+ days after it, only to vendors who haven&apos;t signed up. Each
         reminder sends a fresh link.
@@ -171,6 +177,106 @@ export function BetaSendingControls({
   );
 }
 
+function tomorrowInSydney() {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Sydney", year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    new Date(Date.now() + 86_400_000),
+  );
+  return parts; // YYYY-MM-DD
+}
+
+function ScheduleCampaign({
+  live,
+  maxBatch,
+  invitable,
+  scheduled,
+  onRun,
+  pending,
+}: {
+  live: boolean;
+  maxBatch: number;
+  invitable: number;
+  scheduled: number;
+  onRun: (fn: () => Promise<AdminFoundingState>, confirmText?: string) => void;
+  pending: boolean;
+}) {
+  const [date, setDate] = useState(tomorrowInSydney);
+  const [time, setTime] = useState("10:00");
+  const [count, setCount] = useState(Math.max(1, invitable));
+  const [size, setSize] = useState(Math.min(10, maxBatch));
+  const [interval, setIntervalMinutes] = useState(10);
+
+  const start = sydneyToUtc(date, time);
+  const n = Math.min(count, invitable);
+  const plan = start ? planBatches(Array.from({ length: n }, (_, i) => String(i)), start, Math.max(1, size), Math.max(1, interval)) : [];
+  const problem = !start ? "Enter a valid Sydney date and time." : planProblem(plan);
+  const summary = plan.map((b) => `${formatSydney(b.at)}: ${b.ids.length}`).join("\n");
+
+  return (
+    <fieldset className="grid gap-3 rounded-2xl border border-border p-4">
+      <legend className="px-1 text-sm font-semibold">Schedule invitations (Sydney time)</legend>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="grid gap-1.5">
+          <Label htmlFor="sch-date" className="text-xs">Date</Label>
+          <Input id="sch-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="sch-time" className="text-xs">First batch</Label>
+          <Input id="sch-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="sch-count" className="text-xs">Contacts (max {invitable})</Label>
+          <Input id="sch-count" type="number" min={1} max={invitable} value={count} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))} className="h-11" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="sch-size" className="text-xs">Per batch (max {maxBatch})</Label>
+          <Input id="sch-size" type="number" min={1} max={maxBatch} value={size} onChange={(e) => setSize(Math.max(1, Math.min(maxBatch, Number(e.target.value) || 1)))} className="h-11" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="sch-int" className="text-xs">Minutes apart</Label>
+          <Input id="sch-int" type="number" min={1} max={240} value={interval} onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))} className="h-11" />
+        </div>
+      </div>
+      {n > 0 && !problem ? (
+        <ul className="grid gap-0.5 text-xs text-muted-foreground">
+          {plan.map((b) => (
+            <li key={b.index}>
+              Batch {b.index + 1}: {formatSydney(b.at)} · {b.ids.length} vendor{b.ids.length === 1 ? "" : "s"}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-destructive">{n === 0 ? "No eligible contacts to schedule." : problem}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="lg"
+          disabled={pending || !live || n === 0 || !!problem}
+          onClick={() =>
+            onRun(
+              () => scheduleInvitationCampaign({ date, time, count: n, batchSize: size, intervalMinutes: interval }),
+              `Book ${n} real invitation${n === 1 ? "" : "s"} with Resend?\n\n${summary}\n\nResend will send them at these times even if nobody is online. You can cancel any that haven't gone out yet.`,
+            )
+          }
+        >
+          {pending ? "Working…" : `Schedule ${n} invitation${n === 1 ? "" : "s"}`}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          disabled={pending || scheduled === 0}
+          onClick={() => onRun(() => cancelScheduledSends(), `Cancel all ${scheduled} scheduled email${scheduled === 1 ? "" : "s"} that haven't gone out yet?`)}
+        >
+          Cancel all scheduled ({scheduled})
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Booking happens now; Resend holds each email and sends it at its time (up to 30 days ahead), so it doesn&apos;t depend on
+        Evntly&apos;s servers or your computer. Each contact gets one booking with its own link and duplicate protection.
+      </p>
+    </fieldset>
+  );
+}
+
 export function WaitlistImport() {
   const [state, action, pending] = useActionState<AdminFoundingState, FormData>(importWaitlist, null);
   const report = state?.report;
@@ -179,7 +285,7 @@ export function WaitlistImport() {
       <p className="text-sm text-muted-foreground">
         CSV with a header row. Columns: <code>email</code> (required), <code>first_name</code>, <code>business_name</code>,{" "}
         <code>category</code>, <code>invite_consent</code> (yes/no) and <code>consent_note</code> (where they opted in);{" "}
-        <code>suburb</code> is optional. Only rows with <code>invite_consent</code> = yes can be invited. <strong>Check file</strong>{" "}
+        <code>suburb</code> and <code>consent_at</code> (when they signed up, Sydney time) are optional. Only rows with <code>invite_consent</code> = yes can be invited. <strong>Check file</strong>{" "}
         changes nothing. Imports skip registered vendors and undeliverable addresses, and never re-subscribe anyone.
       </p>
       <Input name="file" type="file" accept=".csv,text/csv" className="h-11 py-2" />
@@ -251,7 +357,7 @@ const INVITE_LABEL: Record<string, string> = {
 };
 
 function canSend(r: RecruitmentRow) {
-  if (!r.waitlistId || !r.consent || r.unsubscribed || r.applicationId) return false;
+  if (!r.waitlistId || !r.consent || r.unsubscribed || r.applicationId || r.scheduledFor) return false;
   if (r.inviteStatus === "claimed" || r.inviteStatus === "revoked" || r.inviteStatus === "sending") return false;
   if (r.inviteStatus === "sent" && r.lastSentAt && Date.now() - new Date(r.lastSentAt).getTime() < 86_400_000) return false;
   return true;
@@ -364,7 +470,8 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
                     <span className="block">{r.inviteStatus ? INVITE_LABEL[r.inviteStatus] : "—"}{r.sendCount > 1 ? ` (×${r.sendCount})` : ""}</span>
                     {r.delivery && r.delivery !== "sent" && <span className="block text-muted-foreground">{r.delivery.replace("_", " ")}</span>}
                     {r.lastSentAt && <span className="block text-muted-foreground">{fmt(r.lastSentAt)}</span>}
-                    {r.reminderSentAt && <span className="block text-muted-foreground">Reminded {fmt(r.reminderSentAt)}</span>}
+                    {r.scheduledFor && <span className="block font-medium">Scheduled {formatSydney(new Date(r.scheduledFor))}</span>}
+                    {r.reminderSentAt && !r.scheduledFor && <span className="block text-muted-foreground">Reminded {fmt(r.reminderSentAt)}</span>}
                     {r.reminderDue && <span className="block font-medium text-primary">Reminder due</span>}
                     {r.inviteError && <span className="block text-destructive">{r.inviteError}</span>}
                   </td>

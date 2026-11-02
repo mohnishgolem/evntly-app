@@ -12,6 +12,7 @@ import { newInviteToken } from "@/lib/founding/tokens";
 import { inviteHeaders, renderInviteEmail, renderReminderEmail } from "@/lib/founding/invite-email";
 import { CLAIM_PATH } from "@/lib/founding/sources";
 import { inviteSendingStatus } from "@/lib/founding/sending";
+import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 
 export type AdminFoundingState = { error?: string; success?: boolean; message?: string; details?: string[]; report?: ImportReport } | null;
 
@@ -127,7 +128,7 @@ export async function importWaitlist(_prev: AdminFoundingState, formData: FormDa
       suburb: r.suburb,
       source: "import",
       invite_consent: r.invite_consent,
-      consent_at: r.invite_consent ? now : null,
+      consent_at: r.invite_consent ? (r.consent_at ?? now) : null,
       consent_note: r.consent_note ?? (r.invite_consent ? "Imported from waitlist CSV (consent column)" : null),
     }));
   for (let i = 0; i < inserts.length; i += 200) {
@@ -148,7 +149,7 @@ export async function importWaitlist(_prev: AdminFoundingState, formData: FormDa
     if (!e.suburb && r.suburb) patch.suburb = r.suburb;
     if (r.invite_consent && !e.invite_consent && !e.unsubscribed_at) {
       patch.invite_consent = true;
-      patch.consent_at = now;
+      patch.consent_at = r.consent_at ?? now;
       patch.consent_note = r.consent_note ?? "Imported from waitlist CSV (consent column)";
     }
     if (Object.keys(patch).length === 0) continue;
@@ -213,8 +214,16 @@ const KIND = {
 // the rolling 24-hour limit) and Resend gets an idempotency key, so a double
 // click or a retry can't email anyone twice. Successful sends are never
 // retried; a rate-limit or quota error stops the batch.
-async function sendBatch(kind: keyof typeof KIND, waitlistIds: string[]): Promise<AdminFoundingState> {
+async function sendBatch(
+  kind: keyof typeof KIND,
+  waitlistIds: string[],
+  // Set: Resend holds the email and sends it at this time.
+  scheduledAt?: Date,
+): Promise<AdminFoundingState> {
   if (!(await requireAdmin())) return { error: "Not authorized." };
+  if (scheduledAt && planProblem([{ index: 0, at: scheduledAt, ids: ["x"] }])) {
+    return { error: planProblem([{ index: 0, at: scheduledAt, ids: ["x"] }])! };
+  }
   const status = inviteSendingStatus();
   if (!status.live) return { error: "Live sending is switched off (BETA_INVITES_LIVE isn't true). Send a test email instead." };
   const client = resend();
@@ -263,11 +272,17 @@ async function sendBatch(kind: keyof typeof KIND, waitlistIds: string[]): Promis
           text: email.text,
           headers: inviteHeaders(row.unsubscribe_token),
           tags: [{ name: "campaign", value: "founding_vendors" }, { name: "kind", value: kind }],
+          ...(scheduledAt ? { scheduledAt: scheduledAt.toISOString() } : {}),
         },
         { idempotencyKey: `${k.key}-${row.invitation_id}-${row.send_number}` },
       );
       if (error || !data?.id) throw new Error(error ? `${error.name}: ${error.message}` : "No email id returned");
-      await supabase.rpc(k.record, { p_invitation_id: row.invitation_id, p_ok: true, p_resend_email_id: data.id });
+      await supabase.rpc(k.record, {
+        p_invitation_id: row.invitation_id,
+        p_ok: true,
+        p_resend_email_id: data.id,
+        ...(scheduledAt ? { p_scheduled_for: scheduledAt.toISOString() } : {}),
+      });
       sent++;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -281,7 +296,9 @@ async function sendBatch(kind: keyof typeof KIND, waitlistIds: string[]): Promis
   revalidatePath(PATH);
   return {
     success: problems.length === 0,
-    message: `Sent ${sent} of ${ids.length} ${k.noun}${ids.length === 1 ? "" : "s"}.`,
+    message: scheduledAt
+      ? `Scheduled ${sent} of ${ids.length} ${k.noun}${ids.length === 1 ? "" : "s"} for ${formatSydney(scheduledAt)}.`
+      : `Sent ${sent} of ${ids.length} ${k.noun}${ids.length === 1 ? "" : "s"}.`,
     details: problems,
   };
 }
@@ -299,6 +316,105 @@ export async function sendNextBatch(count: number): Promise<AdminFoundingState> 
   const ids = (contacts ?? []).map((c) => c.id).filter((id) => !done.has(id)).slice(0, n);
   if (ids.length === 0) return { error: "Everyone with consent has already been invited." };
   return sendInvitations(ids);
+}
+
+// Contacts who can be invited now, oldest first (the database re-checks
+// every rule when each one is booked).
+async function invitableIds(supabase: Awaited<ReturnType<typeof createClient>>, limit: number) {
+  const [{ data: contacts }, { data: invited }] = await Promise.all([
+    supabase.from("vendor_waitlist").select("id").eq("invite_consent", true).is("unsubscribed_at", null).order("created_at").limit(2000),
+    supabase.from("beta_invitations").select("waitlist_id, status"),
+  ]);
+  const done = new Set((invited ?? []).filter((i) => i.status !== "failed" && i.status !== "pending").map((i) => i.waitlist_id));
+  return (contacts ?? []).map((c) => c.id).filter((id) => !done.has(id)).slice(0, limit);
+}
+
+export type ScheduleRequest = { date: string; time: string; count: number; batchSize: number; intervalMinutes: number };
+
+/**
+ * Books the next `count` invitable contacts with Resend in batches, e.g.
+ * 3 Nov 10:00, 10:10, 10:20 Sydney time. Resend sends each one at its time,
+ * independent of Evntly's servers. Same checks, limits and idempotency as an
+ * immediate send; needs BETA_INVITES_LIVE=true.
+ */
+export async function scheduleInvitationCampaign(req: ScheduleRequest): Promise<AdminFoundingState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+  if (!inviteSendingStatus().live) return { error: "Live sending is switched off (BETA_INVITES_LIVE isn't true). Nothing was scheduled." };
+  const start = sydneyToUtc(String(req.date), String(req.time));
+  if (!start) return { error: "Enter a valid Sydney date and time." };
+  const count = Math.max(1, Math.min(500, Math.floor(Number(req.count) || 0)));
+  const interval = Math.max(1, Math.min(240, Math.floor(Number(req.intervalMinutes) || 0)));
+  const supabase = await createClient();
+  const { data: program } = await supabase.from("beta_program").select("batch_size_limit").eq("id", 1).maybeSingle();
+  const size = Math.max(1, Math.min(program?.batch_size_limit ?? 10, Math.floor(Number(req.batchSize) || 0)));
+
+  const ids = await invitableIds(supabase, count);
+  const plan = planBatches(ids, start, size, interval);
+  const problem = planProblem(plan);
+  if (problem) return { error: problem };
+
+  const lines: string[] = [];
+  let booked = 0;
+  for (const batch of plan) {
+    const res = await sendBatch("invitation", batch.ids, batch.at);
+    const n = Number(res?.message?.match(/Scheduled (\d+)/)?.[1] ?? 0);
+    booked += n;
+    lines.push(`${formatSydney(batch.at)}: ${n} of ${batch.ids.length} booked`);
+    for (const d of res?.details ?? []) lines.push(`  ${d}`);
+    if (res?.error) {
+      lines.push(`  Stopped: ${res.error}`);
+      break;
+    }
+    // A daily-limit or rate-limit stop inside a batch ends the campaign too.
+    if (res?.details?.some((d) => /Daily limit|rate_limit|quota|429/i.test(d))) break;
+  }
+  revalidatePath(PATH);
+  return {
+    success: booked === ids.length,
+    message: `Scheduled ${booked} of ${ids.length} invitations in ${plan.length} batch${plan.length === 1 ? "" : "es"}.`,
+    details: lines,
+  };
+}
+
+/** Cancels scheduled (not yet sent) emails with Resend, then frees them in the database. */
+export async function cancelScheduledSends(waitlistIds?: string[]): Promise<AdminFoundingState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+  const client = resend();
+  if (!client) return { error: "Resend isn't configured (RESEND_API_KEY is missing)." };
+  const supabase = await createClient();
+  let query = supabase
+    .from("beta_invitations")
+    .select("id, resend_email_id, scheduled_for, waitlist_id")
+    .eq("delivery_status", "scheduled")
+    .gt("scheduled_for", new Date().toISOString());
+  if (waitlistIds?.length) query = query.in("waitlist_id", waitlistIds);
+  const { data: rows, error } = await query.limit(500);
+  if (error) return { error: error.message };
+  if (!rows?.length) return { error: "Nothing is scheduled." };
+
+  let cancelled = 0;
+  const problems: string[] = [];
+  for (const [i, r] of rows.entries()) {
+    if (i > 0) await pause(150);
+    try {
+      if (!r.resend_email_id) throw new Error("No Resend email id recorded");
+      const { error: cancelError } = await client.emails.cancel(r.resend_email_id);
+      if (cancelError) throw new Error(`${cancelError.name}: ${cancelError.message}`);
+    } catch (err) {
+      // Not cancelled with Resend, so it may still go out: leave it recorded.
+      problems.push(`${r.id.slice(0, 8)}: Resend didn't cancel it (${err instanceof Error ? err.message : String(err)}). It may still send.`);
+      continue;
+    }
+    const { error: dbError } = await supabase.rpc("admin_cancel_beta_send", { p_invitation_id: r.id });
+    if (dbError) problems.push(`${r.id.slice(0, 8)}: cancelled with Resend but not updated here: ${dbError.message}`);
+    else cancelled++;
+  }
+  revalidatePath(PATH);
+  return {
+    success: problems.length === 0,
+    message: `Cancelled ${cancelled} of ${rows.length} scheduled email${rows.length === 1 ? "" : "s"}.`,
+    details: problems,
+  };
 }
 
 /** Reminders for the next N contacts who are due one (oldest invitation first). */

@@ -1,3 +1,5 @@
+import { sydneyToUtc } from "@/lib/founding/schedule";
+
 // Waitlist CSV import and recruitment CSV export. No dependencies: the files
 // are small (hundreds of rows) and come from a spreadsheet or form tool.
 
@@ -9,6 +11,8 @@ export type WaitlistRow = {
   suburb: string | null;
   invite_consent: boolean;
   consent_note: string | null;
+  /** When they gave consent (e.g. their waitlist form timestamp), ISO; null = at import. */
+  consent_at: string | null;
 };
 
 export type ParsedWaitlist = { rows: WaitlistRow[]; errors: string[] };
@@ -55,6 +59,7 @@ const HEADER_ALIASES: Record<keyof WaitlistRow, string[]> = {
   suburb: ["suburb", "location", "area", "city"],
   invite_consent: ["invite_consent", "consent", "opted_in", "opted in", "opt in", "marketing consent", "invite"],
   consent_note: ["consent_note", "consent note", "consent source", "notes"],
+  consent_at: ["consent_at", "consent date", "signed_up_at", "signup date", "timestamp"],
 };
 
 const YES = new Set(["yes", "y", "true", "1", "opted in", "opt-in", "subscribed", "x", "✓"]);
@@ -106,9 +111,29 @@ export function parseWaitlistCsv(text: string): ParsedWaitlist {
       suburb: clip(get("suburb"), 80),
       invite_consent: YES.has((get("invite_consent") ?? "").trim().toLowerCase()),
       consent_note: clip(get("consent_note"), 300),
+      consent_at: parseConsentDate(get("consent_at")),
     });
   });
   return { rows, errors };
+}
+
+/**
+ * Sydney wall-clock date/time from a sheet: "2026-06-22 12:56", "2026-06-22",
+ * or Google Forms' "6/22/2026 12:56:56". Returns ISO (UTC); null if blank,
+ * unreadable or in the future.
+ */
+export function parseConsentDate(value: string | undefined): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  let y: number, mo: number, d: number, h = 0, mi = 0;
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::\d{2})?)?$/.exec(v);
+  if (m) [y, mo, d, h, mi] = [+m[1], +m[2], +m[3], +(m[4] ?? 0), +(m[5] ?? 0)];
+  else if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?: (\d{1,2}):(\d{2})(?::\d{2})?)?$/.exec(v))) [mo, d, y, h, mi] = [+m[1], +m[2], +m[3], +(m[4] ?? 0), +(m[5] ?? 0)];
+  else return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const at = sydneyToUtc(`${y}-${pad(mo)}-${pad(d)}`, `${pad(h)}:${pad(mi)}`);
+  if (!at || at.getTime() > Date.now()) return null;
+  return at.toISOString();
 }
 
 /** CSV with every field quoted; formula-leading characters neutralised for spreadsheets. */

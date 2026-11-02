@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
 import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, sourceFromParams } from "@/lib/founding/sources";
-import { parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
+import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
+import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
 import { buildReport, classifyRow, shouldImport, type ContactFacts } from "@/lib/founding/import-check";
 import { hashInviteToken, looksLikeInviteToken, newInviteToken } from "@/lib/founding/tokens";
@@ -174,7 +175,7 @@ describe("import check", () => {
   const facts = (over: Partial<ContactFacts> = {}): ContactFacts => ({
     onWaitlist: false, unsubscribed: false, inviteStatus: null, deliveryStatus: null, hasAccount: false, registeredVendor: false, applied: false, ...over,
   });
-  const row = (email: string, consent = true) => ({ email, first_name: null, business_name: null, category: null, suburb: null, invite_consent: consent, consent_note: null });
+  const row = (email: string, consent = true) => ({ email, first_name: null, business_name: null, category: null, suburb: null, invite_consent: consent, consent_note: null, consent_at: null });
 
   it.each([
     ["eligible", row("a@b.com.au"), facts()],
@@ -221,8 +222,26 @@ describe("import check", () => {
     expect(errors).toEqual([]);
     expect(rows[0]).toEqual({
       email: "jane@photo.com.au", first_name: "Jane", business_name: "Jane Photo", category: "photographer",
-      suburb: null, invite_consent: true, consent_note: "Tally waitlist form Sept 2026",
+      suburb: null, invite_consent: true, consent_note: "Tally waitlist form Sept 2026", consent_at: null,
     });
+  });
+});
+
+describe("consent dates", () => {
+  it("reads sheet dates as Sydney time", () => {
+    expect(parseConsentDate("6/22/2026 12:56:56")).toBe("2026-06-22T02:56:00.000Z"); // AEST +10
+    expect(parseConsentDate("2026-06-22 12:56")).toBe("2026-06-22T02:56:00.000Z");
+    expect(parseConsentDate("2026-10-20")).toBe("2026-10-19T13:00:00.000Z"); // AEDT +11
+  });
+  it("ignores blanks, nonsense and future dates", () => {
+    expect(parseConsentDate("")).toBeNull();
+    expect(parseConsentDate("yesterday")).toBeNull();
+    expect(parseConsentDate("2/30/2026")).toBeNull();
+    expect(parseConsentDate("2099-01-01")).toBeNull();
+  });
+  it("is imported from a consent_at column", () => {
+    const { rows } = parseWaitlistCsv("email,invite_consent,consent_at\njane@photo.com.au,yes,2026-06-22 12:56\n");
+    expect(rows[0].consent_at).toBe("2026-06-22T02:56:00.000Z");
   });
 });
 
@@ -276,5 +295,39 @@ describe("Resend webhook signature", () => {
     expect(deliveryUpdateFor("email.bounced")).toEqual({ delivery_status: "bounced" });
     expect(deliveryUpdateFor("email.opened")).toEqual({ opened: true });
     expect(deliveryUpdateFor("contact.created")).toBeNull();
+  });
+});
+
+describe("scheduling", () => {
+  it("converts Sydney wall-clock time to UTC across daylight saving", () => {
+    expect(sydneyToUtc("2026-11-03", "10:00")?.toISOString()).toBe("2026-11-02T23:00:00.000Z"); // AEDT
+    expect(sydneyToUtc("2026-11-03", "10:40")?.toISOString()).toBe("2026-11-02T23:40:00.000Z");
+    expect(sydneyToUtc("2026-07-01", "10:00")?.toISOString()).toBe("2026-07-01T00:00:00.000Z"); // AEST
+    expect(sydneyToUtc("2026-10-04", "02:30")).toBeNull(); // skipped hour when AEDT starts
+    expect(sydneyToUtc("2026-02-30", "10:00")).toBeNull();
+    expect(sydneyToUtc("3/11/2026", "10am")).toBeNull();
+  });
+
+  it("formats times for people in Sydney", () => {
+    expect(formatSydney(new Date("2026-11-02T23:10:00Z"))).toMatch(/Tue,? 3 Nov,? 10:10\s?am AEDT/);
+  });
+
+  it("plans the 3 November batches: 10 every 10 minutes", () => {
+    const ids = Array.from({ length: 23 }, (_, i) => `c${i}`);
+    const plan = planBatches(ids, sydneyToUtc("2026-11-03", "10:00")!, 10, 10);
+    expect(plan.map((b) => [b.at.toISOString(), b.ids.length])).toEqual([
+      ["2026-11-02T23:00:00.000Z", 10],
+      ["2026-11-02T23:10:00.000Z", 10],
+      ["2026-11-02T23:20:00.000Z", 3],
+    ]);
+    expect(plan.flatMap((b) => b.ids)).toEqual(ids);
+  });
+
+  it("refuses plans too soon, too far ahead or empty", () => {
+    const now = new Date("2026-11-02T10:00:00Z");
+    expect(planProblem([], now)).toMatch(/No contacts/);
+    expect(planProblem(planBatches(["a"], new Date("2026-11-02T10:02:00Z"), 10, 10), now)).toMatch(/5 minutes/);
+    expect(planProblem(planBatches(["a"], new Date("2026-12-05T10:00:00Z"), 10, 10), now)).toMatch(/30 days/);
+    expect(planProblem(planBatches(["a"], new Date("2026-11-02T23:00:00Z"), 10, 10), now)).toBeNull();
   });
 });

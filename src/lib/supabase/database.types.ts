@@ -114,6 +114,7 @@ export type Database = {
           reminder_attempted_at: string | null
           reminder_sent_at: string | null
           resend_email_id: string | null
+          scheduled_for: string | null
           send_count: number
           status: string
           token_hash: string | null
@@ -138,6 +139,7 @@ export type Database = {
           reminder_attempted_at?: string | null
           reminder_sent_at?: string | null
           resend_email_id?: string | null
+          scheduled_for?: string | null
           send_count?: number
           status?: string
           token_hash?: string | null
@@ -162,6 +164,7 @@ export type Database = {
           reminder_attempted_at?: string | null
           reminder_sent_at?: string | null
           resend_email_id?: string | null
+          scheduled_for?: string | null
           send_count?: number
           status?: string
           token_hash?: string | null
@@ -2812,6 +2815,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_cancel_beta_send: {
+        Args: { p_invitation_id: string }
+        Returns: string
+      }
       admin_decide_founding_application: {
         Args: { p_application_id: string; p_decision: string; p_note?: string }
         Returns: string
@@ -2839,11 +2846,11 @@ export type Database = {
         }[]
       }
       admin_record_beta_reminder: {
-        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string }
+        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string; p_scheduled_for?: string }
         Returns: undefined
       }
       admin_record_beta_invitation: {
-        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string }
+        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string; p_scheduled_for?: string }
         Returns: undefined
       }
       admin_set_beta_program: {

@@ -115,6 +115,19 @@ describe("events", () => {
     expect(unsub?.body).toMatchObject({ invite_consent: false });
   });
 
+  it("a scheduled invitation becomes 'sent' when Resend actually sends it", async () => {
+    invitation!.delivery_status = "scheduled";
+    const res = await POST(signed(event("email.sent")));
+    expect(res.status).toBe(200);
+    expect(patches()[0].body).toMatchObject({ delivery_status: "sent" });
+  });
+
+  it("ignores Resend's own 'scheduled' event", async () => {
+    const res = await POST(signed(event("email.scheduled")));
+    expect(await res.json()).toEqual({ ignored: true });
+    expect(calls).toHaveLength(0);
+  });
+
   it("a late 'delivered' never overwrites a bounce", async () => {
     invitation!.delivery_status = "bounced";
     const res = await POST(signed(event("email.delivered")));
