@@ -10,11 +10,11 @@ import { LAUNCH_CITY } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Founding vendors — private beta",
-  description: `We're inviting 20 ${LAUNCH_CITY} event vendors to join the Evntly private beta. Claim a free vendor account and create your business listing.`,
+  description: `We're inviting ${LAUNCH_CITY} event vendors to join Evntly as Founding Vendors. Claim a free vendor account and create your business listing.`,
   alternates: { canonical: "/founding-vendors" },
   openGraph: {
-    title: "Become an Evntly founding vendor",
-    description: `20 places for ${LAUNCH_CITY} event vendors in the Evntly private beta. Free to take part.`,
+    title: "Become an Evntly Founding Vendor",
+    description: `Limited Founding Vendor places for ${LAUNCH_CITY} event vendors. Free to take part.`,
   },
 };
 
@@ -49,7 +49,7 @@ const FAQ = [
   },
   {
     q: "Is a place guaranteed?",
-    a: "There are 20 approved places. Every listing is reviewed by our team, and a place is confirmed when we approve your application. Evntly can't guarantee enquiries or bookings.",
+    a: "Founding Vendor places are limited. Every listing is reviewed by our team, and a place is confirmed when we approve your application. Evntly can't guarantee enquiries or bookings.",
   },
   {
     q: "How do payments work?",
@@ -78,9 +78,9 @@ export default async function FoundingVendorsPage({
 
       <header className="mx-auto max-w-2xl text-center">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">Private beta · {LAUNCH_CITY}</p>
-        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight sm:text-[48px]">Become an Evntly founding vendor</h1>
+        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight sm:text-[48px]">Become an Evntly Founding Vendor</h1>
         <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">
-          We&apos;re inviting 20 {LAUNCH_CITY} event vendors to join our private beta. Claim a free vendor account, create your
+          We&apos;re inviting {LAUNCH_CITY} event vendors to join Evntly as Founding Vendors. Claim a free vendor account, create your
           business listing and help shape how customers discover and book event services.
         </p>
 
@@ -148,7 +148,7 @@ export default async function FoundingVendorsPage({
 
       <section id="waitlist" aria-labelledby="waitlist-heading" className="mt-16 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
         <h2 id="waitlist-heading" className="text-2xl font-bold tracking-tight">
-          {full ? "All 20 places are taken — join the waitlist" : "Not ready yet? Join the waitlist"}
+          {full ? "All Founding Vendor places are taken — join the waitlist" : "Not ready yet? Join the waitlist"}
         </h2>
         <p className="mt-2 mb-6 max-w-2xl text-[15px] text-muted-foreground">
           {full
@@ -188,14 +188,14 @@ export default async function FoundingVendorsPage({
 }
 
 function PlacesMeter({ places }: { places: Awaited<ReturnType<typeof getFoundingPlaces>> }) {
-  if (!places) return <p className="mt-6 text-[15px] font-medium">Only 20 approved beta places</p>;
+  if (!places) return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
   const { capacity, approved, remaining } = places;
   const percent = capacity ? Math.min(100, Math.round((approved / capacity) * 100)) : 100;
   return (
     <div className="mx-auto mt-7 max-w-sm text-left">
       <div className="mb-1.5 flex items-baseline justify-between text-sm">
         <span className="font-semibold">
-          {remaining > 0 ? `${remaining} of ${capacity} places left` : `All ${capacity} places filled`}
+          {remaining > 0 ? `${remaining} of ${capacity} Founding Vendor places left` : `All ${capacity} places filled`}
         </span>
         <span className="text-muted-foreground tabular-nums">{approved} approved</span>
       </div>

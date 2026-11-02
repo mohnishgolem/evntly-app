@@ -7,12 +7,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdminSession } from "@/lib/data/user";
 import { notify } from "@/lib/email";
 import { parseWaitlistCsv } from "@/lib/founding/csv";
+import { buildReport, maskEmail, shouldImport, type ContactFacts, type ImportReport } from "@/lib/founding/import-check";
 import { newInviteToken } from "@/lib/founding/tokens";
-import { inviteHeaders, renderInviteEmail } from "@/lib/founding/invite-email";
+import { inviteHeaders, renderInviteEmail, renderReminderEmail } from "@/lib/founding/invite-email";
 import { CLAIM_PATH } from "@/lib/founding/sources";
 import { inviteSendingStatus } from "@/lib/founding/sending";
 
-export type AdminFoundingState = { error?: string; success?: boolean; message?: string; details?: string[] } | null;
+export type AdminFoundingState = { error?: string; success?: boolean; message?: string; details?: string[]; report?: ImportReport } | null;
 
 const PATH = "/admin/beta-vendors";
 
@@ -27,9 +28,61 @@ async function requireAdmin() {
 const MAX_CSV_BYTES = 1_000_000;
 const MAX_ROWS = 2000;
 
-/** Upserts waitlist contacts. Never re-subscribes anyone and never turns consent off. */
+type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+
+// What Evntly already knows about each address in the file: waitlist row,
+// invitation, account, vendor listing, founding application.
+async function lookupFacts(admin: AdminClient, emails: string[]) {
+  const lower = [...new Set(emails.map((e) => e.trim().toLowerCase()))];
+  const facts = new Map<string, ContactFacts>();
+  const { data: existing } = await admin
+    .from("vendor_waitlist")
+    .select("id, email_normalized, invite_consent, unsubscribed_at, first_name, business_name, category, suburb")
+    .in("email_normalized", lower);
+  const { data: invites } = existing?.length
+    ? await admin.from("beta_invitations").select("waitlist_id, status, delivery_status").in("waitlist_id", existing.map((e) => e.id))
+    : { data: [] };
+  const { data: users } = await admin.from("users").select("id, email").in("email", [...new Set([...lower, ...emails.map((e) => e.trim())])]);
+  const userIds = (users ?? []).map((u) => u.id);
+  const [{ data: listings }, { data: apps }] = userIds.length
+    ? await Promise.all([
+        admin.from("service_providers").select("owner_user_id, is_demo").in("owner_user_id", userIds),
+        admin.from("beta_applications").select("user_id").in("user_id", userIds),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const inviteByWaitlist = new Map((invites ?? []).map((i) => [i.waitlist_id, i]));
+  const userByEmail = new Map((users ?? []).map((u) => [(u.email ?? "").toLowerCase(), u.id]));
+  const vendorIds = new Set((listings ?? []).filter((l) => !l.is_demo && l.owner_user_id).map((l) => String(l.owner_user_id)));
+  const appliedIds = new Set((apps ?? []).map((a) => String(a.user_id)));
+  const waitlistByEmail = new Map((existing ?? []).map((e) => [e.email_normalized ?? "", e]));
+
+  for (const email of lower) {
+    const w = waitlistByEmail.get(email);
+    const inv = w ? inviteByWaitlist.get(w.id) : undefined;
+    const userId = userByEmail.get(email);
+    facts.set(email, {
+      onWaitlist: !!w,
+      unsubscribed: !!w?.unsubscribed_at,
+      inviteStatus: inv?.status ?? null,
+      deliveryStatus: inv?.delivery_status ?? null,
+      hasAccount: !!userId,
+      registeredVendor: !!userId && vendorIds.has(userId),
+      applied: !!userId && appliedIds.has(userId),
+    });
+  }
+  return { facts, waitlistByEmail };
+}
+
+/**
+ * Waitlist CSV import. mode=check reports what would happen without writing
+ * anything; mode=import writes it. Registered vendors and undeliverable
+ * addresses are never imported; existing contacts are never re-subscribed
+ * and consent is never turned off.
+ */
 export async function importWaitlist(_prev: AdminFoundingState, formData: FormData): Promise<AdminFoundingState> {
   if (!(await requireAdmin())) return { error: "Not authorized." };
+  const mode = formData.get("mode") === "import" ? "import" : "check";
   const file = formData.get("file");
   const pasted = formData.get("csv")?.toString() ?? "";
   const text = file instanceof File && file.size > 0 ? await file.text() : pasted;
@@ -43,18 +96,29 @@ export async function importWaitlist(_prev: AdminFoundingState, formData: FormDa
   const admin = createAdminClient();
   if (!admin) return { error: "The service key isn't configured." };
 
-  const { data: existing } = await admin
-    .from("vendor_waitlist")
-    .select("id, email_normalized, invite_consent, unsubscribed_at, first_name, business_name, category, suburb")
-    .in("email_normalized", rows.map((r) => r.email.toLowerCase()));
-  const byEmail = new Map((existing ?? []).map((e) => [e.email_normalized, e]));
+  const { facts, waitlistByEmail } = await lookupFacts(admin, rows.map((r) => r.email));
+  const report = buildReport(rows, facts, errors);
+  if (mode === "check") {
+    return {
+      success: true,
+      message: `Checked ${rows.length} rows. Nothing was imported.`,
+      report,
+    };
+  }
+
   const now = new Date().toISOString();
   let added = 0;
   let updated = 0;
+  let skipped = 0;
   const failed: string[] = [];
 
-  const inserts = rows
-    .filter((r) => !byEmail.has(r.email.toLowerCase()))
+  const toWrite = rows.filter((r) => {
+    const keep = shouldImport(r, facts.get(r.email.toLowerCase()));
+    if (!keep) skipped++;
+    return keep;
+  });
+  const inserts = toWrite
+    .filter((r) => !waitlistByEmail.has(r.email.toLowerCase()))
     .map((r) => ({
       email: r.email,
       first_name: r.first_name,
@@ -73,8 +137,8 @@ export async function importWaitlist(_prev: AdminFoundingState, formData: FormDa
     else added += chunk.length;
   }
 
-  for (const r of rows) {
-    const e = byEmail.get(r.email.toLowerCase());
+  for (const r of toWrite) {
+    const e = waitlistByEmail.get(r.email.toLowerCase());
     if (!e) continue;
     const patch: Record<string, unknown> = {};
     // Fill gaps only; an admin's earlier data wins.
@@ -89,16 +153,16 @@ export async function importWaitlist(_prev: AdminFoundingState, formData: FormDa
     }
     if (Object.keys(patch).length === 0) continue;
     const { error } = await admin.from("vendor_waitlist").update({ ...patch, updated_at: now }).eq("id", e.id);
-    if (error) failed.push(`${r.email}: ${error.message}`);
+    if (error) failed.push(`${maskEmail(r.email)}: ${error.message}`);
     else updated++;
   }
 
   revalidatePath(PATH);
-  const consented = rows.filter((r) => r.invite_consent).length;
   return {
     success: failed.length === 0,
-    message: `Imported ${rows.length} rows: ${added} new, ${updated} updated, ${consented} with invitation consent.`,
-    details: [...errors, ...failed].slice(0, 30),
+    message: `Imported ${rows.length} rows: ${added} new, ${updated} updated, ${skipped} skipped (registered vendors or undeliverable).`,
+    details: failed.slice(0, 30),
+    report,
   };
 }
 
@@ -119,11 +183,43 @@ const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * or a retry can't email anyone twice.
  */
 export async function sendInvitations(waitlistIds: string[]): Promise<AdminFoundingState> {
+  return sendBatch("invitation", waitlistIds);
+}
+
+/** One follow-up per invitation, 3+ days after it, for contacts who haven't signed up. */
+export async function sendReminders(waitlistIds: string[]): Promise<AdminFoundingState> {
+  return sendBatch("reminder", waitlistIds);
+}
+
+const KIND = {
+  invitation: {
+    prepare: "admin_prepare_beta_invitation",
+    record: "admin_record_beta_invitation",
+    render: renderInviteEmail,
+    key: "beta-invite",
+    noun: "invitation",
+  },
+  reminder: {
+    prepare: "admin_prepare_beta_reminder",
+    record: "admin_record_beta_reminder",
+    render: renderReminderEmail,
+    key: "beta-reminder",
+    noun: "reminder",
+  },
+} as const;
+
+// Sends one email per contact, in order. The database prepares each send
+// first (consent, unsubscribes, registered vendors, duplicates, timing and
+// the rolling 24-hour limit) and Resend gets an idempotency key, so a double
+// click or a retry can't email anyone twice. Successful sends are never
+// retried; a rate-limit or quota error stops the batch.
+async function sendBatch(kind: keyof typeof KIND, waitlistIds: string[]): Promise<AdminFoundingState> {
   if (!(await requireAdmin())) return { error: "Not authorized." };
   const status = inviteSendingStatus();
   if (!status.live) return { error: "Live sending is switched off (BETA_INVITES_LIVE isn't true). Send a test email instead." };
   const client = resend();
   if (!client) return { error: "Resend isn't configured (RESEND_API_KEY is missing)." };
+  const k = KIND[kind];
 
   const ids = [...new Set(waitlistIds)].filter((id) => /^[0-9a-f-]{36}$/.test(id));
   if (ids.length === 0) return { error: "Pick at least one contact." };
@@ -138,7 +234,7 @@ export async function sendInvitations(waitlistIds: string[]): Promise<AdminFound
   for (const [i, id] of ids.entries()) {
     if (i > 0) await pause(600); // stays under Resend's per-second rate limit
     const { token, hash } = newInviteToken();
-    const { data: prepared, error: prepError } = await supabase.rpc("admin_prepare_beta_invitation", {
+    const { data: prepared, error: prepError } = await supabase.rpc(k.prepare, {
       p_waitlist_id: id,
       p_token_hash: hash,
     });
@@ -150,7 +246,7 @@ export async function sendInvitations(waitlistIds: string[]): Promise<AdminFound
       continue;
     }
 
-    const email = renderInviteEmail({
+    const email = k.render({
       firstName: row.first_name,
       token,
       unsubscribeToken: row.unsubscribe_token,
@@ -166,17 +262,17 @@ export async function sendInvitations(waitlistIds: string[]): Promise<AdminFound
           html: email.html,
           text: email.text,
           headers: inviteHeaders(row.unsubscribe_token),
-          tags: [{ name: "campaign", value: "founding_vendors" }],
+          tags: [{ name: "campaign", value: "founding_vendors" }, { name: "kind", value: kind }],
         },
-        { idempotencyKey: `beta-invite-${row.invitation_id}-${row.send_number}` },
+        { idempotencyKey: `${k.key}-${row.invitation_id}-${row.send_number}` },
       );
       if (error || !data?.id) throw new Error(error ? `${error.name}: ${error.message}` : "No email id returned");
-      await supabase.rpc("admin_record_beta_invitation", { p_invitation_id: row.invitation_id, p_ok: true, p_resend_email_id: data.id });
+      await supabase.rpc(k.record, { p_invitation_id: row.invitation_id, p_ok: true, p_resend_email_id: data.id });
       sent++;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await supabase.rpc("admin_record_beta_invitation", { p_invitation_id: row.invitation_id, p_ok: false, p_error: message });
-      problems.push(`${row.email}: ${message}`);
+      await supabase.rpc(k.record, { p_invitation_id: row.invitation_id, p_ok: false, p_error: message });
+      problems.push(`${maskEmail(row.email)}: ${message}`);
       // Rate limited or quota reached: stop instead of failing the rest one by one.
       if (/rate_limit|quota|daily_quota|too many|429/i.test(message)) break;
     }
@@ -185,7 +281,7 @@ export async function sendInvitations(waitlistIds: string[]): Promise<AdminFound
   revalidatePath(PATH);
   return {
     success: problems.length === 0,
-    message: `Sent ${sent} of ${ids.length} invitation${ids.length === 1 ? "" : "s"}.`,
+    message: `Sent ${sent} of ${ids.length} ${k.noun}${ids.length === 1 ? "" : "s"}.`,
     details: problems,
   };
 }
@@ -205,8 +301,32 @@ export async function sendNextBatch(count: number): Promise<AdminFoundingState> 
   return sendInvitations(ids);
 }
 
+/** Reminders for the next N contacts who are due one (oldest invitation first). */
+export async function sendDueReminders(count: number): Promise<AdminFoundingState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+  const n = Math.max(1, Math.min(100, Math.floor(Number(count) || 0)));
+  const supabase = await createClient();
+  const cutoff = new Date(Date.now() - 3 * 86_400_000).toISOString();
+  const { data: due } = await supabase
+    .from("beta_invitations")
+    .select("waitlist_id, delivery_status")
+    .in("status", ["sent", "failed"])
+    .is("reminder_sent_at", null)
+    .lte("first_sent_at", cutoff)
+    .order("first_sent_at")
+    .limit(500);
+  const candidates = (due ?? []).filter((d) => d.delivery_status !== "bounced" && d.delivery_status !== "complained").map((d) => d.waitlist_id);
+  if (candidates.length === 0) return { error: "No reminders are due." };
+  // Contacts must still be emailable; the database re-checks everything else.
+  const { data: ok } = await supabase.from("vendor_waitlist").select("id").in("id", candidates).eq("invite_consent", true).is("unsubscribed_at", null);
+  const allowed = new Set((ok ?? []).map((c) => c.id));
+  const ids = candidates.filter((id) => allowed.has(id)).slice(0, n);
+  if (ids.length === 0) return { error: "No reminders are due." };
+  return sendReminders(ids);
+}
+
 /** Sends the real template (with a non-working preview link) to the signed-in admin only. */
-export async function sendTestInvitation(): Promise<AdminFoundingState> {
+export async function sendTestInvitation(kind: "invitation" | "reminder" = "invitation"): Promise<AdminFoundingState> {
   const session = await requireAdmin();
   if (!session) return { error: "Not authorized." };
   const to = session.user.email;
@@ -215,7 +335,8 @@ export async function sendTestInvitation(): Promise<AdminFoundingState> {
   const client = resend();
   if (!client) return { error: "Resend isn't configured (RESEND_API_KEY is missing)." };
 
-  const email = renderInviteEmail({
+  const render = kind === "reminder" ? renderReminderEmail : renderInviteEmail;
+  const email = render({
     firstName: (session.user.user_metadata.full_name as string | undefined) ?? "Mohnish",
     token: null,
     unsubscribeToken: null,

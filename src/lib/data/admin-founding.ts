@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { completenessPercent, profileChecklist } from "@/lib/profile-completeness";
-import { FOUNDING_SOURCES } from "@/lib/founding/sources";
+import { FOUNDING_GOAL, FOUNDING_SOURCES } from "@/lib/founding/sources";
 
 // Everything the Beta Vendors admin page and its CSV export show. All reads
 // use the admin's own session: the beta tables are readable only by
@@ -25,6 +25,10 @@ export type RecruitmentRow = {
   claimedAt: string | null;
   inviteError: string | null;
   inviteExpiresAt: string | null;
+  firstSentAt: string | null;
+  reminderSentAt: string | null;
+  /** Invited 3+ days ago, unclaimed, not signed up, no reminder yet, still emailable. */
+  reminderDue: boolean;
   applicationStatus: string | null;
   source: string | null;
   listingId: string | null;
@@ -123,6 +127,9 @@ export async function getBetaAdminData() {
       claimedAt: inv?.claimed_at ?? null,
       inviteError: inv?.last_error ?? null,
       inviteExpiresAt: inv?.expires_at ?? null,
+      firstSentAt: inv?.first_sent_at ?? null,
+      reminderSentAt: inv?.reminder_sent_at ?? null,
+      reminderDue: false,
       createdAt: w.created_at,
       ...appFields(app && !usedApps.has(app.id) ? app : undefined),
     });
@@ -149,9 +156,21 @@ export async function getBetaAdminData() {
       claimedAt: null,
       inviteError: null,
       inviteExpiresAt: null,
+      firstSentAt: null,
+      reminderSentAt: null,
+      reminderDue: false,
       createdAt: a.created_at,
       ...appFields(a),
     });
+  }
+
+  const reminderAfter = Date.now() - 3 * 86_400_000;
+  for (const r of rows) {
+    r.reminderDue =
+      r.onWaitlist && r.consent && !r.unsubscribed && !r.applicationId && !r.reminderSentAt &&
+      (r.inviteStatus === "sent" || r.inviteStatus === "failed") &&
+      r.delivery !== "bounced" && r.delivery !== "complained" &&
+      !!r.firstSentAt && new Date(r.firstSentAt).getTime() <= reminderAfter;
   }
 
   const inv = invitations ?? [];
@@ -177,6 +196,21 @@ export async function getBetaAdminData() {
     capacity: places?.[0]?.capacity ?? program?.capacity ?? null,
     onboardingCompleted: rows.filter((r) => r.applicationStatus === "approved" && r.onboardingPercent === 100).length,
     newFeedback: (feedback ?? []).filter((f) => f.status === "new").length,
+    goal: FOUNDING_GOAL,
+    failedEmails: inv.filter((i) => i.status === "failed" || ["bounced", "complained", "failed"].includes(i.delivery_status ?? "")).length,
+    incompleteProfiles: rows.filter((r) => r.applicationId && r.applicationStatus !== "withdrawn" && r.applicationStatus !== "rejected" && (r.onboardingPercent === null || r.onboardingPercent < 100)).length,
+    remindersSent: inv.filter((i) => i.reminder_sent_at).length,
+    remindersDue: rows.filter((r) => r.reminderDue).length,
+  };
+  const invited = stats.invitationsSent;
+  const rate = (n: number) => (invited ? Math.round((n / invited) * 1000) / 10 : null);
+  const conversion = {
+    /** % of invited contacts who started a founding application. */
+    signup: rate(rows.filter((r) => r.sendCount > 0 && r.applicationId).length),
+    /** % of invited contacts who are now approved. */
+    approved: rate(rows.filter((r) => r.sendCount > 0 && r.applicationStatus === "approved").length),
+    /** Approved vendors as a share of the 200 goal. */
+    goalPercent: Math.min(100, Math.round((stats.approved / FOUNDING_GOAL) * 1000) / 10),
   };
 
   const bySource = FOUNDING_SOURCES.map((s) => ({
@@ -189,7 +223,7 @@ export async function getBetaAdminData() {
 
   const feedbackRows = (feedback ?? []).map((f) => ({ ...f, email: emailByUser.get(f.user_id) ?? null }));
 
-  return { program, stats, rows, bySource, feedback: feedbackRows, deployed: !!program };
+  return { program, stats, conversion, rows, bySource, feedback: feedbackRows, deployed: !!program };
 }
 
 export type BetaAdminData = Awaited<ReturnType<typeof getBetaAdminData>>;
