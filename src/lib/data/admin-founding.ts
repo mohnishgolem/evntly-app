@@ -27,6 +27,8 @@ export type RecruitmentRow = {
   inviteExpiresAt: string | null;
   firstSentAt: string | null;
   reminderSentAt: string | null;
+  /** Booked with Resend and not sent yet. */
+  scheduledFor: string | null;
   /** Invited 3+ days ago, unclaimed, not signed up, no reminder yet, still emailable. */
   reminderDue: boolean;
   applicationStatus: string | null;
@@ -129,6 +131,7 @@ export async function getBetaAdminData() {
       inviteExpiresAt: inv?.expires_at ?? null,
       firstSentAt: inv?.first_sent_at ?? null,
       reminderSentAt: inv?.reminder_sent_at ?? null,
+      scheduledFor: inv?.delivery_status === "scheduled" && inv.scheduled_for && new Date(inv.scheduled_for) > new Date() ? inv.scheduled_for : null,
       reminderDue: false,
       createdAt: w.created_at,
       ...appFields(app && !usedApps.has(app.id) ? app : undefined),
@@ -158,6 +161,7 @@ export async function getBetaAdminData() {
       inviteExpiresAt: null,
       firstSentAt: null,
       reminderSentAt: null,
+      scheduledFor: null,
       reminderDue: false,
       createdAt: a.created_at,
       ...appFields(a),
@@ -174,13 +178,18 @@ export async function getBetaAdminData() {
   }
 
   const inv = invitations ?? [];
+  const nowMs = Date.now();
+  const isScheduled = (i: (typeof inv)[number]) => i.delivery_status === "scheduled" && !!i.scheduled_for && new Date(i.scheduled_for).getTime() > nowMs;
   const live = apps.filter((a) => a.status !== "withdrawn");
   const dayAgo = Date.now() - 86_400_000;
   const stats = {
     waitlistTotal: (waitlist ?? []).length,
     waitlistConsented: (waitlist ?? []).filter((w) => w.invite_consent && !w.unsubscribed_at).length,
     unsubscribed: (waitlist ?? []).filter((w) => w.unsubscribed_at).length,
-    invitationsSent: inv.filter((i) => i.send_count > 0).length,
+    invitationsSent: inv.filter((i) => i.send_count > 0 && !isScheduled(i)).length,
+    invitationsScheduled: inv.filter(isScheduled).length,
+    nextScheduledAt: inv.filter(isScheduled).map((i) => i.scheduled_for!).sort()[0] ?? null,
+    eligibleToInvite: rows.filter((r) => r.onWaitlist && r.consent && !r.unsubscribed && !r.applicationId && (r.inviteStatus === null || r.inviteStatus === "pending" || r.inviteStatus === "failed")).length,
     delivered: inv.filter((i) => i.delivery_status === "delivered").length,
     bounced: inv.filter((i) => i.delivery_status === "bounced" || i.delivery_status === "failed").length,
     complained: inv.filter((i) => i.delivery_status === "complained").length,

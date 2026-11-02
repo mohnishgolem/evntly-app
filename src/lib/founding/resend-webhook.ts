@@ -64,7 +64,9 @@ export function deliveryUpdateFor(type: string): InvitationDeliveryUpdate | null
 
 // Resend doesn't guarantee event order. A later-stage status always wins, so a
 // late "sent" or "delivered" never hides a bounce or a spam complaint.
-const STAGE: Record<DeliveryStatus, number> = {
+const STAGE: Record<DeliveryStatus | "scheduled", number> = {
+  // Booked with Resend for later; any real event replaces it.
+  scheduled: -1,
   sent: 0,
   delivery_delayed: 1,
   delivered: 2,
@@ -75,7 +77,7 @@ const STAGE: Record<DeliveryStatus, number> = {
 
 export function shouldReplaceDeliveryStatus(current: string | null | undefined, next: DeliveryStatus) {
   if (!current || !(current in STAGE)) return true;
-  return STAGE[next] >= STAGE[current as DeliveryStatus];
+  return STAGE[next] >= STAGE[current as keyof typeof STAGE];
 }
 
 // One log line per webhook request, for checking deliveries in Vercel's logs.

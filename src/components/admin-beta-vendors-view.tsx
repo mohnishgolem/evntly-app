@@ -12,6 +12,7 @@ import type { BetaAdminData } from "@/lib/data/admin-founding";
 import type { inviteSendingStatus } from "@/lib/founding/sending";
 import { FOUNDING_SOURCES, foundingShareLink } from "@/lib/founding/sources";
 import { cn } from "@/lib/utils";
+import { formatSydney } from "@/lib/founding/schedule";
 
 // The Beta Vendors admin page, given its data (see app/admin/beta-vendors).
 
@@ -73,8 +74,14 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
       </section>
 
       <dl className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Waitlist contacts" value={stats.waitlistTotal} sub={`${stats.waitlistConsented} can be invited · ${stats.unsubscribed} unsubscribed`} />
-        <Stat label="Invitations sent" value={stats.invitationsSent} sub={`${stats.attemptsLast24h} of ${program!.daily_send_limit} in last 24h`} />
+        <Stat label="Contacts imported" value={stats.waitlistTotal} sub={`${stats.waitlistConsented} with consent · ${stats.unsubscribed} unsubscribed`} />
+        <Stat label="Eligible to invite" value={stats.eligibleToInvite} sub="Consented, not invited or applied yet" />
+        <Stat
+          label="Invitations scheduled"
+          value={stats.invitationsScheduled}
+          sub={stats.nextScheduledAt ? `Next: ${formatSydney(new Date(stats.nextScheduledAt))}` : "Held by Resend until their send time"}
+        />
+        <Stat label="Invitations sent" value={stats.invitationsSent} sub={`${stats.attemptsLast24h} of ${program!.daily_send_limit} booked or sent in 24h`} />
         <Stat
           label="Email delivery"
           value={`${stats.delivered} delivered`}
@@ -120,7 +127,13 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
             Live sending: <strong>{sending.live ? "ON" : "off"}</strong> · Delivery webhook: {sending.webhookConfigured ? "configured" : "not set (no delivered/bounced/opened tracking)"}
           </p>
         </div>
-        <BetaSendingControls live={sending.live} maxBatch={program!.batch_size_limit} invitable={invitable} remindersDue={stats.remindersDue} />
+        <BetaSendingControls
+          live={sending.live}
+          maxBatch={program!.batch_size_limit}
+          invitable={invitable}
+          remindersDue={stats.remindersDue}
+          scheduled={stats.invitationsScheduled}
+        />
       </Section>
 
       <Section id="contacts" title="Waitlist contacts">
