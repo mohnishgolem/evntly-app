@@ -104,8 +104,12 @@ describe("invitation email", () => {
     expect(email.html + email.text).not.toMatch(/utm_|mailto:/);
   });
 
-  it("is plain: no images, hidden preheader, buttons or background cards", () => {
-    expect(email.html).not.toMatch(/<img|display:none|max-height:0|border-radius|background:#e8604a/i);
+  it("keeps the Evntly card, wordmark and one orange button, without images or a hidden preheader", () => {
+    expect(email.html).toContain(">Evntly</div>");
+    expect(email.html).toContain("max-width:520px;background:#ffffff;border-radius:14px");
+    expect(email.html.match(/background:#e8604a/g)).toHaveLength(1);
+    expect(email.html).toContain(">Set up your vendor account</a>");
+    expect(email.html).not.toMatch(/<img|display:none|max-height:0|paste this link/i);
   });
 
   it("keeps the personal link, sender identity, reason and unsubscribe (Spam Act)", () => {

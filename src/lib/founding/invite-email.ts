@@ -1,10 +1,10 @@
 import { SITE_URL } from "@/lib/config";
 import { CLAIM_PATH } from "@/lib/founding/sources";
 
-// The founding-vendor invitation. Written to read like a short personal note
-// from the founder rather than a newsletter: plain layout, no images, no
-// hidden preview text, one link, no tracking parameters, and an invitation to
-// reply. (Gmail decides tabs itself; this only removes promotional signals.)
+// The founding-vendor invitation: Evntly's branded card, worded as a short
+// personal note from the founder, with one button, no images, no hidden
+// preview text, no tracking parameters, and an invitation to reply. (Gmail
+// decides tabs itself; this only avoids the strongest promotional signals.)
 //
 // It's still a commercial email under the Spam Act 2003, so every copy says
 // who sent it (Sai Mohnish Golem trading as Evntly, ABN, contact address),
@@ -15,7 +15,7 @@ import { CLAIM_PATH } from "@/lib/founding/sources";
 // as the waitlist email from the token itself, so no utm_ parameters.
 
 export const INVITE_SUBJECT = "Your invitation to the Evntly vendor beta";
-export const SENDER_IDENTITY = "Sai Mohnish Golem trading as Evntly, ABN 49 193 658 959, Sydney NSW, Australia";
+export const SENDER_IDENTITY = "Sai Mohnish Golem trading as Evntly · ABN 49 193 658 959 · Sydney NSW, Australia";
 export const CONTACT_EMAIL = "hello@evntlyapp.com";
 
 export type InviteEmailInput = {
@@ -88,21 +88,32 @@ export function renderInviteEmail(input: InviteEmailInput) {
   const unsub = unsubscribeUrl(input.unsubscribeToken);
   const name = greetingName(input.firstName);
   const { before, after } = paragraphs(expiryDate(input.expiresAt));
-  const p = (text: string) => `<p style="margin:0 0 16px;">${escapeHtml(text)}</p>`;
+  const p = (text: string) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#3a3a3c;">${escapeHtml(text)}</p>`;
 
-  // Deliberately close to a plain-text email: no wrapper card, background
-  // colour, logo, button or hidden preheader.
+  // Evntly's branded card (as in the original invitation), with a single
+  // button and no hidden preheader or duplicated link.
   const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(INVITE_SUBJECT)}</title></head>
-<body style="margin:0;padding:24px 16px;background:#ffffff;color:#1d1d1f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;">
-<div style="max-width:560px;">
-${p(`Hi ${name},`)}
-${before.map(p).join("\n")}
-<p style="margin:0 0 16px;"><a href="${escapeHtml(link)}" style="color:#c2410c;font-weight:600;">${LINK_TEXT}</a></p>
-${after.map(p).join("\n")}
-<p style="margin:0 0 28px;">Thanks,<br>Mohnish<br>Founder, Evntly</p>
-<p style="margin:0;font-size:12px;line-height:1.5;color:#6e6e73;">You're getting this because you joined the Evntly vendor waitlist and asked to hear about early access. <a href="${escapeHtml(unsub)}" style="color:#6e6e73;">Unsubscribe</a>.<br>${escapeHtml(SENDER_IDENTITY)}. ${CONTACT_EMAIL}</p>
-</div>
+<body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;padding:32px;">
+        <tr><td>
+          <div style="font-size:20px;font-weight:700;color:#e8604a;margin-bottom:24px;">Evntly</div>
+          ${p(`Hi ${name},`)}
+          ${before.map(p).join("\n          ")}
+          <a href="${escapeHtml(link)}" style="display:inline-block;margin:4px 0 20px;padding:13px 24px;background:#e8604a;color:#ffffff;text-decoration:none;border-radius:999px;font-size:15px;font-weight:600;">${LINK_TEXT}</a>
+          ${after.map(p).join("\n          ")}
+          <p style="margin:18px 0 0;font-size:15px;line-height:1.6;color:#3a3a3c;">Thanks,<br>Mohnish<br><span style="color:#6e6e73;">Founder, Evntly</span></p>
+        </td></tr>
+      </table>
+      <p style="max-width:520px;margin:16px auto 0;font-size:12px;line-height:1.55;color:#8e8e93;">
+        You're getting this because you joined the Evntly vendor waitlist and asked to hear about early access.
+        <a href="${escapeHtml(unsub)}" style="color:#8e8e93;">Unsubscribe</a> and we won't email you about it again.<br>
+        ${escapeHtml(SENDER_IDENTITY)} · ${CONTACT_EMAIL}
+      </p>
+    </td></tr>
+  </table>
 </body></html>`;
 
   const text = [
@@ -119,7 +130,7 @@ ${after.map(p).join("\n")}
     "--",
     "You're getting this because you joined the Evntly vendor waitlist and asked to hear about early access.",
     `Unsubscribe: ${unsub}`,
-    `${SENDER_IDENTITY}. ${CONTACT_EMAIL}`,
+    `${SENDER_IDENTITY} · ${CONTACT_EMAIL}`,
   ].join("\n");
 
   return { subject: INVITE_SUBJECT, html, text };
