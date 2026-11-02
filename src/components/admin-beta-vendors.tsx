@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   decideApplication,
   importWaitlist,
+  sendDueReminders,
   sendInvitations,
+  sendReminders,
   sendNextBatch,
   sendTestInvitation,
   setBetaProgram,
@@ -18,6 +20,7 @@ import {
   type AdminFoundingState,
 } from "@/lib/actions/admin-founding";
 import type { RecruitmentRow } from "@/lib/data/admin-founding";
+import { VERDICT_LABEL, type ImportReport, type RowVerdict } from "@/lib/founding/import-check";
 import { categoryLabel, isVendorCategory } from "@/lib/config";
 import { sourceLabel } from "@/lib/founding/sources";
 import { cn } from "@/lib/utils";
@@ -76,7 +79,17 @@ export function BetaProgramSettings({
   );
 }
 
-export function BetaSendingControls({ live, maxBatch, invitable }: { live: boolean; maxBatch: number; invitable: number }) {
+export function BetaSendingControls({
+  live,
+  maxBatch,
+  invitable,
+  remindersDue,
+}: {
+  live: boolean;
+  maxBatch: number;
+  invitable: number;
+  remindersDue: number;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<AdminFoundingState>(null);
@@ -94,10 +107,14 @@ export function BetaSendingControls({ live, maxBatch, invitable }: { live: boole
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="lg" variant="outline" disabled={pending} onClick={() => run(sendTestInvitation)}>
-          Send test email to me
+        <Button size="lg" variant="outline" disabled={pending} onClick={() => run(() => sendTestInvitation("invitation"))}>
+          Send test invitation to me
         </Button>
-        <Button size="lg" variant="ghost" nativeButton={false} render={<a href="/admin/beta-vendors/email-preview" target="_blank" rel="noopener noreferrer">Preview email</a>} />
+        <Button size="lg" variant="outline" disabled={pending} onClick={() => run(() => sendTestInvitation("reminder"))}>
+          Send test reminder to me
+        </Button>
+        <Button size="lg" variant="ghost" nativeButton={false} render={<a href="/admin/beta-vendors/email-preview" target="_blank" rel="noopener noreferrer">Preview invitation</a>} />
+        <Button size="lg" variant="ghost" nativeButton={false} render={<a href="/admin/beta-vendors/email-preview?kind=reminder" target="_blank" rel="noopener noreferrer">Preview reminder</a>} />
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <div className="grid gap-1.5">
@@ -126,7 +143,24 @@ export function BetaSendingControls({ live, maxBatch, invitable }: { live: boole
         >
           {pending ? "Working…" : `Send next ${count}`}
         </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          disabled={pending || !live || remindersDue === 0}
+          onClick={() =>
+            run(
+              () => sendDueReminders(count),
+              `Send a reminder to up to ${count} vendor${count === 1 ? "" : "s"} invited 3+ days ago who haven't signed up? This emails real people, once each.`,
+            )
+          }
+        >
+          {`Remind ${Math.min(count, remindersDue)} due`}
+        </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Reminders are never automatic: one per invitation, 3+ days after it, only to vendors who haven&apos;t signed up. Each
+        reminder sends a fresh link.
+      </p>
       {!live && (
         <p className="text-xs text-muted-foreground">
           Real sending is off. After you approve the campaign, set <code>BETA_INVITES_LIVE=true</code> in Vercel and redeploy.
@@ -139,22 +173,71 @@ export function BetaSendingControls({ live, maxBatch, invitable }: { live: boole
 
 export function WaitlistImport() {
   const [state, action, pending] = useActionState<AdminFoundingState, FormData>(importWaitlist, null);
+  const report = state?.report;
   return (
     <form action={action} className="grid gap-3">
       <p className="text-sm text-muted-foreground">
         CSV with a header row. Columns: <code>email</code> (required), <code>first_name</code>, <code>business_name</code>,{" "}
-        <code>category</code>, <code>suburb</code>, <code>invite_consent</code> (yes/no) and <code>consent_note</code> (where they
-        opted in). Only rows with <code>invite_consent</code> = yes can be invited. Existing contacts are never re-subscribed.
+        <code>category</code>, <code>invite_consent</code> (yes/no) and <code>consent_note</code> (where they opted in);{" "}
+        <code>suburb</code> is optional. Only rows with <code>invite_consent</code> = yes can be invited. <strong>Check file</strong>{" "}
+        changes nothing. Imports skip registered vendors and undeliverable addresses, and never re-subscribe anyone.
       </p>
       <Input name="file" type="file" accept=".csv,text/csv" className="h-11 py-2" />
       <Textarea name="csv" rows={4} placeholder={"…or paste rows:\nemail,first_name,business_name,category,invite_consent,consent_note\njane@example.com,Jane,Jane Photo,photographer,yes,Waitlist form Sept 2026"} />
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="lg" variant="outline" disabled={pending}>
-          {pending ? "Importing…" : "Import contacts"}
+        <Button type="submit" name="mode" value="check" size="lg" variant="outline" disabled={pending}>
+          {pending ? "Working…" : "Check file"}
+        </Button>
+        <Button
+          type="submit"
+          name="mode"
+          value="import"
+          size="lg"
+          variant="ghost"
+          disabled={pending}
+          onClick={(e) => {
+            if (!window.confirm("Import these contacts into the waitlist? Nobody is emailed.")) e.preventDefault();
+          }}
+        >
+          Import contacts
         </Button>
       </div>
-      <Result state={state} />
+      <Result state={state ? { ...state, details: report ? [] : state.details } : null} />
+      {report && <ImportReportView report={report} />}
     </form>
+  );
+}
+
+function ImportReportView({ report }: { report: ImportReport }) {
+  const order: RowVerdict[] = ["eligible", "no_consent", "unsubscribed", "suppressed", "registered_vendor", "already_applied", "already_invited"];
+  return (
+    <div className="grid gap-3 rounded-2xl border border-border p-4 text-sm">
+      <p>
+        <strong>{report.rowsInFile}</strong> valid rows · {report.alreadyOnWaitlist} already on the waitlist · {report.withAccount} already
+        have an Evntly account
+      </p>
+      <dl className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+        {order.map((v) => (
+          <div key={v} className="flex justify-between gap-3 border-b border-border/60 py-1">
+            <dt className={v === "eligible" ? "font-semibold" : "text-muted-foreground"}>{VERDICT_LABEL[v]}</dt>
+            <dd className="tabular-nums">{report.counts[v]}</dd>
+          </div>
+        ))}
+      </dl>
+      {!!report.notes.length && (
+        <details>
+          <summary className="cursor-pointer text-xs font-medium">Row notes ({report.notes.length}), addresses masked</summary>
+          <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+            {report.notes.slice(0, 200).map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Resend&apos;s own suppression list isn&apos;t checked here; Resend refuses those sends itself, and they show as failed.
+      </p>
+    </div>
   );
 }
 
@@ -178,12 +261,20 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
   const router = useRouter();
   const contacts = useMemo(() => rows.filter((r) => r.onWaitlist), [rows]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState<"all" | "invitable" | "invited" | "no-consent">("all");
+  const [filter, setFilter] = useState<"all" | "invitable" | "invited" | "reminder" | "no-consent">("all");
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<AdminFoundingState>(null);
 
   const visible = contacts.filter((r) =>
-    filter === "invitable" ? canSend(r) : filter === "invited" ? r.sendCount > 0 : filter === "no-consent" ? !r.consent || r.unsubscribed : true,
+    filter === "invitable"
+      ? canSend(r)
+      : filter === "invited"
+        ? r.sendCount > 0
+        : filter === "reminder"
+          ? r.reminderDue
+          : filter === "no-consent"
+            ? !r.consent || r.unsubscribed
+            : true,
   );
 
   const send = (ids: string[]) => {
@@ -192,6 +283,14 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
       setState(null);
       setState(await sendInvitations(ids));
       setSelected(new Set());
+      router.refresh();
+    });
+  };
+  const remind = (id: string) => {
+    if (!window.confirm("Send this vendor a reminder with a fresh link? This emails a real person.")) return;
+    startTransition(async () => {
+      setState(null);
+      setState(await sendReminders([id]));
       router.refresh();
     });
   };
@@ -208,14 +307,14 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        {(["all", "invitable", "invited", "no-consent"] as const).map((f) => (
+        {(["all", "invitable", "invited", "reminder", "no-consent"] as const).map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
             className={cn("min-h-9 rounded-full border px-3 text-sm", filter === f ? "border-foreground bg-foreground text-background" : "border-border")}
           >
-            {f === "all" ? "All" : f === "invitable" ? "Can invite" : f === "invited" ? "Invited" : "No consent"}
+            {f === "all" ? "All" : f === "invitable" ? "Can invite" : f === "invited" ? "Invited" : f === "reminder" ? "Reminder due" : "No consent"}
           </button>
         ))}
         <Button size="sm" disabled={!live || pending || selected.size === 0} onClick={() => send([...selected])} className="ml-auto">
@@ -265,6 +364,8 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
                     <span className="block">{r.inviteStatus ? INVITE_LABEL[r.inviteStatus] : "—"}{r.sendCount > 1 ? ` (×${r.sendCount})` : ""}</span>
                     {r.delivery && r.delivery !== "sent" && <span className="block text-muted-foreground">{r.delivery.replace("_", " ")}</span>}
                     {r.lastSentAt && <span className="block text-muted-foreground">{fmt(r.lastSentAt)}</span>}
+                    {r.reminderSentAt && <span className="block text-muted-foreground">Reminded {fmt(r.reminderSentAt)}</span>}
+                    {r.reminderDue && <span className="block font-medium text-primary">Reminder due</span>}
                     {r.inviteError && <span className="block text-destructive">{r.inviteError}</span>}
                   </td>
                   <td className="px-3 py-2 text-xs">
@@ -272,9 +373,14 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
                   </td>
                   <td className="px-3 py-2 text-xs">{r.applicationStatus ? r.applicationStatus.replace("_", " ") : "—"}</td>
                   <td className="px-3 py-2 text-right">
-                    {sendable && (
+                    {sendable && !r.reminderDue && (
                       <Button size="sm" variant="outline" disabled={!live || pending} onClick={() => send([r.waitlistId!])}>
                         {r.sendCount > 0 ? "Resend" : "Send"}
+                      </Button>
+                    )}
+                    {r.reminderDue && (
+                      <Button size="sm" variant="outline" disabled={!live || pending} onClick={() => remind(r.waitlistId!)}>
+                        Remind
                       </Button>
                     )}
                   </td>

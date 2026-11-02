@@ -155,15 +155,19 @@ describe("beta sender", () => {
     delete process.env.BETA_EMAIL_FROM;
     delete process.env.EMAIL_FROM;
   });
-  it("uses BETA_EMAIL_FROM, then EMAIL_FROM, then Evntly <hello@evntlyapp.com>", async () => {
-    const { inviteSendingStatus } = await import("@/lib/founding/sending");
-    expect(inviteSendingStatus().from).toBe("Evntly <hello@evntlyapp.com>");
-    process.env.EMAIL_FROM = "Evntly Notifications <notifications@evntlyapp.com>";
-    expect(inviteSendingStatus().from).toBe("Evntly Notifications <notifications@evntlyapp.com>");
-    process.env.BETA_EMAIL_FROM = "Mohnish from Evntly <hello@evntlyapp.com>";
+  it("is 'Mohnish from Evntly' at the existing verified address, unless BETA_EMAIL_FROM overrides it", async () => {
+    const { inviteSendingStatus, senderAddress } = await import("@/lib/founding/sending");
     expect(inviteSendingStatus().from).toBe("Mohnish from Evntly <hello@evntlyapp.com>");
+    process.env.EMAIL_FROM = "Evntly <notifications@evntlyapp.com>";
+    expect(inviteSendingStatus().from).toBe("Mohnish from Evntly <notifications@evntlyapp.com>");
+    process.env.EMAIL_FROM = "notifications@evntlyapp.com";
+    expect(inviteSendingStatus().from).toBe("Mohnish from Evntly <notifications@evntlyapp.com>");
+    process.env.BETA_EMAIL_FROM = "Mohnish Golem <mohnish@evntlyapp.com>";
+    expect(inviteSendingStatus().from).toBe("Mohnish Golem <mohnish@evntlyapp.com>");
     process.env.BETA_EMAIL_FROM = "   ";
-    expect(inviteSendingStatus().from).toBe("Evntly Notifications <notifications@evntlyapp.com>");
+    expect(inviteSendingStatus().from).toBe("Mohnish from Evntly <notifications@evntlyapp.com>");
+    expect(senderAddress("Evntly <a@b.com>")).toBe("a@b.com");
+    expect(senderAddress("garbage")).toBeNull();
   });
 });
 

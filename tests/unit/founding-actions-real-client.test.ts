@@ -10,6 +10,7 @@ const respond = (body: unknown, status = 200) =>
   new Response(body === null ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 let resendStatus = 200;
+let tableRows: Record<string, unknown[]> = {};
 let prepareError: string | null = null;
 const handler = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
@@ -31,8 +32,14 @@ const handler = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (prepareError) return respond({ code: "P0001", message: prepareError }, 400);
     return respond([{ invitation_id: "inv-1", email: "jane@photo.com.au", first_name: "Jane", unsubscribe_token: "c".repeat(64), expires_at: "2026-11-15T00:00:00Z", send_number: 1 }]);
   }
+  if (url.includes("/rpc/admin_prepare_beta_reminder")) {
+    if (prepareError) return respond({ code: "P0001", message: prepareError }, 400);
+    return respond([{ invitation_id: "inv-9", email: "kai@dj.com.au", first_name: "Kai", unsubscribe_token: "e".repeat(64), expires_at: "2026-11-20T00:00:00Z", send_number: 2 }]);
+  }
   if (url.includes("/rpc/")) return respond(null, 204);
   if (url.includes("/rest/v1/beta_program")) return respond({ batch_size_limit: 10 });
+  const table = url.match(/\/rest\/v1\/([a-z_]+)/)?.[1];
+  if (method === "GET" && table && table in tableRows) return respond(tableRows[table]);
   if (url.includes("/rest/v1/vendor_waitlist") && method === "GET") return respond(null);
   if (url.includes("/rest/v1/beta_applications") && method === "GET") return respond(null);
   return respond(null, 201);
@@ -74,7 +81,9 @@ vi.mock("@/lib/data/user", () => ({
 }));
 
 const { claimFoundingPlace, joinVendorWaitlist, unsubscribeFromInvites } = await import("@/lib/actions/founding");
-const { sendInvitations, sendTestInvitation, decideApplication } = await import("@/lib/actions/admin-founding");
+const { sendInvitations, sendReminders, sendDueReminders, sendTestInvitation, decideApplication, importWaitlist } = await import(
+  "@/lib/actions/admin-founding"
+);
 
 const rpc = (name: string) => calls.filter((c) => c.url.includes(`/rest/v1/rpc/${name}`));
 const resendCalls = () => calls.filter((c) => c.url.startsWith("https://api.resend.com/emails"));
@@ -93,6 +102,7 @@ beforeEach(() => {
   cookieSource = undefined;
   resendStatus = 200;
   prepareError = null;
+  tableRows = {};
   vi.stubGlobal("fetch", fakeFetch);
   process.env.RESEND_API_KEY = "re_test_key";
   process.env.EMAIL_FROM = "Evntly <hello@evntlyapp.com>";
@@ -184,7 +194,7 @@ describe("sendInvitations", () => {
     expect(send.headers.get("Idempotency-Key")).toBe("beta-invite-inv-1-1");
     const payload = send.body as { to: string; subject: string; headers: Record<string, string>; html: string };
     expect(payload.to).toBe("jane@photo.com.au");
-    expect(payload.subject).toBe("Your invitation to the Evntly vendor beta");
+    expect(payload.subject).toBe("You're Invited to Join Evntly – Early Vendor Access");
     expect(payload.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
     // The emailed link carries the raw token whose hash was stored.
     const token = payload.html.match(/invite=([A-Za-z0-9_-]{43})/)![1];
@@ -238,5 +248,112 @@ describe("decideApplication", () => {
       p_decision: "needs_changes",
       p_note: "Add three photos",
     });
+  });
+});
+
+describe("importWaitlist", () => {
+  const csv =
+    "email,first_name,business_name,category,invite_consent,consent_note\n" +
+    "jane@photo.com.au,Jane,Jane Photo,photographer,yes,Tally form\n" +
+    "tom@dj.com.au,Tom,Tom DJ,dj,no,\n" +
+    "sam@decor.com.au,Sam,Sam Decor,decorator,yes,Tally form\n" +
+    "x@site.test,X,,,yes,\n" +
+    "jane@photo.com.au,Dup,,,yes,\n";
+  const registeredSam = () => {
+    tableRows = {
+      vendor_waitlist: [],
+      users: [{ id: "u-sam", email: "sam@decor.com.au" }],
+      service_providers: [{ owner_user_id: "u-sam", is_demo: false }],
+      beta_applications: [],
+    };
+  };
+
+  it("Check file reports eligible and excluded rows and writes nothing", async () => {
+    registeredSam();
+    const res = await importWaitlist(null, form({ csv, mode: "check" }));
+    expect(res?.message).toBe("Checked 4 rows. Nothing was imported.");
+    expect(res?.report?.counts).toMatchObject({ eligible: 1, no_consent: 1, registered_vendor: 1, suppressed: 1 });
+    expect(res?.report?.notes.join(" ")).toContain("appears twice");
+    expect(res?.report?.notes.join(" ")).not.toMatch(/sam@|tom@/);
+    expect(calls.filter((c) => c.method !== "GET")).toHaveLength(0);
+  });
+
+  it("defaults to a check when no mode is given", async () => {
+    registeredSam();
+    await importWaitlist(null, form({ csv }));
+    expect(calls.filter((c) => c.method !== "GET")).toHaveLength(0);
+  });
+
+  it("Import skips registered vendors and undeliverable addresses", async () => {
+    registeredSam();
+    const res = await importWaitlist(null, form({ csv, mode: "import" }));
+    const insert = calls.find((c) => c.method === "POST" && c.url.includes("/rest/v1/vendor_waitlist"));
+    const emails = (insert?.body as { email: string }[]).map((r) => r.email);
+    expect(emails).toEqual(["jane@photo.com.au", "tom@dj.com.au"]);
+    expect((insert?.body as { invite_consent: boolean }[]).map((r) => r.invite_consent)).toEqual([true, false]);
+    expect(res?.message).toContain("2 skipped");
+  });
+
+  it("refuses non-admins", async () => {
+    adminSession = { admin: false, mfa: "n/a" };
+    expect((await importWaitlist(null, form({ csv, mode: "check" })))?.error).toMatch(/Not authorized/);
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("reminders", () => {
+  it("send nothing unless BETA_INVITES_LIVE=true", async () => {
+    expect((await sendReminders(["11111111-1111-4111-8111-111111111111"]))?.error).toMatch(/switched off/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("use the reminder RPCs, the reminder template and their own idempotency key", async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    const res = await sendReminders(["11111111-1111-4111-8111-111111111111"]);
+    expect(res?.message).toBe("Sent 1 of 1 reminder.");
+    expect(rpc("admin_prepare_beta_reminder")).toHaveLength(1);
+    expect(rpc("admin_prepare_beta_invitation")).toHaveLength(0);
+    const [send] = resendCalls();
+    expect(send.headers.get("Idempotency-Key")).toBe("beta-reminder-inv-9-2");
+    const payload = send.body as { subject: string; from: string; headers: Record<string, string>; text: string };
+    expect(payload.subject).toBe("Following up on your Evntly invitation");
+    expect(payload.from).toBe("Mohnish from Evntly <hello@evntlyapp.com>");
+    expect(payload.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+    expect(rpc("admin_record_beta_reminder")[0].body).toMatchObject({ p_invitation_id: "inv-9", p_ok: true });
+  });
+
+  it("report the database's refusal (e.g. too soon) without emailing", async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    prepareError = "Too soon: reminders go 3+ days after the invitation.";
+    const res = await sendReminders(["11111111-1111-4111-8111-111111111111"]);
+    expect(res?.details?.[0]).toMatch(/Too soon/);
+    expect(resendCalls()).toHaveLength(0);
+  });
+
+  it("'Remind N due' only picks emailable contacts invited 3+ days ago", async () => {
+    process.env.BETA_INVITES_LIVE = "true";
+    tableRows = {
+      beta_invitations: [
+        { waitlist_id: "11111111-1111-4111-8111-111111111111", delivery_status: "delivered" },
+        { waitlist_id: "22222222-2222-4222-8222-222222222222", delivery_status: "bounced" },
+        { waitlist_id: "33333333-3333-4333-8333-333333333333", delivery_status: "sent" },
+      ],
+      vendor_waitlist: [{ id: "11111111-1111-4111-8111-111111111111" }],
+    };
+    await sendDueReminders(5);
+    const due = calls.find((c) => c.method === "GET" && c.url.includes("/rest/v1/beta_invitations"))!;
+    expect(due.url).toContain("reminder_sent_at=is.null");
+    expect(due.url).toMatch(/first_sent_at=lte\./);
+    expect(rpc("admin_prepare_beta_reminder").map((c) => (c.body as { p_waitlist_id: string }).p_waitlist_id)).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+    ]);
+  });
+
+  it("test reminder goes only to the admin", async () => {
+    await sendTestInvitation("reminder");
+    const [send] = resendCalls();
+    const payload = send.body as { to: string; subject: string };
+    expect(payload.to).toBe("mohnish@evntlyapp.com");
+    expect(payload.subject).toBe("[TEST] Following up on your Evntly invitation");
   });
 });

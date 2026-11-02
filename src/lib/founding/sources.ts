@@ -14,6 +14,9 @@ export const FOUNDING_SOURCES = [
 export type FoundingSource = (typeof FOUNDING_SOURCES)[number]["value"];
 
 export const FOUNDING_CAMPAIGN = "founding_vendors";
+
+/** Recruitment goal shown on the admin dashboard (approved Founding Vendors). */
+export const FOUNDING_GOAL = 200;
 export const FOUNDING_PATH = "/founding-vendors";
 export const CLAIM_PATH = "/founding-vendors/claim";
 

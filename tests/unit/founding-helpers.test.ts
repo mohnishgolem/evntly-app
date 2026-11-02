@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { foundingShareLink, isFoundingPath, sourceFromParams } from "@/lib/founding/sources";
+import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, sourceFromParams } from "@/lib/founding/sources";
 import { parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
-import { claimUrl, inviteHeaders, renderInviteEmail, INVITE_SUBJECT } from "@/lib/founding/invite-email";
+import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
+import { buildReport, classifyRow, shouldImport, type ContactFacts } from "@/lib/founding/import-check";
 import { hashInviteToken, looksLikeInviteToken, newInviteToken } from "@/lib/founding/tokens";
 import { deliveryUpdateFor, verifyResendWebhook } from "@/lib/founding/resend-webhook";
 
@@ -78,29 +79,46 @@ describe("waitlist CSV", () => {
 });
 
 describe("invitation email", () => {
-  const email = renderInviteEmail({
+  const input = {
     firstName: "Jane Smith",
     token: "tok_123",
     unsubscribeToken: "a".repeat(64),
     expiresAt: new Date("2026-11-15T01:00:00Z"),
+  };
+  const email = renderInviteEmail(input);
+  const reminder = renderReminderEmail(input);
+  const links = (html: string) => [...html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, "&"));
+
+  it("uses the approved subject, copy, button and signature", () => {
+    expect(email.subject).toBe("You're Invited to Join Evntly – Early Vendor Access");
+    expect(INVITE_SUBJECT).toBe(email.subject);
+    for (const line of [
+      "Hi Jane,",
+      "Thanks for joining the Evntly waitlist!",
+      "I'm excited to invite you to become one of our first Sydney vendors.",
+      "Your early access is now ready. You can create your free vendor account, set up your business profile and showcase your services to customers looking for event professionals.",
+      "We're starting with a group of founding vendors, and I'd love to have you involved.",
+      "If you have any questions, just reply to this email.",
+      "Mohnish\nFounder, Evntly\nhttps://evntlyapp.com",
+    ]) {
+      expect(email.text).toContain(line);
+    }
+    expect(email.html).toContain(">Create Your Free Vendor Account</a>");
   });
 
-  it("reads like a personal invitation, not a promotion", () => {
-    expect(email.subject).toBe(INVITE_SUBJECT);
-    expect(INVITE_SUBJECT).toBe("Your invitation to the Evntly vendor beta");
-    expect(INVITE_SUBJECT).not.toMatch(/free|claim|!|\$|%/i);
-    expect(email.text).toMatch(/^Hi Jane,/);
-    expect(email.text).toContain("We're inviting our first 20 Sydney event vendors into a private beta");
-    expect(email.text).toContain("just reply to this email");
-    expect(email.text).toContain("Mohnish\nFounder, Evntly");
-    expect(email.text).not.toMatch(/!{2,}|limited time|act now|don't miss/i);
+  it("never names a number of places or promises permanent free access or zero commission", () => {
+    for (const body of [email.text, reminder.text]) {
+      expect(body).not.toMatch(/\b20\b|first 20|forever|lifetime|always free|no commission|zero commission|guarantee/i);
+    }
   });
 
-  it("has exactly one call-to-action link, with no tracking parameters", () => {
-    const links = [...email.html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, "&"));
-    const ctas = links.filter((l) => !l.includes("/unsubscribe"));
-    expect(ctas).toEqual(["https://evntlyapp.com/founding-vendors/claim?invite=tok_123"]);
-    expect(links).toHaveLength(2); // the call to action + unsubscribe
+  it("has one call to action plus the website and unsubscribe links, with no tracking parameters", () => {
+    const all = links(email.html);
+    expect(all).toEqual([
+      "https://evntlyapp.com/founding-vendors/claim?invite=tok_123",
+      "https://evntlyapp.com",
+      `https://evntlyapp.com/founding-vendors/unsubscribe?t=${"a".repeat(64)}`,
+    ]);
     expect(email.html + email.text).not.toMatch(/utm_|mailto:/);
   });
 
@@ -108,18 +126,30 @@ describe("invitation email", () => {
     expect(email.html).toContain(">Evntly</div>");
     expect(email.html).toContain("max-width:520px;background:#ffffff;border-radius:14px");
     expect(email.html.match(/background:#e8604a/g)).toHaveLength(1);
-    expect(email.html).toContain(">Set up your vendor account</a>");
     expect(email.html).not.toMatch(/<img|display:none|max-height:0|paste this link/i);
   });
 
-  it("keeps the personal link, sender identity, reason and unsubscribe (Spam Act)", () => {
+  it("keeps the personal link, expiry, review note, sender identity, reason and unsubscribe (Spam Act)", () => {
     for (const body of [email.html, email.text]) {
       expect(body).toContain("/founding-vendors/claim?invite=tok_123");
+      expect(body).toContain("works until 15 November");
+      expect(body).toContain("Every listing is reviewed by our team");
       expect(body).toContain("ABN 49 193 658 959");
       expect(body).toContain("joined the Evntly vendor waitlist");
       expect(body).toContain(`/founding-vendors/unsubscribe?t=${"a".repeat(64)}`);
     }
-    expect(email.text).toContain("15 November");
+  });
+
+  it("the reminder is short, personal and says the new link replaces the old one", () => {
+    expect(reminder.subject).toBe(REMINDER_SUBJECT);
+    expect(REMINDER_SUBJECT).toBe("Following up on your Evntly invitation");
+    expect(reminder.text).toMatch(/^Hi Jane,/);
+    expect(reminder.text).toContain("Just following up on my invitation from a few days ago.");
+    expect(reminder.text).toContain("It replaces the link in my earlier email.");
+    expect(reminder.text).toContain("you'd rather not join right now, just reply");
+    expect(reminder.html).toContain(">Create Your Free Vendor Account</a>");
+    expect(reminder.text).toContain(`/founding-vendors/unsubscribe?t=${"a".repeat(64)}`);
+    expect(reminder.text.length).toBeLessThan(email.text.length);
   });
 
   it("escapes names and falls back to 'there'", () => {
@@ -137,6 +167,68 @@ describe("invitation email", () => {
     expect(h["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
     expect(h["List-Unsubscribe"]).toContain(`/api/founding/unsubscribe?t=${"b".repeat(64)}`);
     expect(h["List-Unsubscribe"]).toContain("mailto:hello@evntlyapp.com");
+  });
+});
+
+describe("import check", () => {
+  const facts = (over: Partial<ContactFacts> = {}): ContactFacts => ({
+    onWaitlist: false, unsubscribed: false, inviteStatus: null, deliveryStatus: null, hasAccount: false, registeredVendor: false, applied: false, ...over,
+  });
+  const row = (email: string, consent = true) => ({ email, first_name: null, business_name: null, category: null, suburb: null, invite_consent: consent, consent_note: null });
+
+  it.each([
+    ["eligible", row("a@b.com.au"), facts()],
+    ["eligible", row("a@b.com.au"), facts({ hasAccount: true })],
+    ["eligible", row("a@b.com.au"), facts({ onWaitlist: true, inviteStatus: "failed" })],
+    ["no_consent", row("a@b.com.au", false), facts()],
+    ["registered_vendor", row("a@b.com.au"), facts({ hasAccount: true, registeredVendor: true })],
+    ["already_applied", row("a@b.com.au"), facts({ applied: true })],
+    ["suppressed", row("a@example.com"), facts()],
+    ["suppressed", row("x@test.example"), facts()],
+    ["suppressed", row("a@b.com.au"), facts({ deliveryStatus: "bounced" })],
+    ["suppressed", row("a@b.com.au"), facts({ deliveryStatus: "complained" })],
+    ["unsubscribed", row("a@b.com.au"), facts({ unsubscribed: true })],
+    ["already_invited", row("a@b.com.au"), facts({ inviteStatus: "sent" })],
+    ["already_invited", row("a@b.com.au"), facts({ inviteStatus: "claimed" })],
+  ] as const)("%s", (verdict, r, f) => {
+    expect(classifyRow(r, f)).toBe(verdict);
+  });
+
+  it("builds counts and masked notes, never full addresses", () => {
+    const rows = [row("jane@photo.com.au"), row("tom@dj.com.au", false), row("sam@decor.com.au")];
+    const byEmail = new Map([["sam@decor.com.au", facts({ registeredVendor: true, hasAccount: true })]]);
+    const report = buildReport(rows, byEmail, ["Row 5: duplicate"]);
+    expect(report.rowsInFile).toBe(3);
+    expect(report.counts.eligible).toBe(1);
+    expect(report.counts.no_consent).toBe(1);
+    expect(report.counts.registered_vendor).toBe(1);
+    expect(report.withAccount).toBe(1);
+    expect(report.notes).toEqual(["Row 5: duplicate", "t•••@dj.com.au: No invitation consent in the file", "s•••@decor.com.au: Already a registered vendor"]);
+    expect(report.notes.join(" ")).not.toMatch(/tom@|sam@|jane@/);
+  });
+
+  it("imports everything except registered vendors and undeliverable addresses", () => {
+    expect(shouldImport(row("a@b.com.au", false), facts())).toBe(true);
+    expect(shouldImport(row("a@b.com.au"), facts({ unsubscribed: true }))).toBe(true);
+    expect(shouldImport(row("a@b.com.au"), facts({ registeredVendor: true }))).toBe(false);
+    expect(shouldImport(row("a@x.test"), facts())).toBe(false);
+  });
+
+  it("accepts the required CSV columns", () => {
+    const { rows, errors } = parseWaitlistCsv(
+      "email,first_name,business_name,category,invite_consent,consent_note\njane@photo.com.au,Jane,Jane Photo,photographer,yes,Tally waitlist form Sept 2026\n",
+    );
+    expect(errors).toEqual([]);
+    expect(rows[0]).toEqual({
+      email: "jane@photo.com.au", first_name: "Jane", business_name: "Jane Photo", category: "photographer",
+      suburb: null, invite_consent: true, consent_note: "Tally waitlist form Sept 2026",
+    });
+  });
+});
+
+describe("founding goal", () => {
+  it("is 200", () => {
+    expect(FOUNDING_GOAL).toBe(200);
   });
 });
 

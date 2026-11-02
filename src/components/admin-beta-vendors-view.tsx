@@ -38,7 +38,7 @@ function Section({ id, title, description, children }: { id: string; title: stri
 }
 
 export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sending: ReturnType<typeof inviteSendingStatus> }) {
-  const { stats, program, rows, bySource, feedback } = data;
+  const { stats, conversion, program, rows, bySource, feedback } = data;
   const full = stats.remaining !== null && stats.remaining <= 0;
   const invitable = rows.filter(
     (r) => r.onWaitlist && r.consent && !r.unsubscribed && !r.applicationId && (r.inviteStatus === null || r.inviteStatus === "pending" || r.inviteStatus === "failed"),
@@ -48,8 +48,29 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
     <div className="mx-auto max-w-5xl px-4 py-8">
       <AdminHeading
         title="Beta vendors"
-        description={`Founding vendor recruitment: ${stats.approved} of ${stats.capacity ?? "?"} places approved.`}
+        description={`Founding Vendor recruitment: ${stats.approved} of ${stats.capacity ?? "?"} places approved.`}
       />
+
+      <section aria-labelledby="goal" className="mb-4 rounded-2xl border border-border p-4">
+        <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="goal" className="text-sm font-semibold">
+            Progress to {stats.goal} approved Founding Vendors
+          </h2>
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {stats.approved} / {stats.goal} · {conversion.goalPercent}%
+          </span>
+        </div>
+        <div
+          className="h-2.5 overflow-hidden rounded-full bg-muted"
+          role="progressbar"
+          aria-label="Approved Founding Vendors toward the goal"
+          aria-valuemin={0}
+          aria-valuemax={stats.goal}
+          aria-valuenow={stats.approved}
+        >
+          <div className="h-full rounded-full bg-primary" style={{ width: `${conversion.goalPercent}%` }} />
+        </div>
+      </section>
 
       <dl className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Waitlist contacts" value={stats.waitlistTotal} sub={`${stats.waitlistConsented} can be invited · ${stats.unsubscribed} unsubscribed`} />
@@ -60,12 +81,20 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
           sub={`${stats.bounced} bounced · ${stats.complained} spam · ${stats.sendFailures} failed`}
           urgent={stats.bounced + stats.complained + stats.sendFailures > 0}
         />
-        <Stat label="Opened / clicked / claimed" value={`${stats.opened} / ${stats.clicked} / ${stats.claimed}`} sub="Opens need tracking on in Resend" />
+        <Stat label="Failed emails" value={stats.failedEmails} sub="Send failures, bounces and spam reports" urgent={stats.failedEmails > 0} />
+        <Stat label="Clicked / claimed" value={`${stats.clicked} / ${stats.claimed}`} sub="Clicks are counted when the link is opened" />
+        <Stat
+          label="Conversion"
+          value={conversion.signup === null ? "—" : `${conversion.signup}%`}
+          sub={conversion.approved === null ? "of invited vendors signed up" : `signed up · ${conversion.approved}% approved`}
+        />
         <Stat label="Applications started" value={stats.applicationsStarted} />
         <Stat label="Applications submitted" value={stats.applicationsSubmitted} />
         <Stat label="Vendors approved" value={stats.approved} />
         <Stat label="Remaining places" value={stats.remaining ?? "—"} urgent={full} />
+        <Stat label="Incomplete profiles" value={stats.incompleteProfiles} sub="Applicants whose listing isn't 100% yet" />
         <Stat label="Completed onboarding" value={stats.onboardingCompleted} sub="Approved + profile 100%" />
+        <Stat label="Reminders" value={`${stats.remindersDue} due`} sub={`${stats.remindersSent} sent · one per invitation, after 3 days`} urgent={stats.remindersDue > 0} />
         <Stat label="New feedback" value={stats.newFeedback} urgent={stats.newFeedback > 0} />
       </dl>
       <p className="mb-8 text-xs">
@@ -81,7 +110,7 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
       <Section
         id="send"
         title="Invitations"
-        description="Send yourself a test first. Real sends need BETA_INVITES_LIVE=true, skip anyone without consent, unsubscribed or already applied, and stop at the daily limit."
+        description="Send yourself a test first. Real sends need BETA_INVITES_LIVE=true, skip anyone without consent, unsubscribed, already registered or already applied, and stop at the daily limit (invitations and reminders share it)."
       >
         <div className="mb-4 grid gap-1 rounded-2xl bg-secondary p-4 text-xs">
           <p>
@@ -91,7 +120,7 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
             Live sending: <strong>{sending.live ? "ON" : "off"}</strong> · Delivery webhook: {sending.webhookConfigured ? "configured" : "not set (no delivered/bounced/opened tracking)"}
           </p>
         </div>
-        <BetaSendingControls live={sending.live} maxBatch={program!.batch_size_limit} invitable={invitable} />
+        <BetaSendingControls live={sending.live} maxBatch={program!.batch_size_limit} invitable={invitable} remindersDue={stats.remindersDue} />
       </Section>
 
       <Section id="contacts" title="Waitlist contacts">

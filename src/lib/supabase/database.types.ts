@@ -111,6 +111,8 @@ export type Database = {
           last_error: string | null
           last_sent_at: string | null
           opened_at: string | null
+          reminder_attempted_at: string | null
+          reminder_sent_at: string | null
           resend_email_id: string | null
           send_count: number
           status: string
@@ -133,6 +135,8 @@ export type Database = {
           last_error?: string | null
           last_sent_at?: string | null
           opened_at?: string | null
+          reminder_attempted_at?: string | null
+          reminder_sent_at?: string | null
           resend_email_id?: string | null
           send_count?: number
           status?: string
@@ -155,6 +159,8 @@ export type Database = {
           last_error?: string | null
           last_sent_at?: string | null
           opened_at?: string | null
+          reminder_attempted_at?: string | null
+          reminder_sent_at?: string | null
           resend_email_id?: string | null
           send_count?: number
           status?: string
@@ -2820,6 +2826,21 @@ export type Database = {
           send_number: number
           unsubscribe_token: string
         }[]
+      }
+      admin_prepare_beta_reminder: {
+        Args: { p_token_hash: string; p_waitlist_id: string }
+        Returns: {
+          email: string
+          expires_at: string
+          first_name: string | null
+          invitation_id: string
+          send_number: number
+          unsubscribe_token: string
+        }[]
+      }
+      admin_record_beta_reminder: {
+        Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string }
+        Returns: undefined
       }
       admin_record_beta_invitation: {
         Args: { p_error?: string; p_invitation_id: string; p_ok: boolean; p_resend_email_id?: string }
