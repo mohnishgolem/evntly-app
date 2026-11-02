@@ -184,7 +184,7 @@ describe("sendInvitations", () => {
     expect(send.headers.get("Idempotency-Key")).toBe("beta-invite-inv-1-1");
     const payload = send.body as { to: string; subject: string; headers: Record<string, string>; html: string };
     expect(payload.to).toBe("jane@photo.com.au");
-    expect(payload.subject).toBe("You're Invited — Claim Your Free Evntly Vendor Account");
+    expect(payload.subject).toBe("Your invitation to the Evntly vendor beta");
     expect(payload.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
     // The emailed link carries the raw token whose hash was stored.
     const token = payload.html.match(/invite=([A-Za-z0-9_-]{43})/)![1];

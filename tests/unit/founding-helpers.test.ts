@@ -85,19 +85,38 @@ describe("invitation email", () => {
     expiresAt: new Date("2026-11-15T01:00:00Z"),
   });
 
-  it("uses the approved subject and copy", () => {
+  it("reads like a personal invitation, not a promotion", () => {
     expect(email.subject).toBe(INVITE_SUBJECT);
-    expect(INVITE_SUBJECT).toBe("You're Invited — Claim Your Free Evntly Vendor Account");
-    expect(email.text).toContain("Hi Jane,");
-    expect(email.text).toContain("Thanks for joining the Evntly waitlist!");
-    expect(email.text).toContain("We're inviting our first 20 Sydney event vendors to join our private beta.");
+    expect(INVITE_SUBJECT).toBe("Your invitation to the Evntly vendor beta");
+    expect(INVITE_SUBJECT).not.toMatch(/free|claim|!|\$|%/i);
+    expect(email.text).toMatch(/^Hi Jane,/);
+    expect(email.text).toContain("We're inviting our first 20 Sydney event vendors into a private beta");
+    expect(email.text).toContain("just reply to this email");
     expect(email.text).toContain("Mohnish\nFounder, Evntly");
+    expect(email.text).not.toMatch(/!{2,}|limited time|act now|don't miss/i);
   });
 
-  it("carries the personal link, sender identity and unsubscribe", () => {
+  it("has exactly one call-to-action link, with no tracking parameters", () => {
+    const links = [...email.html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, "&"));
+    const ctas = links.filter((l) => !l.includes("/unsubscribe"));
+    expect(ctas).toEqual(["https://evntlyapp.com/founding-vendors/claim?invite=tok_123"]);
+    expect(links).toHaveLength(2); // the call to action + unsubscribe
+    expect(email.html + email.text).not.toMatch(/utm_|mailto:/);
+  });
+
+  it("keeps the Evntly card, wordmark and one orange button, without images or a hidden preheader", () => {
+    expect(email.html).toContain(">Evntly</div>");
+    expect(email.html).toContain("max-width:520px;background:#ffffff;border-radius:14px");
+    expect(email.html.match(/background:#e8604a/g)).toHaveLength(1);
+    expect(email.html).toContain(">Set up your vendor account</a>");
+    expect(email.html).not.toMatch(/<img|display:none|max-height:0|paste this link/i);
+  });
+
+  it("keeps the personal link, sender identity, reason and unsubscribe (Spam Act)", () => {
     for (const body of [email.html, email.text]) {
       expect(body).toContain("/founding-vendors/claim?invite=tok_123");
       expect(body).toContain("ABN 49 193 658 959");
+      expect(body).toContain("joined the Evntly vendor waitlist");
       expect(body).toContain(`/founding-vendors/unsubscribe?t=${"a".repeat(64)}`);
     }
     expect(email.text).toContain("15 November");
@@ -110,7 +129,7 @@ describe("invitation email", () => {
   });
 
   it("preview emails link nowhere real", () => {
-    expect(claimUrl(null)).toContain("invite=preview");
+    expect(claimUrl(null)).toBe("https://evntlyapp.com/founding-vendors/claim?invite=preview");
   });
 
   it("has one-click unsubscribe headers", () => {
