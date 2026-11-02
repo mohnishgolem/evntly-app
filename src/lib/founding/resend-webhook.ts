@@ -77,3 +77,42 @@ export function shouldReplaceDeliveryStatus(current: string | null | undefined, 
   if (!current || !(current in STAGE)) return true;
   return STAGE[next] >= STAGE[current as DeliveryStatus];
 }
+
+// One log line per webhook request, for checking deliveries in Vercel's logs.
+// Built from an allow-list of fields so nothing else can slip in: never an
+// email address, email id, svix id, secret or any part of the payload.
+export type WebhookOutcome =
+  | "updated" // a change was written
+  | "duplicate" // same state already recorded (Resend retry or repeat)
+  | "kept" // older-stage event arrived late; later status kept
+  | "unmatched" // not a founding-vendor invitation
+  | "ignored" // event type we don't track
+  | "invalid_signature"
+  | "bad_payload"
+  | "not_configured"
+  | "too_large"
+  | "db_error";
+
+export type WebhookLogEntry = {
+  status: number;
+  outcome: WebhookOutcome;
+  /** Only for signed events, and only when it looks like a Resend event type. */
+  type?: string;
+  matched?: boolean;
+};
+
+const EVENT_TYPE = /^[a-z]+\.[a-z_]+$/;
+
+export function webhookLogLine(entry: WebhookLogEntry) {
+  const safe: Record<string, unknown> = { status: entry.status, outcome: entry.outcome };
+  if (entry.type && EVENT_TYPE.test(entry.type) && entry.type.length <= 40) safe.type = entry.type;
+  if (typeof entry.matched === "boolean") safe.matched = entry.matched;
+  return `[resend-webhook] ${JSON.stringify(safe)}`;
+}
+
+export function logWebhook(entry: WebhookLogEntry) {
+  const line = webhookLogLine(entry);
+  if (entry.status >= 500) console.error(line);
+  else if (entry.status >= 400) console.warn(line);
+  else console.info(line);
+}
