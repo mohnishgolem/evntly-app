@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdminPage } from "@/lib/data/user";
 import { getBetaAdminData } from "@/lib/data/admin-founding";
+import { getAcquisitionData } from "@/lib/data/admin-acquisition";
 import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
 import { BetaVendorsView } from "@/components/admin-beta-vendors-view";
 import { inviteSendingStatus } from "@/lib/founding/sending";
@@ -29,5 +30,6 @@ export default async function AdminBetaVendorsPage() {
     );
   }
 
-  return <BetaVendorsView data={data} sending={sending} />;
+  const acquisition = await getAcquisitionData(data);
+  return <BetaVendorsView data={data} sending={sending} acquisition={acquisition} />;
 }

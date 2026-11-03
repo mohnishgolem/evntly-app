@@ -1,10 +1,14 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 import { completenessPercent, profileChecklist } from "@/lib/profile-completeness";
 import { FOUNDING_GOAL, FOUNDING_SOURCES } from "@/lib/founding/sources";
 
-// Everything the Beta Vendors admin page and its CSV export show. All reads
-// use the admin's own session: the beta tables are readable only by
-// MFA-verified admins (RLS), so a non-admin gets empty lists.
+// Everything the Beta Vendors admin page and its CSV export show. Reads use
+// the admin's own session: the beta tables are readable only by
+// MFA-verified admins (RLS), so a non-admin gets empty lists. The daily
+// acquisition report passes the service-role client instead (serviceClient),
+// which reads listings directly rather than through the admin-only RPC.
 
 export type RecruitmentRow = {
   waitlistId: string | null;
@@ -44,8 +48,8 @@ export type RecruitmentRow = {
   createdAt: string;
 };
 
-export async function getBetaAdminData() {
-  const supabase = await createClient();
+export async function getBetaAdminData(opts: { serviceClient?: SupabaseClient<Database> } = {}) {
+  const supabase = opts.serviceClient ?? (await createClient());
   const [
     { data: program },
     { data: waitlist },
@@ -68,7 +72,12 @@ export async function getBetaAdminData() {
   const [{ data: users }, { data: listings }, { data: photos }, { data: packages }] = await Promise.all([
     userIds.length ? supabase.from("users").select("id, email").in("id", userIds) : Promise.resolve({ data: [] as { id: string; email: string | null }[] }),
     providerIds.length
-      ? supabase.rpc("admin_service_providers").select("id, name, status, service_type, bio, abn, locations_serviced, event_types").in("id", providerIds)
+      ? (opts.serviceClient
+          ? supabase.from("service_providers")
+          : supabase.rpc("admin_service_providers")
+        )
+          .select("id, name, status, service_type, bio, abn, locations_serviced, event_types")
+          .in("id", providerIds)
       : Promise.resolve({ data: [] }),
     providerIds.length ? supabase.from("portfolio_items").select("provider_id").in("provider_id", providerIds) : Promise.resolve({ data: [] as { provider_id: string }[] }),
     providerIds.length

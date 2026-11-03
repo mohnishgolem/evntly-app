@@ -9,6 +9,8 @@ import {
   ReferralsList,
   WaitlistImport,
 } from "@/components/admin-beta-vendors";
+import { AcquisitionFunnel, ProspectImport, ProspectsTable } from "@/components/admin-acquisition";
+import type { AcquisitionData } from "@/lib/data/admin-acquisition";
 import type { BetaAdminData } from "@/lib/data/admin-founding";
 import type { inviteSendingStatus } from "@/lib/founding/sending";
 import { FOUNDING_SOURCES, foundingShareLink } from "@/lib/founding/sources";
@@ -39,7 +41,15 @@ function Section({ id, title, description, children }: { id: string; title: stri
   );
 }
 
-export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sending: ReturnType<typeof inviteSendingStatus> }) {
+export function BetaVendorsView({
+  data,
+  sending,
+  acquisition,
+}: {
+  data: BetaAdminData;
+  sending: ReturnType<typeof inviteSendingStatus>;
+  acquisition?: AcquisitionData;
+}) {
   const { stats, conversion, program, rows, bySource, feedback } = data;
   const full = stats.remaining !== null && stats.remaining <= 0;
   const invitable = rows.filter(
@@ -112,6 +122,8 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
         </a>
       </p>
 
+      {acquisition && <AcquisitionOverview acquisition={acquisition} />}
+
       <Section id="apps" title="Applications" description="Approving also approves the listing (it goes live) and marks it Founding. Capacity is enforced in the database.">
         <ApplicationsList rows={rows} full={full} />
       </Section>
@@ -145,6 +157,19 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
       <Section id="import" title="Import waitlist">
         <WaitlistImport />
       </Section>
+
+      {acquisition?.deployed && (
+        <Section
+          id="prospects"
+          title="Prospects"
+          description="Businesses found by research (not the opted-in waitlist). Each step is recorded in the database and checked there: no contact without a reason we may (Spam Act), one follow-up at most, and 'declined' or 'do not contact' is permanent. Nothing on this page sends anything; you send from Gmail, then mark it here."
+        >
+          <div className="grid gap-6">
+            <ProspectImport />
+            <ProspectsTable prospects={acquisition.prospects} />
+          </div>
+        </Section>
+      )}
 
       <Section id="sources" title="Share links and sources" description="UTM-tagged links to the founding vendor page. Only the source is recorded on each application.">
         <div className="overflow-x-auto rounded-2xl border border-border">
@@ -202,5 +227,64 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
         <BetaProgramSettings program={program!} />
       </Section>
     </div>
+  );
+}
+
+function AcquisitionOverview({ acquisition }: { acquisition: AcquisitionData }) {
+  if (!acquisition.deployed) {
+    return (
+      <Section id="acquisition" title="Vendor acquisition">
+        <p className="rounded-2xl border border-border p-4 text-sm">
+          Apply migration <code>20261106090000_vendor_acquisition.sql</code> to turn on the prospect pipeline and the daily report.
+        </p>
+      </Section>
+    );
+  }
+  const { kpis, funnel, followUpsDue, forecast } = acquisition;
+  return (
+    <Section
+      id="acquisition"
+      title="Vendor acquisition"
+      description="From research to an active vendor. The first six stages are prospects; Registered onwards counts every founding applicant, whatever brought them."
+    >
+      <div className="grid gap-6 md:grid-cols-2">
+        <AcquisitionFunnel funnel={funnel} />
+        <dl className="grid grid-cols-2 gap-3">
+          <Stat label="Verified prospects" value={kpis.verifiedProspects} sub={`${kpis.doNotContact} do-not-contact`} />
+          <Stat label="Awaiting your approval" value={kpis.awaitingApproval} sub="Contact eligible" urgent={kpis.awaitingApproval > 0} />
+          <Stat label="Approved, ready to send" value={kpis.outreachReady} urgent={kpis.outreachReady > 0} />
+          <Stat
+            label="Responses"
+            value={kpis.responses}
+            sub={kpis.responseRate === null ? `of ${kpis.contacted} contacted` : `${kpis.responseRate}% of ${kpis.contacted} contacted`}
+          />
+          <Stat label="Interested" value={kpis.interested} />
+          <Stat
+            label="Prospect → registered"
+            value={kpis.prospectConversion === null ? "—" : `${kpis.prospectConversion}%`}
+            sub="of contacted prospects"
+          />
+          <Stat label="Phase 1" value={`${kpis.phase1} / 20`} sub="approved beta vendors" />
+          <Stat
+            label="Forecast to 200"
+            value={forecast.weeksToGoal === null ? "—" : `~${forecast.weeksToGoal} wks`}
+            sub={`${forecast.perWeek}/week approved (last 4 weeks). An estimate, not a promise`}
+          />
+        </dl>
+      </div>
+      {followUpsDue.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
+          <p className="font-medium">Follow-ups due ({followUpsDue.length}): one each, then never again</p>
+          <ul className="mt-1 list-disc pl-5">
+            {followUpsDue.slice(0, 20).map((p) => (
+              <li key={p.id}>
+                {p.business_name}
+                {p.email ? ` · ${p.email}` : p.instagram ? ` · ${p.instagram}` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Section>
   );
 }
