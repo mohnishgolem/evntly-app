@@ -210,6 +210,8 @@ export async function getBetaAdminData() {
     incompleteProfiles: rows.filter((r) => r.applicationId && r.applicationStatus !== "withdrawn" && r.applicationStatus !== "rejected" && (r.onboardingPercent === null || r.onboardingPercent < 100)).length,
     remindersSent: inv.filter((i) => i.reminder_sent_at).length,
     remindersDue: rows.filter((r) => r.reminderDue).length,
+    referred: live.filter((a) => a.referred_by).length,
+    spotlightsDue: apps.filter((a) => a.referral_code && !a.spotlight_posted_at && live.some((r) => r.referred_by === a.id && r.status === "approved")).length,
   };
   const invited = stats.invitationsSent;
   const rate = (n: number) => (invited ? Math.round((n / invited) * 1000) / 10 : null);
@@ -230,9 +232,30 @@ export async function getBetaAdminData() {
     approved: apps.filter((a) => a.source === s.value && a.status === "approved").length,
   }));
 
+  // Founding vendors who shared their referral link, with what it brought
+  // in. A spotlight is due once one of their invitees is approved.
+  const nameByApp = new Map(rows.filter((r) => r.applicationId).map((r) => [r.applicationId!, r.businessName ?? r.firstName ?? r.email]));
+  const referrals = apps
+    .filter((a) => a.referral_code)
+    .map((a) => {
+      const referred = live.filter((r) => r.referred_by === a.id);
+      const approvedReferrals = referred.filter((r) => r.status === "approved").length;
+      return {
+        applicationId: a.id,
+        name: nameByApp.get(a.id) ?? emailByUser.get(a.user_id) ?? "",
+        code: a.referral_code!,
+        joined: referred.length,
+        submitted: referred.filter((r) => r.status !== "started").length,
+        approved: approvedReferrals,
+        spotlightPostedAt: a.spotlight_posted_at,
+        spotlightDue: approvedReferrals > 0 && !a.spotlight_posted_at,
+      };
+    })
+    .sort((x, y) => Number(y.spotlightDue) - Number(x.spotlightDue) || y.approved - x.approved || y.joined - x.joined);
+
   const feedbackRows = (feedback ?? []).map((f) => ({ ...f, email: emailByUser.get(f.user_id) ?? null }));
 
-  return { program, stats, conversion, rows, bySource, feedback: feedbackRows, deployed: !!program };
+  return { program, stats, conversion, rows, bySource, referrals, feedback: feedbackRows, deployed: !!program };
 }
 
 export type BetaAdminData = Awaited<ReturnType<typeof getBetaAdminData>>;

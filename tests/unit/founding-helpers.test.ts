@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, sourceFromParams } from "@/lib/founding/sources";
+import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
 import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
@@ -32,6 +32,26 @@ describe("founding sources (UTM)", () => {
       expect(url.searchParams.get("utm_campaign")).toBe("founding_vendors");
       expect(sourceFromParams(Object.fromEntries(url.searchParams))).toBe(s);
     }
+  });
+
+  it("referral links carry a valid code and count as the referral source", () => {
+    const url = new URL(referralLink("ab12cd34ef"));
+    expect(url.pathname).toBe("/founding-vendors");
+    const params = Object.fromEntries(url.searchParams);
+    expect(referralFromParams(params)).toBe("ab12cd34ef");
+    expect(sourceFromParams(params)).toBe("referral");
+    // An explicit src still wins.
+    expect(sourceFromParams({ ...params, src: "instagram_dm" })).toBe("instagram_dm");
+  });
+
+  it.each(["AB12CD34EF", " ab12cd34ef "])("normalises %j", (ref) => {
+    expect(referralFromParams({ ref })).toBe("ab12cd34ef");
+  });
+
+  it.each(["short", "toolongcode1234", "ab12-cd34ef", "<script>", ""])("ignores malformed code %j", (ref) => {
+    expect(referralFromParams({ ref })).toBeNull();
+    expect(sourceFromParams({ ref })).toBeNull();
+    expect(isReferralCode(ref)).toBe(false);
   });
 
   it("only treats /founding-vendors paths as founding", () => {

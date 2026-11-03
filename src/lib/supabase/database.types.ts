@@ -23,7 +23,10 @@ export type Database = {
           id: string
           invitation_id: string | null
           provider_id: string | null
+          referral_code: string | null
+          referred_by: string | null
           source: string
+          spotlight_posted_at: string | null
           status: string
           submitted_at: string | null
           updated_at: string
@@ -37,7 +40,10 @@ export type Database = {
           id?: string
           invitation_id?: string | null
           provider_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           source?: string
+          spotlight_posted_at?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
@@ -51,7 +57,10 @@ export type Database = {
           id?: string
           invitation_id?: string | null
           provider_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           source?: string
+          spotlight_posted_at?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
@@ -2819,6 +2828,15 @@ export type Database = {
         Args: { p_invitation_id: string }
         Returns: string
       }
+      admin_set_referral_spotlight: {
+        Args: { p_application_id: string; p_posted: boolean }
+        Returns: undefined
+      }
+      my_referral_code: { Args: never; Returns: string }
+      my_referral_stats: {
+        Args: never
+        Returns: { approved: number; joined: number; referral_code: string | null; submitted: number }[]
+      }
       admin_decide_founding_application: {
         Args: { p_application_id: string; p_decision: string; p_note?: string }
         Returns: string
@@ -2866,7 +2884,7 @@ export type Database = {
         Returns: boolean
       }
       claim_founding_vendor_place: {
-        Args: { p_invite_token_hash?: string; p_source?: string }
+        Args: { p_invite_token_hash?: string; p_referral_code?: string; p_source?: string }
         Returns: { application_id: string; created: boolean; invite: string | null; status: string }[]
       }
       founding_vendor_places: {

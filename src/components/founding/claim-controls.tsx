@@ -5,12 +5,23 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { claimFoundingPlace, updateMyFoundingApplication, type FoundingActionState } from "@/lib/actions/founding";
 
-export function ClaimButton({ invite, source, label }: { invite: string | null; source: string | null; label: string }) {
+export function ClaimButton({
+  invite,
+  source,
+  referral = null,
+  label,
+}: {
+  invite: string | null;
+  source: string | null;
+  referral?: string | null;
+  label: string;
+}) {
   const [state, action, pending] = useActionState<FoundingActionState, FormData>(claimFoundingPlace, null);
   return (
     <form action={action} className="grid gap-2">
       {invite && <input type="hidden" name="invite" value={invite} />}
       {source && <input type="hidden" name="source" value={source} />}
+      {referral && <input type="hidden" name="ref" value={referral} />}
       <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto">
         {pending ? "Claiming…" : label}
       </Button>

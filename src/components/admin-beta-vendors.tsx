@@ -19,9 +19,10 @@ import {
   sendTestInvitation,
   setBetaProgram,
   setFeedbackStatus,
+  setReferralSpotlight,
   type AdminFoundingState,
 } from "@/lib/actions/admin-founding";
-import type { RecruitmentRow } from "@/lib/data/admin-founding";
+import type { BetaAdminData, RecruitmentRow } from "@/lib/data/admin-founding";
 import { VERDICT_LABEL, type ImportReport, type RowVerdict } from "@/lib/founding/import-check";
 import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { categoryLabel, isVendorCategory } from "@/lib/config";
@@ -657,6 +658,70 @@ export function FeedbackList({ items }: { items: FeedbackItem[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+export function ReferralsList({ items }: { items: BetaAdminData["referrals"] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">No founding vendor has opened their invite link yet.</p>;
+  const toggle = (id: string, posted: boolean) =>
+    startTransition(async () => {
+      const res = await setReferralSpotlight(id, posted);
+      setError(res?.error ?? null);
+      router.refresh();
+    });
+  return (
+    <>
+      {error && (
+        <p role="alert" className="mb-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <div className="overflow-x-auto rounded-2xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2">Founding vendor</th>
+              <th className="px-3 py-2 text-right">Joined</th>
+              <th className="px-3 py-2 text-right">Submitted</th>
+              <th className="px-3 py-2 text-right">Approved</th>
+              <th className="px-3 py-2">Instagram spotlight</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((r) => (
+              <tr key={r.applicationId}>
+                <td className="px-3 py-2">
+                  <span className="font-medium">{r.name}</span>
+                  <code className="ml-2 text-xs text-muted-foreground">{r.code}</code>
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.joined}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.submitted}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{r.approved}</td>
+                <td className="px-3 py-2">
+                  {r.spotlightPostedAt ? (
+                    <span className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-success">Posted {fmt(r.spotlightPostedAt)}</span>
+                      <Button size="xs" variant="ghost" disabled={pending} onClick={() => toggle(r.applicationId, false)}>
+                        Undo
+                      </Button>
+                    </span>
+                  ) : r.spotlightDue ? (
+                    <Button size="sm" disabled={pending} onClick={() => toggle(r.applicationId, true)}>
+                      Mark spotlight posted
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Due after their first approved invitee</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

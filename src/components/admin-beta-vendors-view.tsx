@@ -6,6 +6,7 @@ import {
   ContactsTable,
   CopyLink,
   FeedbackList,
+  ReferralsList,
   WaitlistImport,
 } from "@/components/admin-beta-vendors";
 import type { BetaAdminData } from "@/lib/data/admin-founding";
@@ -103,6 +104,7 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
         <Stat label="Completed onboarding" value={stats.onboardingCompleted} sub="Approved + profile 100%" />
         <Stat label="Reminders" value={`${stats.remindersDue} due`} sub={`${stats.remindersSent} sent · one per invitation, after 3 days`} urgent={stats.remindersDue > 0} />
         <Stat label="New feedback" value={stats.newFeedback} urgent={stats.newFeedback > 0} />
+        <Stat label="Referrals" value={stats.referred} sub={`${stats.spotlightsDue} Instagram spotlight${stats.spotlightsDue === 1 ? "" : "s"} due`} urgent={stats.spotlightsDue > 0} />
       </dl>
       <p className="mb-8 text-xs">
         <a href="/admin/beta-vendors/export" className="font-medium underline underline-offset-2">
@@ -182,6 +184,14 @@ export function BetaVendorsView({ data, sending }: { data: BetaAdminData; sendin
             </tbody>
           </table>
         </div>
+      </Section>
+
+      <Section
+        id="referrals"
+        title="Vendor referrals"
+        description="Approved founding vendors each get an invite link on their beta page. The only reward is an Instagram spotlight, due once someone they invited is approved. Post it, then mark it here."
+      >
+        <ReferralsList items={data.referrals} />
       </Section>
 
       <Section id="feedback" title="Beta feedback and bug reports">

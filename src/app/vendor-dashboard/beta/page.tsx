@@ -6,7 +6,8 @@ import { requireVendor } from "@/lib/data/user";
 import { getMyFoundingStatus } from "@/lib/data/founding";
 import { createClient } from "@/lib/supabase/server";
 import { BetaFeedbackForm } from "@/components/founding/beta-feedback-form";
-import { CLAIM_PATH } from "@/lib/founding/sources";
+import { CLAIM_PATH, referralLink } from "@/lib/founding/sources";
+import { ReferralCard } from "@/components/founding/referral-card";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default async function VendorBetaPage() {
   if (!application || application.status !== "approved") redirect(CLAIM_PATH);
 
   const supabase = await createClient();
-  const [{ count: quotesSent }, { count: bookings }, { data: myFeedback }] = await Promise.all([
+  const [{ count: quotesSent }, { count: bookings }, { data: myFeedback }, { data: referralCode }, { data: referralStats }] = await Promise.all([
     supabase
       .from("quote_requests")
       .select("id", { count: "exact", head: true })
@@ -31,7 +32,10 @@ export default async function VendorBetaPage() {
       .not("responded_at", "is", null),
     supabase.from("bookings").select("id", { count: "exact", head: true }).eq("provider_owner_user_id", session.user.id),
     supabase.from("beta_feedback").select("id, kind, message, status, created_at").order("created_at", { ascending: false }).limit(10),
+    supabase.rpc("my_referral_code"),
+    supabase.rpc("my_referral_stats"),
   ]);
+  const referral = referralStats?.[0];
 
   const listingDone = (status?.checklist ?? []).filter((c) => c.key !== "abn").every((c) => c.done);
   const listingId = status?.listing?.id;
@@ -78,6 +82,18 @@ export default async function VendorBetaPage() {
           ))}
         </ul>
       </section>
+
+      {referralCode && (
+        <section id="invite" aria-labelledby="invite-heading" className="mb-10 scroll-mt-24">
+          <h2 id="invite-heading" className="mb-3 text-lg font-semibold">
+            Invite other vendors
+          </h2>
+          <ReferralCard
+            link={referralLink(referralCode)}
+            stats={{ joined: referral?.joined ?? 0, submitted: referral?.submitted ?? 0, approved: referral?.approved ?? 0 }}
+          />
+        </section>
+      )}
 
       <section id="feedback" aria-labelledby="feedback-heading" className="mb-10 scroll-mt-24">
         <h2 id="feedback-heading" className="mb-1 text-lg font-semibold">
