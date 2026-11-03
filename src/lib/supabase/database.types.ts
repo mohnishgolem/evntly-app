@@ -212,6 +212,129 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_prospect_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          from_stage: string | null
+          id: number
+          note: string | null
+          prospect_id: string
+          to_stage: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          from_stage?: string | null
+          id?: number
+          note?: string | null
+          prospect_id: string
+          to_stage?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          from_stage?: string | null
+          id?: number
+          note?: string | null
+          prospect_id?: string
+          to_stage?: string | null
+        }
+        Relationships: []
+      }
+      vendor_prospects: {
+        Row: {
+          business_name: string
+          business_name_normalized: string | null
+          category: string | null
+          consent_basis: string
+          consent_note: string | null
+          contacted_at: string | null
+          created_at: string
+          created_by: string | null
+          do_not_contact: boolean
+          do_not_contact_at: string | null
+          do_not_contact_reason: string | null
+          email: string | null
+          email_normalized: string | null
+          follow_up_count: number
+          id: string
+          instagram: string | null
+          last_contacted_at: string | null
+          lead_quality: string
+          next_follow_up_at: string | null
+          notes: string | null
+          phone: string | null
+          replied_at: string | null
+          source_url: string | null
+          stage: string
+          suburb: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          business_name_normalized?: string | null
+          category?: string | null
+          consent_basis?: string
+          consent_note?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          do_not_contact?: boolean
+          do_not_contact_at?: string | null
+          do_not_contact_reason?: string | null
+          email?: string | null
+          email_normalized?: string | null
+          follow_up_count?: number
+          id?: string
+          instagram?: string | null
+          last_contacted_at?: string | null
+          lead_quality?: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          replied_at?: string | null
+          source_url?: string | null
+          stage?: string
+          suburb?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          business_name_normalized?: string | null
+          category?: string | null
+          consent_basis?: string
+          consent_note?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          do_not_contact?: boolean
+          do_not_contact_at?: string | null
+          do_not_contact_reason?: string | null
+          email?: string | null
+          email_normalized?: string | null
+          follow_up_count?: number
+          id?: string
+          instagram?: string | null
+          last_contacted_at?: string | null
+          lead_quality?: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          replied_at?: string | null
+          source_url?: string | null
+          stage?: string
+          suburb?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       vendor_waitlist: {
         Row: {
           business_name: string | null
@@ -2827,6 +2950,18 @@ export type Database = {
       admin_cancel_beta_send: {
         Args: { p_invitation_id: string }
         Returns: string
+      }
+      admin_import_prospects: {
+        Args: { p_commit?: boolean; p_rows: Json }
+        Returns: { row_index: number; verdict: string }[]
+      }
+      admin_prospect_action: {
+        Args: { p_action: string; p_note?: string; p_prospect_id: string }
+        Returns: string
+      }
+      admin_set_prospect_consent: {
+        Args: { p_basis: string; p_note?: string; p_prospect_id: string }
+        Returns: undefined
       }
       admin_set_referral_spotlight: {
         Args: { p_application_id: string; p_posted: boolean }
