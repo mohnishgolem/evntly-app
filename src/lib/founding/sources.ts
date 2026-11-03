@@ -8,6 +8,7 @@ export const FOUNDING_SOURCES = [
   { value: "instagram_dm", label: "Instagram DMs", utm: { source: "instagram", medium: "dm" } },
   { value: "waitlist_email", label: "Waitlist email", utm: { source: "waitlist", medium: "email" } },
   { value: "direct_outreach", label: "Direct outreach", utm: { source: "outreach", medium: "direct" } },
+  { value: "referral", label: "Vendor referral", utm: null },
   { value: "direct", label: "Direct / other", utm: null },
 ] as const;
 
@@ -22,6 +23,27 @@ export const CLAIM_PATH = "/founding-vendors/claim";
 
 /** Cookie that remembers the source between the landing page and claiming. */
 export const SOURCE_COOKIE = "evntly_fv_src";
+/** Cookie that remembers a founding vendor's referral code (?ref=) until claiming. */
+export const REF_COOKIE = "evntly_fv_ref";
+
+/** Referral codes are 8–12 lowercase letters/digits (see the referrals migration). */
+export function isReferralCode(value: unknown): value is string {
+  return typeof value === "string" && /^[a-z0-9]{8,12}$/.test(value);
+}
+
+/** The referral code from ?ref=, normalised, or null. */
+export function referralFromParams(params: Record<string, string | string[] | undefined>): string | null {
+  const raw = Array.isArray(params.ref) ? params.ref[0] : params.ref;
+  const code = raw?.trim().toLowerCase();
+  return isReferralCode(code) ? code : null;
+}
+
+/** An approved founding vendor's shareable invite link. */
+export function referralLink(code: string, base = SITE_URL) {
+  const url = new URL(FOUNDING_PATH, base);
+  url.searchParams.set("ref", code);
+  return url.toString();
+}
 
 export function isFoundingSource(value: unknown): value is FoundingSource {
   return FOUNDING_SOURCES.some((s) => s.value === value);
@@ -38,6 +60,7 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 export function sourceFromParams(params: Params): FoundingSource | null {
   const src = first(params.src);
   if (isFoundingSource(src)) return src;
+  if (referralFromParams(params)) return "referral";
   const source = first(params.utm_source);
   const medium = first(params.utm_medium);
   if (!source) return null;

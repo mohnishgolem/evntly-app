@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { getFoundingPlaces } from "@/lib/data/founding";
-import { CLAIM_PATH, sourceFromParams } from "@/lib/founding/sources";
+import { CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -68,13 +68,17 @@ export default async function FoundingVendorsPage({
 }) {
   const params = await searchParams;
   const source = sourceFromParams(params);
+  const referral = referralFromParams(params);
   const places = await getFoundingPlaces();
   const full = places ? places.remaining <= 0 : false;
-  const claimHref = source ? `${CLAIM_PATH}?src=${source}` : CLAIM_PATH;
+  const claimQuery = new URLSearchParams();
+  if (source) claimQuery.set("src", source);
+  if (referral) claimQuery.set("ref", referral);
+  const claimHref = claimQuery.size ? `${CLAIM_PATH}?${claimQuery}` : CLAIM_PATH;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
-      <SourceCookie source={source} />
+      <SourceCookie source={source} referral={referral} />
 
       <header className="mx-auto max-w-2xl text-center">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">Private beta · {LAUNCH_CITY}</p>

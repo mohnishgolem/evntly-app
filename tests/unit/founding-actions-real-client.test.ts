@@ -64,13 +64,19 @@ const adminClient = realClient("service-role-test-key");
 
 let adminSession: { admin: boolean; mfa: string } = { admin: true, mfa: "ok" };
 let cookieSource: string | undefined;
+let cookieRef: string | undefined;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => userClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => adminClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
-  cookies: async () => ({ get: (name: string) => (name === "evntly_fv_src" && cookieSource ? { value: cookieSource } : undefined) }),
+  cookies: async () => ({
+    get: (name: string) => {
+      const value = name === "evntly_fv_src" ? cookieSource : name === "evntly_fv_ref" ? cookieRef : undefined;
+      return value ? { value } : undefined;
+    },
+  }),
 }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: vi.fn(async () => true),
@@ -87,7 +93,7 @@ vi.mock("@/lib/data/user", () => ({
 }));
 
 const { claimFoundingPlace, joinVendorWaitlist, unsubscribeFromInvites } = await import("@/lib/actions/founding");
-const { sendInvitations, sendReminders, sendDueReminders, sendTestInvitation, decideApplication, importWaitlist, scheduleInvitationCampaign, cancelScheduledSends } = await import(
+const { sendInvitations, sendReminders, sendDueReminders, sendTestInvitation, decideApplication, importWaitlist, scheduleInvitationCampaign, cancelScheduledSends, setReferralSpotlight } = await import(
   "@/lib/actions/admin-founding"
 );
 
@@ -106,6 +112,7 @@ beforeEach(() => {
   signedIn = { id: "22222222-2222-4222-8222-222222222222", email: "jane@photo.com.au" };
   adminSession = { admin: true, mfa: "ok" };
   cookieSource = undefined;
+  cookieRef = undefined;
   resendStatus = 200;
   prepareError = null;
   tableRows = {};
@@ -139,6 +146,42 @@ describe("claimFoundingPlace", () => {
     cookieSource = "instagram_dm";
     await claimFoundingPlace(null, form({ invite: "preview", source: "evil" }));
     expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "instagram_dm" });
+  });
+
+  it("passes a referral code from the link, normalised", async () => {
+    await claimFoundingPlace(null, form({ source: "referral", ref: " AB12CD34EF " }));
+    expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "referral", p_referral_code: "ab12cd34ef" });
+  });
+
+  it("falls back to the remembered referral cookie and drops malformed codes", async () => {
+    cookieRef = "zz99yy88xx";
+    await claimFoundingPlace(null, form({ ref: "x'; drop table" }));
+    expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "direct", p_referral_code: "zz99yy88xx" });
+    calls.length = 0;
+    cookieRef = "short";
+    await claimFoundingPlace(null, form({}));
+    expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "direct" });
+  });
+});
+
+describe("setReferralSpotlight", () => {
+  const APP = "33333333-3333-4333-8333-333333333333";
+  it("refuses non-admins and admins without MFA", async () => {
+    adminSession = { admin: true, mfa: "required" };
+    expect((await setReferralSpotlight(APP, true))?.error).toMatch(/Not authorized/);
+    adminSession = { admin: false, mfa: "ok" };
+    expect((await setReferralSpotlight(APP, true))?.error).toMatch(/Not authorized/);
+    expect(rpc("admin_set_referral_spotlight")).toHaveLength(0);
+  });
+
+  it("goes through the audited RPC", async () => {
+    expect((await setReferralSpotlight(APP, true))?.success).toBe(true);
+    expect(rpc("admin_set_referral_spotlight")[0].body).toEqual({ p_application_id: APP, p_posted: true });
+  });
+
+  it("rejects malformed ids without calling the database", async () => {
+    expect((await setReferralSpotlight("not-an-id", true))?.error).toMatch(/Unknown/);
+    expect(rpc("admin_set_referral_spotlight")).toHaveLength(0);
   });
 });
 

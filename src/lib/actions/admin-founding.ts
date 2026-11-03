@@ -583,3 +583,14 @@ export async function setFeedbackStatus(id: string, status: "new" | "reviewed" |
   revalidatePath(PATH);
   return { success: true };
 }
+
+/** Records (or undoes) a referrer's Instagram spotlight. Audit-logged in the database. */
+export async function setReferralSpotlight(applicationId: string, posted: boolean): Promise<AdminFoundingState> {
+  if (!(await requireAdmin())) return { error: "Not authorized." };
+  if (typeof applicationId !== "string" || !/^[0-9a-f-]{36}$/i.test(applicationId)) return { error: "Unknown application." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_referral_spotlight", { p_application_id: applicationId, p_posted: posted === true });
+  if (error) return { error: error.message };
+  revalidatePath(PATH);
+  return { success: true };
+}

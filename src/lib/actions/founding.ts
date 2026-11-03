@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailAdmins, emailApplicationReceived } from "@/lib/founding/notify";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { hashInviteToken, looksLikeInviteToken } from "@/lib/founding/tokens";
-import { CLAIM_PATH, isFoundingSource, SOURCE_COOKIE } from "@/lib/founding/sources";
+import { CLAIM_PATH, isFoundingSource, isReferralCode, REF_COOKIE, SOURCE_COOKIE } from "@/lib/founding/sources";
 import { isVendorCategory } from "@/lib/config";
 
 export type FoundingActionState = { error?: string; success?: boolean; message?: string } | null;
@@ -25,12 +25,18 @@ export async function claimFoundingPlace(_prev: FoundingActionState, formData: F
 
   const invite = formData.get("invite")?.toString();
   const formSource = formData.get("source")?.toString();
-  const cookieSource = (await cookies()).get(SOURCE_COOKIE)?.value;
+  const jar = await cookies();
+  const cookieSource = jar.get(SOURCE_COOKIE)?.value;
   const source = isFoundingSource(formSource) ? formSource : isFoundingSource(cookieSource) ? cookieSource : "direct";
+  // Referral code from the link, else remembered from the landing page.
+  const formRef = formData.get("ref")?.toString().trim().toLowerCase();
+  const cookieRef = jar.get(REF_COOKIE)?.value?.trim().toLowerCase();
+  const referral = isReferralCode(formRef) ? formRef : isReferralCode(cookieRef) ? cookieRef : undefined;
 
   const { data, error } = await supabase.rpc("claim_founding_vendor_place", {
     p_invite_token_hash: looksLikeInviteToken(invite) ? hashInviteToken(invite) : undefined,
     p_source: source,
+    ...(referral ? { p_referral_code: referral } : {}),
   });
   if (error || !data?.[0]) {
     console.error("[founding] claim failed:", error?.message);

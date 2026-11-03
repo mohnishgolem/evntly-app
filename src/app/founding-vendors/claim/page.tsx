@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { getFoundingPlaces, getMyFoundingStatus } from "@/lib/data/founding";
 import { createClient } from "@/lib/supabase/server";
 import { hashInviteToken, looksLikeInviteToken } from "@/lib/founding/tokens";
-import { CLAIM_PATH, FOUNDING_PATH, sourceFromParams, type FoundingSource } from "@/lib/founding/sources";
+import { CLAIM_PATH, FOUNDING_PATH, referralFromParams, sourceFromParams, type FoundingSource } from "@/lib/founding/sources";
 import { MIN_PHOTOS } from "@/lib/profile-completeness";
 
 export const metadata: Metadata = {
@@ -29,6 +29,7 @@ export default async function ClaimPage({
   const rawInvite = typeof params.invite === "string" ? params.invite : null;
   const invite = looksLikeInviteToken(rawInvite) ? rawInvite : null;
   const source: FoundingSource | null = sourceFromParams(params) ?? (invite ? "waitlist_email" : null);
+  const referral = referralFromParams(params);
 
   const supabase = await createClient();
   let inviteState: InviteState | null = rawInvite === "preview" ? "preview" : rawInvite ? "invalid" : null;
@@ -44,6 +45,7 @@ export default async function ClaimPage({
   const back = new URLSearchParams();
   if (invite) back.set("invite", invite);
   if (source) back.set("src", source);
+  if (referral) back.set("ref", referral);
   const returnPath = back.size ? `${CLAIM_PATH}?${back}` : CLAIM_PATH;
 
   const [session, places] = await Promise.all([getCurrentUser(), getFoundingPlaces()]);
@@ -51,11 +53,11 @@ export default async function ClaimPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10 sm:py-14">
-      <SourceCookie source={source} />
+      <SourceCookie source={source} referral={referral} />
       {!session ? (
         <SignedOut inviteState={inviteState} invitee={invitee} returnPath={returnPath} full={full} />
       ) : (
-        <SignedIn invite={invite} inviteState={inviteState} invitee={invitee} source={source} full={full} email={session.user.email ?? null} />
+        <SignedIn invite={invite} inviteState={inviteState} invitee={invitee} source={source} referral={referral} full={full} email={session.user.email ?? null} />
       )}
     </div>
   );
@@ -162,6 +164,7 @@ async function SignedIn({
   inviteState,
   invitee,
   source,
+  referral,
   full,
   email,
 }: {
@@ -169,6 +172,7 @@ async function SignedIn({
   inviteState: InviteState | null;
   invitee: { maskedEmail: string | null; firstName: string | null } | null;
   source: FoundingSource | null;
+  referral: string | null;
   full: boolean;
   email: string | null;
 }) {
@@ -187,7 +191,7 @@ async function SignedIn({
         </p>
         <InviteNotice state={inviteState} invitee={invitee} signedIn />
         {full && <FullNotice />}
-        <ClaimButton invite={invite} source={source} label={listing ? "Apply with my listing" : "Claim my place"} />
+        <ClaimButton invite={invite} source={source} referral={referral} label={listing ? "Apply with my listing" : "Claim my place"} />
         {email && <p className="mt-3 text-xs text-muted-foreground">Signed in as {email}.</p>}
         {!listing && <WhatYouNeed />}
       </>
