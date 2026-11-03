@@ -278,7 +278,7 @@ export function VendorSignupWizard() {
             <p id="abn-help" className="text-xs text-muted-foreground">
               {draft.abn && !isValidAbn(draft.abn)
                 ? "That doesn't look like a valid ABN. Check it at abr.business.gov.au."
-                : "Required to list on Evntly. It's shown on your listing and on booking invoices."}
+                : "Required to list on Evntly. It's shown on your listing and on booking invoices. Don't have one? Applying is free at abr.gov.au."}
             </p>
           </div>
           <div className="flex items-start gap-2">
