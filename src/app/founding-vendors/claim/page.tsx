@@ -140,7 +140,13 @@ function FullNotice() {
 }
 
 function WhatYouNeed() {
-  const items = ["Your business name and category", "Your ABN", "The Sydney areas you service", "A phone number customers can reach", `At least ${MIN_PHOTOS} photos of your work`];
+  // Matches the listing form: phone is optional, photos come after submitting.
+  const items = [
+    "Your business name and category",
+    "Your ABN (don't have one? Applying is free at abr.gov.au)",
+    "A short description, your starting rate and the Sydney areas you service",
+    `At least ${MIN_PHOTOS} photos of your work. You add these after you submit, before we approve your listing`,
+  ];
   return (
     <div className="mt-8 rounded-2xl border border-border p-5">
       <p className="mb-3 font-medium">What you&apos;ll need</p>
