@@ -8,6 +8,8 @@ describe("funnel page views", () => {
     expect(pageViewFor("/plan")).toEqual({ kind: "plan" });
     expect(pageViewFor("/vendor-signup")).toEqual({ kind: "vendor_signup" });
     expect(pageViewFor("/bundles/abc")).toEqual({ kind: "bundles" });
+    expect(pageViewFor("/founding-vendors")).toEqual({ kind: "founding" });
+    expect(pageViewFor("/founding-vendors/claim")).toEqual({ kind: "founding_claim" });
     expect(pageViewFor("/vendor/4e3d8cbe-f7f1-4053-aa6f-bc838c990cd8")).toEqual({
       kind: "vendor",
       vendorId: "4e3d8cbe-f7f1-4053-aa6f-bc838c990cd8",
@@ -15,7 +17,7 @@ describe("funnel page views", () => {
   });
 
   it("ignores private and other pages", () => {
-    for (const p of ["/messages", "/dashboard", "/admin", "/profile", "/vendor/not-an-id", "/vendor-dashboard"]) {
+    for (const p of ["/messages", "/dashboard", "/admin", "/profile", "/vendor/not-an-id", "/vendor-dashboard", "/founding-vendors/unsubscribe"]) {
       expect(pageViewFor(p)).toBeNull();
     }
   });
