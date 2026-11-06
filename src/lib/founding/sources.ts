@@ -8,6 +8,7 @@ export const FOUNDING_SOURCES = [
   { value: "instagram_dm", label: "Instagram DMs", utm: { source: "instagram", medium: "dm" } },
   { value: "waitlist_email", label: "Waitlist email", utm: { source: "waitlist", medium: "email" } },
   { value: "direct_outreach", label: "Direct outreach", utm: { source: "outreach", medium: "direct" } },
+  { value: "meta_ads", label: "Meta ads (paid)", utm: { source: "meta", medium: "paid" } },
   { value: "referral", label: "Vendor referral", utm: null },
   { value: "direct", label: "Direct / other", utm: null },
 ] as const;
@@ -56,6 +57,8 @@ export function sourceLabel(value: string) {
 type Params = Record<string, string | string[] | undefined>;
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.trim().toLowerCase() ?? "";
 
+const PAID_MEDIUMS = new Set(["paid", "paid_social", "paidsocial", "cpc", "ppc", "ad", "ads", "boost"]);
+
 /** Maps ?utm_source=&utm_medium= (or ?src=<source>) to a known source, else null. */
 export function sourceFromParams(params: Params): FoundingSource | null {
   const src = first(params.src);
@@ -64,6 +67,9 @@ export function sourceFromParams(params: Params): FoundingSource | null {
   const source = first(params.utm_source);
   const medium = first(params.utm_medium);
   if (!source) return null;
+  // Paid Instagram/Facebook traffic (boosts and Ads Manager) is its own source,
+  // so ad spend can be judged on its own sign-ups.
+  if (["meta", "facebook", "fb", "instagram", "ig"].includes(source) && PAID_MEDIUMS.has(medium)) return "meta_ads";
   if (source === "instagram" || source === "ig") {
     if (medium.startsWith("story") || medium === "stories") return "instagram_story";
     if (medium === "dm" || medium === "dms") return "instagram_dm";
