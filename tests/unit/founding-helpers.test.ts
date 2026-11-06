@@ -19,6 +19,10 @@ describe("founding sources (UTM)", () => {
     [{ utm_source: "outreach", utm_medium: "direct" }, "direct_outreach"],
     [{ utm_source: "facebook" }, "direct"],
     [{ src: "instagram_dm" }, "instagram_dm"],
+    [{ src: "meta_ads" }, "meta_ads"],
+    [{ utm_source: "meta", utm_medium: "paid" }, "meta_ads"],
+    [{ utm_source: "facebook", utm_medium: "cpc" }, "meta_ads"],
+    [{ utm_source: "instagram", utm_medium: "paid_social" }, "meta_ads"],
     [{ src: "<script>" }, null],
     [{}, null],
   ])("%j → %s", (params, expected) => {
@@ -26,7 +30,7 @@ describe("founding sources (UTM)", () => {
   });
 
   it("share links round-trip to their source", () => {
-    for (const s of ["instagram_bio", "instagram_story", "instagram_dm", "waitlist_email", "direct_outreach"] as const) {
+    for (const s of ["instagram_bio", "instagram_story", "instagram_dm", "waitlist_email", "direct_outreach", "meta_ads"] as const) {
       const url = new URL(foundingShareLink(s));
       expect(url.pathname).toBe("/founding-vendors");
       expect(url.searchParams.get("utm_campaign")).toBe("founding_vendors");
