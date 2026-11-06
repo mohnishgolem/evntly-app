@@ -191,8 +191,14 @@ export default async function FoundingVendorsPage({
   );
 }
 
+// Below this many approved vendors the meter reads as "nobody has joined",
+// which puts vendors off; show the plain line until there's some proof.
+const PLACES_METER_MIN_APPROVED = 5;
+
 function PlacesMeter({ places }: { places: Awaited<ReturnType<typeof getFoundingPlaces>> }) {
-  if (!places) return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
+  if (!places || (places.approved < PLACES_METER_MIN_APPROVED && places.remaining > 0)) {
+    return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
+  }
   const { capacity, approved, remaining } = places;
   const percent = capacity ? Math.min(100, Math.round((approved / capacity) * 100)) : 100;
   return (

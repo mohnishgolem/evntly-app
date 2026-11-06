@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/site/logo";
 
+const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 print:hidden">
@@ -32,6 +34,9 @@ export function SiteFooter() {
             <Link href="/vendor-signup" className="hover:text-foreground">
               List your business
             </Link>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+              Instagram
+            </a>
           </nav>
         </div>
         <p className="text-xs text-muted-foreground">
