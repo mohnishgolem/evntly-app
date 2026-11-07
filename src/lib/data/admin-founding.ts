@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { completenessPercent, profileChecklist } from "@/lib/profile-completeness";
-import { FOUNDING_GOAL, FOUNDING_SOURCES } from "@/lib/founding/sources";
+import { FOUNDING_GOAL } from "@/lib/founding/sources";
+import { sourceFunnel } from "@/lib/founding/source-funnel";
 
 // Everything the Beta Vendors admin page and its CSV export show. Reads use
 // the admin's own session: the beta tables are readable only by
@@ -233,13 +234,11 @@ export async function getBetaAdminData(opts: { serviceClient?: SupabaseClient<Da
     goalPercent: Math.min(100, Math.round((stats.approved / FOUNDING_GOAL) * 1000) / 10),
   };
 
-  const bySource = FOUNDING_SOURCES.map((s) => ({
-    source: s.value,
-    label: s.label,
-    applications: live.filter((a) => a.source === s.value).length,
-    submitted: live.filter((a) => a.source === s.value && a.status !== "started").length,
-    approved: apps.filter((a) => a.source === s.value && a.status === "approved").length,
-  }));
+  const bySource = sourceFunnel(
+    rows
+      .filter((r) => r.applicationId && r.applicationStatus)
+      .map((r) => ({ source: r.source, status: r.applicationStatus!, onboardingPercent: r.onboardingPercent })),
+  );
 
   // Founding vendors who shared their referral link, with what it brought
   // in. A spotlight is due once one of their invitees is approved.

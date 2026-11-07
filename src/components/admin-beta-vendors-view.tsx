@@ -171,7 +171,7 @@ export function BetaVendorsView({
         </Section>
       )}
 
-      <Section id="sources" title="Share links and sources" description="UTM-tagged links to the founding vendor page. Only the source is recorded on each application.">
+      <Section id="sources" title="Share links and sources" description="UTM-tagged links to the founding vendor page, and how far vendors from each source got: claimed, submitted, approved, listing complete. Only the source is recorded on each application.">
         <div className="overflow-x-auto rounded-2xl border border-border">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
@@ -181,6 +181,7 @@ export function BetaVendorsView({
                 <th className="px-3 py-2 text-right">Applied</th>
                 <th className="px-3 py-2 text-right">Submitted</th>
                 <th className="px-3 py-2 text-right">Approved</th>
+                <th className="px-3 py-2 text-right" title="Approved and the profile is 100% complete">Listing complete</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -203,6 +204,7 @@ export function BetaVendorsView({
                     <td className="px-3 py-2 text-right tabular-nums">{s.applications}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{s.submitted}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{s.approved}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{s.complete}</td>
                   </tr>
                 );
               })}
