@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarCheck, FileText, Inbox, MessageCircle, MessagesSquare, ShieldCheck, Store, Users, type LucideIcon } from "lucide-react";
+import { Award, CalendarCheck, Camera, Check, FileText, MessageCircle, Search, Store, Users, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { getFoundingPlaces } from "@/lib/data/founding";
+import { getCurrentUser } from "@/lib/data/user";
+import { navRole } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 import { CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Founding vendors — private beta",
-  description: `We're inviting ${LAUNCH_CITY} event vendors to join Evntly as Founding Vendors. Claim a free vendor account and create your business listing.`,
+  description: `Get found by people planning events in ${LAUNCH_CITY}. Founding Vendors get a free listing, a Founding Vendor badge and first spot in search.`,
   alternates: { canonical: "/founding-vendors" },
   openGraph: {
     title: "Become an Evntly Founding Vendor",
@@ -20,18 +24,20 @@ export const metadata: Metadata = {
 
 type Point = { icon: LucideIcon; title: string; body: string };
 
-const POINTS: Point[] = [
-  { icon: Store, title: "A free account and listing", body: "Claim your free vendor account and set up your business profile, photos, prices and service area." },
-  { icon: ShieldCheck, title: "No subscription fee", body: "There's no subscription fee to take part in the beta." },
-  { icon: Inbox, title: "Test the whole flow", body: "Try enquiries, quotes, bookings and messaging, the same tools customers use to find and book you." },
-  { icon: MessagesSquare, title: "Shape what we build", body: "Tell us what works and what doesn't. Beta vendors can send feedback and report bugs right from their dashboard." },
+// Keep these in step with the Meta ads and Instagram posts: people arrive here
+// expecting exactly these four things. Every one must be real and enforced.
+const PERKS: Point[] = [
+  { icon: Store, title: "Free listing", body: "Your business profile, photos, prices and service area, with no subscription fee during the beta." },
+  { icon: Award, title: "Founding Vendor badge", body: "Shown on your profile, your card in search results and the map." },
+  { icon: Search, title: "Listed first in search", body: "Founding Vendors appear ahead of other vendors in Evntly search results." },
+  { icon: Camera, title: "Featured on @evntly.au", body: "We'll introduce your business on our Instagram when your listing goes live." },
 ];
 
 const STEPS: Point[] = [
   { icon: Users, title: "Claim your account", body: "Sign up, or log in if you already have an Evntly account. You'll confirm your email." },
   { icon: FileText, title: "Create your listing", body: "Business name, category, the Sydney areas you service, contact details and your portfolio." },
   { icon: CalendarCheck, title: "We review it", body: "Our team checks every listing. You'll see your status (Pending, Approved or Needs changes) and we'll email you." },
-  { icon: MessageCircle, title: "Start testing", body: "Once approved, you'll get a short checklist to try listings, leads, quotes and bookings." },
+  { icon: MessageCircle, title: "Go live", body: "Once approved, your listing goes live with the Founding Vendor badge. Tell us what works and what doesn't from your dashboard." },
 ];
 
 const FAQ = [
@@ -69,7 +75,9 @@ export default async function FoundingVendorsPage({
   const params = await searchParams;
   const source = sourceFromParams(params);
   const referral = referralFromParams(params);
-  const places = await getFoundingPlaces();
+  const [places, session] = await Promise.all([getFoundingPlaces(), getCurrentUser()]);
+  const role = navRole(session?.profile?.role, !!session);
+  const hasTabBar = role === "customer" || role === "vendor";
   const full = places ? places.remaining <= 0 : false;
   const claimQuery = new URLSearchParams();
   if (source) claimQuery.set("src", source);
@@ -81,12 +89,24 @@ export default async function FoundingVendorsPage({
       <SourceCookie source={source} referral={referral} />
 
       <header className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-semibold tracking-wide text-primary uppercase">Private beta · {LAUNCH_CITY}</p>
-        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight sm:text-[48px]">Become an Evntly Founding Vendor</h1>
+        <p className="text-sm font-semibold tracking-wide text-primary uppercase">Founding Vendors · {LAUNCH_CITY}</p>
+        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight sm:text-[48px]">
+          Get found by people planning events in {LAUNCH_CITY}
+        </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">
-          We&apos;re inviting {LAUNCH_CITY} event vendors to join Evntly as Founding Vendors. Claim a free vendor account, create your
-          business listing and help shape how customers discover and book event services.
+          Join Evntly as a Founding Vendor. Your free listing takes about 10 minutes.
         </p>
+
+        <ul className="mx-auto mt-6 grid max-w-md gap-2.5 text-left text-[16px]">
+          {PERKS.map((p) => (
+            <li key={p.title} className="flex items-center gap-3">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Check className="size-4" strokeWidth={3} aria-hidden />
+              </span>
+              <span className="font-medium">{p.title}</span>
+            </li>
+          ))}
+        </ul>
 
         <PlacesMeter places={places} />
 
@@ -94,7 +114,7 @@ export default async function FoundingVendorsPage({
           {full ? (
             <Button size="lg" nativeButton={false} render={<a href="#waitlist">Join the Waitlist</a>} />
           ) : (
-            <Button size="lg" nativeButton={false} render={<Link href={claimHref}>Claim Your Free Vendor Account</Link>} />
+            <Button size="lg" nativeButton={false} render={<Link href={claimHref}>{CLAIM_LABEL}</Link>} />
           )}
           <Button size="lg" variant="outline" nativeButton={false} render={<a href="#how-it-works">How it works</a>} />
         </div>
@@ -108,21 +128,24 @@ export default async function FoundingVendorsPage({
 
       <section aria-labelledby="what-heading" className="mt-16">
         <h2 id="what-heading" className="text-2xl font-bold tracking-tight sm:text-[32px]">
-          What&apos;s included
+          What Founding Vendors get
         </h2>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-          {POINTS.map((p) => (
-            <li key={p.title} className="flex gap-4 rounded-2xl bg-secondary p-5">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary shadow-sm">
-                <p.icon className="size-[22px]" strokeWidth={1.75} aria-hidden />
-              </span>
-              <span>
-                <span className="block text-[17px] font-semibold">{p.title}</span>
-                <span className="mt-1 block text-[15px] leading-relaxed text-muted-foreground">{p.body}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {PERKS.map((p) => (
+              <li key={p.title} className="flex gap-4 rounded-2xl bg-secondary p-5">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary shadow-sm">
+                  <p.icon className="size-[22px]" strokeWidth={1.75} aria-hidden />
+                </span>
+                <span>
+                  <span className="block text-[17px] font-semibold">{p.title}</span>
+                  <span className="mt-1 block text-[15px] leading-relaxed text-muted-foreground">{p.body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <BadgePreview />
+        </div>
       </section>
 
       <section id="how-it-works" aria-labelledby="how-heading" className="mt-16 scroll-mt-24">
@@ -145,7 +168,7 @@ export default async function FoundingVendorsPage({
         </ol>
         {!full && (
           <div className="mt-6">
-            <Button size="lg" className="w-full sm:w-auto" nativeButton={false} render={<Link href={claimHref}>Claim Your Free Vendor Account</Link>} />
+            <Button size="lg" className="w-full sm:w-auto" nativeButton={false} render={<Link href={claimHref}>{CLAIM_LABEL}</Link>} />
           </div>
         )}
       </section>
@@ -187,7 +210,49 @@ export default async function FoundingVendorsPage({
           hello@evntlyapp.com
         </a>
       </p>
+
+      {!full && <StickyClaim href={claimHref} hasTabBar={hasTabBar} />}
     </div>
+  );
+}
+
+const CLAIM_LABEL = "Claim my free listing";
+
+// Phones: the hero button scrolls away fast, so keep it in reach. Sits above
+// the tab bar for signed-in customers and vendors (same offset as the
+// vendor profile's booking bar).
+function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) {
+  return (
+    <>
+      <div aria-hidden className="h-20 sm:hidden print:hidden" />
+      <div
+        className={cn(
+          "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden print:hidden",
+          hasTabBar
+            ? "bottom-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))]"
+            : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        )}
+      >
+        <Button size="lg" className="w-full" nativeButton={false} render={<Link href={href}>{CLAIM_LABEL}</Link>} />
+      </div>
+    </>
+  );
+}
+
+// What the badge looks like on a listing. Clearly labelled as an example so
+// it isn't read as a real vendor.
+function BadgePreview() {
+  return (
+    <figure className="rounded-2xl border border-border p-4">
+      <div className="relative aspect-[5/2] overflow-hidden rounded-xl bg-gradient-to-br lg:aspect-[4/3] from-secondary to-muted">
+        <FoundingBadge className="absolute top-3 left-3" />
+      </div>
+      <div className="mt-3">
+        <p className="text-[17px] font-semibold">Your business name</p>
+        <p className="text-[15px] text-muted-foreground">Photographer · Parramatta</p>
+      </div>
+      <figcaption className="mt-3 text-xs text-muted-foreground">Example: how the badge appears on your listing.</figcaption>
+    </figure>
   );
 }
 
