@@ -41,6 +41,9 @@ const signupSchema = z.object({
   marketingOptIn: z.string().nullable(),
 });
 
+const WEAK_PASSWORD_MESSAGE =
+  "That password has shown up in a data breach, so it isn't safe to use. Try a longer one, like three random words.";
+
 export type AuthFormState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
@@ -103,6 +106,11 @@ export async function signup(
   });
 
   if (error) {
+    // Supabase rejects passwords found in known data breaches (leaked
+    // password protection). Show it on the password field, in plain words.
+    if (error.code === "weak_password") {
+      return { fieldErrors: { password: [WEAK_PASSWORD_MESSAGE] } };
+    }
     return { error: error.message };
   }
 

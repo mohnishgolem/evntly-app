@@ -5,8 +5,16 @@ import { createClient } from "@supabase/supabase-js";
 // REAL Supabase client with only the network faked, so the test sees the
 // redirect_to Supabase Auth actually receives.
 const calls: string[] = [];
+// Set to make Supabase Auth answer the next sign-up with an error.
+let signupFailure: { status: number; body: unknown } | null = null;
 const fakeFetch = vi.fn(async (input: RequestInfo | URL) => {
   calls.push(String(input));
+  if (signupFailure && String(input).includes("/auth/v1/signup")) {
+    return new Response(JSON.stringify(signupFailure.body), {
+      status: signupFailure.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   // Email confirmation on: a user comes back without a session.
   return new Response(JSON.stringify({ id: "u1", email: "new@example.invalid" }), {
     status: 200,
@@ -55,6 +63,32 @@ const redirectTo = () => new URL(new URL(calls.find((u) => u.includes("/auth/v1/
 beforeEach(() => {
   calls.length = 0;
   exchangeError = null;
+  signupFailure = null;
+});
+
+describe("sign-up errors", () => {
+  it("shows a breached/weak password on the password field, in plain words", async () => {
+    // What Supabase returns with leaked-password protection on (seen in prod
+    // auth logs from a Meta-ads visitor on 10 Nov 2026).
+    signupFailure = {
+      status: 422,
+      body: {
+        code: 422,
+        error_code: "weak_password",
+        msg: "Password is known to be weak and easy to guess, please choose a different one.",
+        weak_password: { reasons: ["pwned"] },
+      },
+    };
+    const res = await signup(null, form("vendor"));
+    expect(res?.error).toBeUndefined();
+    expect(res?.fieldErrors?.password?.[0]).toMatch(/data breach/);
+  });
+
+  it("still passes other Supabase errors through", async () => {
+    signupFailure = { status: 400, body: { code: 400, error_code: "email_address_invalid", msg: "Email address is invalid" } };
+    const res = await signup(null, form("customer"));
+    expect(res?.error).toBe("Email address is invalid");
+  });
 });
 
 describe("sign-up confirmation link", () => {
