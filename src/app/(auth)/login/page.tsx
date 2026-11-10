@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { isInAppBrowser } from "@/lib/in-app-browser";
 import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
 import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
@@ -40,7 +42,7 @@ export default async function LoginPage({
         </div>
       )}
       {isBookingReturn(next) && <BookingReturnNote />}
-      <AuthTabs defaultTab="login" next={next} />
+      <AuthTabs defaultTab="login" next={next} inAppBrowser={isInAppBrowser((await headers()).get("user-agent"))} />
     </div>
   );
 }

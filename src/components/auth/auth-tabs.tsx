@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -18,10 +18,13 @@ export function AuthTabs({
   defaultTab = "signup",
   defaultRole = "customer",
   next,
+  inAppBrowser = false,
 }: {
   defaultTab?: "signup" | "login";
   defaultRole?: "customer" | "vendor";
   next?: string;
+  /** Instagram/Facebook's built-in browser, where Google sign-in is blocked. */
+  inAppBrowser?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState(defaultTab);
@@ -43,10 +46,10 @@ export function AuthTabs({
         <TabsTrigger value="login">Log in</TabsTrigger>
       </TabsList>
       <TabsContent value="signup" className="pt-6">
-        <SignupForm defaultRole={defaultRole} next={next} />
+        <SignupForm defaultRole={defaultRole} next={next} inAppBrowser={inAppBrowser} />
       </TabsContent>
       <TabsContent value="login" className="pt-6">
-        <LoginForm next={next} />
+        <LoginForm next={next} inAppBrowser={inAppBrowser} />
       </TabsContent>
     </Tabs>
   );
@@ -58,7 +61,17 @@ const APPLE_SIGN_IN_ENABLED = false;
 
 // Shown on both the signup and login forms — the call's ask was social
 // sign-in "on all form variations", not just one.
-function SocialButtons({ role, next }: { role?: "customer" | "vendor"; next?: string }) {
+function SocialButtons({ role, next, inAppBrowser }: { role?: "customer" | "vendor"; next?: string; inAppBrowser?: boolean }) {
+  // Google blocks sign-in inside Instagram/Facebook's browser, so offer email
+  // only there rather than a button that ends on Google's error page.
+  if (inAppBrowser) {
+    return (
+      <p className="rounded-xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
+        Google sign-in doesn&apos;t work inside Instagram or Facebook. Use your email below, or open this page in Safari or
+        Chrome to use Google.
+      </p>
+    );
+  }
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
@@ -84,9 +97,17 @@ function SocialButtons({ role, next }: { role?: "customer" | "vendor"; next?: st
   );
 }
 
-function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor"; next?: string }) {
+function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "customer" | "vendor"; next?: string; inAppBrowser?: boolean }) {
   const [state, formAction, pending] = useActionState(signup, initialState);
   const [role, setRole] = useState(defaultRole);
+  // Controlled, and submitted via onSubmit rather than <form action>, so a
+  // server-side error (e.g. a breached password) doesn't wipe what they typed
+  // or untick the agreements: React resets a form after every form action.
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToVendor, setAgreedToVendor] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
 
   if (state?.needsEmailConfirmation) {
     return (
@@ -124,15 +145,30 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
         </button>
       </div>
 
-      <SocialButtons role={role} next={next} />
+      <SocialButtons role={role} next={next} inAppBrowser={inAppBrowser} />
 
-      <form action={formAction} className="space-y-4">
+      <form
+        className="space-y-4"
+        onSubmit={(e: FormEvent<HTMLFormElement>) => {
+          e.preventDefault();
+          const data = new FormData(e.currentTarget);
+          startTransition(() => formAction(data));
+        }}
+      >
       <input type="hidden" name="role" value={role} />
       {next && <input type="hidden" name="next" value={next} />}
 
       <div className="space-y-1.5">
         <Label htmlFor="fullName">Full name</Label>
-        <Input id="fullName" name="fullName" placeholder="Jane Smith" required />
+        <Input
+          id="fullName"
+          name="fullName"
+          placeholder="Jane Smith"
+          autoComplete="name"
+          required
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+        />
         {state?.fieldErrors?.fullName && (
           <p className="text-sm text-destructive">{state.fieldErrors.fullName[0]}</p>
         )}
@@ -140,7 +176,16 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
 
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         {state?.fieldErrors?.email && (
           <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
         )}
@@ -148,9 +193,24 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
 
       <div className="space-y-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" required />
-        {state?.fieldErrors?.password && (
-          <p className="text-sm text-destructive">{state.fieldErrors.password[0]}</p>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
+          required
+          aria-describedby="password-hint"
+          aria-invalid={!!state?.fieldErrors?.password || undefined}
+        />
+        {state?.fieldErrors?.password ? (
+          <p id="password-hint" role="alert" className="text-sm text-destructive">
+            {state.fieldErrors.password[0]}
+          </p>
+        ) : (
+          <p id="password-hint" className="text-xs text-muted-foreground">
+            At least 8 characters. Common or leaked passwords are blocked, so three random words works well.
+          </p>
         )}
       </div>
 
@@ -159,7 +219,15 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
       <fieldset className="space-y-3">
         <legend className="sr-only">Agreements</legend>
         <div className="flex items-start gap-2">
-          <Checkbox aria-labelledby="agreedToTerms-label" id="agreedToTerms" name="agreedToTerms" required aria-describedby="privacy-notice" />
+          <Checkbox
+            aria-labelledby="agreedToTerms-label"
+            id="agreedToTerms"
+            name="agreedToTerms"
+            required
+            aria-describedby="privacy-notice"
+            checked={agreedToTerms}
+            onCheckedChange={(v) => setAgreedToTerms(v === true)}
+          />
           <Label id="agreedToTerms-label" htmlFor="agreedToTerms" className="text-sm leading-snug font-normal text-muted-foreground">
             <span>
               I agree to Evntly&apos;s{" "}
@@ -181,7 +249,14 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
         {role === "vendor" && (
           <>
             <div className="flex items-start gap-2">
-              <Checkbox aria-labelledby="agreedToVendorAgreement-label" id="agreedToVendorAgreement" name="agreedToVendorAgreement" required />
+              <Checkbox
+                aria-labelledby="agreedToVendorAgreement-label"
+                id="agreedToVendorAgreement"
+                name="agreedToVendorAgreement"
+                required
+                checked={agreedToVendor}
+                onCheckedChange={(v) => setAgreedToVendor(v === true)}
+              />
               <Label id="agreedToVendorAgreement-label" htmlFor="agreedToVendorAgreement" className="text-sm leading-snug font-normal text-muted-foreground">
                 <span>
                   I agree to the{" "}
@@ -203,7 +278,13 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
         )}
 
         <div className="flex items-start gap-2">
-          <Checkbox aria-labelledby="marketingOptIn-label" id="marketingOptIn" name="marketingOptIn" />
+          <Checkbox
+            aria-labelledby="marketingOptIn-label"
+            id="marketingOptIn"
+            name="marketingOptIn"
+            checked={marketingOptIn}
+            onCheckedChange={(v) => setMarketingOptIn(v === true)}
+          />
           <Label id="marketingOptIn-label" htmlFor="marketingOptIn" className="text-sm leading-snug font-normal text-muted-foreground">
             {MARKETING_CONSENT_LABEL}
           </Label>
@@ -219,7 +300,11 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
         </p>
       </fieldset>
 
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      {state?.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {state.error}
+        </p>
+      )}
 
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Creating account…" : "Sign up"}
@@ -229,12 +314,12 @@ function SignupForm({ defaultRole, next }: { defaultRole: "customer" | "vendor";
   );
 }
 
-function LoginForm({ next }: { next?: string }) {
+function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boolean }) {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
     <div className="space-y-4">
-      <SocialButtons next={next} />
+      <SocialButtons next={next} inAppBrowser={inAppBrowser} />
       <form action={formAction} className="space-y-4">
         {next && <input type="hidden" name="next" value={next} />}
         <div className="space-y-1.5">
