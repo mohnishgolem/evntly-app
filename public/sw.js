@@ -15,12 +15,19 @@ const STATIC_LIMIT = 300;
 // Older copies go to the network instead (they'd mostly be a different deploy).
 const SHELL_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
+// On a dev server, chunk URLs are reused across code edits, so a cached chunk
+// goes stale and the page hydrates with old code (seen as hydration errors
+// after copy changes). Cache nothing there; push notifications still work.
+const host = self.location.hostname;
+const IS_LOCAL_DEV =
+  host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.endsWith(".localhost");
+
 self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const keep = [SHELL_CACHE, STATIC_CACHE];
+      const keep = IS_LOCAL_DEV ? [] : [SHELL_CACHE, STATIC_CACHE];
       for (const key of await caches.keys()) {
         if (!keep.includes(key)) await caches.delete(key);
       }
@@ -86,7 +93,7 @@ async function staticAsset(request) {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET") return;
+  if (IS_LOCAL_DEV || request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
