@@ -1,5 +1,7 @@
 "use server";
 
+import { recordFunnelEvent } from "@/lib/funnel-events";
+
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -106,6 +108,7 @@ export async function signup(
   });
 
   if (error) {
+    if (role === "vendor") await recordFunnelEvent("signup_error", { detail: error.code ?? "unknown" });
     // Supabase rejects passwords found in known data breaches (leaked
     // password protection). Show it on the password field, in plain words.
     if (error.code === "weak_password") {
@@ -115,6 +118,11 @@ export async function signup(
   }
 
   if (data.user) await recordSignupConsents(data.user.id, role, marketing);
+  // Supabase answers an already-registered email with a user but no
+  // identities (so it doesn't reveal the account exists): not a new account.
+  if (role === "vendor" && data.user && (data.user.identities?.length ?? 0) > 0) {
+    await recordFunnelEvent("account_created", { detail: "email" });
+  }
 
   // When email confirmation is required, signUp succeeds but returns no
   // session — redirecting to a protected page would just bounce the user

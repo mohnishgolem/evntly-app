@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
+import { ClaimLink } from "@/components/founding/claim-link";
 import { getFoundingPlaces } from "@/lib/data/founding";
 import { getCurrentUser } from "@/lib/data/user";
 import { navRole } from "@/lib/nav";
@@ -114,7 +115,7 @@ export default async function FoundingVendorsPage({
           {full ? (
             <Button size="lg" nativeButton={false} render={<a href="#waitlist">Join the Waitlist</a>} />
           ) : (
-            <Button size="lg" nativeButton={false} render={<Link href={claimHref}>{CLAIM_LABEL}</Link>} />
+            <Button size="lg" nativeButton={false} render={<ClaimLink href={claimHref}>{CLAIM_LABEL}</ClaimLink>} />
           )}
           <Button size="lg" variant="outline" nativeButton={false} render={<a href="#how-it-works">How it works</a>} />
         </div>
@@ -168,7 +169,7 @@ export default async function FoundingVendorsPage({
         </ol>
         {!full && (
           <div className="mt-6">
-            <Button size="lg" className="w-full sm:w-auto" nativeButton={false} render={<Link href={claimHref}>{CLAIM_LABEL}</Link>} />
+            <Button size="lg" className="w-full sm:w-auto" nativeButton={false} render={<ClaimLink href={claimHref}>{CLAIM_LABEL}</ClaimLink>} />
           </div>
         )}
       </section>
@@ -233,7 +234,7 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
-        <Button size="lg" className="w-full" nativeButton={false} render={<Link href={href}>{CLAIM_LABEL}</Link>} />
+        <Button size="lg" className="w-full" nativeButton={false} render={<ClaimLink href={href}>{CLAIM_LABEL}</ClaimLink>} />
       </div>
     </>
   );

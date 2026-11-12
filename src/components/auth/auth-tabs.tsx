@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { login, signup, signInWithOAuth, type AuthFormState } from "@/lib/actions/auth";
 import { GoogleIcon, AppleIcon } from "@/components/auth/social-icons";
 import { MARKETING_CONSENT_LABEL } from "@/lib/legal/versions";
+import { trackFunnelEvent } from "@/lib/track-client";
+import { metaPixelTrack } from "@/lib/meta-pixel";
 
 const initialState: AuthFormState = null;
 
@@ -111,6 +113,8 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
 
   if (state?.needsEmailConfirmation) {
     return (
+      <>
+        {role === "vendor" && <CompleteRegistrationPing />}
       <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-6 text-center text-sm">
         <p className="mb-1 font-medium">Check your email</p>
         <p className="text-muted-foreground">
@@ -119,6 +123,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
             : "We sent a confirmation link — click it to activate your account, then log in."}
         </p>
       </div>
+      </>
     );
   }
 
@@ -152,6 +157,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
         onSubmit={(e: FormEvent<HTMLFormElement>) => {
           e.preventDefault();
           const data = new FormData(e.currentTarget);
+          if (role === "vendor") trackFunnelEvent("signup_attempt");
           startTransition(() => formAction(data));
         }}
       >
@@ -350,4 +356,11 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
       </form>
     </div>
   );
+}
+
+// Tells the Meta Pixel a vendor account was created. Does nothing until the
+// pixel is switched on (see lib/meta-pixel.ts).
+function CompleteRegistrationPing() {
+  useEffect(() => metaPixelTrack("CompleteRegistration"), []);
+  return null;
 }

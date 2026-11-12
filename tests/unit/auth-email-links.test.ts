@@ -7,6 +7,9 @@ import { createClient } from "@supabase/supabase-js";
 const calls: string[] = [];
 // Set to make Supabase Auth answer the next sign-up with an error.
 let signupFailure: { status: number; body: unknown } | null = null;
+// Supabase returns identities for a new account and none for an email that's
+// already registered (so it doesn't reveal the account exists).
+let newUserIdentities: unknown[] = [];
 const fakeFetch = vi.fn(async (input: RequestInfo | URL) => {
   calls.push(String(input));
   if (signupFailure && String(input).includes("/auth/v1/signup")) {
@@ -16,7 +19,7 @@ const fakeFetch = vi.fn(async (input: RequestInfo | URL) => {
     });
   }
   // Email confirmation on: a user comes back without a session.
-  return new Response(JSON.stringify({ id: "u1", email: "new@example.invalid" }), {
+  return new Response(JSON.stringify({ id: "u1", email: "new@example.invalid", identities: newUserIdentities }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -36,6 +39,12 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => client }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ origin: "https://evil.example" }) }));
+const funnel: { event: string; detail?: string | null }[] = [];
+vi.mock("@/lib/funnel-events", () => ({
+  recordFunnelEvent: vi.fn(async (event: string, opts: { detail?: string | null } = {}) => {
+    funnel.push({ event, detail: opts.detail });
+  }),
+}));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: vi.fn(async () => true),
   clientIp: vi.fn(async () => "1.2.3.4"),
@@ -64,6 +73,8 @@ beforeEach(() => {
   calls.length = 0;
   exchangeError = null;
   signupFailure = null;
+  funnel.length = 0;
+  newUserIdentities = [];
 });
 
 describe("sign-up errors", () => {
@@ -82,6 +93,22 @@ describe("sign-up errors", () => {
     const res = await signup(null, form("vendor"));
     expect(res?.error).toBeUndefined();
     expect(res?.fieldErrors?.password?.[0]).toMatch(/data breach/);
+    // Counted for the founding funnel, as a code only.
+    expect(funnel).toEqual([{ event: "signup_error", detail: "weak_password" }]);
+  });
+
+  it("counts a new vendor account, but not a repeat sign-up or a customer", async () => {
+    newUserIdentities = [{ id: "i1", provider: "email" }];
+    await signup(null, form("vendor"));
+    expect(funnel).toEqual([{ event: "account_created", detail: "email" }]);
+
+    funnel.length = 0;
+    await signup(null, form("customer"));
+    expect(funnel).toEqual([]);
+
+    newUserIdentities = []; // email already registered
+    await signup(null, form("vendor"));
+    expect(funnel).toEqual([]);
   });
 
   it("still passes other Supabase errors through", async () => {
