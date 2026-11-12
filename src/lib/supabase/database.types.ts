@@ -1873,6 +1873,33 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: number
+          source: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: number
+          source?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: number
+          source?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
@@ -3077,6 +3104,15 @@ export type Database = {
           last_stack: string
           message: string
           occurrences: number
+          source: string
+        }[]
+      }
+      admin_founding_events: {
+        Args: { p_days?: number }
+        Returns: {
+          detail: string
+          event: string
+          n: number
           source: string
         }[]
       }

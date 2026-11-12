@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import { PAGE_VIEW_KINDS, type PageViewKind } from "@/lib/page-views";
+import { CLIENT_FUNNEL_EVENTS, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
 // Same-origin, tiny allow-listed payload, rate-limited per IP; always 204.
@@ -13,10 +14,20 @@ export async function POST(request: NextRequest) {
 
   const raw = await request.text();
   if (!raw || raw.length > 512) return done;
-  let body: { kind?: unknown; visitorId?: unknown; vendorId?: unknown };
+  let body: { kind?: unknown; event?: unknown; visitorId?: unknown; vendorId?: unknown };
   try {
     body = JSON.parse(raw);
   } catch {
+    return done;
+  }
+
+  // Founding funnel steps the browser reports (claim click, sign-up attempt).
+  // The source comes from the evntly_fv_src cookie, not the request body.
+  if (body.event !== undefined) {
+    const visitorId = typeof body.visitorId === "string" ? body.visitorId : "";
+    if (!isFunnelEvent(body.event) || !CLIENT_FUNNEL_EVENTS.includes(body.event) || !/^[A-Za-z0-9-]{8,64}$/.test(visitorId)) return done;
+    if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
+    await recordFunnelEvent(body.event, { visitorId });
     return done;
   }
   const kind = body.kind as PageViewKind;

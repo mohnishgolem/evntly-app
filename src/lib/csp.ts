@@ -11,6 +11,8 @@
 // Styles keep 'unsafe-inline': React style props render as style attributes,
 // and CSS injection is far lower risk than script injection.
 
+import { META_PIXEL_CSP, metaPixelConfigured } from "@/lib/meta-pixel";
+
 const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
   : "";
@@ -25,17 +27,19 @@ const STRIPE_FRAMES = "https://js.stripe.com https://*.js.stripe.com https://hoo
 const STRIPE_CONNECT = "https://api.stripe.com https://checkout.stripe.com";
 const STRIPE_IMAGES = "https://*.stripe.com";
 
-export function buildCsp(nonce: string, isDev = process.env.NODE_ENV === "development") {
+export function buildCsp(nonce: string, isDev = process.env.NODE_ENV === "development", pixel = metaPixelConfigured()) {
+  // Meta Pixel hosts are added only when the pixel is switched on (see lib/meta-pixel.ts).
+  const px = (v: string) => (pixel ? ` ${v}` : "");
   return [
     "default-src 'self'",
     // 'unsafe-eval' only in dev: React uses eval there for error stacks.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${STRIPE_SCRIPTS}${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${STRIPE_SCRIPTS}${px(META_PIXEL_CSP.script)}${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${supabaseOrigin} ${MAP_ORIGIN} ${IMAGE_HOSTS} ${STRIPE_IMAGES}`,
+    `img-src 'self' data: blob: ${supabaseOrigin} ${MAP_ORIGIN} ${IMAGE_HOSTS} ${STRIPE_IMAGES}${px(META_PIXEL_CSP.img)}`,
     // Portfolio videos are served from Supabase storage.
     `media-src 'self' ${supabaseOrigin}`,
     "font-src 'self' data:",
-    `connect-src 'self' ${supabaseOrigin} ${supabaseWs} ${MAP_ORIGIN} ${STRIPE_CONNECT}`,
+    `connect-src 'self' ${supabaseOrigin} ${supabaseWs} ${MAP_ORIGIN} ${STRIPE_CONNECT}${px(META_PIXEL_CSP.connect)}`,
     "worker-src 'self' blob:",
     `frame-src ${STRIPE_FRAMES}`,
     "object-src 'none'",

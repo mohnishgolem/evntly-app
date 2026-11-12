@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { isFoundingPath } from "@/lib/founding/sources";
+import { recordFunnelEvent } from "@/lib/funnel-events";
 import type { AuthNoticeKey } from "@/lib/auth-notices";
 
 // Supabase redirects here after a Google/Apple OAuth sign-in, or after a
@@ -33,6 +34,11 @@ export async function GET(request: Request) {
         } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
+          // Google sign-up from the vendor form: count it once, when the
+          // account is brand new (a returning vendor also comes through here).
+          if (Date.now() - new Date(user.created_at).getTime() < 10 * 60 * 1000) {
+            await recordFunnelEvent("account_created", { detail: "google" });
+          }
         }
         // Founding-vendor sign-ups go back to their claim page.
         const founding = !!next && isFoundingPath(safeNextPath(next));

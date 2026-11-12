@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { ErrorReporter } from "@/components/error-reporter";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { MetaPixel } from "@/components/meta-pixel";
 import { AppShellCache } from "@/components/app-shell-cache";
 import { LegalGate } from "@/components/legal/legal-gate";
 import { OnboardingGate } from "@/components/help/onboarding-gate";
@@ -142,6 +143,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Analytics />
         <ErrorReporter />
         <PageViewTracker />
+        <MetaPixel nonce={nonce} />
         <AppShellCache />
         <Suspense>
           <LegalGate />
