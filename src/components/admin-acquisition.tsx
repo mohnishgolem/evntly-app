@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, useTransition } from "react";
+import { formatSydneyDay } from "@/lib/founding/schedule";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import type { AcquisitionData } from "@/lib/data/admin-acquisition";
 import { cn } from "@/lib/utils";
 
 const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Sydney" }) : "—";
+  formatSydneyDay(iso);
 
 function Notice({ state }: { state: AcquisitionState }) {
   if (!state) return null;

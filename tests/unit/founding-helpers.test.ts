@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
 import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
-import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
+import { formatSydney, formatSydneyDay, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
 import { buildReport, classifyRow, shouldImport, type ContactFacts } from "@/lib/founding/import-check";
@@ -333,7 +333,30 @@ describe("scheduling", () => {
   });
 
   it("formats times for people in Sydney", () => {
-    expect(formatSydney(new Date("2026-11-02T23:10:00Z"))).toMatch(/Tue,? 3 Nov,? 10:10\s?am AEDT/);
+    expect(formatSydney(new Date("2026-11-02T23:10:00Z"))).toBe("Tue 3 Nov, 10:10 am AEDT");
+    expect(formatSydney(new Date("2026-07-01T02:00:00Z"))).toBe("Wed 1 Jul, 12:00 pm AEST");
+    expect(formatSydney(new Date("2026-09-14T14:05:00Z"))).toBe("Tue 15 Sep, 12:05 am AEST");
+  });
+
+  it("labels AEDT/AEST correctly across daylight-saving changeovers", () => {
+    // AEDT starts Sun 4 Oct 2026: 2:00 am AEST jumps to 3:00 am AEDT (16:00Z).
+    expect(formatSydney(new Date("2026-10-03T15:59:59.900Z"))).toBe("Sun 4 Oct, 1:59 am AEST");
+    expect(formatSydney(new Date("2026-10-03T16:00:00Z"))).toBe("Sun 4 Oct, 3:00 am AEDT");
+    // AEDT ends Sun 5 Apr 2026: 3:00 am AEDT falls back to 2:00 am AEST (16:00Z).
+    expect(formatSydney(new Date("2026-04-04T15:59:00Z"))).toBe("Sun 5 Apr, 2:59 am AEDT");
+    expect(formatSydney(new Date("2026-04-04T16:00:00Z"))).toBe("Sun 5 Apr, 2:00 am AEST");
+  });
+
+  it("ignores seconds when working out the zone", () => {
+    expect(formatSydney(new Date("2026-11-02T23:00:59.999Z"))).toBe("Tue 3 Nov, 10:00 am AEDT");
+    expect(formatSydney(new Date("2026-07-01T01:59:59.999Z"))).toBe("Wed 1 Jul, 11:59 am AEST");
+  });
+
+  it("formats Sydney days identically everywhere (no hydration mismatch)", () => {
+    expect(formatSydneyDay("2026-11-02T23:10:00Z")).toBe("3 Nov");
+    expect(formatSydneyDay("2026-09-01T00:00:00Z")).toBe("1 Sep");
+    expect(formatSydneyDay(null)).toBe("—");
+    expect(formatSydneyDay("not a date")).toBe("—");
   });
 
   it("plans the 3 November batches: 10 every 10 minutes", () => {

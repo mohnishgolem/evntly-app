@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatSydneyDay } from "@/lib/founding/schedule";
 import { AdminRiskReview } from "@/components/admin-risk-review";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
 import { signalLabel, type RiskAccount } from "@/lib/risk";
@@ -9,7 +10,7 @@ const LEVEL_STYLE = {
   medium: "bg-champagne/15 text-warning",
   low: "bg-muted text-muted-foreground",
 } as const;
-const date = (iso: string) => new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Sydney" });
+const date = (iso: string) => formatSydneyDay(iso);
 
 export function AdminRiskList({ accounts }: { accounts: RiskAccount[] }) {
   return (

@@ -24,7 +24,7 @@ import {
 } from "@/lib/actions/admin-founding";
 import type { BetaAdminData, RecruitmentRow } from "@/lib/data/admin-founding";
 import { VERDICT_LABEL, type ImportReport, type RowVerdict } from "@/lib/founding/import-check";
-import { formatSydney, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
+import { formatSydney, formatSydneyDay, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { categoryLabel, isVendorCategory } from "@/lib/config";
 import { sourceLabel } from "@/lib/founding/sources";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,7 @@ function Result({ state }: { state: AdminFoundingState }) {
 }
 
 const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Sydney" }) : "—";
+  formatSydneyDay(iso);
 
 export function BetaProgramSettings({
   program,

@@ -20,7 +20,8 @@ function sydneyParts(utc: Date) {
     minute: "2-digit",
   }).formatToParts(utc);
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  return { y: get("year"), m: get("month"), d: get("day"), h: get("hour"), min: get("minute") };
+  // Some engines print midnight as "24" even with hourCycle h23.
+  return { y: get("year"), m: get("month"), d: get("day"), h: get("hour") % 24, min: get("minute") };
 }
 
 /**
@@ -47,17 +48,33 @@ export function sydneyToUtc(date: string, time: string): Date | null {
   return new Date(utc);
 }
 
+// Built from numeric parts with fixed English names, not Intl's text output:
+// Node and Safari ship different ICU data (spacing before "am", "Sep" vs
+// "Sept", "AEDT" vs "GMT+11"), and any difference between the server render
+// and the browser is a React hydration error (#418) in client components.
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 /** "Tue 3 Nov, 10:10 am AEDT" */
 export function formatSydney(utc: Date) {
-  return new Intl.DateTimeFormat("en-AU", {
-    timeZone: SYDNEY_TZ,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(utc);
+  const p = sydneyParts(utc);
+  const wallClock = Date.UTC(p.y, p.m - 1, p.d, p.h, p.min);
+  // Compare whole minutes: seconds in `utc` would otherwise skew the offset.
+  const utcMinute = Math.floor(utc.getTime() / 60_000) * 60_000;
+  const offsetMinutes = (wallClock - utcMinute) / 60_000;
+  const zone = offsetMinutes === 660 ? "AEDT" : "AEST";
+  const weekday = WEEKDAYS[new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay()];
+  const hour12 = p.h % 12 === 0 ? 12 : p.h % 12;
+  const minutes = String(p.min).padStart(2, "0");
+  return `${weekday} ${p.d} ${MONTHS[p.m - 1]}, ${hour12}:${minutes} ${p.h < 12 ? "am" : "pm"} ${zone}`;
+}
+
+/** "3 Nov" in Sydney, identical on server and in every browser; "—" for null. */
+export function formatSydneyDay(iso: string | null, empty = "—") {
+  const date = iso ? new Date(iso) : null;
+  if (!date || Number.isNaN(date.getTime())) return empty;
+  const p = sydneyParts(date);
+  return `${p.d} ${MONTHS[p.m - 1]}`;
 }
 
 export type BatchPlan = { index: number; at: Date; ids: string[] }[];
