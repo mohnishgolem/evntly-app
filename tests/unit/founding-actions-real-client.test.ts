@@ -65,6 +65,7 @@ const adminClient = realClient("service-role-test-key");
 let adminSession: { admin: boolean; mfa: string } = { admin: true, mfa: "ok" };
 let cookieSource: string | undefined;
 let cookieRef: string | undefined;
+let cookieCampaign: string | undefined;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => userClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => adminClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -73,7 +74,8 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
   cookies: async () => ({
     get: (name: string) => {
-      const value = name === "evntly_fv_src" ? cookieSource : name === "evntly_fv_ref" ? cookieRef : undefined;
+      const value =
+        name === "evntly_fv_src" ? cookieSource : name === "evntly_fv_ref" ? cookieRef : name === "evntly_fv_cmp" ? cookieCampaign : undefined;
       return value ? { value } : undefined;
     },
   }),
@@ -113,6 +115,7 @@ beforeEach(() => {
   adminSession = { admin: true, mfa: "ok" };
   cookieSource = undefined;
   cookieRef = undefined;
+  cookieCampaign = undefined;
   resendStatus = 200;
   prepareError = null;
   tableRows = {};
@@ -146,6 +149,23 @@ describe("claimFoundingPlace", () => {
     cookieSource = "instagram_dm";
     await claimFoundingPlace(null, form({ invite: "preview", source: "evil" }));
     expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "instagram_dm" });
+  });
+
+  it("records the post's campaign tag once on the new application, with the service role", async () => {
+    cookieCampaign = "reel-a-1117";
+    expect((await claimFoundingPlace(null, form({ source: "instagram_bio" })))?.success).toBe(true);
+    const updates = calls.filter((c) => c.url.includes("/rest/v1/beta_applications") && c.method === "PATCH");
+    expect(updates).toHaveLength(1);
+    expect(updates[0].body).toEqual({ campaign: "reel-a-1117" });
+    expect(updates[0].url).toContain("id=eq.app-1");
+    expect(updates[0].url).toContain("campaign=is.null");
+    expect(updates[0].headers.get("apikey")).toBe("service-role-test-key");
+  });
+
+  it("skips the campaign when there's no clean tag", async () => {
+    cookieCampaign = "Bad Tag!";
+    await claimFoundingPlace(null, form({ source: "instagram_bio" }));
+    expect(calls.filter((c) => c.url.includes("/rest/v1/beta_applications") && c.method === "PATCH")).toHaveLength(0);
   });
 
   it("passes a referral code from the link, normalised", async () => {

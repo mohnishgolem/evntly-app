@@ -24,6 +24,8 @@ export const CLAIM_PATH = "/founding-vendors/claim";
 
 /** Cookie that remembers the source between the landing page and claiming. */
 export const SOURCE_COOKIE = "evntly_fv_src";
+/** Cookie that remembers which post or link (?utm_content=) brought the visitor. */
+export const CAMPAIGN_COOKIE = "evntly_fv_cmp";
 /** Cookie that remembers a founding vendor's referral code (?ref=) until claiming. */
 export const REF_COOKIE = "evntly_fv_ref";
 
@@ -43,6 +45,33 @@ export function referralFromParams(params: Record<string, string | string[] | un
 export function referralLink(code: string, base = SITE_URL) {
   const url = new URL(FOUNDING_PATH, base);
   url.searchParams.set("ref", code);
+  return url.toString();
+}
+
+/**
+ * Campaign tags name the post or link a visitor came from (utm_content=reel-a-1117,
+ * link_in_bio, dm-batch3). Lowercase letters, digits, "_" and "-", 1–40 chars.
+ */
+export function isCampaignTag(value: unknown): value is string {
+  return typeof value === "string" && /^[a-z0-9][a-z0-9_-]{0,39}$/.test(value);
+}
+
+/** The campaign tag from ?utm_content= (or the short ?c=), normalised, or null. */
+export function campaignFromParams(params: Record<string, string | string[] | undefined>): string | null {
+  for (const key of ["utm_content", "c"]) {
+    const raw = params[key];
+    const value = (Array.isArray(raw) ? raw[0] : raw)?.trim().toLowerCase();
+    if (isCampaignTag(value)) return value;
+  }
+  return null;
+}
+
+/** A landing-page link for one post: its source plus a campaign tag. */
+export function campaignLink(source: FoundingSource, campaign: string, base = SITE_URL) {
+  if (!isCampaignTag(campaign)) throw new Error(`Invalid campaign tag: ${campaign}`);
+  const url = new URL(FOUNDING_PATH, base);
+  url.searchParams.set("src", source);
+  url.searchParams.set("utm_content", campaign);
   return url.toString();
 }
 

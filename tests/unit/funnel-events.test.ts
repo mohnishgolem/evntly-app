@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // personal data).
 const inserts: Record<string, unknown>[] = [];
 let sourceCookie: string | undefined = "meta_ads";
+let campaignCookie: string | undefined;
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -20,7 +21,12 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }),
 }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({ get: (name: string) => (name === "evntly_fv_src" && sourceCookie ? { value: sourceCookie } : undefined) }),
+  cookies: async () => ({
+    get: (name: string) => {
+      const value = name === "evntly_fv_src" ? sourceCookie : name === "evntly_fv_cmp" ? campaignCookie : undefined;
+      return value ? { value } : undefined;
+    },
+  }),
 }));
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: vi.fn(async () => true), clientIpFrom: () => "1.2.3.4" }));
 
@@ -34,18 +40,19 @@ const post = (body: unknown) =>
 beforeEach(() => {
   inserts.length = 0;
   sourceCookie = "meta_ads";
+  campaignCookie = undefined;
 });
 
 describe("/api/track funnel events", () => {
   it("records a claim click with the source from the cookie", async () => {
     expect((await post({ event: "claim_click", visitorId: "visitor-abc-123" })).status).toBe(204);
-    expect(inserts).toEqual([{ table: "funnel_events", event: "claim_click", source: "meta_ads", detail: null, visitor_id: "visitor-abc-123" }]);
+    expect(inserts).toEqual([{ table: "funnel_events", event: "claim_click", source: "meta_ads", campaign: null, detail: null, visitor_id: "visitor-abc-123" }]);
   });
 
   it("records a sign-up attempt without a source when there's no founding cookie", async () => {
     sourceCookie = undefined;
     await post({ event: "signup_attempt", visitorId: "visitor-abc-123" });
-    expect(inserts).toEqual([{ table: "funnel_events", event: "signup_attempt", source: null, detail: null, visitor_id: "visitor-abc-123" }]);
+    expect(inserts).toEqual([{ table: "funnel_events", event: "signup_attempt", source: null, campaign: null, detail: null, visitor_id: "visitor-abc-123" }]);
   });
 
   it("ignores server-only events, unknown events and bad visitor ids", async () => {
@@ -61,6 +68,19 @@ describe("/api/track funnel events", () => {
     sourceCookie = "evil<script>";
     await post({ event: "claim_click", visitorId: "visitor-abc-123" });
     expect(inserts[0]).toMatchObject({ source: null });
+  });
+
+  it("records the post's campaign tag from the cookie", async () => {
+    sourceCookie = "instagram_bio";
+    campaignCookie = "reel-a-1117";
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).toMatchObject({ source: "instagram_bio", campaign: "reel-a-1117" });
+  });
+
+  it("drops a campaign cookie that isn't a clean tag", async () => {
+    campaignCookie = "Reel A <script>";
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).toMatchObject({ campaign: null });
   });
 
   it("still records page views as before", async () => {

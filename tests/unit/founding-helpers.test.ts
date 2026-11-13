@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { FOUNDING_GOAL, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, campaignLink, FOUNDING_GOAL, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
 import { formatSydney, formatSydneyDay, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
@@ -27,6 +27,35 @@ describe("founding sources (UTM)", () => {
     [{}, null],
   ])("%j → %s", (params, expected) => {
     expect(sourceFromParams(params)).toBe(expected);
+  });
+
+  it.each([
+    [{ utm_content: "reel-a-1117" }, "reel-a-1117"],
+    [{ utm_content: " Link_In_Bio " }, "link_in_bio"],
+    [{ c: "dm-batch3" }, "dm-batch3"],
+    [{ utm_content: ["story-1118", "x"] }, "story-1118"],
+    [{ utm_content: "has space" }, null],
+    [{ utm_content: "-leading-dash" }, null],
+    [{ utm_content: "a".repeat(41) }, null],
+    [{ utm_content: "<script>" }, null],
+    [{}, null],
+  ])("campaign tag %j → %s", (params, expected) => {
+    expect(campaignFromParams(params)).toBe(expected);
+  });
+
+  it("campaign links carry the source and the tag", () => {
+    const url = new URL(campaignLink("instagram_story", "story-1118"));
+    expect(url.pathname).toBe("/founding-vendors");
+    const params = Object.fromEntries(url.searchParams);
+    expect(sourceFromParams(params)).toBe("instagram_story");
+    expect(campaignFromParams(params)).toBe("story-1118");
+    expect(() => campaignLink("instagram_bio", "Bad Tag")).toThrow();
+  });
+
+  it("the live Instagram bio link is an instagram_bio source tagged link_in_bio", () => {
+    const params = { utm_source: "ig", utm_medium: "social", utm_content: "link_in_bio" };
+    expect(sourceFromParams(params)).toBe("instagram_bio");
+    expect(campaignFromParams(params)).toBe("link_in_bio");
   });
 
   it("share links round-trip to their source", () => {

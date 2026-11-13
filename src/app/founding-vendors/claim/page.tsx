@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { getFoundingPlaces, getMyFoundingStatus } from "@/lib/data/founding";
 import { createClient } from "@/lib/supabase/server";
 import { hashInviteToken, looksLikeInviteToken } from "@/lib/founding/tokens";
-import { CLAIM_PATH, FOUNDING_PATH, referralFromParams, sourceFromParams, type FoundingSource } from "@/lib/founding/sources";
+import { campaignFromParams, CLAIM_PATH, FOUNDING_PATH, referralFromParams, sourceFromParams, type FoundingSource } from "@/lib/founding/sources";
 import { MIN_PHOTOS } from "@/lib/profile-completeness";
 
 export const metadata: Metadata = {
@@ -30,6 +30,7 @@ export default async function ClaimPage({
   const invite = looksLikeInviteToken(rawInvite) ? rawInvite : null;
   const source: FoundingSource | null = sourceFromParams(params) ?? (invite ? "waitlist_email" : null);
   const referral = referralFromParams(params);
+  const campaign = campaignFromParams(params);
 
   const supabase = await createClient();
   let inviteState: InviteState | null = rawInvite === "preview" ? "preview" : rawInvite ? "invalid" : null;
@@ -46,6 +47,7 @@ export default async function ClaimPage({
   if (invite) back.set("invite", invite);
   if (source) back.set("src", source);
   if (referral) back.set("ref", referral);
+  if (campaign) back.set("utm_content", campaign);
   const returnPath = back.size ? `${CLAIM_PATH}?${back}` : CLAIM_PATH;
 
   const [session, places] = await Promise.all([getCurrentUser(), getFoundingPlaces()]);
@@ -53,7 +55,7 @@ export default async function ClaimPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10 sm:py-14">
-      <SourceCookie source={source} referral={referral} />
+      <SourceCookie source={source} referral={referral} campaign={campaign} />
       {!session ? (
         <SignedOut inviteState={inviteState} invitee={invitee} returnPath={returnPath} full={full} />
       ) : (
