@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // personal data).
 const inserts: Record<string, unknown>[] = [];
 let sourceCookie: string | undefined = "meta_ads";
+let campaignCookie: string | undefined;
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -20,7 +21,12 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }),
 }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({ get: (name: string) => (name === "evntly_fv_src" && sourceCookie ? { value: sourceCookie } : undefined) }),
+  cookies: async () => ({
+    get: (name: string) => {
+      const value = name === "evntly_fv_src" ? sourceCookie : name === "evntly_fv_cmp" ? campaignCookie : undefined;
+      return value ? { value } : undefined;
+    },
+  }),
 }));
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: vi.fn(async () => true), clientIpFrom: () => "1.2.3.4" }));
 
@@ -34,6 +40,7 @@ const post = (body: unknown) =>
 beforeEach(() => {
   inserts.length = 0;
   sourceCookie = "meta_ads";
+  campaignCookie = undefined;
 });
 
 describe("/api/track funnel events", () => {
@@ -61,6 +68,24 @@ describe("/api/track funnel events", () => {
     sourceCookie = "evil<script>";
     await post({ event: "claim_click", visitorId: "visitor-abc-123" });
     expect(inserts[0]).toMatchObject({ source: null });
+  });
+
+  it("records the post's campaign tag from the cookie", async () => {
+    sourceCookie = "instagram_bio";
+    campaignCookie = "reel-a-1117";
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).toMatchObject({ source: "instagram_bio", campaign: "reel-a-1117" });
+  });
+
+  it("drops a campaign cookie that isn't a clean tag", async () => {
+    campaignCookie = "Reel A <script>";
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).not.toHaveProperty("campaign");
+  });
+
+  it("leaves the campaign key out without a tag, so events survive a missing column", async () => {
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).not.toHaveProperty("campaign");
   });
 
   it("records founding page views with the founding source", async () => {

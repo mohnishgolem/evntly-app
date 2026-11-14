@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isFoundingSource, SOURCE_COOKIE, type FoundingSource } from "@/lib/founding/sources";
+import { CAMPAIGN_COOKIE, isCampaignTag, isFoundingSource, SOURCE_COOKIE, type FoundingSource } from "@/lib/founding/sources";
 
 // Founding Vendor conversion events (table public.funnel_events). Nothing
 // personal is stored: the event, which founding link the visitor came from,
@@ -39,6 +39,16 @@ export async function foundingSourceFromCookie(): Promise<FoundingSource | null>
   }
 }
 
+/** The post/link campaign tag remembered by <SourceCookie>, if any. */
+export async function foundingCampaignFromCookie(): Promise<string | null> {
+  try {
+    const value = (await cookies()).get(CAMPAIGN_COOKIE)?.value;
+    return isCampaignTag(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function recordFunnelEvent(
   event: FunnelEvent,
   opts: { source?: FoundingSource | null; detail?: string | null; visitorId?: string | null } = {}
@@ -47,9 +57,13 @@ export async function recordFunnelEvent(
     const admin = createAdminClient();
     if (!admin) return;
     const source = opts.source === undefined ? await foundingSourceFromCookie() : opts.source;
+    const campaign = await foundingCampaignFromCookie();
     await admin.from("funnel_events").insert({
       event,
       source,
+      // Only sent when there is one, so events keep recording if this code is
+      // ever live before the funnel_events.campaign migration.
+      ...(campaign ? { campaign } : {}),
       detail: funnelDetail(opts.detail),
       visitor_id: opts.visitorId && /^[A-Za-z0-9-]{8,64}$/.test(opts.visitorId) ? opts.visitorId : null,
     });

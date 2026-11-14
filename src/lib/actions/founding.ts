@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailAdmins, emailApplicationReceived } from "@/lib/founding/notify";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { hashInviteToken, looksLikeInviteToken } from "@/lib/founding/tokens";
-import { CLAIM_PATH, isFoundingSource, isReferralCode, REF_COOKIE, SOURCE_COOKIE } from "@/lib/founding/sources";
+import { CAMPAIGN_COOKIE, CLAIM_PATH, isCampaignTag, isFoundingSource, isReferralCode, REF_COOKIE, SOURCE_COOKIE } from "@/lib/founding/sources";
 import { isVendorCategory } from "@/lib/config";
 
 export type FoundingActionState = { error?: string; success?: boolean; message?: string } | null;
@@ -44,6 +44,20 @@ export async function claimFoundingPlace(_prev: FoundingActionState, formData: F
   }
 
   const result = data[0];
+  // Which post or link brought them (utm_content), recorded once on a new
+  // application. Tracking only: a failure here never blocks the claim.
+  const campaign = jar.get(CAMPAIGN_COOKIE)?.value;
+  if (result.created && isCampaignTag(campaign)) {
+    try {
+      await createAdminClient()
+        ?.from("beta_applications")
+        .update({ campaign })
+        .eq("id", result.application_id)
+        .is("campaign", null);
+    } catch (e) {
+      console.error("[founding] could not record campaign:", e instanceof Error ? e.message : e);
+    }
+  }
   // First claim by an existing vendor (listing already there): confirm by email.
   if (result.created && result.status === "submitted") await emailApplicationReceived(user.email);
 

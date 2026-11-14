@@ -17,6 +17,7 @@ export type Database = {
       beta_applications: {
         Row: {
           admin_note: string | null
+          campaign: string | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -34,6 +35,7 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          campaign?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -51,6 +53,7 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          campaign?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -1881,6 +1884,7 @@ export type Database = {
       }
       funnel_events: {
         Row: {
+          campaign: string | null
           created_at: string
           detail: string | null
           event: string
@@ -1889,6 +1893,7 @@ export type Database = {
           visitor_id: string | null
         }
         Insert: {
+          campaign?: string | null
           created_at?: string
           detail?: string | null
           event: string
@@ -1897,6 +1902,7 @@ export type Database = {
           visitor_id?: string | null
         }
         Update: {
+          campaign?: string | null
           created_at?: string
           detail?: string | null
           event?: string

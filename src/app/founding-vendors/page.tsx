@@ -12,7 +12,7 @@ import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
 import { navRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -85,6 +85,7 @@ export default async function FoundingVendorsPage({
   const params = await searchParams;
   const source = sourceFromParams(params);
   const referral = referralFromParams(params);
+  const campaign = campaignFromParams(params);
   const variant = landingVariant(params);
   const [places, session, sample] = await Promise.all([
     getFoundingPlaces(),
@@ -97,6 +98,7 @@ export default async function FoundingVendorsPage({
   const claimQuery = new URLSearchParams();
   if (source) claimQuery.set("src", source);
   if (referral) claimQuery.set("ref", referral);
+  if (campaign) claimQuery.set("utm_content", campaign);
   const claimPage = claimQuery.size ? `${CLAIM_PATH}?${claimQuery}` : CLAIM_PATH;
   // Signed-out visitors go straight to the vendor sign-up form (it returns to
   // the claim page afterwards); the claim page in between was an extra tap
@@ -105,7 +107,7 @@ export default async function FoundingVendorsPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
-      <SourceCookie source={source} referral={referral} />
+      <SourceCookie source={source} referral={referral} campaign={campaign} />
 
       <header className="mx-auto max-w-2xl text-center">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
