@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { pageViewFor } from "@/lib/page-views";
+import { pageViewFor, sourceParamsFrom } from "@/lib/page-views";
 import { analyticsVisitorId, sendTrack } from "@/lib/track-client";
 
 // Counts visits to a few key pages for the admin funnel. The visitor id is a
@@ -16,7 +16,11 @@ export function PageViewTracker() {
     if (!view) return;
     const id = analyticsVisitorId();
     if (!id) return;
-    sendTrack({ kind: view.kind, vendorId: view.vendorId, visitorId: id });
+    // Founding pages also send their own link tags (utm_*, src, ref), so the
+    // landing view is credited to the link that brought the visitor even
+    // before <SourceCookie> has stored it.
+    const params = view.kind === "founding" || view.kind === "founding_claim" ? sourceParamsFrom(window.location.search) : undefined;
+    sendTrack({ kind: view.kind, vendorId: view.vendorId, visitorId: id, ...(params ? { params } : {}) });
   }, [pathname]);
 
   return null;
