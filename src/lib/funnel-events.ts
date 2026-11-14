@@ -50,10 +50,13 @@ export async function recordFunnelEvent(
     const admin = createAdminClient();
     if (!admin) return;
     const source = opts.source === undefined ? await foundingSourceFromCookie() : opts.source;
+    const campaign = await foundingCampaignFromCookie();
     await admin.from("funnel_events").insert({
       event,
       source,
-      campaign: await foundingCampaignFromCookie(),
+      // Only sent when there is one, so events keep recording if this code is
+      // ever live before the funnel_events.campaign migration.
+      ...(campaign ? { campaign } : {}),
       detail: funnelDetail(opts.detail),
       visitor_id: opts.visitorId && /^[A-Za-z0-9-]{8,64}$/.test(opts.visitorId) ? opts.visitorId : null,
     });

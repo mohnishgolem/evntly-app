@@ -46,13 +46,13 @@ beforeEach(() => {
 describe("/api/track funnel events", () => {
   it("records a claim click with the source from the cookie", async () => {
     expect((await post({ event: "claim_click", visitorId: "visitor-abc-123" })).status).toBe(204);
-    expect(inserts).toEqual([{ table: "funnel_events", event: "claim_click", source: "meta_ads", campaign: null, detail: null, visitor_id: "visitor-abc-123" }]);
+    expect(inserts).toEqual([{ table: "funnel_events", event: "claim_click", source: "meta_ads", detail: null, visitor_id: "visitor-abc-123" }]);
   });
 
   it("records a sign-up attempt without a source when there's no founding cookie", async () => {
     sourceCookie = undefined;
     await post({ event: "signup_attempt", visitorId: "visitor-abc-123" });
-    expect(inserts).toEqual([{ table: "funnel_events", event: "signup_attempt", source: null, campaign: null, detail: null, visitor_id: "visitor-abc-123" }]);
+    expect(inserts).toEqual([{ table: "funnel_events", event: "signup_attempt", source: null, detail: null, visitor_id: "visitor-abc-123" }]);
   });
 
   it("ignores server-only events, unknown events and bad visitor ids", async () => {
@@ -80,7 +80,12 @@ describe("/api/track funnel events", () => {
   it("drops a campaign cookie that isn't a clean tag", async () => {
     campaignCookie = "Reel A <script>";
     await post({ event: "claim_click", visitorId: "visitor-abc-123" });
-    expect(inserts[0]).toMatchObject({ campaign: null });
+    expect(inserts[0]).not.toHaveProperty("campaign");
+  });
+
+  it("leaves the campaign key out without a tag, so events survive a missing column", async () => {
+    await post({ event: "claim_click", visitorId: "visitor-abc-123" });
+    expect(inserts[0]).not.toHaveProperty("campaign");
   });
 
   it("still records page views as before", async () => {
