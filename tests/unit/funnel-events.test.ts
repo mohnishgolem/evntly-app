@@ -73,6 +73,37 @@ describe("/api/track funnel events", () => {
     ]);
   });
 
+  it("credits the landing view to the page's own link tags, not a stale cookie", async () => {
+    // The tracker can fire before <SourceCookie> saves the new source, so the
+    // cookie still holds an earlier visit's source.
+    sourceCookie = "waitlist_email";
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: { utm_source: "meta", utm_medium: "paid_social" } });
+    expect(inserts[0]).toMatchObject({ kind: "founding", source: "meta_ads" });
+  });
+
+  it("credits the landing view from its tags when there's no cookie yet", async () => {
+    sourceCookie = undefined;
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: { utm_source: "instagram", utm_medium: "story" } });
+    await post({ kind: "founding_claim", visitorId: "visitor-abc-123", params: { src: "instagram_dm" } });
+    expect(inserts.map((r) => r.source)).toEqual(["instagram_story", "instagram_dm"]);
+  });
+
+  it("falls back to the cookie on untagged founding pages", async () => {
+    sourceCookie = "meta_ads";
+    await post({ kind: "founding", visitorId: "visitor-abc-123" });
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: { ref: "not a code!" } });
+    expect(inserts.map((r) => r.source)).toEqual(["meta_ads", "meta_ads"]);
+  });
+
+  it("ignores tampered tags and never tags non-founding pages", async () => {
+    sourceCookie = undefined;
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: { utm_source: "meta", evil: "x" } });
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: { utm_source: "x".repeat(41) } });
+    await post({ kind: "founding", visitorId: "visitor-abc-123", params: ["meta"] });
+    await post({ kind: "explore", visitorId: "visitor-abc-123", params: { utm_source: "meta", utm_medium: "paid" } });
+    expect(inserts.map((r) => r.source)).toEqual([undefined, undefined, undefined, undefined]);
+  });
+
   it("leaves the source off other page views", async () => {
     sourceCookie = "meta_ads";
     await post({ kind: "explore", visitorId: "visitor-abc-123" });
