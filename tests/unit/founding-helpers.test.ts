@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { campaignFromParams, campaignLink, FOUNDING_GOAL, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, campaignLink, FOUNDING_GOAL, foundingCookieWrites, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
 import { formatSydney, formatSydneyDay, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
@@ -405,5 +405,31 @@ describe("scheduling", () => {
     expect(planProblem(planBatches(["a"], new Date("2026-11-02T10:02:00Z"), 10, 10), now)).toMatch(/5 minutes/);
     expect(planProblem(planBatches(["a"], new Date("2026-12-05T10:00:00Z"), 10, 10), now)).toMatch(/30 days/);
     expect(planProblem(planBatches(["a"], new Date("2026-11-02T23:00:00Z"), 10, 10), now)).toBeNull();
+  });
+});
+
+describe("founding cookies (no stale campaign tags)", () => {
+  const DAY30 = "max-age=2592000; samesite=lax; secure";
+  it("stores source, referral and campaign for 30 days", () => {
+    expect(foundingCookieWrites({ source: "meta_ads", campaign: "a_photo" }, true)).toEqual([
+      `evntly_fv_src=meta_ads; path=/; ${DAY30}`,
+      `evntly_fv_cmp=a_photo; path=/; ${DAY30}`,
+    ]);
+    expect(foundingCookieWrites({ source: "referral", referral: "abcd1234", campaign: null }, false)).toEqual([
+      "evntly_fv_src=referral; path=/; max-age=2592000; samesite=lax",
+      "evntly_fv_ref=abcd1234; path=/; max-age=2592000; samesite=lax",
+      "evntly_fv_cmp=; path=/; max-age=0; samesite=lax",
+    ]);
+  });
+
+  it("clears an earlier post's tag when a new link has no campaign", () => {
+    expect(foundingCookieWrites({ source: "instagram_dm", campaign: null }, true)).toEqual([
+      `evntly_fv_src=instagram_dm; path=/; ${DAY30}`,
+      "evntly_fv_cmp=; path=/; max-age=0; samesite=lax; secure",
+    ]);
+  });
+
+  it("leaves everything alone on an untagged visit", () => {
+    expect(foundingCookieWrites({ source: null }, true)).toEqual([]);
   });
 });

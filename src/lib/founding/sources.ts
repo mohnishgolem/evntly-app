@@ -125,3 +125,23 @@ export function foundingShareLink(source: FoundingSource, base = SITE_URL) {
 export function isFoundingPath(path: string | null | undefined) {
   return !!path && (path === FOUNDING_PATH || path.startsWith(`${FOUNDING_PATH}/`) || path.startsWith(`${FOUNDING_PATH}?`));
 }
+
+/**
+ * The cookie strings <SourceCookie> writes for a founding landing. A new
+ * campaign tag replaces the old one; a new tagged source without a campaign
+ * clears the old campaign, so an earlier post's tag is never paired with a
+ * later, different link. An untagged visit (no source) changes nothing.
+ */
+export function foundingCookieWrites(
+  { source, referral = null, campaign = null }: { source: FoundingSource | null; referral?: string | null; campaign?: string | null },
+  secure: boolean,
+): string[] {
+  const opts = (maxAge: number) => `; path=/; max-age=${maxAge}; samesite=lax${secure ? "; secure" : ""}`;
+  const keep = opts(60 * 60 * 24 * 30);
+  const writes: string[] = [];
+  if (source) writes.push(`${SOURCE_COOKIE}=${source}${keep}`);
+  if (referral) writes.push(`${REF_COOKIE}=${referral}${keep}`);
+  if (campaign) writes.push(`${CAMPAIGN_COOKIE}=${campaign}${keep}`);
+  else if (source) writes.push(`${CAMPAIGN_COOKIE}=${opts(0)}`);
+  return writes;
+}
