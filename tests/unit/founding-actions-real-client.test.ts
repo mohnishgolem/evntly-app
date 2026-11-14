@@ -206,6 +206,23 @@ describe("joinVendorWaitlist", () => {
     expect(insert?.body).toMatchObject({ email: "New@Vendor.com.au", invite_consent: true, source: "founding_page", category: "dj" });
     expect((insert?.body as { consent_at: string }).consent_at).toBeTruthy();
   });
+  it("stores a help request with the handle and its own consent note", async () => {
+    const res = await joinVendorWaitlist(
+      null,
+      form({ email: "help@decor.com.au", firstName: "Lu", businessName: "Lu Decor", instagram: "@ludecor", wantsHelp: "1", consent: "on" })
+    );
+    expect(res?.message).toMatch(/set up your listing/);
+    const insert = calls.find((c) => c.url.includes("/rest/v1/vendor_waitlist") && c.method === "POST");
+    expect(insert?.body).toMatchObject({ wants_help: true, instagram: "@ludecor", invite_consent: true, source: "founding_page" });
+    expect((insert?.body as { consent_note: string }).consent_note).toMatch(/Asked for help/);
+  });
+
+  it("ignores the handle on the plain waitlist form", async () => {
+    await joinVendorWaitlist(null, form({ email: "plain@dj.com.au", firstName: "Pi", instagram: "@pi", consent: "on" }));
+    const insert = calls.find((c) => c.url.includes("/rest/v1/vendor_waitlist") && c.method === "POST");
+    expect(insert?.body).not.toHaveProperty("wants_help");
+    expect(insert?.body).not.toHaveProperty("instagram");
+  });
 });
 
 describe("unsubscribe", () => {

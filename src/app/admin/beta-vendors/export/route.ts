@@ -13,12 +13,12 @@ export async function GET() {
   const { rows } = await getBetaAdminData();
   const csv = toCsv(
     [
-      "email", "first_name", "business_name", "category", "on_waitlist", "invite_consent", "unsubscribed",
+      "email", "first_name", "business_name", "category", "wants_help", "instagram", "on_waitlist", "invite_consent", "unsubscribed",
       "invite_status", "delivery", "times_sent", "last_sent", "opened", "clicked", "claimed",
       "application_status", "source", "listing_name", "listing_status", "profile_complete_pct", "submitted", "decided",
     ],
     rows.map((r) => [
-      r.email, r.firstName, r.businessName, r.category, r.onWaitlist, r.consent, r.unsubscribed,
+      r.email, r.firstName, r.businessName, r.category, r.wantsHelp, r.instagram, r.onWaitlist, r.consent, r.unsubscribed,
       r.inviteStatus, r.delivery, r.sendCount, r.lastSentAt, r.openedAt, r.clickedAt, r.claimedAt,
       r.applicationStatus, r.source ? sourceLabel(r.source) : null, r.listingName, r.listingStatus, r.onboardingPercent, r.submittedAt, r.decidedAt,
     ]),

@@ -347,10 +347,12 @@ export type Database = {
           first_name: string | null
           id: string
           invite_consent: boolean
+          instagram: string | null
           source: string
           suburb: string | null
           unsubscribe_token: string
           unsubscribed_at: string | null
+          wants_help: boolean
           updated_at: string
         }
         Insert: {
@@ -364,10 +366,12 @@ export type Database = {
           first_name?: string | null
           id?: string
           invite_consent?: boolean
+          instagram?: string | null
           source?: string
           suburb?: string | null
           unsubscribe_token?: string
           unsubscribed_at?: string | null
+          wants_help?: boolean
           updated_at?: string
         }
         Update: {
@@ -381,10 +385,12 @@ export type Database = {
           first_name?: string | null
           id?: string
           invite_consent?: boolean
+          instagram?: string | null
           source?: string
           suburb?: string | null
           unsubscribe_token?: string
           unsubscribed_at?: string | null
+          wants_help?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1905,6 +1911,7 @@ export type Database = {
           created_at: string
           id: number
           kind: string
+          source: string | null
           user_id: string | null
           vendor_id: string | null
           visitor_id: string
@@ -1913,6 +1920,7 @@ export type Database = {
           created_at?: string
           id?: never
           kind: string
+          source?: string | null
           user_id?: string | null
           vendor_id?: string | null
           visitor_id: string
@@ -1921,6 +1929,7 @@ export type Database = {
           created_at?: string
           id?: never
           kind?: string
+          source?: string | null
           user_id?: string | null
           vendor_id?: string | null
           visitor_id?: string

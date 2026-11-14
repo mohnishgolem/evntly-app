@@ -23,6 +23,12 @@ export const RATE_LIMITS = {
   // generous enough that it can't easily be used to lock a victim out.
   loginEmail: { max: 10, windowSeconds: 15 * 60 },
   signupIp: { max: 5, windowSeconds: 60 * 60 },
+  // Sign-up confirmation codes: guessing a 6-digit code needs ~10^6 tries,
+  // so a handful per email per 15 minutes makes that hopeless.
+  signupCodeIp: { max: 30, windowSeconds: 15 * 60 },
+  signupCodeEmail: { max: 8, windowSeconds: 15 * 60 },
+  signupResendIp: { max: 10, windowSeconds: 60 * 60 },
+  signupResendEmail: { max: 3, windowSeconds: 60 * 60 },
   passwordResetIp: { max: 5, windowSeconds: 60 * 60 },
   passwordResetEmail: { max: 3, windowSeconds: 60 * 60 },
   mfaVerifyUser: { max: 10, windowSeconds: 15 * 60 },

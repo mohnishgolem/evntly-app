@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { login, signup, signInWithOAuth, type AuthFormState } from "@/lib/actions/auth";
+import { login, signup, signInWithOAuth, verifySignupCode, resendSignupCode, type AuthFormState } from "@/lib/actions/auth";
 import { GoogleIcon, AppleIcon } from "@/components/auth/social-icons";
 import { MARKETING_CONSENT_LABEL } from "@/lib/legal/versions";
 import { trackFunnelEvent } from "@/lib/track-client";
@@ -115,14 +115,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
     return (
       <>
         {role === "vendor" && <CompleteRegistrationPing />}
-      <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-6 text-center text-sm">
-        <p className="mb-1 font-medium">Check your email</p>
-        <p className="text-muted-foreground">
-          {next
-            ? "We sent a confirmation link. Open it on this device and you'll pick up right where you left off."
-            : "We sent a confirmation link — click it to activate your account, then log in."}
-        </p>
-      </div>
+        <ConfirmByCode email={state.email ?? email} next={state.next ?? next} />
       </>
     );
   }
@@ -315,6 +308,94 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Creating account…" : "Sign up"}
       </Button>
+      </form>
+    </div>
+  );
+}
+
+// After sign-up: type the code from the confirmation email. Confirming here
+// keeps the visitor signed in in *this* browser, which matters inside
+// Instagram/Facebook, where the email link opens a different browser.
+function ConfirmByCode({ email, next }: { email: string; next?: string }) {
+  const [state, verifyAction, verifying] = useActionState(verifySignupCode, initialState);
+  const [resendState, resendAction, resending] = useActionState(resendSignupCode, initialState);
+  const [code, setCode] = useState("");
+  const codeError = state?.fieldErrors?.code?.[0] ?? state?.fieldErrors?.email?.[0];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-5 text-sm">
+        <p className="mb-1 font-medium">Check your email</p>
+        <p className="text-muted-foreground">
+          We sent a code to <span className="font-medium break-all text-foreground">{email}</span>. Enter it below to
+          finish signing up. You can stay on this page.
+        </p>
+      </div>
+
+      <form
+        className="space-y-3"
+        onSubmit={(e: FormEvent<HTMLFormElement>) => {
+          e.preventDefault();
+          const data = new FormData(e.currentTarget);
+          startTransition(() => verifyAction(data));
+        }}
+      >
+        <input type="hidden" name="email" value={email} />
+        {next && <input type="hidden" name="next" value={next} />}
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-code">Code from the email</Label>
+          <Input
+            id="signup-code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9 \-]*"
+            maxLength={12}
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            aria-describedby="signup-code-hint"
+            aria-invalid={!!codeError || undefined}
+            className="text-center text-lg tracking-[0.3em] tabular-nums"
+          />
+          {codeError ? (
+            <p id="signup-code-hint" role="alert" className="text-sm text-destructive">
+              {codeError}
+            </p>
+          ) : (
+            <p id="signup-code-hint" className="text-xs text-muted-foreground">
+              Or tap the link in the email. If it opens in a different browser, log in there with the same password.
+            </p>
+          )}
+        </div>
+        {state?.error && (
+          <p role="alert" className="text-sm text-destructive">
+            {state.error}
+          </p>
+        )}
+        <Button type="submit" className="w-full" disabled={verifying}>
+          {verifying ? "Checking…" : "Confirm and continue"}
+        </Button>
+      </form>
+
+      <form action={resendAction} className="text-center text-sm text-muted-foreground">
+        <input type="hidden" name="email" value={email} />
+        {next && <input type="hidden" name="next" value={next} />}
+        {resendState?.resent ? (
+          <p role="status">A new code is on its way. It can take a minute, so check your junk folder too.</p>
+        ) : (
+          <>
+            No email?{" "}
+            <button type="submit" disabled={resending} className="font-medium text-foreground underline underline-offset-2">
+              {resending ? "Sending…" : "Send a new code"}
+            </button>
+          </>
+        )}
+        {resendState?.error && (
+          <p role="alert" className="mt-1 text-destructive">
+            {resendState.error}
+          </p>
+        )}
       </form>
     </div>
   );

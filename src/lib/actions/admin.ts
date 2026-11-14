@@ -75,6 +75,25 @@ export async function setFoundingVendor(
   if (typeof founding !== "boolean") return { error: "Invalid value." };
 
   const supabase = await createClient();
+  // The badge is capped at the Founding Vendor capacity, like approvals
+  // through the beta (admin_decide_founding_application). Sample listings
+  // don't count. Admin-only and rare, so a check-then-update is enough here.
+  if (founding) {
+    const [{ data: places }, { count, error: countError }, { data: current }] = await Promise.all([
+      supabase.rpc("founding_vendor_places"),
+      supabase
+        .from("service_providers")
+        .select("id", { count: "exact", head: true })
+        .eq("founding_vendor", true)
+        .eq("is_demo", false),
+      supabase.from("service_providers").select("founding_vendor").eq("id", vendorId).maybeSingle(),
+    ]);
+    const capacity = places?.[0] ? Number(places[0].capacity) : null;
+    if (countError || capacity === null) return { error: "Couldn't check the Founding Vendor places. Try again." };
+    if (!current?.founding_vendor && (count ?? 0) >= capacity) {
+      return { error: `All ${capacity} Founding Vendor places are taken. Raise the capacity first.` };
+    }
+  }
   const { data, error } = await supabase
     .from("service_providers")
     .update({ founding_vendor: founding })

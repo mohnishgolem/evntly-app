@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import { PAGE_VIEW_KINDS, type PageViewKind } from "@/lib/page-views";
-import { CLIENT_FUNNEL_EVENTS, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
+import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
 // Same-origin, tiny allow-listed payload, rate-limited per IP; always 204.
@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await (await createClient()).auth.getUser();
-  await admin.from("page_views").insert({ kind, visitor_id: visitorId, vendor_id: vendorId, user_id: user?.id ?? null });
+  // Founding pages also record which founding link brought the visitor (the
+  // same cookie funnel events use), so ad visits can be told from organic.
+  const source = kind === "founding" || kind === "founding_claim" ? await foundingSourceFromCookie() : null;
+  // Only sent when there is one, so other page views keep working if this
+  // code is ever live before the page_views.source migration.
+  await admin
+    .from("page_views")
+    .insert({ kind, visitor_id: visitorId, vendor_id: vendorId, user_id: user?.id ?? null, ...(source ? { source } : {}) });
   return done;
 }

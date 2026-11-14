@@ -36,11 +36,13 @@ We handle personal information in accordance with the Australian Privacy Princip
 
 **Automatically, when you use Evntly:**
 
-- **Page views:** visits to a few key pages (home, Explore, vendor profiles, planning, vendor signup and bundles), linked to a random ID stored in your browser and, if you're signed in, to your account. We use the signed-in link to show your "recently viewed" vendors and to exclude our own staff's visits from our statistics. We don't record these visits if your browser sends a Do Not Track or Global Privacy Control signal.
+- **Page views:** visits to a few key pages (home, Explore, vendor profiles, planning, vendor signup and bundles), linked to a random ID stored in your browser and, if you're signed in, to your account. On the Founding Vendor pages we also note which of our links brought you there (for example an Instagram post or one of our ads). We use the signed-in link to show your "recently viewed" vendors and to exclude our own staff's visits from our statistics. We don't record these visits if your browser sends a Do Not Track or Global Privacy Control signal.
 - **Website analytics** from Vercel Analytics, which counts visits without cross-site tracking cookies.
 - **Error reports:** when something breaks, the page, your browser and device type, technical details of the error and, if you're signed in, your account ID.
 - **Network information:** your IP address (and, for sign-in attempts, the email address entered) is used to limit abuse, for example too many sign-in attempts. These counters are kept for 2 days and aren't stored with your account.
 - **Push notifications:** if you turn them on, the address your browser's push service provides for your device.
+
+**Vendor waitlist, help requests and ad sign-up forms:** if you're an event business and you join our vendor waitlist, ask us to help set up your listing, or send us your details through a sign-up form in one of our Facebook or Instagram ads, we collect your name, email address, phone number (ad forms only), business name, Instagram handle or website, category, the area you service and whether you have an ABN. We use these details only to contact you about listing your business on Evntly and to check that you're an event business in our service area. Forms inside Facebook and Instagram are run by Meta, which also handles what you enter under its own privacy policy.
 
 **From other people:** a Vendor may add details to a quote for you; a Customer may describe you in a review or report; and another user may send you messages.
 
@@ -125,6 +127,7 @@ We keep personal information only for as long as we need it for the purposes in 
 
 - **Error reports:** deleted after 30 days.
 - **Page-view records:** deleted after about 13 months.
+- **Vendor waitlist, help-request and ad sign-up form details:** kept for up to 12 months from when you gave them, unless you create an account (then the account rules apply). You can unsubscribe or ask us to delete them at any time.
 - **Abuse-prevention counters** (including IP-based rate limits): deleted after 2 days.
 - **Portfolio photos and videos:** deleted from storage when you delete them.
 - **Account, listing, event, message, quote and booking information:** kept while your account is open. After you close your account: **[TO BE CONFIRMED: retention periods to be confirmed, e.g. booking and transaction records 7 years; messages 2 years; everything else deleted within 30 days.]**
