@@ -6,7 +6,9 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { ClaimLink } from "@/components/founding/claim-link";
-import { getFoundingPlaces } from "@/lib/data/founding";
+import { getFoundingPlaces, getSampleListing, type SampleListing } from "@/lib/data/founding";
+import { landingVariant } from "@/lib/founding/landing-variants";
+import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
 import { navRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,13 @@ const FAQ = [
   },
 ];
 
+// Said in the first screen: most ad visitors had never heard of Evntly.
+const WHAT_EVNTLY_IS = `Evntly is a ${LAUNCH_CITY} marketplace where people planning events browse vendors by category and area, then send you a quote request. You reply in Evntly, and customers pay you directly.`;
+
+// The Vendor Service Agreement, Schedule 1 (fees). Keep in step with it.
+const DEAL_TERMS =
+  "Free: no subscription, no commission and no booking fees. If we ever add a fee, you'll get 30 days' notice and it only applies if you accept it.";
+
 export default async function FoundingVendorsPage({
   searchParams,
 }: {
@@ -77,7 +86,12 @@ export default async function FoundingVendorsPage({
   const source = sourceFromParams(params);
   const referral = referralFromParams(params);
   const campaign = campaignFromParams(params);
-  const [places, session] = await Promise.all([getFoundingPlaces(), getCurrentUser()]);
+  const variant = landingVariant(params);
+  const [places, session, sample] = await Promise.all([
+    getFoundingPlaces(),
+    getCurrentUser(),
+    getSampleListing(variant?.category ?? null),
+  ]);
   const role = navRole(session?.profile?.role, !!session);
   const hasTabBar = role === "customer" || role === "vendor";
   const full = places ? places.remaining <= 0 : false;
@@ -85,19 +99,25 @@ export default async function FoundingVendorsPage({
   if (source) claimQuery.set("src", source);
   if (referral) claimQuery.set("ref", referral);
   if (campaign) claimQuery.set("utm_content", campaign);
-  const claimHref = claimQuery.size ? `${CLAIM_PATH}?${claimQuery}` : CLAIM_PATH;
+  const claimPage = claimQuery.size ? `${CLAIM_PATH}?${claimQuery}` : CLAIM_PATH;
+  // Signed-out visitors go straight to the vendor sign-up form (it returns to
+  // the claim page afterwards); the claim page in between was an extra tap
+  // that most ad visitors never got past. Signed-in visitors claim directly.
+  const claimHref = session ? claimPage : `/signup?role=vendor&next=${encodeURIComponent(claimPage)}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
       <SourceCookie source={source} referral={referral} campaign={campaign} />
 
       <header className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-semibold tracking-wide text-primary uppercase">Founding Vendors · {LAUNCH_CITY}</p>
-        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight sm:text-[48px]">
-          Get found by people planning events in {LAUNCH_CITY}
+        <p className="text-sm font-semibold tracking-wide text-primary uppercase">
+          {variant ? variant.eyebrow : `Founding Vendors · ${LAUNCH_CITY}`}
+        </p>
+        <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight text-balance sm:text-[48px]">
+          {variant ? variant.headline : `Get found by people planning events in ${LAUNCH_CITY}`}
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">
-          Join Evntly as a Founding Vendor. Your free listing takes about 10 minutes.
+          {WHAT_EVNTLY_IS}
         </p>
 
         <ul className="mx-auto mt-6 grid max-w-md gap-2.5 text-left text-[16px]">
@@ -112,6 +132,7 @@ export default async function FoundingVendorsPage({
         </ul>
 
         <PlacesMeter places={places} />
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{DEAL_TERMS}</p>
 
         <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
           {full ? (
@@ -123,7 +144,7 @@ export default async function FoundingVendorsPage({
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
           Already on Evntly?{" "}
-          <Link href={`/login?next=${encodeURIComponent(claimHref)}`} className="font-medium text-foreground underline underline-offset-2">
+          <Link href={`/login?next=${encodeURIComponent(claimPage)}`} className="font-medium text-foreground underline underline-offset-2">
             Log in to claim your place
           </Link>
         </p>
@@ -147,7 +168,7 @@ export default async function FoundingVendorsPage({
               </li>
             ))}
           </ul>
-          <BadgePreview />
+          <BadgePreview sample={sample} />
         </div>
       </section>
 
@@ -175,6 +196,19 @@ export default async function FoundingVendorsPage({
           </div>
         )}
       </section>
+
+      {!full && (
+        <section id="help" aria-labelledby="help-heading" className="mt-16 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
+          <h2 id="help-heading" className="text-2xl font-bold tracking-tight">
+            Prefer some help?
+          </h2>
+          <p className="mt-2 mb-6 max-w-2xl text-[15px] text-muted-foreground">
+            Leave your details and your Instagram or website. We&apos;ll look at your work and email you to set up your
+            listing together. It&apos;s still free.
+          </p>
+          <WaitlistForm assisted submitLabel="Ask for help" />
+        </section>
+      )}
 
       <section id="waitlist" aria-labelledby="waitlist-heading" className="mt-16 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
         <h2 id="waitlist-heading" className="text-2xl font-bold tracking-tight">
@@ -207,7 +241,9 @@ export default async function FoundingVendorsPage({
         </div>
       </section>
 
-      <p className="mt-12 text-center text-[15px] text-muted-foreground">
+      <FounderNote />
+
+      <p className="mt-6 text-center text-[15px] text-muted-foreground">
         Questions about the beta? Email{" "}
         <a href="mailto:hello@evntlyapp.com" className="font-medium text-foreground underline underline-offset-2">
           hello@evntlyapp.com
@@ -242,20 +278,51 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
   );
 }
 
-// What the badge looks like on a listing. Clearly labelled as an example so
-// it isn't read as a real vendor.
-function BadgePreview() {
+// What a listing card with the badge looks like, using one of Evntly's own
+// sample listings (clearly labelled) so it isn't read as a real vendor.
+function BadgePreview({ sample }: { sample: SampleListing | null }) {
   return (
     <figure className="rounded-2xl border border-border p-4">
-      <div className="relative aspect-[5/2] overflow-hidden rounded-xl bg-gradient-to-br lg:aspect-[4/3] from-secondary to-muted">
+      <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-gradient-to-br from-secondary to-muted lg:aspect-[4/3]">
+        {sample && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={sample.avatarUrl} alt="" className="h-full w-full object-cover" />
+        )}
         <FoundingBadge className="absolute top-3 left-3" />
+        <span className="absolute top-3 right-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium">Sample listing</span>
       </div>
       <div className="mt-3">
-        <p className="text-[17px] font-semibold">Your business name</p>
-        <p className="text-[15px] text-muted-foreground">Photographer · Parramatta</p>
+        <p className="text-[17px] font-semibold">{sample ? sample.name : "Your business name"}</p>
+        <p className="text-[15px] text-muted-foreground">
+          {sample ? `${categoryLabel(sample.category)} · ${sample.city ?? LAUNCH_CITY}` : "Photographer · Parramatta"}
+          {sample?.hourlyRate ? ` · from $${Math.round(sample.hourlyRate)}/hr` : ""}
+        </p>
       </div>
-      <figcaption className="mt-3 text-xs text-muted-foreground">Example: how the badge appears on your listing.</figcaption>
+      <figcaption className="mt-3 text-xs text-muted-foreground">
+        Example only: one of Evntly&apos;s sample listings, showing how the Founding Vendor badge appears on your card.
+      </figcaption>
     </figure>
+  );
+}
+
+// Who's behind it. A new marketplace asks vendors to trust someone they've
+// never heard of, so say plainly who runs it and how to reach them.
+function FounderNote() {
+  return (
+    <section aria-label="Who runs Evntly" className="mx-auto mt-16 max-w-2xl rounded-2xl bg-secondary p-6 text-[15px] leading-relaxed">
+      <p>
+        Evntly is a {LAUNCH_CITY} business run by Mohnish. Every listing is checked by a person before it goes live, and
+        you can reach us at{" "}
+        <a href="mailto:hello@evntlyapp.com" className="font-medium underline underline-offset-2">
+          hello@evntlyapp.com
+        </a>{" "}
+        or{" "}
+        <a href="https://www.instagram.com/evntly.au/" className="font-medium underline underline-offset-2">
+          @evntly.au
+        </a>{" "}
+        on Instagram.
+      </p>
+    </section>
   );
 }
 

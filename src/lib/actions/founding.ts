@@ -86,6 +86,13 @@ const waitlistSchema = z.object({
   firstName: z.string().trim().min(1, "Enter your first name").max(80),
   businessName: z.string().trim().max(160).optional(),
   category: z.string().trim().max(40).optional(),
+  // "Prefer help?" form: an Instagram handle or website so we can draft the listing.
+  instagram: z
+    .string()
+    .trim()
+    .max(120)
+    .optional(),
+  wantsHelp: z.literal("1").optional(),
   consent: z.literal("on", { error: "Tick the box so we can email you when a place opens." }),
 });
 
@@ -98,6 +105,8 @@ export async function joinVendorWaitlist(_prev: FoundingActionState, formData: F
     firstName: formData.get("firstName"),
     businessName: formData.get("businessName") || undefined,
     category: formData.get("category") || undefined,
+    instagram: formData.get("instagram") || undefined,
+    wantsHelp: formData.get("wantsHelp") || undefined,
     consent: formData.get("consent") ?? undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
@@ -105,9 +114,13 @@ export async function joinVendorWaitlist(_prev: FoundingActionState, formData: F
 
   const admin = createAdminClient();
   if (!admin) return { error: "The waitlist isn't available right now. Please email hello@evntlyapp.com." };
-  const { email, firstName, businessName, category } = parsed.data;
+  const { email, firstName, businessName, category, instagram } = parsed.data;
+  const wantsHelp = parsed.data.wantsHelp === "1";
   const now = new Date().toISOString();
-  const consentNote = "Ticked the founding vendor waitlist box on evntlyapp.com/founding-vendors";
+  const consentNote = wantsHelp
+    ? "Asked for help setting up a listing on evntlyapp.com/founding-vendors and ticked the contact box"
+    : "Ticked the founding vendor waitlist box on evntlyapp.com/founding-vendors";
+  const helpFields = wantsHelp ? { wants_help: true, instagram: instagram || null } : {};
 
   const { data: existing } = await admin
     .from("vendor_waitlist")
@@ -118,7 +131,7 @@ export async function joinVendorWaitlist(_prev: FoundingActionState, formData: F
     ? // Ticking the box again is fresh consent, even after an unsubscribe.
       await admin
         .from("vendor_waitlist")
-        .update({ invite_consent: true, consent_at: now, consent_note: consentNote, unsubscribed_at: null, updated_at: now })
+        .update({ invite_consent: true, consent_at: now, consent_note: consentNote, unsubscribed_at: null, updated_at: now, ...helpFields })
         .eq("id", existing.id)
     : await admin.from("vendor_waitlist").insert({
         email: email.trim(),
@@ -129,12 +142,18 @@ export async function joinVendorWaitlist(_prev: FoundingActionState, formData: F
         invite_consent: true,
         consent_at: now,
         consent_note: consentNote,
+        ...helpFields,
       });
   if (error) {
     console.error("[founding] waitlist join failed:", error.message);
     return { error: "We couldn't add you just now. Please try again." };
   }
-  return { success: true, message: "Thanks! You're on the list — we'll email you if a founding place opens up." };
+  return {
+    success: true,
+    message: wantsHelp
+      ? "Thanks! We'll look at your work and email you within one business day to set up your listing."
+      : "Thanks! You're on the list — we'll email you if a founding place opens up.",
+  };
 }
 
 const feedbackSchema = z.object({

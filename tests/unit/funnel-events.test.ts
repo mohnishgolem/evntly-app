@@ -88,9 +88,26 @@ describe("/api/track funnel events", () => {
     expect(inserts[0]).not.toHaveProperty("campaign");
   });
 
-  it("still records page views as before", async () => {
+  it("records founding page views with the founding source", async () => {
+    sourceCookie = "meta_ads";
     await post({ kind: "founding", visitorId: "visitor-abc-123" });
-    expect(inserts).toEqual([{ table: "page_views", kind: "founding", visitor_id: "visitor-abc-123", vendor_id: null, user_id: null }]);
+    await post({ kind: "founding_claim", visitorId: "visitor-abc-123" });
+    expect(inserts).toEqual([
+      { table: "page_views", kind: "founding", visitor_id: "visitor-abc-123", vendor_id: null, user_id: null, source: "meta_ads" },
+      { table: "page_views", kind: "founding_claim", visitor_id: "visitor-abc-123", vendor_id: null, user_id: null, source: "meta_ads" },
+    ]);
+  });
+
+  it("leaves the source off other page views", async () => {
+    sourceCookie = "meta_ads";
+    await post({ kind: "explore", visitorId: "visitor-abc-123" });
+    expect(inserts).toEqual([{ table: "page_views", kind: "explore", visitor_id: "visitor-abc-123", vendor_id: null, user_id: null }]);
+  });
+
+  it("accepts the sign-up form view from the browser, but not email confirmation", async () => {
+    await post({ event: "signup_view", visitorId: "visitor-abc-123" });
+    await post({ event: "email_confirmed", visitorId: "visitor-abc-123" });
+    expect(inserts).toEqual([{ table: "funnel_events", event: "signup_view", source: "meta_ads", detail: null, visitor_id: "visitor-abc-123" }]);
   });
 });
 

@@ -50,6 +50,11 @@ export type AuthFormState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
   needsEmailConfirmation?: boolean;
+  /** Set with needsEmailConfirmation: where the code form posts back to. */
+  email?: string;
+  next?: string;
+  /** Code form: a fresh code was sent. */
+  resent?: boolean;
   success?: boolean;
 } | null;
 
@@ -128,10 +133,99 @@ export async function signup(
   // session — redirecting to a protected page would just bounce the user
   // to /login with no explanation. Tell them to check their inbox instead.
   if (!data.session) {
-    return { needsEmailConfirmation: true };
+    return { needsEmailConfirmation: true, email, next };
   }
 
   redirect(next);
+}
+
+// ---------------------------------------------------------------------------
+// Sign-up confirmation by code
+//
+// The confirmation email carries a one-time code as well as the link. Typing
+// the code here confirms the email *in this browser*, so a vendor who signed
+// up inside Instagram's or Facebook's built-in browser stays signed in there.
+// (The link opens in Mail/Safari instead, without this browser's session, and
+// lands on the log-in page.) The code only works for the email it was sent
+// to, expires (Supabase Auth's OTP expiry), and is rate-limited per visitor
+// and per email on top of Supabase's own limits.
+// ---------------------------------------------------------------------------
+
+const codeSchema = z.object({
+  email: z.email("Enter the email you signed up with"),
+  // Supabase sends 6 digits by default (configurable up to 10).
+  code: z
+    .string()
+    .transform((v) => v.replace(/[\s-]/g, ""))
+    .refine((v) => /^\d{6,10}$/.test(v), "Enter the code from the email (numbers only)"),
+});
+
+// Supabase Auth answers a wrong code and an expired one the same way
+// ("Token has expired or is invalid"), so one message covers both.
+const CODE_FAILED = "That code didn't work or has expired. Check the newest email, or send a new code below.";
+
+/** Where a newly confirmed account goes: their founding claim page, the listing set-up, or `next`. */
+function afterConfirmPath(rawNext: string | undefined, role: unknown): string {
+  const requested = safeNextPath(rawNext, "/");
+  if (role === "vendor") return isFoundingPath(requested) ? requested : "/vendor-signup";
+  return requested;
+}
+
+export async function verifySignupCode(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const rawEmail = formData.get("email")?.toString() ?? "";
+  const next = formData.get("next")?.toString() || undefined;
+  const keep = { needsEmailConfirmation: true, email: rawEmail, next } as const;
+
+  const parsed = codeSchema.safeParse({ email: rawEmail, code: formData.get("code")?.toString() ?? "" });
+  if (!parsed.success) return { ...keep, fieldErrors: parsed.error.flatten().fieldErrors };
+  const { email, code } = parsed.data;
+
+  const [ipOk, emailOk] = await Promise.all([
+    checkRateLimit("signupCodeIp", await clientIp()),
+    checkRateLimit("signupCodeEmail", email),
+  ]);
+  if (!ipOk || !emailOk) return { ...keep, error: RATE_LIMIT_ERROR };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+  if (error || !data.session) {
+    return { ...keep, fieldErrors: { code: [CODE_FAILED] } };
+  }
+
+  const role = data.user?.user_metadata?.role;
+  if (role === "vendor") await recordFunnelEvent("email_confirmed", { detail: "code" });
+  redirect(afterConfirmPath(next, role));
+}
+
+export async function resendSignupCode(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const rawEmail = formData.get("email")?.toString() ?? "";
+  const next = formData.get("next")?.toString() || undefined;
+  const keep = { needsEmailConfirmation: true, email: rawEmail, next } as const;
+
+  const parsed = z.email().safeParse(rawEmail);
+  if (!parsed.success) return { ...keep, error: "Enter the email you signed up with." };
+
+  const [ipOk, emailOk] = await Promise.all([
+    checkRateLimit("signupResendIp", await clientIp()),
+    checkRateLimit("signupResendEmail", parsed.data),
+  ]);
+  if (!ipOk || !emailOk) return { ...keep, error: RATE_LIMIT_ERROR };
+
+  const supabase = await createClient();
+  const confirmUrl = new URL("/auth/callback", await appOrigin());
+  confirmUrl.searchParams.set("flow", "signup");
+  confirmUrl.searchParams.set("next", safeNextPath(next, "/"));
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data,
+    options: { emailRedirectTo: confirmUrl.toString() },
+  });
+  // Don't reveal whether the address has an account: only rate limits and
+  // outages are reported, every other answer looks like a send.
+  if (error && (error.status === 429 || (error.status ?? 0) >= 500)) {
+    return { ...keep, error: "We couldn't send a new code just now. Please wait a minute and try again." };
+  }
+  return { ...keep, resent: true };
 }
 
 const loginSchema = z.object({

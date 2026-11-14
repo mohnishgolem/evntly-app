@@ -31,7 +31,7 @@ export function sendTrack(payload: Record<string, unknown>) {
 }
 
 /** Records a founding funnel step from the browser (claim click, sign-up attempt). */
-export function trackFunnelEvent(event: "claim_click" | "signup_attempt") {
+export function trackFunnelEvent(event: "claim_click" | "signup_view" | "signup_attempt") {
   if (event === "claim_click") metaPixelTrack("Lead"); // no-op until the pixel is switched on
   const visitorId = analyticsVisitorId();
   if (!visitorId) return;

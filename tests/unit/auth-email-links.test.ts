@@ -120,7 +120,7 @@ describe("sign-up errors", () => {
 
 describe("sign-up confirmation link", () => {
   it("sends customers through the callback to the home page", async () => {
-    expect(await signup(null, form("customer"))).toEqual({ needsEmailConfirmation: true });
+    expect(await signup(null, form("customer"))).toEqual({ needsEmailConfirmation: true, email: "new@example.invalid", next: "/" });
     const to = redirectTo();
     // An untrusted Origin header never ends up in the email.
     expect(to.origin).toBe(SITE_URL);

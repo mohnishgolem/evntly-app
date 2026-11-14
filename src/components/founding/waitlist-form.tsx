@@ -8,7 +8,15 @@ import { Label } from "@/components/ui/label";
 import { joinVendorWaitlist, type FoundingActionState } from "@/lib/actions/founding";
 import { LAUNCH_CATEGORIES, categoryLabel } from "@/lib/config";
 
-export function WaitlistForm({ submitLabel = "Join the Waitlist" }: { submitLabel?: string }) {
+export function WaitlistForm({
+  submitLabel = "Join the Waitlist",
+  assisted = false,
+}: {
+  submitLabel?: string;
+  /** "Prefer help?" version: asks for an Instagram handle or website so we can draft the listing. */
+  assisted?: boolean;
+}) {
+  const p = assisted ? "as" : "wl";
   const [state, action, pending] = useActionState<FoundingActionState, FormData>(joinVendorWaitlist, null);
 
   if (state?.success) {
@@ -28,26 +36,27 @@ export function WaitlistForm({ submitLabel = "Join the Waitlist" }: { submitLabe
           Website <input name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+      {assisted && <input type="hidden" name="wantsHelp" value="1" />}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor="wl-first">First name</Label>
-          <Input id="wl-first" name="firstName" autoComplete="given-name" required className="h-11" />
+          <Label htmlFor={`${p}-first`}>First name</Label>
+          <Input id={`${p}-first`} name="firstName" autoComplete="given-name" required className="h-11" />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="wl-email">Email</Label>
-          <Input id="wl-email" name="email" type="email" autoComplete="email" inputMode="email" required className="h-11" />
+          <Label htmlFor={`${p}-email`}>Email</Label>
+          <Input id={`${p}-email`} name="email" type="email" autoComplete="email" inputMode="email" required className="h-11" />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="wl-business">
+          <Label htmlFor={`${p}-business`}>
             Business name <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Input id="wl-business" name="businessName" autoComplete="organization" className="h-11" />
+          <Input id={`${p}-business`} name="businessName" autoComplete="organization" className="h-11" />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="wl-category">
+          <Label htmlFor={`${p}-category`}>
             What you do <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <select id="wl-category" name="category" defaultValue="" className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base md:text-sm">
+          <select id={`${p}-category`} name="category" defaultValue="" className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base md:text-sm">
             <option value="">Choose…</option>
             {LAUNCH_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -56,11 +65,19 @@ export function WaitlistForm({ submitLabel = "Join the Waitlist" }: { submitLabe
             ))}
           </select>
         </div>
+        {assisted && (
+          <div className="grid gap-1.5 sm:col-span-2">
+            <Label htmlFor="as-instagram">Instagram handle or website</Label>
+            <Input id="as-instagram" name="instagram" placeholder="@yourbusiness" autoComplete="url" className="h-11" />
+          </div>
+        )}
       </div>
       <label className="flex items-start gap-2.5 text-sm leading-relaxed">
         <input type="checkbox" name="consent" required className="mt-1 size-4 shrink-0 accent-primary" />
         <span>
-          Email me about Evntly vendor early access, including if a founding place opens up. I can unsubscribe at any time.
+          {assisted
+            ? "Email me about setting up my free Evntly listing. I can unsubscribe at any time."
+            : "Email me about Evntly vendor early access, including if a founding place opens up. I can unsubscribe at any time."}
         </span>
       </label>
       {state?.error && (
