@@ -1,0 +1,11 @@
+table,id,created_at,kind,source,detail,visitor_id,user_id,decision
+funnel_events,12,2026-11-14 10:25:39.729959+00,claim_click,meta_ads,,2f40f6ff-604f-4330-8bed-3b421b56f7a2,,deleted: admin browser during Instagram test
+funnel_events,13,2026-11-14 10:27:20.739491+00,claim_click,meta_ads,,2f40f6ff-604f-4330-8bed-3b421b56f7a2,,deleted: admin browser during Instagram test
+funnel_events,14,2026-11-14 10:33:22.26211+00,claim_click,meta_ads,,52e3a83b-a574-41c3-aa82-5334c48f17a3,,deleted: Google test browser
+funnel_events,15,2026-11-14 10:33:22.626714+00,signup_view,meta_ads,,52e3a83b-a574-41c3-aa82-5334c48f17a3,,deleted: Google test browser
+funnel_events,16,2026-11-14 10:35:30.115119+00,account_created,meta_ads,google,,,deleted: test account 2d1e2caa created 10:35:29 (deleted earlier)
+page_views,869,2026-11-14 10:32:35.93543+00,founding,,,b955fd05-deb0-4ee3-b9f4-9ebcb5cc9e35,,KEPT: cannot be verified as test activity
+page_views,870,2026-11-14 10:33:11.820675+00,founding,,,52e3a83b-a574-41c3-aa82-5334c48f17a3,,deleted: Google test browser
+page_views,871,2026-11-14 10:35:30.677169+00,founding_claim,meta_ads,,52e3a83b-a574-41c3-aa82-5334c48f17a3,(was test account 2d1e2caa; unlinked earlier),deleted: Google test browser
+page_views,872,2026-11-14 10:36:57.401086+00,home,,,52e3a83b-a574-41c3-aa82-5334c48f17a3,,deleted: Google test browser
+page_views,873,2026-11-14 10:38:23.098555+00,home,,,52e3a83b-a574-41c3-aa82-5334c48f17a3,,deleted: Google test browser

@@ -1,0 +1,13 @@
+<!--
+  DRAFT (not live). Supabase → Authentication → Emails → "Confirm signup".
+  Subject: Confirm your Evntly account
+  Adds the one-time code ({{ .Token }}) and keeps the confirmation link ({{ .ConfirmationURL }}).
+  Before pasting: back up the current template to docs/launch/supabase-confirm-signup-template.backup.html.
+  If the current template has branding or wording you want to keep, merge this code block into it instead.
+-->
+<h2>Confirm your Evntly account</h2>
+<p>Your sign-up code is:</p>
+<p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:16px 0">{{ .Token }}</p>
+<p>Type it on the Evntly sign-up page to finish. The code expires in 1 hour.</p>
+<p>Or <a href="{{ .ConfirmationURL }}">confirm by link</a>. The link may open in a different browser; if it does, log in there with the same email and password.</p>
+<p>If you didn't sign up for Evntly, you can ignore this email.</p>

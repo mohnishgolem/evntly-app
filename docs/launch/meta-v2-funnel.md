@@ -19,7 +19,7 @@ PR branch `meta-v2-funnel`. Nothing here is live until Sai approves each step.
    <p>Type it on the sign-up page to finish. Or <a href="{{ .ConfirmationURL }}">confirm by link</a> (it may open a different browser; log in there with the same password).</p>
    <p>If you didn't sign up for Evntly, ignore this email.</p>
    ```
-   Check Authentication → Providers → Email: "Email OTP length" (6 by default; the form accepts 6–10 digits) and "Email OTP expiration" (keep at 1 hour or less).
+   Check Authentication → Providers → Email: "Email OTP length" (currently 8; the form accepts 6–10 digits) and "Email OTP expiration" (currently 3600 s; keep at 1 hour or less).
 2. **Migration** `supabase/migrations/20261115090000_meta_v2_funnel.sql` (additive: two nullable/defaulted columns, one constraint widened, `admin_funnel` steps 115–116). Rollback: `supabase/rollbacks/20261115090000_meta_v2_funnel.down.sql`. Tested offline in PGlite (`tests/sql/meta-v2-funnel.test.ts`), never against production.
 3. **Merge + deploy** the PR. The code is safe if it lands before the migration for everything except the new events and the help form (those inserts would fail quietly until the migration is applied), but apply the migration first.
 4. **Signup test on a throwaway account** (Sai's OK needed, because it creates a real account): on an iPhone, open a tagged link inside Instagram, sign up as a vendor, type the code, check you land on the claim page signed in, then check `admin_funnel` steps 115/111/113/116 and delete the test account.
@@ -28,7 +28,7 @@ PR branch `meta-v2-funnel`. Nothing here is live until Sai approves each step.
 The privacy-policy edit adds information about people who aren't Evntly users (waitlist and ad-form contacts) and doesn't change anything for account holders, so it doesn't bump `LEGAL_VERSIONS.privacy_policy` (a bump makes every user re-accept and blocks quotes/messages until they do). If you or your solicitor treat it as a material change, bump the version and add the `legal_document_versions` migration before deploying.
 
 ## Security review (auth change)
-- **Code guessing:** 6 digits = 1,000,000 combinations. Our limits: 8 tries per email and 30 per IP per 15 minutes, on top of Supabase's own. At a 1-hour expiry that's at most ~32 guesses per code (~0.003%).
+- **Code guessing:** the project sends 8-digit codes (checked 14 Nov) = 100,000,000 combinations. Our limits: 8 tries per email and 30 per IP per 15 minutes, on top of Supabase's own. At the 1-hour expiry that's at most ~32 guesses per code (~0.00003%).
 - **Code bound to the email:** `verifyOtp({ email, token, type: "email" })` only signs in the account the code was sent to.
 - **No account enumeration:** a wrong code and an expired code get the same message; "Send a new code" reports success for any address and only surfaces rate limits or outages.
 - **Redirects:** `next` passes through `safeNextPath`, and vendors without a founding path go to `/vendor-signup`. Tested with `//evil.example/x` and `https://evil.example`.
