@@ -1,6 +1,6 @@
 # PR #43 (meta-v2-funnel) deploy checklist
 
-Prepared 14 Nov 2026. Steps 1–3 were done in production on 14 Nov with Sai's approval; each step still marked 🔒 needs Sai's separate approval.
+Prepared 14 Nov 2026. Steps 1–3, 5 and 6 were done in production on 14 Nov with Sai's approval; each step still marked 🔒 needs Sai's separate approval.
 
 Checked at commit `3851a14` (PR head, up to date with `main` `cedd412`):
 - `vitest`: 70 files, 632 tests pass. `tsc --noEmit` clean. Lint clean. GitHub CI all green (test-and-build, dependency-audit, secret-scan, sast, Vercel preview).
@@ -41,7 +41,7 @@ Merged at reviewed head 3851a14 as merge commit c17e8f0; Vercel production deplo
 
 ## 4. 🔒 Throwaway vendor sign-ups (create real accounts)
 Status 14 Nov:
-- ✅ **Google sign-up inside Instagram** (10:33–10:35 UTC): claim tap → sign-up form → account → claim page signed in, all credited to `meta_ads`. Test account deleted afterwards (its 6 `legal_consents` rows stay: append-only by design). Test funnel events ids 12–16 identified (see the launch report) and left in place pending approval to delete.
+- ✅ **Google sign-up** (10:33–10:35 UTC; a fresh browser, not confirmed to be Instagram's): claim tap → sign-up form → account → claim page signed in, all credited to `meta_ads`. Test account deleted afterwards (its 6 `legal_consents` rows stay: append-only by design). Test records removed 14 Nov with Sai's approval after a backup (`backups/2026-11-14-test-records.csv`): funnel_events 12–16 and page_views 870–873. page_views 869 kept (couldn't be verified as ours).
 - ⏳ **Email + password + 8-digit code inside Instagram**: not yet run. Instagram's browser must be signed out of Evntly first (an admin session sends Claim to the claim page instead of sign-up).
 
 Steps for the email test:
@@ -50,11 +50,11 @@ Steps for the email test:
 - Check: `admin_funnel` steps 110, 111, 113, 115, 116 each +1, and the latest `funnel_events` row is `email_confirmed` with detail `code`.
 - Delete the test account afterwards (Admin or Supabase Auth).
 
-## 5. Then (separately) PR #42
-#42 already targets `main` (retargeted 14 Nov) and now also clears stale campaign cookies. Apply `20261113090000_founding_campaign_tags.sql` (new `campaign` columns only; no overlap with this migration), then merge. Each step 🔒.
+## 5. ✅ PR #42 (done 14 Nov 2026, approved by Sai)
+Schema backed up first (`backups/2026-11-14-pre-campaign-tags-schema.sql`). Applied `founding_campaign_tags` (prod `20261114110146`) and `funnel_exclude_admin_activity` (prod `20261114110218`), then merged (0525373). Existing 6 applications unchanged (campaign null). Reports now leave out any browser ever signed in as an admin, and admin-owned applications.
 
-## 6. PR #44 (landing view source)
-Code only. Fixes the first founding page view being credited to a stale or missing source. Merge 🔒 any time; merges cleanly with #42.
+## 6. ✅ PR #44 (landing view source, merged and deployed 14 Nov, a5254b1)
+Founding page views now send the page's own link tags; confirmed in the live JavaScript bundle.
 
 ## Rollback
 Choose by what broke:
