@@ -465,6 +465,11 @@ export function ContactsTable({ rows, live, maxBatch }: { rows: RecruitmentRow[]
                     <span className="block font-medium">{r.firstName ?? "—"}</span>
                     <span className="block break-all text-xs text-muted-foreground">{r.email}</span>
                     {r.businessName && <span className="block text-xs text-muted-foreground">{r.businessName}</span>}
+                    {r.wantsHelp && (
+                      <span className="mt-1 block text-xs font-medium text-primary">
+                        Wants help setting up{r.instagram ? ` · ${r.instagram}` : ""}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs">{r.unsubscribed ? "Unsubscribed" : r.consent ? "Yes" : "No"}</td>
                   <td className="px-3 py-2 text-xs">

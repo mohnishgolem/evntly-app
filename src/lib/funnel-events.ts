@@ -7,11 +7,18 @@ import { isFoundingSource, SOURCE_COOKIE, type FoundingSource } from "@/lib/foun
 // a short error code, and at most the random per-browser visitor id that
 // page_views already uses. Recording must never break the flow it measures.
 
-export const FUNNEL_EVENTS = ["claim_click", "signup_attempt", "signup_error", "account_created"] as const;
+export const FUNNEL_EVENTS = [
+  "claim_click",
+  "signup_view",
+  "signup_attempt",
+  "signup_error",
+  "account_created",
+  "email_confirmed",
+] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
 
 /** Events the browser may send to /api/track. The rest are server-only. */
-export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = ["claim_click", "signup_attempt"];
+export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = ["claim_click", "signup_view", "signup_attempt"];
 
 export function isFunnelEvent(value: unknown): value is FunnelEvent {
   return FUNNEL_EVENTS.includes(value as FunnelEvent);

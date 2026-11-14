@@ -28,6 +28,13 @@ export async function GET(request: Request) {
       if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
         return NextResponse.redirect(`${origin}/login/mfa?next=${encodeURIComponent(safeNextPath(next))}`);
       }
+      // A vendor confirming their email by link (the code path records its own).
+      if (flow === "signup") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user?.user_metadata?.role === "vendor") await recordFunnelEvent("email_confirmed", { detail: "link" });
+      }
       if (role === "vendor") {
         const {
           data: { user },

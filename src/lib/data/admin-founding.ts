@@ -18,6 +18,9 @@ export type RecruitmentRow = {
   firstName: string | null;
   businessName: string | null;
   category: string | null;
+  /** Asked for help setting up their listing ("Prefer some help?" form). */
+  wantsHelp: boolean;
+  instagram: string | null;
   onWaitlist: boolean;
   consent: boolean;
   unsubscribed: boolean;
@@ -127,6 +130,8 @@ export async function getBetaAdminData(opts: { serviceClient?: SupabaseClient<Da
       firstName: w.first_name,
       businessName: w.business_name,
       category: w.category,
+      wantsHelp: !!w.wants_help,
+      instagram: w.instagram ?? null,
       onWaitlist: true,
       consent: w.invite_consent,
       unsubscribed: !!w.unsubscribed_at,
@@ -157,6 +162,8 @@ export async function getBetaAdminData(opts: { serviceClient?: SupabaseClient<Da
       firstName: null,
       businessName: l?.name ?? null,
       category: l?.service_type ?? null,
+      wantsHelp: false,
+      instagram: null,
       onWaitlist: false,
       consent: false,
       unsubscribed: false,

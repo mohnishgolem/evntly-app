@@ -69,3 +69,32 @@ export const getMyFoundingStatus = cache(async function getMyFoundingStatus(): P
     checklist,
   };
 });
+
+export type SampleListing = { name: string; category: string; city: string | null; avatarUrl: string; hourlyRate: number | null };
+
+/**
+ * One of Evntly's own sample (demo) listings with a photo, preferring the
+ * given category, to show vendors what a listing card looks like. Always
+ * labelled "Sample listing" where it's shown; never presented as a real vendor.
+ */
+export const getSampleListing = cache(async function getSampleListing(category: string | null): Promise<SampleListing | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("service_providers")
+    .select("name, service_type, city, avatar_url, hourly_rate")
+    .eq("status", "approved")
+    .eq("is_demo", true)
+    .not("avatar_url", "is", null)
+    .order("created_at")
+    .limit(20);
+  if (error || !data?.length) return null;
+  const pick = data.find((v) => v.service_type === category) ?? data.find((v) => v.service_type === "photographer") ?? data[0];
+  if (!pick.avatar_url) return null;
+  return {
+    name: pick.name,
+    category: pick.service_type,
+    city: pick.city,
+    avatarUrl: pick.avatar_url,
+    hourlyRate: pick.hourly_rate == null ? null : Number(pick.hourly_rate),
+  };
+});
