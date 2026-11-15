@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/site/logo";
+import { AdChoicesLink } from "@/components/ad-choices-link";
 
 const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
 
@@ -22,6 +23,7 @@ export function SiteFooter() {
             <Link href="/privacy-policy" className="hover:text-foreground">
               Privacy Policy
             </Link>
+            <AdChoicesLink className="text-left hover:text-foreground" />
             <Link href="/cancellation-refund-dispute-policy" className="hover:text-foreground">
               Cancellations &amp; refunds
             </Link>

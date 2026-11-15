@@ -55,6 +55,13 @@ vi.mock("@/lib/funnel-events", () => ({
     funnel.push({ event, detail: opts.detail });
   }),
 }));
+const metaRegistrations: { userId: string; url: string }[] = [];
+vi.mock("@/lib/meta-capi", () => ({
+  recordVendorRegistration: vi.fn(async (user: { id: string }, url: string) => {
+    metaRegistrations.push({ userId: user.id, url });
+    return { sent: true };
+  }),
+}));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: vi.fn(async () => rateLimitOk),
   clientIp: vi.fn(async () => "1.2.3.4"),
@@ -83,6 +90,7 @@ async function redirectedTo(p: Promise<unknown>): Promise<string | null> {
 beforeEach(() => {
   calls.length = 0;
   funnel.length = 0;
+  metaRegistrations.length = 0;
   redirect.mockClear();
   rateLimitOk = true;
   verifyReply = { status: 200, body: session("vendor") };
@@ -144,6 +152,16 @@ describe("verifySignupCode", () => {
     const to = await redirectedTo(verifySignupCode(null, form({ email: "vendor@example.invalid", code: "123456", next: CLAIM_NEXT })));
     expect(to).toBe(CLAIM_NEXT);
     expect(funnel).toEqual([{ event: "email_confirmed", detail: "code" }]);
+    // One Meta CompleteRegistration for this account, pointing at where they land.
+    expect(metaRegistrations).toEqual([{ userId: "u1", url: `${SITE_URL}${CLAIM_NEXT}` }]);
+  });
+
+  it("tells Meta nothing when the code is wrong or the account isn't a vendor", async () => {
+    verifyReply = { status: 403, body: { code: 403, error_code: "otp_expired", msg: "Token has expired or is invalid" } };
+    await verifySignupCode(null, form({ email: "vendor@example.invalid", code: "123456", next: CLAIM_NEXT }));
+    verifyReply = { status: 200, body: session("customer") };
+    await redirectedTo(verifySignupCode(null, form({ email: "vendor@example.invalid", code: "123456", next: "/" })));
+    expect(metaRegistrations).toEqual([]);
   });
 
   it("never redirects off-site, and sends other vendors to listing set-up", async () => {
