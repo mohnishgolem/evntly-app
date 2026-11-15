@@ -28,7 +28,10 @@ vi.mock("next/headers", () => ({
   headers: async () => reqHeaders,
 }));
 
-const { recordVendorRegistration, registrationEventId, completeRegistrationPayload, capiEnabled } = await import("@/lib/meta-capi");
+const { recordVendorRegistration, registrationEventId, completeRegistrationPayload, capiEnabled, isNewConfirmation } = await import("@/lib/meta-capi");
+
+// A vendor created a minute ago who has just confirmed their email.
+const fresh = (id: string) => ({ id, created_at: new Date(Date.now() - 60_000).toISOString(), email_confirmed_at: new Date().toISOString() });
 
 const URL_CLAIM = "https://evntlyapp.com/founding-vendors/claim?src=meta_ads";
 
@@ -43,7 +46,7 @@ beforeEach(() => {
 
 describe("recordVendorRegistration", () => {
   it("sends one CompleteRegistration with the shared event id and no personal data", async () => {
-    expect(await recordVendorRegistration("user-uuid-1", URL_CLAIM)).toEqual({ sent: true });
+    expect(await recordVendorRegistration(fresh("user-uuid-1"), URL_CLAIM)).toEqual({ sent: true });
     expect(sent).toHaveLength(1);
     expect(sent[0].url).toBe(`https://graph.facebook.com/v21.0/${PIXEL}/events`);
     expect((sent[0].init.headers as Record<string, string>).Authorization).toBe("Bearer test-token-not-real");
@@ -67,15 +70,15 @@ describe("recordVendorRegistration", () => {
 
   it("sends nothing without consent, when declined, or when the pixel or token is off", async () => {
     jar = {};
-    expect(await recordVendorRegistration("u", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     jar = { evntly_ad_consent: "denied" };
-    expect(await recordVendorRegistration("u", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     jar = { evntly_ad_consent: "granted" };
     vi.stubEnv("META_CAPI_ACCESS_TOKEN", "");
-    expect(await recordVendorRegistration("u", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     vi.stubEnv("META_CAPI_ACCESS_TOKEN", "test-token-not-real");
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ENABLED", "false");
-    expect(await recordVendorRegistration("u", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ENABLED", "true");
     expect(sent).toHaveLength(0);
     expect(setCookies).toHaveLength(0);
@@ -84,22 +87,59 @@ describe("recordVendorRegistration", () => {
   it("drops malformed Meta cookies and unknown IPs instead of forwarding them", async () => {
     jar = { evntly_ad_consent: "granted", _fbp: "<script>", _fbc: "fb.1.1763100000000.IwAR-click_id" };
     reqHeaders = new Headers({ "user-agent": "UA" });
-    await recordVendorRegistration("u2", URL_CLAIM);
+    await recordVendorRegistration(fresh("u2"), URL_CLAIM);
     const event = (sent[0].body.data as Record<string, unknown>[])[0];
     expect(event.user_data).toEqual({ client_user_agent: "UA", fbc: "fb.1.1763100000000.IwAR-click_id" });
   });
 
   it("adds the Events Manager test code only when configured", async () => {
     vi.stubEnv("META_CAPI_TEST_EVENT_CODE", "TEST12345");
-    await recordVendorRegistration("u3", URL_CLAIM);
+    await recordVendorRegistration(fresh("u3"), URL_CLAIM);
     expect(sent[0].body.test_event_code).toBe("TEST12345");
   });
 
   it("never throws or blocks sign-up when Meta errors or is unreachable", async () => {
     reply = new Response('{"error":{}}', { status: 400 });
-    expect(await recordVendorRegistration("u4", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u4"), URL_CLAIM)).toEqual({ sent: false });
     fakeFetch.mockRejectedValueOnce(new Error("network down"));
-    expect(await recordVendorRegistration("u4", URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration(fresh("u4"), URL_CLAIM)).toEqual({ sent: false });
+  });
+});
+
+describe("once per genuinely new, email-confirmed vendor", () => {
+  it("ignores old confirmations: a second link click, a re-login or a later reset", async () => {
+    const now = Date.now();
+    const old = { id: "v1", created_at: new Date(now - 3 * 86400_000).toISOString(), email_confirmed_at: new Date(now - 2 * 86400_000).toISOString() };
+    expect(await recordVendorRegistration(old, URL_CLAIM)).toEqual({ sent: false });
+    const longAgoAccount = { id: "v2", created_at: new Date(now - 60 * 86400_000).toISOString(), email_confirmed_at: new Date(now).toISOString() };
+    expect(await recordVendorRegistration(longAgoAccount, URL_CLAIM)).toEqual({ sent: false });
+    expect(await recordVendorRegistration({ id: "v3", created_at: null, email_confirmed_at: null }, URL_CLAIM)).toEqual({ sent: false });
+    expect(sent).toHaveLength(0);
+  });
+
+  it("repeats inside the window reuse the same event id, so Meta counts one", async () => {
+    const v = fresh("repeat-user");
+    await recordVendorRegistration(v, URL_CLAIM);
+    await recordVendorRegistration(v, URL_CLAIM);
+    const ids = sent.map((x) => (x.body.data as { event_id: string }[])[0].event_id);
+    expect(new Set(ids).size).toBe(1);
+  });
+
+  it("checks the confirmation window precisely", () => {
+    const now = Date.UTC(2026, 10, 15, 10, 0, 0);
+    const at = (msAgo: number) => new Date(now - msAgo).toISOString();
+    expect(isNewConfirmation({ created_at: at(5 * 60_000), email_confirmed_at: at(9 * 60_000) }, now)).toBe(true);
+    expect(isNewConfirmation({ created_at: at(5 * 60_000), email_confirmed_at: at(11 * 60_000) }, now)).toBe(false);
+    expect(isNewConfirmation({ created_at: at(31 * 86400_000), email_confirmed_at: at(0) }, now)).toBe(false);
+    expect(isNewConfirmation({ created_at: at(0), email_confirmed_at: new Date(now + 5 * 60_000).toISOString() }, now)).toBe(false);
+  });
+});
+
+describe("browser/server deduplication and failures", () => {
+  it("hands the browser the same id even when the server request fails", async () => {
+    fakeFetch.mockRejectedValueOnce(new Error("graph down"));
+    expect(await recordVendorRegistration(fresh("u-fail"), URL_CLAIM)).toEqual({ sent: false });
+    expect(setCookies).toEqual([expect.objectContaining({ name: "evntly_reg_evt", value: registrationEventId("u-fail") })]);
   });
 });
 

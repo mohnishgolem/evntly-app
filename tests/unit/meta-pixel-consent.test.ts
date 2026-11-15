@@ -25,7 +25,7 @@ const events: string[] = [];
 const fbqCalls: unknown[][] = [];
 vi.stubGlobal("document", fakeDocument);
 vi.stubGlobal("navigator", nav);
-vi.stubGlobal("location", { protocol: "https:" });
+vi.stubGlobal("location", { protocol: "https:", hostname: "evntlyapp.com" });
 vi.stubGlobal("window", { dispatchEvent: (e: Event) => events.push(e.type), fbq: (...a: unknown[]) => fbqCalls.push(a) });
 
 const m = await import("@/lib/meta-pixel");
@@ -58,10 +58,20 @@ describe("ad measurement consent", () => {
     expect(m.hasMarketingConsent()).toBe(false);
   });
 
-  it("removes Meta's cookies when someone says no", () => {
-    cookieStore = { _fbp: "fb.1.1.1", _fbc: "fb.1.1.x" };
+  it("removes Meta's cookies and stops a running pixel when someone says no", () => {
+    cookieStore = { _fbp: "fb.1.1.1", _fbc: "fb.1.1.x", evntly_reg_evt: "reg_" + "c".repeat(32) };
     m.setAdConsent("denied");
     expect(cookieStore).toEqual({ evntly_ad_consent: "denied" });
+    expect(fbqCalls).toContainEqual(["consent", "revoke"]);
+  });
+
+  it("Ad choices withdraws an earlier Allow and asks again", () => {
+    m.setAdConsent("granted");
+    cookieStore._fbp = "fb.1.1.1";
+    m.resetAdConsent();
+    expect(m.adConsentChoice()).toBeUndefined();
+    expect(cookieStore._fbp).toBeUndefined();
+    expect(fbqCalls).toContainEqual(["consent", "revoke"]);
   });
 
   it("fires nothing without consent, and the registration with its shared id with consent", () => {
@@ -69,7 +79,8 @@ describe("ad measurement consent", () => {
     expect(fbqCalls).toEqual([]);
     m.setAdConsent("granted");
     m.metaPixelTrack("CompleteRegistration", "reg_" + "a".repeat(32));
-    expect(fbqCalls).toEqual([["track", "CompleteRegistration", {}, { eventID: "reg_" + "a".repeat(32) }]]);
+    // "Allow" re-grants a pixel that was revoked earlier on this page, then the event goes out once.
+    expect(fbqCalls).toEqual([["consent", "grant"], ["track", "CompleteRegistration", {}, { eventID: "reg_" + "a".repeat(32) }]]);
   });
 });
 

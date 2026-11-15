@@ -16,17 +16,19 @@ export function AdConsentBanner() {
     <div
       role="region"
       aria-label="Ad measurement choice"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3 shadow-lg backdrop-blur"
+      // Phones: at the top, so the sticky "Claim my free listing" bar and the
+      // tab bar at the bottom stay visible and tappable. Desktop: bottom.
+      className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+10px)] shadow-lg backdrop-blur sm:top-auto sm:bottom-0 sm:border-b-0 sm:border-t sm:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:pt-3"
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center">
-        <p className="text-sm leading-relaxed text-muted-foreground sm:flex-1">
-          Can we use Meta&apos;s measurement tools to see which of our Facebook and Instagram ads bring vendors to Evntly? It
-          sets Meta cookies and tells Meta when you sign up as a vendor. We never send your name, email or phone.{" "}
+      <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <p className="min-w-0 flex-1 text-xs leading-snug text-muted-foreground sm:text-sm sm:leading-relaxed">
+          Allow Meta to measure which of our ads bring vendors? It sets Meta cookies and tells Meta when you sign up as a
+          vendor. Never your name, email or phone.{" "}
           <Link href="/privacy-policy#cookies" className="font-medium text-foreground underline underline-offset-2">
             Privacy policy
           </Link>
         </p>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row sm:gap-2">
           <Button variant="outline" size="sm" onClick={() => setAdConsent("denied")}>
             No thanks
           </Button>

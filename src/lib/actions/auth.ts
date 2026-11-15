@@ -198,7 +198,7 @@ export async function verifySignupCode(_prevState: AuthFormState, formData: Form
   if (role === "vendor") {
     await recordFunnelEvent("email_confirmed", { detail: "code" });
     // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
-    if (data.user) await recordVendorRegistration(data.user.id, new URL(destination, SITE_URL).toString());
+    if (data.user) await recordVendorRegistration(data.user, new URL(destination, SITE_URL).toString());
   }
   redirect(destination);
 }

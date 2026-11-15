@@ -65,9 +65,26 @@ export function setAdConsent(choice: "granted" | "denied") {
   try {
     const secure = location.protocol === "https:" ? "; secure" : "";
     document.cookie = `${AD_CONSENT_COOKIE}=${choice}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${secure}`;
+    if (choice === "granted") {
+      try {
+        (window as unknown as { fbq?: (...a: unknown[]) => void }).fbq?.("consent", "grant");
+      } catch {
+        // ignore
+      }
+    }
     if (choice === "denied") {
-      // Meta's own cookies, if a pixel ever loaded before, are removed too.
-      for (const c of ["_fbp", "_fbc"]) document.cookie = `${c}=; path=/; max-age=0; samesite=lax${secure}`;
+      // Withdrawal: stop a pixel that's already running on this page, and
+      // delete Meta's cookies (Meta sets them for the whole site domain).
+      try {
+        (window as unknown as { fbq?: (...a: unknown[]) => void }).fbq?.("consent", "revoke");
+      } catch {
+        // ignore
+      }
+      const host = location.hostname;
+      const domains = ["", host, `.${host}`, `.${host.split(".").slice(-2).join(".")}`];
+      for (const c of ["_fbp", "_fbc", REGISTRATION_EVENT_COOKIE]) {
+        for (const d of new Set(domains)) document.cookie = `${c}=; path=/; max-age=0${d ? `; domain=${d}` : ""}; samesite=lax${secure}`;
+      }
     }
     window.dispatchEvent(new Event(AD_CONSENT_EVENT));
   } catch {
@@ -86,6 +103,17 @@ export function metaPixelTrack(event: MetaPixelEvent, eventId?: string) {
     else fbq?.("track", event);
   } catch {
     // Never break the page for analytics.
+  }
+}
+
+/** Browser only: forget the choice so the banner asks again (footer "Ad choices"). */
+export function resetAdConsent() {
+  try {
+    if (adConsentChoice() === "granted") setAdConsent("denied");
+    document.cookie = `${AD_CONSENT_COOKIE}=; path=/; max-age=0; samesite=lax`;
+    window.dispatchEvent(new Event(AD_CONSENT_EVENT));
+  } catch {
+    // ignore
   }
 }
 

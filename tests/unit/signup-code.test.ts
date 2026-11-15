@@ -57,8 +57,8 @@ vi.mock("@/lib/funnel-events", () => ({
 }));
 const metaRegistrations: { userId: string; url: string }[] = [];
 vi.mock("@/lib/meta-capi", () => ({
-  recordVendorRegistration: vi.fn(async (userId: string, url: string) => {
-    metaRegistrations.push({ userId, url });
+  recordVendorRegistration: vi.fn(async (user: { id: string }, url: string) => {
+    metaRegistrations.push({ userId: user.id, url });
     return { sent: true };
   }),
 }));

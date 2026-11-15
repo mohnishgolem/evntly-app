@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         if (user?.user_metadata?.role === "vendor") {
           await recordFunnelEvent("email_confirmed", { detail: "link" });
           // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
-          await recordVendorRegistration(user.id, `${origin}${safeNextPath(next, "/vendor-signup")}`);
+          await recordVendorRegistration(user, `${origin}${safeNextPath(next, "/vendor-signup")}`);
         }
       }
       if (role === "vendor") {

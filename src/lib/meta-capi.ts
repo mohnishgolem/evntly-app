@@ -57,23 +57,42 @@ export function completeRegistrationPayload(opts: {
 
 const FB_COOKIE = /^fb\.\d\.\d{10,13}\.[A-Za-z0-9_.-]{1,200}$/;
 
+/**
+ * Only a genuinely new registration counts: the account was created in the
+ * last 30 days and its email was confirmed in the last 10 minutes. Supabase
+ * sets email_confirmed_at once, at the first confirmation, so a repeated
+ * email link, a second code attempt, a re-login or a password reset later
+ * never passes this check. Repeats inside the 10 minutes reuse the same
+ * event id, which Meta deduplicates.
+ */
+export function isNewConfirmation(user: { created_at?: string | null; email_confirmed_at?: string | null }, now = Date.now()): boolean {
+  const created = user.created_at ? Date.parse(user.created_at) : NaN;
+  const confirmed = user.email_confirmed_at ? Date.parse(user.email_confirmed_at) : NaN;
+  if (!Number.isFinite(created) || !Number.isFinite(confirmed)) return false;
+  return now - created <= 30 * 24 * 3600 * 1000 && now - confirmed <= 10 * 60 * 1000 && confirmed <= now + 60 * 1000;
+}
+
 /** Is the server allowed to send to Meta for this request? */
 export function capiEnabled(consent: string | undefined): boolean {
   return metaPixelConfigured() && !!process.env.META_CAPI_ACCESS_TOKEN && consent === "granted";
 }
 
 /**
- * A vendor has just confirmed their email. If (and only if) this browser
- * consented, send CompleteRegistration to Meta and leave the event id in a
+ * A vendor has just confirmed their email for the first time. If (and only
+ * if) this browser consented, send CompleteRegistration to Meta and leave the event id in a
  * short-lived cookie so <RegistrationPixel> fires the browser copy with the
  * same id. Never throws and never blocks sign-up for more than ~2.5s.
  */
-export async function recordVendorRegistration(userId: string, sourceUrl: string): Promise<{ sent: boolean }> {
+export async function recordVendorRegistration(
+  user: { id: string; created_at?: string | null; email_confirmed_at?: string | null },
+  sourceUrl: string
+): Promise<{ sent: boolean }> {
   try {
+    if (!isNewConfirmation(user)) return { sent: false };
     const jar = await cookies();
     if (!capiEnabled(jar.get(AD_CONSENT_COOKIE)?.value)) return { sent: false };
 
-    const eventId = registrationEventId(userId);
+    const eventId = registrationEventId(user.id);
     const h = await headers();
     const fbp = jar.get("_fbp")?.value;
     const fbc = jar.get("_fbc")?.value;
@@ -91,6 +110,8 @@ export async function recordVendorRegistration(userId: string, sourceUrl: string
     });
 
     // Hand the id to the browser pixel (read once, then deleted by the client).
+    // Set before calling Meta: if the server request fails, the browser copy
+    // still arrives and is counted once.
     jar.set(REGISTRATION_EVENT_COOKIE, eventId, { path: "/", maxAge: 600, sameSite: "lax", secure: true, httpOnly: false });
 
     const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${META_PIXEL_ID}/events`, {
