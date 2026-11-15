@@ -124,6 +124,7 @@ export const privacyPolicy: LegalDocument = {
             "**Photon by Komoot:** looking up suburbs when a Vendor sets their location (Germany).",
             "**OpenFreeMap:** map tiles your browser loads when you view the map (Europe).",
             "**Unsplash:** some images, including sample listing photos, are loaded from Unsplash by your browser (United States).",
+            "**Meta Platforms** (Facebook and Instagram): measuring which of our ads bring vendors, only if you allow ad measurement (see section 8) (United States and Ireland).",
           ],
         },
         "We may also disclose information if the law requires it, to a regulator or law enforcement agency where permitted, to protect someone's safety, or to a buyer of the Evntly business (who would have to handle it in line with this policy).",
@@ -140,7 +141,8 @@ export const privacyPolicy: LegalDocument = {
       id: "cookies",
       title: "8. Cookies and browser storage",
       blocks: [
-        "We use cookies that are strictly needed to keep you signed in and secure. In your browser's local storage we keep your light/dark theme choice and the random ID used for page-view counts. We don't use advertising or cross-site tracking cookies. If you block cookies, you won't be able to sign in.",
+        "We use cookies that are strictly needed to keep you signed in and secure. In your browser's local storage we keep your light/dark theme choice and the random ID used for page-view counts. If you block cookies, you won't be able to sign in.",
+        "**Ad measurement (Meta), only if you allow it.** We advertise to event businesses on Facebook and Instagram. When ad measurement is switched on, a banner asks whether you allow it, and nothing Meta-related loads until you press Allow. If you allow it, Meta's Pixel sets its own cookies (`_fbp`, and `_fbc` if you came from one of our ads) and tells Meta about page visits and, if you sign up as a Vendor and confirm your email, that a vendor registration happened. Our server sends the same registration to Meta (Conversions API) with your IP address, browser type and those Meta cookies, so Meta can match it to the ad. We never send your name, email address, phone number or account details. Meta uses this under its own privacy policy, including to measure and improve ads. If you press No thanks, or your browser sends Do Not Track or Global Privacy Control, none of this happens; choosing No thanks later also deletes Meta's cookies from our site. To change your choice, clear the `evntly_ad_consent` cookie for evntlyapp.com and the banner will ask again.",
       ],
     },
     {

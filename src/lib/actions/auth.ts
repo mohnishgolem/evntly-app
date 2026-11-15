@@ -1,6 +1,7 @@
 "use server";
 
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { recordVendorRegistration } from "@/lib/meta-capi";
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -193,8 +194,13 @@ export async function verifySignupCode(_prevState: AuthFormState, formData: Form
   }
 
   const role = data.user?.user_metadata?.role;
-  if (role === "vendor") await recordFunnelEvent("email_confirmed", { detail: "code" });
-  redirect(afterConfirmPath(next, role));
+  const destination = afterConfirmPath(next, role);
+  if (role === "vendor") {
+    await recordFunnelEvent("email_confirmed", { detail: "code" });
+    // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
+    if (data.user) await recordVendorRegistration(data.user.id, new URL(destination, SITE_URL).toString());
+  }
+  redirect(destination);
 }
 
 export async function resendSignupCode(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {

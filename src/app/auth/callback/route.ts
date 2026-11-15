@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { isFoundingPath } from "@/lib/founding/sources";
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { recordVendorRegistration } from "@/lib/meta-capi";
 import type { AuthNoticeKey } from "@/lib/auth-notices";
 
 // Supabase redirects here after a Google/Apple OAuth sign-in, or after a
@@ -33,7 +34,11 @@ export async function GET(request: Request) {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (user?.user_metadata?.role === "vendor") await recordFunnelEvent("email_confirmed", { detail: "link" });
+        if (user?.user_metadata?.role === "vendor") {
+          await recordFunnelEvent("email_confirmed", { detail: "link" });
+          // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
+          await recordVendorRegistration(user.id, `${origin}${safeNextPath(next, "/vendor-signup")}`);
+        }
       }
       if (role === "vendor") {
         const {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,6 @@ import { login, signup, signInWithOAuth, verifySignupCode, resendSignupCode, typ
 import { GoogleIcon, AppleIcon } from "@/components/auth/social-icons";
 import { MARKETING_CONSENT_LABEL } from "@/lib/legal/versions";
 import { trackFunnelEvent } from "@/lib/track-client";
-import { metaPixelTrack } from "@/lib/meta-pixel";
 
 const initialState: AuthFormState = null;
 
@@ -113,10 +112,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
 
   if (state?.needsEmailConfirmation) {
     return (
-      <>
-        {role === "vendor" && <CompleteRegistrationPing />}
-        <ConfirmByCode email={state.email ?? email} next={state.next ?? next} />
-      </>
+      <ConfirmByCode email={state.email ?? email} next={state.next ?? next} />
     );
   }
 
@@ -439,9 +435,3 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
   );
 }
 
-// Tells the Meta Pixel a vendor account was created. Does nothing until the
-// pixel is switched on (see lib/meta-pixel.ts).
-function CompleteRegistrationPing() {
-  useEffect(() => metaPixelTrack("CompleteRegistration"), []);
-  return null;
-}
