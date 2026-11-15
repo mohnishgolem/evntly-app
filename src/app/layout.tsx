@@ -58,6 +58,10 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: "Evntly",
+  // iPhone Safari turns number-like text (ABNs, prices, dates) into tap-to-call
+  // or calendar links before React hydrates, which changes the HTML and throws
+  // React error #418 (seen on vendor profiles showing "ABN 82 481 228 456").
+  formatDetection: { telephone: false, date: false, address: false, email: false },
   // Home-screen icon: the white wordmark on black. A fixed URL (rather than
   // the apple-icon file convention's hashed query string) is the path iOS
   // also probes on its own when it misses the <link>.
