@@ -90,9 +90,16 @@ export async function recordVendorRegistration(
   try {
     if (!isNewConfirmation(user)) return { sent: false };
     const jar = await cookies();
-    if (!capiEnabled(jar.get(AD_CONSENT_COOKIE)?.value)) return { sent: false };
+    const consent = jar.get(AD_CONSENT_COOKIE)?.value;
+    if (!metaPixelConfigured() || consent !== "granted") return { sent: false };
 
     const eventId = registrationEventId(user.id);
+    // Hand the id to the browser pixel (read once, then deleted by the client).
+    // Set before calling Meta: if the server request fails, or the Conversions
+    // API isn't configured yet (no token), the browser copy still arrives.
+    jar.set(REGISTRATION_EVENT_COOKIE, eventId, { path: "/", maxAge: 600, sameSite: "lax", secure: true, httpOnly: false });
+    if (!capiEnabled(consent)) return { sent: false };
+
     const h = await headers();
     const fbp = jar.get("_fbp")?.value;
     const fbc = jar.get("_fbc")?.value;
@@ -108,11 +115,6 @@ export async function recordVendorRegistration(
       },
       testEventCode: process.env.META_CAPI_TEST_EVENT_CODE || undefined,
     });
-
-    // Hand the id to the browser pixel (read once, then deleted by the client).
-    // Set before calling Meta: if the server request fails, the browser copy
-    // still arrives and is counted once.
-    jar.set(REGISTRATION_EVENT_COOKIE, eventId, { path: "/", maxAge: 600, sameSite: "lax", secure: true, httpOnly: false });
 
     const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${META_PIXEL_ID}/events`, {
       method: "POST",

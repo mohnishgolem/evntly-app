@@ -74,14 +74,19 @@ describe("recordVendorRegistration", () => {
     jar = { evntly_ad_consent: "denied" };
     expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     jar = { evntly_ad_consent: "granted" };
-    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "");
-    expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
-    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "test-token-not-real");
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ENABLED", "false");
     expect(await recordVendorRegistration(fresh("u"), URL_CLAIM)).toEqual({ sent: false });
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ENABLED", "true");
     expect(sent).toHaveLength(0);
     expect(setCookies).toHaveLength(0);
+  });
+
+  it("without a Conversions API token, still lets the browser pixel send the registration", async () => {
+    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "");
+    expect(await recordVendorRegistration(fresh("browser-only"), URL_CLAIM)).toEqual({ sent: false });
+    expect(sent).toHaveLength(0);
+    expect(setCookies).toEqual([expect.objectContaining({ name: "evntly_reg_evt", value: registrationEventId("browser-only") })]);
+    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "test-token-not-real");
   });
 
   it("drops malformed Meta cookies and unknown IPs instead of forwarding them", async () => {
