@@ -15,6 +15,7 @@ import {
 import type { Database } from "@/lib/supabase/database.types";
 import type { SimilarVendor } from "@/lib/data/vendors";
 import { formatAudDollars } from "@/lib/payments/money";
+import { vendorPrice } from "@/lib/pricing-model";
 
 // Follow-up bookkeeping columns aren't part of what the list shows (and the
 // my_quote_requests RPC doesn't return them).
@@ -117,7 +118,7 @@ export function QuoteList({
                       href={`/vendor/${v.id}`}
                       className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
                     >
-                      {v.name} <span className="text-muted-foreground">· {formatAudDollars(v.hourly_rate)}/hr</span>
+                      {v.name} <span className="text-muted-foreground">· {vendorPrice(v).label}</span>
                     </Link>
                   ))}
                 </div>

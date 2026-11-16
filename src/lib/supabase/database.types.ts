@@ -2537,6 +2537,7 @@ export type Database = {
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
+          base_price: number | null
           bio: string | null
           cancellation_policy: string | null
           city: string | null
@@ -2550,7 +2551,7 @@ export type Database = {
           founding_vendor: boolean | null
           free_travel_km: number
           gst_registered: boolean
-          hourly_rate: number
+          hourly_rate: number | null
           id: string
           is_demo: boolean
           languages: string[] | null
@@ -2565,6 +2566,7 @@ export type Database = {
           phone: string | null
           portfolio_urls: string[] | null
           postcode: string | null
+          pricing_model: string
           pricing_options: string[] | null
           rating: number | null
           rating_sum: number | null
@@ -2589,6 +2591,7 @@ export type Database = {
           available?: boolean | null
           avatar_url?: string | null
           avg_response_hours?: number | null
+          base_price?: number | null
           bio?: string | null
           cancellation_policy?: string | null
           city?: string | null
@@ -2602,7 +2605,7 @@ export type Database = {
           founding_vendor?: boolean | null
           free_travel_km?: number
           gst_registered?: boolean
-          hourly_rate: number
+          hourly_rate?: number | null
           id?: string
           is_demo?: boolean
           languages?: string[] | null
@@ -2617,6 +2620,7 @@ export type Database = {
           phone?: string | null
           portfolio_urls?: string[] | null
           postcode?: string | null
+          pricing_model?: string
           pricing_options?: string[] | null
           rating?: number | null
           rating_sum?: number | null
@@ -2641,6 +2645,7 @@ export type Database = {
           available?: boolean | null
           avatar_url?: string | null
           avg_response_hours?: number | null
+          base_price?: number | null
           bio?: string | null
           cancellation_policy?: string | null
           city?: string | null
@@ -2654,7 +2659,7 @@ export type Database = {
           founding_vendor?: boolean | null
           free_travel_km?: number
           gst_registered?: boolean
-          hourly_rate?: number
+          hourly_rate?: number | null
           id?: string
           is_demo?: boolean
           languages?: string[] | null
@@ -2669,6 +2674,7 @@ export type Database = {
           phone?: string | null
           portfolio_urls?: string[] | null
           postcode?: string | null
+          pricing_model?: string
           pricing_options?: string[] | null
           rating?: number | null
           rating_sum?: number | null
@@ -3154,6 +3160,7 @@ export type Database = {
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
+          base_price: number | null
           bio: string | null
           cancellation_policy: string | null
           city: string | null
@@ -3167,7 +3174,7 @@ export type Database = {
           founding_vendor: boolean | null
           free_travel_km: number
           gst_registered: boolean
-          hourly_rate: number
+          hourly_rate: number | null
           id: string
           is_demo: boolean
           languages: string[] | null
@@ -3182,6 +3189,7 @@ export type Database = {
           phone: string | null
           portfolio_urls: string[] | null
           postcode: string | null
+          pricing_model: string
           pricing_options: string[] | null
           rating: number | null
           rating_sum: number | null
@@ -3441,6 +3449,7 @@ export type Database = {
           available: boolean | null
           avatar_url: string | null
           avg_response_hours: number | null
+          base_price: number | null
           bio: string | null
           cancellation_policy: string | null
           city: string | null
@@ -3454,7 +3463,7 @@ export type Database = {
           founding_vendor: boolean | null
           free_travel_km: number
           gst_registered: boolean
-          hourly_rate: number
+          hourly_rate: number | null
           id: string
           is_demo: boolean
           languages: string[] | null
@@ -3469,6 +3478,7 @@ export type Database = {
           phone: string | null
           portfolio_urls: string[] | null
           postcode: string | null
+          pricing_model: string
           pricing_options: string[] | null
           rating: number | null
           rating_sum: number | null

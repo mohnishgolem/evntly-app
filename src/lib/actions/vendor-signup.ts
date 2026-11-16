@@ -11,12 +11,17 @@ import { VENDOR_DOCUMENTS } from "@/lib/legal/versions";
 import { friendlyLegalError } from "@/lib/legal/status";
 import { emailApplicationReceived } from "@/lib/founding/notify";
 import { CLAIM_PATH } from "@/lib/founding/sources";
+import { pricingColumns } from "@/lib/pricing-model";
 
 export type VendorSignupDraft = {
   businessName: string;
   bio: string;
   serviceType: string;
-  hourlyRate: number;
+  // How the vendor prices (hourly / fixed / from / quote) and the one amount
+  // that model uses. Older callers that only send hourlyRate are hourly.
+  pricingModel?: string;
+  hourlyRate?: number | null;
+  basePrice?: number | null;
   city: string;
   // Set when the vendor picks a suggestion from the suburb picker; otherwise
   // the server geocodes `city` itself.
@@ -74,6 +79,8 @@ export async function submitVendorListing(
   if (agreement.acceptedVendorAgreement !== true) {
     return { error: "Please agree to the Vendor Service Agreement to submit your listing." };
   }
+  const pricing = pricingColumns(draft);
+  if ("error" in pricing) return { error: pricing.error };
 
   const { data: existing } = await supabase
     .rpc("my_service_providers")
@@ -99,7 +106,7 @@ export async function submitVendorListing(
     name: draft.businessName,
     bio: draft.bio || null,
     service_type: draft.serviceType,
-    hourly_rate: draft.hourlyRate,
+    ...pricing,
     city: draft.city || null,
     ...coordinates,
     // "which locations do you service" — the specific ask from the call
@@ -176,6 +183,8 @@ export async function updateVendorListing(
   if (abn && !isValidAbn(abn)) {
     return { error: "That ABN isn't valid. Check the 11 digits on abr.business.gov.au." };
   }
+  const pricing = pricingColumns(draft);
+  if ("error" in pricing) return { error: pricing.error };
 
   const coordinates = await resolveCoordinates(draft);
   const { error } = await supabase
@@ -184,7 +193,7 @@ export async function updateVendorListing(
       name: draft.businessName,
       bio: draft.bio || null,
       service_type: draft.serviceType,
-      hourly_rate: draft.hourlyRate,
+      ...pricing,
       city: draft.city || null,
       ...coordinates,
       locations_serviced: draft.locationsServiced,

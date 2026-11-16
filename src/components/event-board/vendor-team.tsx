@@ -10,8 +10,7 @@ import { categoryIcon, categoryLabel, categoryPlural } from "@/lib/config";
 import { setShortlisted } from "@/lib/actions/event-board";
 import { requestQuotesForEvent, type InviteResult } from "@/lib/actions/event-vendors";
 import { acceptQuote } from "@/lib/actions/quotes";
-import { formatAudDollars } from "@/lib/payments/money";
-import { priceTier, TEAM_STATUS_LABEL, type PaymentSummary, type TeamStatus } from "@/lib/event-board";
+import { TEAM_STATUS_LABEL, type PaymentSummary, type TeamStatus } from "@/lib/event-board";
 import { cn } from "@/lib/utils";
 import { QuoteDetails, type QuoteDetailFields } from "@/components/quote-details";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +26,10 @@ export type TeamVendor = {
   rating: number | null;
   reviewCount: number;
   city: string | null;
-  hourlyRate: number;
+  /** "$"–"$$$$" from the estimated booking cost; null for quote-only vendors. */
+  priceTier: string | null;
+  /** "$150/hr", "$800 per event", "From $500" or "Contact for pricing". */
+  priceLabel: string;
   availableOnDate: boolean;
   saved: boolean;
   status: TeamStatus;
@@ -396,9 +398,9 @@ function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: 
               <span className="block text-[11px] text-muted-foreground">estimate</span>
             </span>
           ) : (
-            <span className="text-sm font-semibold" title={`From ${formatAudDollars(v.hourlyRate)}/hr`}>
-              {priceTier(v.hourlyRate)}
-              <span className="sr-only"> (from ${v.hourlyRate} per hour)</span>
+            <span className="text-sm font-semibold" title={v.priceLabel}>
+              {v.priceTier ?? "Quote"}
+              <span className="sr-only"> ({v.priceLabel})</span>
             </span>
           )}
           {!readOnly && (

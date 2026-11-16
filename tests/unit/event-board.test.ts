@@ -28,10 +28,12 @@ const vendor = (over: Partial<MatchableVendor> = {}): MatchableVendor => ({
   longitude: 151.21,
   service_radius_km: null,
   hourly_rate: 150,
+  pricing_model: "hourly",
+  base_price: null,
   ...over,
 });
 
-const event = (over: Partial<MatchableEvent> = {}): MatchableEvent => ({
+const event =(over: Partial<MatchableEvent> = {}): MatchableEvent => ({
   event_date: "2026-12-05", // a Saturday
   budget_total: 6000,
   required_services: ["photographer", "dj"],
@@ -87,6 +89,14 @@ describe("budget", () => {
   it("combines all rules", () => {
     expect(matchesEvent(vendor(), event(), none)).toBe(true);
     expect(matchesEvent(vendor({ weekly_unavailable_days: [6] }), event(), none)).toBe(false);
+  });
+
+  it("estimates fixed and starting prices for budget matching, and never filters quote-only vendors", () => {
+    const fixed = vendor({ pricing_model: "fixed", hourly_rate: null, base_price: 800 });
+    expect(withinBudget(fixed, event({ budget_total: 1000, required_services: ["photographer"] }))).toBe(true);
+    expect(withinBudget(fixed, event({ budget_total: 500, required_services: ["photographer"] }))).toBe(false);
+    const quote = vendor({ pricing_model: "quote", hourly_rate: null, base_price: null });
+    expect(withinBudget(quote, event({ budget_total: 1, required_services: ["photographer"] }))).toBe(true);
   });
 
   it("buckets hourly rates into price tiers", () => {

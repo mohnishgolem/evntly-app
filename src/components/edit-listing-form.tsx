@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, isLaunchCategory, VENDOR_CATEGORIES } from "@/lib/config";
 import { updateVendorListing, type VendorSignupDraft } from "@/lib/actions/vendor-signup";
+import { PricingFields } from "@/components/pricing-fields";
+import { pricingComplete } from "@/lib/pricing-model";
 
 export function EditListingForm({
   listingId,
@@ -47,7 +49,7 @@ export function EditListingForm({
     !!draft.businessName &&
     !!draft.serviceType &&
     draft.eventTypes.length > 0 &&
-    draft.hourlyRate > 0 &&
+    pricingComplete(draft) &&
     !!draft.city &&
     draft.locationsServiced.length > 0;
 
@@ -154,18 +156,7 @@ export function EditListingForm({
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="edit-rate">
-          Hourly rate (AUD) <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="edit-rate"
-          type="number"
-          min={0}
-          value={draft.hourlyRate || ""}
-          onChange={(e) => setDraft((d) => ({ ...d, hourlyRate: Number(e.target.value) }))}
-        />
-      </div>
+      <PricingFields idPrefix="edit" value={draft} onChange={(p) => setDraft((d) => ({ ...d, ...p }))} />
 
       <div className="space-y-1.5">
         <Label htmlFor="edit-city">Base suburb</Label>

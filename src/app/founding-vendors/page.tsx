@@ -295,7 +295,7 @@ function BadgePreview({ sample }: { sample: SampleListing | null }) {
         <p className="text-[17px] font-semibold">{sample ? sample.name : "Your business name"}</p>
         <p className="text-[15px] text-muted-foreground">
           {sample ? `${categoryLabel(sample.category)} · ${sample.city ?? LAUNCH_CITY}` : "Photographer · Parramatta"}
-          {sample?.hourlyRate ? ` · from $${Math.round(sample.hourlyRate)}/hr` : ""}
+          {sample?.priceSummary ? ` · ${sample.priceSummary}` : ""}
         </p>
       </div>
       <figcaption className="mt-3 text-xs text-muted-foreground">

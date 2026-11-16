@@ -6,7 +6,7 @@ import { SampleBadge } from "@/components/sample-badge";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import type { PublicVendor } from "@/lib/vendor-columns";
-import { formatAudDollars } from "@/lib/payments/money";
+import { vendorPrice } from "@/lib/pricing-model";
 
 type Vendor = PublicVendor;
 
@@ -20,6 +20,7 @@ export function VendorCard({
   isAuthenticated?: boolean;
 }) {
   const CategoryIcon = categoryIcon(vendor.service_type);
+  const price = vendorPrice(vendor);
 
   return (
     <Link href={`/vendor/${vendor.id}`} className="group block">
@@ -87,8 +88,8 @@ export function VendorCard({
           {vendor.city ? ` · ${vendor.city}` : ""}
         </p>
         <p className="mt-1.5 text-sm">
-          <span className="font-semibold">{formatAudDollars(vendor.hourly_rate)}</span>
-          <span className="text-muted-foreground"> / hr</span>
+          <span className="font-semibold">{price.figure}</span>
+          {price.suffix && <span className="text-muted-foreground"> {price.suffix}</span>}
         </p>
       </div>
     </Link>

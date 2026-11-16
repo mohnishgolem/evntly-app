@@ -22,7 +22,7 @@ import { formatAbn } from "@/lib/abn";
 import { sampleListingsHidden } from "@/lib/sample-listings";
 import { cookies } from "next/headers";
 import { BOOK_INTENT_COOKIE } from "@/lib/booking-intent";
-import { formatAudDollars } from "@/lib/payments/money";
+import { priceSummary, vendorPrice } from "@/lib/pricing-model";
 
 export async function generateMetadata({
   params,
@@ -38,7 +38,7 @@ export async function generateMetadata({
   const title = `${vendor.name} — ${categoryLabel(vendor.service_type)} in ${city}`;
   const description =
     vendor.bio ||
-    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}, from ${formatAudDollars(vendor.hourly_rate)}/hr on Evntly.`;
+    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}${priceSummary(vendor) ? `, ${priceSummary(vendor)}` : ""} on Evntly.`;
   const url = `${SITE_URL}/vendor/${id}`;
 
   return {
@@ -109,11 +109,10 @@ export default async function VendorDetailPage({
   }
   const role = navRole(session?.profile?.role, !!session);
   const fromPackage = packages.length ? Math.min(...packages.map((p) => p.price_cents)) : null;
-  const priceLabel = vendor.hourly_rate
-    ? `From ${formatAudDollars(vendor.hourly_rate)}/hr`
-    : fromPackage != null
-      ? `Packages from ${formatAud(fromPackage)}`
-      : "Price on request";
+  const price = vendorPrice(vendor);
+  // Quote-only vendors with packages show those instead of "Contact for pricing".
+  const priceLabel =
+    price.amount == null && fromPackage != null ? `Packages from ${formatAud(fromPackage)}` : price.label;
 
   const vendorUrl = `${SITE_URL}/vendor/${vendor.id}`;
   const jsonLd = {
@@ -123,7 +122,7 @@ export default async function VendorDetailPage({
     description: vendor.bio ?? undefined,
     image: vendor.avatar_url ?? undefined,
     url: vendorUrl,
-    priceRange: vendor.hourly_rate ? `${formatAudDollars(vendor.hourly_rate)}/hr` : undefined,
+    priceRange: price.amount != null ? price.label : undefined,
     address: vendor.city
       ? { "@type": "PostalAddress", addressLocality: vendor.city, addressCountry: "AU" }
       : undefined,
@@ -312,15 +311,15 @@ export default async function VendorDetailPage({
 
         <div>
           <div className="sticky top-[calc(6rem+env(safe-area-inset-top))] rounded-2xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            {vendor.hourly_rate ? (
+            {price.amount != null ? (
               <p className="mb-1 text-2xl font-bold">
-                {formatAudDollars(vendor.hourly_rate)}
-                <span className="text-base font-normal text-muted-foreground"> / hr</span>
+                {price.figure}
+                {price.suffix && <span className="text-base font-normal text-muted-foreground"> {price.suffix}</span>}
               </p>
             ) : (
               <p className="mb-1 text-xl font-bold">{priceLabel}</p>
             )}
-            {vendor.hourly_rate && fromPackage != null && (
+            {price.amount != null && fromPackage != null && (
               <p className="text-sm text-muted-foreground">Packages from {formatAud(fromPackage)}</p>
             )}
             {vendor.is_demo ? (

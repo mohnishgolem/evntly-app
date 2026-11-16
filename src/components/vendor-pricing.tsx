@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { vendorPrice, type PricedListing } from "@/lib/pricing-model";
 import { useRouter } from "next/navigation";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -189,13 +190,14 @@ export function ServiceAreaForm({
 
 export function PackageList({
   listingId,
-  hourlyRate,
+  listing,
   packages,
 }: {
   listingId: string;
-  hourlyRate: number;
+  listing: PricedListing;
   packages: VendorPackageRow[];
 }) {
+  const price = vendorPrice(listing);
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -204,7 +206,9 @@ export function PackageList({
           <p className="text-sm text-muted-foreground">
             {packages.length
               ? "Customers see the cheapest package that covers their event."
-              : `Without packages, estimates use your hourly rate${hourlyRate ? ` ($${hourlyRate}/hr)` : ""}.`}
+              : price.model === "hourly" && price.amount != null
+                ? `Without packages, estimates use your hourly rate (${price.label}).`
+                : `Without packages, customers see "${price.label}" and you quote each event.`}
           </p>
         </div>
         {packages.length < 12 && <PackageEditor listingId={listingId} />}
