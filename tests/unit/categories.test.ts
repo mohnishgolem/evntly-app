@@ -42,5 +42,11 @@ describe("launch categories", () => {
     expect(categoryPlural("dj")).toBe("DJs");
     expect(categoryPlural("celebrant")).toBe("celebrants");
     expect(categoryPlural("venue")).toBe("venues");
+    expect(categoryPlural("cakes_desserts")).toBe("cake and dessert makers");
+  });
+
+  it("list cake and dessert makers as a live category", () => {
+    expect(isLaunchCategory("cakes_desserts")).toBe(true);
+    expect(categoryLabel("cakes_desserts")).toBe("Cakes & Desserts");
   });
 });
