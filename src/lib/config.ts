@@ -32,8 +32,9 @@ export const VENDOR_CATEGORIES = [
 
 export type VendorCategory = (typeof VENDOR_CATEGORIES)[number]["value"];
 
-// Categories hidden from browse, plan and signup for now. Venues need
-// per-event pricing (listings are priced per hour) before they launch.
+// Categories hidden from browse, plan and signup for now. Venues were held
+// back for per-event pricing, which listings now support (pricing_model
+// fixed / from / quote); unhiding them is a separate launch decision.
 export const HIDDEN_CATEGORIES: VendorCategory[] = ["venue"];
 
 // Categories live in the launch market: browse, plan and signup.

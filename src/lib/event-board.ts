@@ -8,9 +8,9 @@
 
 import type { PublicVendor } from "@/lib/vendor-columns";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
+import { estimatedBookingCost } from "@/lib/pricing-model";
 
-/** Hours a typical booking runs, for turning an hourly rate into a cost. */
-export const TYPICAL_BOOKING_HOURS = 4;
+export { TYPICAL_BOOKING_HOURS } from "@/lib/pricing-model";
 /** Used when a vendor hasn't set a service radius. */
 export const DEFAULT_SERVICE_RADIUS_KM = 40;
 
@@ -26,6 +26,8 @@ export type MatchableVendor = Pick<
   | "longitude"
   | "service_radius_km"
   | "hourly_rate"
+  | "pricing_model"
+  | "base_price"
 >;
 
 export type MatchableEvent = {
@@ -71,8 +73,9 @@ export function categoryBudget(event: MatchableEvent) {
   return event.budget_total / n;
 }
 
-export function estimatedCost(vendor: Pick<MatchableVendor, "hourly_rate">) {
-  return vendor.hourly_rate > 0 ? vendor.hourly_rate * TYPICAL_BOOKING_HOURS : null;
+/** Hourly × typical hours, or the fixed / starting price; null for quote-only. */
+export function estimatedCost(vendor: Partial<Pick<MatchableVendor, "hourly_rate" | "pricing_model" | "base_price">>) {
+  return estimatedBookingCost(vendor);
 }
 
 export function withinBudget(vendor: MatchableVendor, event: MatchableEvent) {

@@ -13,7 +13,7 @@ import { THEME_CHANGE_EVENT } from "@/components/theme-toggle";
 import { FoundingBadge } from "@/components/founding-badge";
 import { SampleBadge } from "@/components/sample-badge";
 import type { PublicVendor } from "@/lib/vendor-columns";
-import { formatAudDollars } from "@/lib/payments/money";
+import { vendorPrice } from "@/lib/pricing-model";
 
 type Vendor = PublicVendor;
 type LocatedVendor = Vendor & { latitude: number; longitude: number };
@@ -133,7 +133,7 @@ function PricePin({
         e.stopPropagation();
         onSelect();
       }}
-      aria-label={`${vendor.name}, ${formatAudDollars(Math.round(vendor.hourly_rate))} per hour`}
+      aria-label={`${vendor.name}, ${vendorPrice(vendor).spoken}`}
       aria-pressed={active}
       className={cn(
         "flex cursor-pointer flex-col items-center motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-75 motion-safe:duration-200",
@@ -156,7 +156,7 @@ function PricePin({
           className="size-3.5"
           style={{ color: active ? "white" : color }}
         />
-        {`${formatAudDollars(Math.round(vendor.hourly_rate))}/hr`}
+        {vendorPrice(vendor).compact}
       </span>
       <span
         className="mt-1.5 size-2 rounded-full"
@@ -257,8 +257,10 @@ function VendorCard({
           </span>
           <span className="mt-1.5 flex items-center gap-3 text-xs">
             <span className="font-semibold text-foreground">
-              {formatAudDollars(Math.round(vendor.hourly_rate))}
-              <span className="font-normal text-muted-foreground">/hr</span>
+              {vendorPrice(vendor).figure}
+              {vendorPrice(vendor).suffix && (
+                <span className="font-normal text-muted-foreground"> {vendorPrice(vendor).suffix}</span>
+              )}
             </span>
             {!!vendor.rating && vendor.rating > 0 && (
               <span className="flex items-center gap-1 text-muted-foreground">

@@ -16,7 +16,7 @@ export default async function VendorPricingPage() {
 
   const { data: listings } = await supabase
     .rpc("my_service_providers")
-    .select("id, name, service_type, city, hourly_rate, service_radius_km, free_travel_km, travel_fee_cents_per_km, travels_regional, min_booking_hours")
+    .select("id, name, service_type, city, hourly_rate, pricing_model, base_price, service_radius_km, free_travel_km, travel_fee_cents_per_km, travels_regional, min_booking_hours")
     .order("created_at", { ascending: false });
 
   const ids = (listings ?? []).map((l) => l.id);
@@ -59,7 +59,7 @@ export default async function VendorPricingPage() {
             />
             <PackageList
               listingId={l.id}
-              hourlyRate={Number(l.hourly_rate) || 0}
+              listing={l}
               packages={(packages ?? []).filter((p) => p.provider_id === l.id)}
             />
           </section>

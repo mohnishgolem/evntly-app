@@ -1,4 +1,5 @@
 import "server-only";
+import { priceTierFor, vendorPrice } from "@/lib/pricing-model";
 
 import { createClient } from "@/lib/supabase/server";
 import { PUBLIC_VENDOR_COLUMNS, type PublicVendor } from "@/lib/vendor-columns";
@@ -195,7 +196,8 @@ export async function loadEventBoard(
       rating: v.rating,
       reviewCount: v.review_count ?? 0,
       city: v.city,
-      hourlyRate: Number(v.hourly_rate) || 0,
+      priceTier: priceTierFor(v),
+      priceLabel: vendorPrice(v).label,
       availableOnDate: isAvailableOn(v, event.event_date, bookedIds) || !!booking,
       saved: saved.has(v.id),
       status: standing.status,

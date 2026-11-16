@@ -13,6 +13,8 @@ import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config"
 import { submitVendorListing, type VendorSignupDraft } from "@/lib/actions/vendor-signup";
 import { CheckCircle2, Clock } from "lucide-react";
 import { isValidAbn } from "@/lib/abn";
+import { PricingFields } from "@/components/pricing-fields";
+import { pricingComplete } from "@/lib/pricing-model";
 
 const STEPS = ["Business", "Services", "Pricing", "Locations", "Agreement"] as const;
 const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
@@ -26,7 +28,9 @@ export function VendorSignupWizard() {
     businessName: "",
     bio: "",
     serviceType: "",
+    pricingModel: "hourly",
     hourlyRate: 0,
+    basePrice: 0,
     city: "",
     locationsServiced: [],
     eventTypes: [],
@@ -40,7 +44,7 @@ export function VendorSignupWizard() {
   const canAdvance = [
     !!draft.businessName,
     !!draft.serviceType && draft.eventTypes.length > 0,
-    draft.hourlyRate > 0,
+    pricingComplete(draft),
     !!draft.city && draft.locationsServiced.length > 0,
     isValidAbn(draft.abn) && agreed,
   ][step];
@@ -181,22 +185,15 @@ export function VendorSignupWizard() {
 
       {step === 2 && (
         <div className="space-y-3">
-          <h1 className="mb-4 text-xl font-bold">Set your rate</h1>
-          <div className="space-y-1.5">
-            <Label htmlFor="hourlyRate">
-              Hourly rate (AUD) <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="hourlyRate"
-              type="number"
-              min={0}
-              value={draft.hourlyRate || ""}
-              onChange={(e) => setDraft((d) => ({ ...d, hourlyRate: Number(e.target.value) }))}
-            />
-            {draft.hourlyRate <= 0 && (
-              <p className="text-xs text-muted-foreground">Enter a rate to continue.</p>
-            )}
-          </div>
+          <h1 className="mb-1 text-xl font-bold">Set your pricing</h1>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Pick what suits your business. You can change it any time.
+          </p>
+          <PricingFields
+            idPrefix="signup"
+            value={draft}
+            onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
+          />
         </div>
       )}
 

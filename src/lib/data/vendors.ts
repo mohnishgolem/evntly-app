@@ -58,6 +58,9 @@ export async function searchVendors(filters: VendorFilters = {}) {
     const like = `"%${q}%"`;
     query = query.or(`name.ilike.${like},description.ilike.${like},city.ilike.${like}`);
   }
+  // The price buckets are per hour ("$50–100/hr"), so they match hourly
+  // listings only; fixed-price, "from" and quote-only listings have no hourly
+  // rate (NULL never matches gte/lte) and appear whenever no bucket is picked.
   if (filters.minPrice != null) {
     query = query.gte("hourly_rate", filters.minPrice);
   }
@@ -124,7 +127,14 @@ export async function getVendorReviews(providerId: string) {
 
 export const launchCity = LAUNCH_CITY;
 
-export type SimilarVendor = { id: string; name: string; hourly_rate: number; city: string | null };
+export type SimilarVendor = {
+  id: string;
+  name: string;
+  hourly_rate: number | null;
+  pricing_model: string;
+  base_price: number | null;
+  city: string | null;
+};
 
 /**
  * Up to `limit` approved vendors in a category, founding first then newest —
@@ -141,7 +151,7 @@ export async function findSimilarVendors(
   if (!isLaunchCategory(serviceType)) return [];
   const { data } = await client
     .from("service_providers")
-    .select("id, name, hourly_rate, city")
+    .select("id, name, hourly_rate, pricing_model, base_price, city")
     .eq("status", "approved")
     .eq("service_type", serviceType)
     .eq("is_demo", false)
