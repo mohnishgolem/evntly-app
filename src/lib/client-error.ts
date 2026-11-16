@@ -6,8 +6,17 @@ const sent = new Set<string>();
 const MAX_PER_PAGE = 5;
 
 // Noise that isn't ours: browser extensions, cross-origin script errors with
-// no detail, and the harmless ResizeObserver warning.
-const IGNORED = [/ResizeObserver loop/i, /^Script error\.?$/i, /extension:\/\//i];
+// no detail, the harmless ResizeObserver warning, and the native bridge that
+// Instagram/Facebook's iOS in-app browser injects into pages (its
+// sendDataToNative calls window.webkit.messageHandlers, which can be gone
+// while the page hides). Evntly never uses that bridge.
+const IGNORED = [
+  /ResizeObserver loop/i,
+  /^Script error\.?$/i,
+  /extension:\/\//i,
+  /window\.webkit\.messageHandlers/,
+  /\bsendDataToNative@/,
+];
 
 /**
  * Message + stack from anything thrown. Errors from another JS realm (an
