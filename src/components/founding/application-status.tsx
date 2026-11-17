@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, ChevronRight, Circle, Clock, PartyPopper, PencilLine, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, Circle, Clock, PartyPopper, PencilLine, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApplicationAction } from "@/components/founding/claim-controls";
 import type { MyFoundingStatus, FoundingApplicationStatus } from "@/lib/data/founding";
@@ -52,6 +52,27 @@ export function ApplicationStatusView({
         <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-semibold", s.tone)}>{s.label}</span>
       </p>
 
+      {application.status === "started" && !listing && (
+        // Right after claiming, the next step must be the obvious one: before
+        // this box the only button on the page was "Withdraw my application"
+        // (16 Nov: a Meta ad sign-up claimed, then left from this screen).
+        <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/5 p-5">
+          <p className="font-semibold">Your place is saved. One step left: your listing</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            About 5 minutes: business name, ABN, a short bio, your rate and the Sydney areas you cover. Photos come after you submit.
+          </p>
+          <Button
+            className="mt-4 w-full sm:w-auto"
+            size="lg"
+            nativeButton={false}
+            render={
+              <Link href="/vendor-signup">
+                Create my listing <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            }
+          />
+        </div>
+      )}
       {application.status === "approved" && (
         <div className="mb-6 rounded-2xl border border-success/40 bg-success/5 p-5">
           <p className="flex items-center gap-2 font-semibold">
