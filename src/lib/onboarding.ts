@@ -25,8 +25,11 @@ export function onboardingStatus(metadata: Record<string, unknown> | null | unde
 
 // Pages where a walkthrough would get in the way: signing in/up, the legal
 // documents (the Terms prompt sends people there), vendor signup, admin and
-// printable invoices.
+// printable invoices. Also the founding claim pages: a new vendor should
+// finish their first listing before a 7-step tour (it covered the Claim
+// button on phones, 17 Nov).
 const QUIET_PATHS = [
+  "/founding-vendors",
   "/login",
   "/signup",
   "/forgot-password",

@@ -37,10 +37,20 @@ export default async function VendorBetaPage() {
   ]);
   const referral = referralStats?.[0];
 
-  const listingDone = (status?.checklist ?? []).filter((c) => c.key !== "abn").every((c) => c.done);
+  const items = status?.checklist ?? [];
+  const item = (key: string) => items.find((c) => c.key === key);
+  const detailsDone = items.filter((c) => !["abn", "photos", "packages"].includes(c.key)).every((c) => c.done);
   const listingId = status?.listing?.id;
+  // Photos and packages link straight to their pages (one combined item used
+  // to send vendors to the dashboard home to hunt for them, 17 Nov).
   const checklist = [
-    { label: "Complete your listing: photos, a package, description and service areas", done: listingDone, href: "/vendor-dashboard" },
+    { label: item("photos")?.label ?? "Add photos of your work", done: !!item("photos")?.done, href: "/vendor-dashboard/portfolio" },
+    { label: item("packages")?.label ?? "Add a package so customers see what's included", done: !!item("packages")?.done, href: "/vendor-dashboard/pricing" },
+    {
+      label: "Finish your description, service areas and event types",
+      done: detailsDone,
+      href: listingId ? `/vendor-dashboard/edit/${listingId}` : "/vendor-dashboard",
+    },
     { label: "Check how your public profile looks to customers", done: false, href: listingId ? `/vendor/${listingId}` : "/vendor-dashboard" },
     { label: "Look through Leads: enquiries, Smart matches and the Event Feed", done: false, href: "/vendor-dashboard/enquiries" },
     { label: "Reply to an enquiry with a quote", done: (quotesSent ?? 0) > 0, href: "/vendor-dashboard/quotes" },
