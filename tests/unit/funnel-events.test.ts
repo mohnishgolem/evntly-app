@@ -150,6 +150,14 @@ describe("recordFunnelEvent", () => {
   });
 });
 
+describe("listing steps", () => {
+  it("accepts listing_started from the browser but never listing_submitted", async () => {
+    await post({ event: "listing_started", visitorId: "visitor-abc-123" });
+    await post({ event: "listing_submitted", visitorId: "visitor-abc-123" });
+    expect(inserts).toEqual([{ table: "funnel_events", event: "listing_started", source: "meta_ads", detail: null, visitor_id: "visitor-abc-123" }]);
+  });
+});
+
 // Facebook's in-app browser: the ad's landing view and the Claim tap can come
 // from different browser storage, so the source cookie is missing on the tap
 // (seen 16 Nov: a Meta ad sign-up whose funnel steps had no source). The
