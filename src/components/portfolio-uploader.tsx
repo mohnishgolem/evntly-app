@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { CheckCircle2, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
@@ -31,33 +31,46 @@ export function PortfolioUploader({
   const [caption, setCaption] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [added, setAdded] = useState<number | null>(null);
 
-  function upload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
-    const fileError = portfolioFileError(file);
-    if (fileError) {
-      setError(fileError);
-      return;
-    }
+  // Choosing files starts the upload: on phones a separate "Upload" button
+  // after the picker was easy to miss, and nothing looked like it happened.
+  function uploadFiles(files: File[]) {
+    if (!files.length) return;
     setError(null);
+    setAdded(null);
     startTransition(async () => {
-      // Straight to storage: server actions can't take bodies over 1 MB.
-      const path = portfolioPath(userId, providerId, file.type);
-      const { error: uploadError } = await createClient()
-        .storage.from(PORTFOLIO_BUCKET)
-        .upload(path, file, { contentType: file.type });
-      if (uploadError) {
-        setError("Couldn't upload that file. Try again.");
-        return;
+      let ok = 0;
+      const failures: string[] = [];
+      for (const [i, file] of files.entries()) {
+        setProgress({ done: i, total: files.length });
+        const fileError = portfolioFileError(file);
+        if (fileError) {
+          failures.push(`${file.name}: ${fileError}`);
+          continue;
+        }
+        // Straight to storage: server actions can't take bodies over 1 MB.
+        const path = portfolioPath(userId, providerId, file.type);
+        const { error: uploadError } = await createClient()
+          .storage.from(PORTFOLIO_BUCKET)
+          .upload(path, file, { contentType: file.type });
+        if (uploadError) {
+          failures.push(`${file.name}: couldn't upload (${uploadError.message}). Check your connection and try again.`);
+          continue;
+        }
+        const res = await addPortfolioItem(providerId, { path, type: file.type, caption });
+        if (res?.error) failures.push(`${file.name}: ${res.error}`);
+        else ok++;
       }
-      const res = await addPortfolioItem(providerId, { path, type: file.type, caption });
-      if (res?.error) setError(res.error);
-      else {
+      setProgress(null);
+      if (fileRef.current) fileRef.current.value = "";
+      if (ok) {
         setCaption("");
-        if (fileRef.current) fileRef.current.value = "";
+        setAdded(ok);
         router.refresh();
       }
+      if (failures.length) setError(failures.join(" "));
     });
   }
 
@@ -70,22 +83,42 @@ export function PortfolioUploader({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-dashed border-border p-4 sm:flex-row sm:items-center">
-        <Input ref={fileRef} type="file" accept={PORTFOLIO_ACCEPT} className="flex-1" />
+      <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-dashed border-border p-4">
+        <input
+          ref={fileRef}
+          type="file"
+          accept={PORTFOLIO_ACCEPT}
+          multiple
+          className="sr-only"
+          aria-label="Choose photos or videos"
+          onChange={(e) => uploadFiles(Array.from(e.target.files ?? []))}
+        />
         <Input
-          placeholder="Caption (optional)"
+          placeholder="Caption for these photos (optional)"
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          className="sm:w-48"
+          disabled={pending}
         />
-        <Button disabled={pending} onClick={upload}>
-          <Upload /> {pending ? "Uploading…" : "Upload"}
+        <Button size="lg" className="w-full" disabled={pending} onClick={() => fileRef.current?.click()}>
+          <ImagePlus />{" "}
+          {progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : pending ? "Uploading…" : "Add photos or videos"}
         </Button>
+        <p className="text-xs text-muted-foreground">
+          Choose one or more from your phone or computer. Photos up to 10 MB, short clips (MP4, MOV, WEBM) up to 50 MB.
+        </p>
       </div>
-      <p className="-mt-4 mb-6 text-xs text-muted-foreground">
-        Photos up to 10 MB, or short video clips (MP4, MOV, WEBM) up to 50 MB.
-      </p>
-      {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+      <div aria-live="polite">
+        {added !== null && (
+          <p className="mb-4 flex items-center gap-2 text-sm text-success">
+            <CheckCircle2 className="size-4" aria-hidden /> {added === 1 ? "Photo added." : `${added} photos added.`}
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">

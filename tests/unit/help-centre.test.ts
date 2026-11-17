@@ -146,7 +146,7 @@ describe("onboarding rules", () => {
   });
 
   it("stays out of auth, legal, signup, admin and invoice pages", () => {
-    for (const p of ["/login", "/signup", "/terms", "/legal", "/vendor-signup", "/admin/risk", "/bookings/abc/invoice"])
+    for (const p of ["/login", "/signup", "/terms", "/legal", "/vendor-signup", "/founding-vendors", "/founding-vendors/claim", "/admin/risk", "/bookings/abc/invoice"])
       expect(isQuietPath(p), p).toBe(true);
     for (const p of ["/", "/dashboard", "/vendor-dashboard", "/bookings/abc", "/help"]) expect(isQuietPath(p), p).toBe(false);
   });
