@@ -19,7 +19,7 @@ export default async function VendorCalendarPage() {
   const [{ data: listings }, { data: bookings }, { data: feedToken }] = await Promise.all([
     supabase
       .rpc("my_service_providers")
-      .select("id, name, unavailable_dates, weekly_unavailable_days, available, availability_confirmed_at")
+      .select("id, name, unavailable_dates, weekly_unavailable_days, available, availability_confirmed_at, created_at")
       .order("created_at", { ascending: true }),
     supabase
       .from("bookings")

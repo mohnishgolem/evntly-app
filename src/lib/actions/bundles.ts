@@ -35,7 +35,7 @@ export async function createCombinedPackage(draft: CreatePackageDraft): Promise<
 
   const { data: listing } = await supabase
     .rpc("my_service_providers")
-    .select("id, name")
+    .select("id, name, created_at")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
