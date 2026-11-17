@@ -143,7 +143,7 @@ export default async function FoundingVendorsPage({
 
         <LiveVendors live={live} />
         <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors.</span> {DEAL_TERMS}
+          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
         </p>
 
         <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
