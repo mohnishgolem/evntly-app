@@ -46,7 +46,7 @@ const STEPS: Point[] = [
 const FAQ = [
   {
     q: "Who can join?",
-    a: `Event vendors based in ${LAUNCH_CITY} with an ABN: photographers, decorators, DJs, celebrants, florists, caterers, videographers, MCs, makeup artists and event planners.`,
+    a: `Event vendors based in ${LAUNCH_CITY} with an ABN: photographers, decorators, DJs, celebrants, florists, caterers, cake and dessert makers, videographers, MCs, makeup artists and event planners.`,
   },
   {
     q: "Does it cost anything?",
