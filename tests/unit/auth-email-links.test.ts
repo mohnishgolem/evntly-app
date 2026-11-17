@@ -54,7 +54,7 @@ vi.mock("@/lib/rate-limit", () => ({
 const { signup } = await import("@/lib/actions/auth");
 const { GET } = await import("@/app/auth/callback/route");
 const { SITE_URL } = await import("@/lib/config");
-const { authNotice } = await import("@/lib/auth-notices");
+const { authNotice, EXISTING_ACCOUNT_MESSAGE } = await import("@/lib/auth-notices");
 
 function form(role: "customer" | "vendor") {
   const f = new FormData();
@@ -74,7 +74,7 @@ beforeEach(() => {
   exchangeError = null;
   signupFailure = null;
   funnel.length = 0;
-  newUserIdentities = [];
+  newUserIdentities = [{ id: "i1", provider: "email" }];
 });
 
 describe("sign-up errors", () => {
@@ -98,7 +98,6 @@ describe("sign-up errors", () => {
   });
 
   it("counts a new vendor account, but not a repeat sign-up or a customer", async () => {
-    newUserIdentities = [{ id: "i1", provider: "email" }];
     await signup(null, form("vendor"));
     expect(funnel).toEqual([{ event: "account_created", detail: "email" }]);
 
@@ -108,7 +107,18 @@ describe("sign-up errors", () => {
 
     newUserIdentities = []; // email already registered
     await signup(null, form("vendor"));
-    expect(funnel).toEqual([]);
+    expect(funnel).toEqual([{ event: "signup_error", detail: "existing_account" }]);
+  });
+
+  it("tells someone whose email is already registered to log in, instead of waiting for a code", async () => {
+    newUserIdentities = []; // what Supabase returns for an existing email
+    for (const role of ["customer", "vendor"] as const) {
+      const res = await signup(null, form(role));
+      expect(res?.needsEmailConfirmation).toBeUndefined();
+      expect(res?.fieldErrors?.email?.[0]).toBe(EXISTING_ACCOUNT_MESSAGE);
+      expect(res?.fieldErrors?.email?.[0]).toMatch(/Log in instead/);
+      expect(res?.fieldErrors?.email?.[0]).toMatch(/Continue with Google/);
+    }
   });
 
   it("still passes other Supabase errors through", async () => {

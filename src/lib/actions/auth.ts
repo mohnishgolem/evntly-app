@@ -1,6 +1,7 @@
 "use server";
 
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { EXISTING_ACCOUNT_MESSAGE } from "@/lib/auth-notices";
 import { recordVendorRegistration } from "@/lib/meta-capi";
 
 import { redirect } from "next/navigation";
@@ -123,10 +124,17 @@ export async function signup(
     return { error: error.message };
   }
 
-  if (data.user) await recordSignupConsents(data.user.id, role, marketing);
   // Supabase answers an already-registered email with a user but no
-  // identities (so it doesn't reveal the account exists): not a new account.
-  if (role === "vendor" && data.user && (data.user.identities?.length ?? 0) > 0) {
+  // identities, and sends no email. Without saying so here, people wait for a
+  // code that never arrives (seen in production QA on 17 Nov 2026, with an
+  // account first made through Google). Point them at logging in instead.
+  if (data.user && (data.user.identities?.length ?? 0) === 0) {
+    if (role === "vendor") await recordFunnelEvent("signup_error", { detail: "existing_account" });
+    return { fieldErrors: { email: [EXISTING_ACCOUNT_MESSAGE] } };
+  }
+
+  if (data.user) await recordSignupConsents(data.user.id, role, marketing);
+  if (role === "vendor" && data.user) {
     await recordFunnelEvent("account_created", { detail: "email" });
   }
 

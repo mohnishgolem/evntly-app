@@ -22,3 +22,7 @@ export type AuthNoticeKey = keyof typeof AUTH_NOTICES;
 export function authNotice(key: string | undefined) {
   return key && Object.hasOwn(AUTH_NOTICES, key) ? AUTH_NOTICES[key as AuthNoticeKey] : null;
 }
+
+/** Sign-up with an email that already has an account (Supabase sends no code). */
+export const EXISTING_ACCOUNT_MESSAGE =
+  "You already have an Evntly account with this email. Log in instead, or use Continue with Google if that's how you signed up.";
