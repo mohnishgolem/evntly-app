@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +17,39 @@ import { PricingFields } from "@/components/pricing-fields";
 import { pricingComplete } from "@/lib/pricing-model";
 
 const STEPS = ["Business", "Services", "Pricing", "Locations", "Agreement"] as const;
+// The unfinished form is kept in this browser only, so a vendor who leaves to
+// find their ABN or photos comes back to their answers instead of a blank
+// form. Cleared on submit. Never holds anything but the form fields.
+const DRAFT_KEY = "evntly_listing_draft_v1";
+
 const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
 
+type SavedDraft = { draft: Partial<VendorSignupDraft>; step: number };
+
+function readSavedDraft(): SavedDraft | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null");
+    if (!saved?.draft || typeof saved.draft !== "object") return null;
+    const step = Number.isInteger(saved.step) && saved.step >= 0 && saved.step < STEPS.length ? saved.step : 0;
+    return { draft: saved.draft, step };
+  } catch {
+    // No storage (private mode, blocked): the form still works, it just isn't saved.
+    return null;
+  }
+}
+
+const noSubscribe = () => () => {};
+
 export function VendorSignupWizard() {
-  const [step, setStep] = useState(0);
+  // The server can't see this browser's saved answers, so the form mounts
+  // fresh once on the client with them (key change), avoiding a mismatch.
+  const onClient = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const saved = useMemo(() => (onClient ? readSavedDraft() : null), [onClient]);
+  return <WizardForm key={onClient ? "client" : "server"} saved={saved} persist={onClient} />;
+}
+
+function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boolean }) {
+  const [step, setStep] = useState(saved?.step ?? 0);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -37,15 +66,26 @@ export function VendorSignupWizard() {
     phone: "",
     abn: "",
     gstRegistered: false,
+    ...saved?.draft,
   });
   const [locationInput, setLocationInput] = useState("");
   const [agreed, setAgreed] = useState(false);
+  useEffect(() => {
+    if (!persist) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, step }));
+    } catch {
+      // Ignore: saving is a convenience only.
+    }
+  }, [draft, step, persist]);
 
   const canAdvance = [
     !!draft.businessName,
     !!draft.serviceType && draft.eventTypes.length > 0,
     pricingComplete(draft),
-    !!draft.city && draft.locationsServiced.length > 0,
+    // The base suburb is enough: it becomes the first service area if none
+    // were added (Next used to stay disabled until "Add" was tapped).
+    !!draft.city,
     isValidAbn(draft.abn) && agreed,
   ][step];
 
@@ -57,12 +97,32 @@ export function VendorSignupWizard() {
     setLocationInput("");
   }
 
+  function next() {
+    if (STEPS[step] === "Locations") {
+      // Keep a typed-but-not-added area, and fall back to the base suburb.
+      const typed = locationInput.trim();
+      setDraft((d) => {
+        const areas = typed && !d.locationsServiced.includes(typed) ? [...d.locationsServiced, typed] : d.locationsServiced;
+        return { ...d, locationsServiced: areas.length ? areas : d.city ? [d.city] : areas };
+      });
+      setLocationInput("");
+    }
+    setStep((s) => s + 1);
+  }
+
   function submit() {
     setError(null);
     startTransition(async () => {
       const res = await submitVendorListing(draft, { acceptedVendorAgreement: agreed });
       if (res?.error) setError(res.error);
-      else setSubmitted(true);
+      else {
+        setSubmitted(true);
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch {
+          // Ignore.
+        }
+      }
     });
   }
 
@@ -331,7 +391,7 @@ export function VendorSignupWizard() {
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="flex-1" disabled={!canAdvance} onClick={() => setStep((s) => s + 1)}>
+          <Button className="flex-1" disabled={!canAdvance} onClick={next}>
             Continue
           </Button>
         ) : (

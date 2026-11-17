@@ -168,6 +168,13 @@ describe("claimFoundingPlace", () => {
     expect(calls.filter((c) => c.url.includes("/rest/v1/beta_applications") && c.method === "PATCH")).toHaveLength(0);
   });
 
+  it("sends a vendor with no listing straight to the listing form after claiming", async () => {
+    const { redirect } = await import("next/navigation");
+    vi.mocked(redirect).mockClear();
+    await claimFoundingPlace(null, form({ source: "meta_ads" }));
+    expect(redirect).toHaveBeenCalledWith("/vendor-signup");
+  });
+
   it("passes a referral code from the link, normalised", async () => {
     await claimFoundingPlace(null, form({ source: "referral", ref: " AB12CD34EF " }));
     expect(rpc("claim_founding_vendor_place")[0].body).toEqual({ p_source: "referral", p_referral_code: "ab12cd34ef" });
