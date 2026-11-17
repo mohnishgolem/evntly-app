@@ -149,3 +149,37 @@ describe("recordFunnelEvent", () => {
     expect(inserts.map((r) => r.detail)).toEqual(["weak_password", null]);
   });
 });
+
+// Facebook's in-app browser: the ad's landing view and the Claim tap can come
+// from different browser storage, so the source cookie is missing on the tap
+// (seen 16 Nov: a Meta ad sign-up whose funnel steps had no source). The
+// step's own link tags fix the credit and restore the cookie for later steps.
+describe("funnel steps carry the page's link tags", () => {
+  it("credits a claim click from its tags when the cookie is missing, and saves the cookie", async () => {
+    sourceCookie = undefined;
+    const res = await post({
+      event: "claim_click",
+      visitorId: "visitor-abc-123",
+      params: { utm_source: "meta", utm_medium: "paid", utm_content: "b_dj" },
+    });
+    expect(inserts).toEqual([
+      { table: "funnel_events", event: "claim_click", source: "meta_ads", campaign: "b_dj", detail: null, visitor_id: "visitor-abc-123" },
+    ]);
+    const set = res.headers.getSetCookie().join("\n");
+    expect(set).toContain("evntly_fv_src=meta_ads");
+    expect(set).toContain("evntly_fv_cmp=b_dj");
+  });
+
+  it("prefers the tags over an older cookie but leaves an existing cookie alone", async () => {
+    sourceCookie = "instagram_bio";
+    const res = await post({ event: "signup_view", visitorId: "visitor-abc-123", params: { src: "direct_outreach" } });
+    expect(inserts[0]).toMatchObject({ event: "signup_view", source: "direct_outreach" });
+    expect(res.headers.getSetCookie()).toEqual([]);
+  });
+
+  it("falls back to the cookie when the tags are tampered with or absent", async () => {
+    await post({ event: "claim_click", visitorId: "visitor-abc-123", params: { src: "x".repeat(41) } });
+    await post({ event: "claim_click", visitorId: "visitor-abc-123", params: { evil: "1" } });
+    expect(inserts.map((r) => r.source)).toEqual(["meta_ads", "meta_ads"]);
+  });
+});

@@ -24,10 +24,11 @@ describe("funnel page views", () => {
 });
 
 describe("founding source tags on page views", () => {
-  it("keeps only the tags that decide the source, trimmed to 40 characters", () => {
+  it("keeps only the tags that decide the source and campaign, trimmed to 40 characters", () => {
     expect(sourceParamsFrom("?cat=photographer&utm_source=meta&utm_medium=paid_social&utm_campaign=fv_v2_nov26&utm_content=a_photo")).toEqual({
       utm_source: "meta",
       utm_medium: "paid_social",
+      utm_content: "a_photo",
     });
     expect(sourceParamsFrom("?src=instagram_dm&ref=abcd1234")).toEqual({ src: "instagram_dm", ref: "abcd1234" });
     expect(sourceParamsFrom(`?utm_source=${"m".repeat(60)}`)).toEqual({ utm_source: "m".repeat(40) });
@@ -44,5 +45,15 @@ describe("founding source tags on page views", () => {
     expect(parseSourceParams("utm_source=meta")).toBeNull();
     expect(parseSourceParams({})).toBeNull();
     expect(parseSourceParams(null)).toBeNull();
+  });
+});
+
+describe("funnelParamsFrom", () => {
+  it("uses the page's own tags, else the tags of the founding page in ?next=", async () => {
+    const { funnelParamsFrom } = await import("@/lib/page-views");
+    expect(funnelParamsFrom("?utm_source=meta&utm_medium=paid&utm_content=b_dj")).toEqual({ utm_source: "meta", utm_medium: "paid", utm_content: "b_dj" });
+    expect(funnelParamsFrom("?role=vendor&next=" + encodeURIComponent("/founding-vendors/claim?src=meta_ads&utm_content=b_dj"))).toEqual({ src: "meta_ads", utm_content: "b_dj" });
+    expect(funnelParamsFrom("?next=" + encodeURIComponent("//evil.example/?src=meta_ads"))).toBeUndefined();
+    expect(funnelParamsFrom("?role=vendor")).toBeUndefined();
   });
 });
