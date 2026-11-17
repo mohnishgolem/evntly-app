@@ -97,6 +97,20 @@ describe("recordError alert emails", () => {
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
+  it("keeps local development errors out of the production log and alerts", async () => {
+    reset({ status: 200, body: true });
+    const recordError = await load();
+    vi.stubEnv("NODE_ENV", "development");
+    try {
+      await recordError(report);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(calls).toHaveLength(0);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("(dev, not recorded)"));
+  });
+
   it("sends nothing if the claim fails, rather than risk a flood", async () => {
     reset({ status: 404, body: { code: "PGRST202", message: "Could not find the function" } });
     const recordError = await load();

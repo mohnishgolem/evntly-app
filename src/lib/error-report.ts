@@ -44,6 +44,14 @@ export function errorFingerprint(report: Pick<ErrorReport, "source" | "message" 
 }
 
 export async function recordError(report: ErrorReport) {
+  // `next dev` talks to the production database, so without this a local
+  // session's errors land in the production error log and email the admins
+  // (17 Nov: a QA run's aborted render showed up as a /vendor-dashboard/
+  // portfolio "stream errored" alert). Keep them in the terminal instead.
+  if (process.env.NODE_ENV === "development") {
+    console.error(`[error-report] (dev, not recorded) ${report.source} ${report.route ?? report.path ?? ""}: ${report.message}`);
+    return;
+  }
   try {
     const admin = createAdminClient();
     if (!admin) return;
