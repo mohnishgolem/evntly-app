@@ -16,7 +16,7 @@ export function pageViewFor(pathname: string): { kind: PageViewKind; vendorId?: 
 }
 
 /** Link tags that decide where a founding visitor came from (see sourceFromParams). */
-export const SOURCE_PARAM_KEYS = ["src", "ref", "utm_source", "utm_medium"] as const;
+export const SOURCE_PARAM_KEYS = ["src", "ref", "utm_source", "utm_medium", "utm_content"] as const;
 export type SourceParams = Partial<Record<(typeof SOURCE_PARAM_KEYS)[number], string>>;
 
 /**
@@ -33,6 +33,22 @@ export function sourceParamsFrom(search: string): SourceParams | undefined {
     if (value) out[key] = value.slice(0, 40);
   }
   return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * The link tags for a founding funnel step: the page's own, else the tags of
+ * the founding page it will return to (?next=/founding-vendors/claim?src=…, as
+ * on /signup). Lets the step be credited even when this browser never saved
+ * the source cookie, e.g. Facebook's in-app browser, where the ad's landing
+ * view and the Claim tap can arrive from different browser storage.
+ */
+export function funnelParamsFrom(search: string): SourceParams | undefined {
+  const own = sourceParamsFrom(search);
+  if (own) return own;
+  const next = new URLSearchParams(search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return undefined;
+  const q = next.indexOf("?");
+  return q === -1 ? undefined : sourceParamsFrom(next.slice(q));
 }
 
 /** The same tags from an untrusted request body: known keys, short strings only. */

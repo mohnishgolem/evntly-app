@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import { PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind } from "@/lib/page-views";
-import { sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/lib/founding/sources";
 import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
@@ -28,7 +28,23 @@ export async function POST(request: NextRequest) {
     const visitorId = typeof body.visitorId === "string" ? body.visitorId : "";
     if (!isFunnelEvent(body.event) || !CLIENT_FUNNEL_EVENTS.includes(body.event) || !/^[A-Za-z0-9-]{8,64}$/.test(visitorId)) return done;
     if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
-    await recordFunnelEvent(body.event, { visitorId });
+    // The page's own link tags win over the cookie (as for page views): in
+    // Facebook's in-app browser the cookie saved on the ad's landing page may
+    // be missing by the time the visitor taps Claim.
+    const params = parseSourceParams(body.params);
+    const source = params ? sourceFromParams(params) : null;
+    if (!source) {
+      await recordFunnelEvent(body.event, { visitorId });
+      return done;
+    }
+    const campaign = campaignFromParams(params!);
+    await recordFunnelEvent(body.event, { visitorId, source, campaign });
+    // Save them now if this browser has no source yet, so the later
+    // server-side steps (account created, email confirmed) are credited too.
+    // Same first-party cookies <SourceCookie> writes; nothing ad-related.
+    if (!(await foundingSourceFromCookie())) {
+      for (const c of foundingCookieWrites({ source, campaign }, request.nextUrl.protocol === "https:")) done.headers.append("Set-Cookie", c);
+    }
     return done;
   }
   const kind = body.kind as PageViewKind;
