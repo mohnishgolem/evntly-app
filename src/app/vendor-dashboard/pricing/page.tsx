@@ -14,11 +14,13 @@ export default async function VendorPricingPage() {
   await requireVendor("/vendor-dashboard/pricing");
   const supabase = await createClient();
 
-  const { data: listings } = await supabase
+  const { data: listings, error: listingsError } = await supabase
     .rpc("my_service_providers")
-    .select("id, name, service_type, city, hourly_rate, pricing_model, base_price, service_radius_km, free_travel_km, travel_fee_cents_per_km, travels_regional, min_booking_hours")
+    .select("id, name, service_type, city, hourly_rate, pricing_model, base_price, service_radius_km, free_travel_km, travel_fee_cents_per_km, travels_regional, min_booking_hours, created_at")
     .order("created_at", { ascending: false });
 
+  // Fail loudly: an error here used to show an empty page with no packages.
+  if (listingsError) throw new Error(`Couldn't load your listings: ${listingsError.message}`);
   const ids = (listings ?? []).map((l) => l.id);
   const { data: packages } = ids.length
     ? await supabase

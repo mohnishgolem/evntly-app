@@ -53,13 +53,13 @@ export async function foundingCampaignFromCookie(): Promise<string | null> {
 
 export async function recordFunnelEvent(
   event: FunnelEvent,
-  opts: { source?: FoundingSource | null; detail?: string | null; visitorId?: string | null } = {}
+  opts: { source?: FoundingSource | null; campaign?: string | null; detail?: string | null; visitorId?: string | null } = {}
 ): Promise<void> {
   try {
     const admin = createAdminClient();
     if (!admin) return;
     const source = opts.source === undefined ? await foundingSourceFromCookie() : opts.source;
-    const campaign = await foundingCampaignFromCookie();
+    const campaign = opts.campaign === undefined ? await foundingCampaignFromCookie() : opts.campaign;
     await admin.from("funnel_events").insert({
       event,
       source,

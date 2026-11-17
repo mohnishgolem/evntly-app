@@ -11,6 +11,7 @@ import {
   PartyPopper,
   HeartHandshake,
   Landmark,
+  Cake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export const VENDOR_CATEGORIES = [
   { value: "venue", label: "Venue", icon: Landmark },
   { value: "florist", label: "Florist", icon: Flower2 },
   { value: "caterer", label: "Caterer", icon: UtensilsCrossed },
+  { value: "cakes_desserts", label: "Cakes & Desserts", icon: Cake },
   { value: "videographer", label: "Videographer", icon: Video },
   { value: "mc", label: "MC", icon: Mic },
   { value: "makeup_artist", label: "Makeup Artist", icon: Sparkles },
@@ -110,8 +112,14 @@ export function categoryLabel(value: string) {
 }
 
 /** "DJs", "photographers": for running text. */
+// Labels that don't pluralise by adding "s".
+const CATEGORY_PLURALS: Record<string, string> = {
+  dj: "DJs",
+  cakes_desserts: "cake and dessert makers",
+};
+
 export function categoryPlural(value: string) {
-  return value === "dj" ? "DJs" : `${categoryLabel(value).toLowerCase()}s`;
+  return CATEGORY_PLURALS[value] ?? `${categoryLabel(value).toLowerCase()}s`;
 }
 
 export function categoryIcon(value: string): LucideIcon {
@@ -124,6 +132,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   photographer: "#4a7df0",
   florist: "#e0559a",
   caterer: "#e8a53a",
+  cakes_desserts: "#db2777",
   videographer: "#0891b2",
   decorator: "#d946ef",
   mc: "#e8a53a",

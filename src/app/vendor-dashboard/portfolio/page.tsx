@@ -15,12 +15,15 @@ export default async function VendorPortfolioPage() {
   const session = await requireVendor("/vendor-dashboard/portfolio");
 
   const supabase = await createClient();
-  const { data: listing } = await supabase
+  const { data: listing, error: listingError } = await supabase
     .rpc("my_service_providers")
-    .select("id, name")
+    .select("id, name, created_at")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  // A failed lookup must not read as "no listing": that hid a query error
+  // from every vendor here until 17 Nov (DJ Valgen: "can't add photos").
+  if (listingError) throw new Error(`Couldn't load your listing: ${listingError.message}`);
 
   if (!listing) {
     return (

@@ -12,6 +12,7 @@ const json = (body: unknown, status = 200) =>
 
 let verifyReply: { status: number; body: unknown } = { status: 200, body: {} };
 let resendReply: { status: number; body: unknown } = { status: 200, body: {} };
+let tokenReply: { status: number; body: unknown } = { status: 400, body: { error_code: "email_not_confirmed", msg: "Email not confirmed" } };
 const session = (role: string) => ({
   access_token: "header.payload.sig",
   token_type: "bearer",
@@ -32,6 +33,7 @@ const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
   calls.push({ url, body });
   if (url.includes("/auth/v1/verify")) return json(verifyReply.body, verifyReply.status);
   if (url.includes("/auth/v1/resend")) return json(resendReply.body, resendReply.status);
+  if (url.includes("/auth/v1/token")) return json(tokenReply.body, tokenReply.status);
   if (url.includes("/auth/v1/signup")) return json({ id: "u1", email: "vendor@example.invalid", identities: [{}] });
   return json({});
 });
@@ -68,7 +70,7 @@ vi.mock("@/lib/rate-limit", () => ({
   RATE_LIMIT_ERROR: "Too many attempts.",
 }));
 
-const { signup, verifySignupCode, resendSignupCode } = await import("@/lib/actions/auth");
+const { signup, verifySignupCode, resendSignupCode, login } = await import("@/lib/actions/auth");
 const { SITE_URL } = await import("@/lib/config");
 
 const form = (fields: Record<string, string>) => {
@@ -95,6 +97,7 @@ beforeEach(() => {
   rateLimitOk = true;
   verifyReply = { status: 200, body: session("vendor") };
   resendReply = { status: 200, body: {} };
+  tokenReply = { status: 400, body: { error_code: "email_not_confirmed", msg: "Email not confirmed" } };
 });
 
 describe("sign-up hands the code form what it needs", () => {
@@ -203,5 +206,33 @@ describe("resendSignupCode", () => {
     calls.length = 0;
     expect((await resendSignupCode(null, form({ email: "vendor@example.invalid" })))?.error).toMatch(/Too many/);
     expect(calls).toHaveLength(0);
+  });
+});
+
+// 17 Nov: a vendor (our QA account) closed the code screen, then logging in
+// said "Incorrect email or password" with no way back to the code.
+describe("login with an unconfirmed email", () => {
+  it("sends a fresh code and returns the code form instead of a wrong-password error", async () => {
+    const res = await login(null, form({ email: "vendor@example.invalid", password: "right horse battery", next: CLAIM_NEXT }));
+    expect(res).toMatchObject({ needsEmailConfirmation: true, email: "vendor@example.invalid", next: CLAIM_NEXT, resent: true });
+    expect(res?.error).toBeUndefined();
+    const resend = calls.find((c) => c.url.includes("/auth/v1/resend"));
+    expect(resend?.body).toMatchObject({ type: "signup", email: "vendor@example.invalid" });
+  });
+
+  it("still says incorrect email or password for a wrong password", async () => {
+    tokenReply = { status: 400, body: { error_code: "invalid_credentials", msg: "Invalid login credentials" } };
+    const res = await login(null, form({ email: "vendor@example.invalid", password: "nope nope nope" }));
+    expect(res).toEqual({ error: "Incorrect email or password." });
+    expect(calls.some((c) => c.url.includes("/auth/v1/resend"))).toBe(false);
+  });
+
+  it("keeps the code form but reports our rate limit on the resend", async () => {
+    let n = 0;
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+    vi.mocked(checkRateLimit).mockImplementation(async () => n++ < 2);
+    const res = await login(null, form({ email: "vendor@example.invalid", password: "right horse battery" }));
+    expect(res).toMatchObject({ needsEmailConfirmation: true, resent: false, error: "Too many attempts." });
+    vi.mocked(checkRateLimit).mockImplementation(async () => rateLimitOk);
   });
 });

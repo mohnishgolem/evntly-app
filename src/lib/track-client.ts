@@ -1,4 +1,5 @@
 import { metaPixelTrack } from "@/lib/meta-pixel";
+import { funnelParamsFrom } from "@/lib/page-views";
 
 // Browser side of the anonymous analytics (see <PageViewTracker> and
 // /api/track): a random per-browser id, nothing sent under Do Not Track or
@@ -35,5 +36,8 @@ export function trackFunnelEvent(event: "claim_click" | "signup_view" | "signup_
   if (event === "claim_click") metaPixelTrack("Lead"); // no-op until the pixel is switched on
   const visitorId = analyticsVisitorId();
   if (!visitorId) return;
-  sendTrack({ event, visitorId });
+  // The page's link tags travel with the step, so it is credited even if the
+  // source cookie was never saved in this browser (see funnelParamsFrom).
+  const params = funnelParamsFrom(window.location.search);
+  sendTrack({ event, visitorId, ...(params ? { params } : {}) });
 }
