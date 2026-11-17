@@ -13,7 +13,7 @@ const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
   const method = init?.method ?? "GET";
   const body = typeof init?.body === "string" ? JSON.parse(init.body) : null;
   calls.push({ url, method, body });
-  if (url.includes("/auth/v1/signup")) return respond({ id: "11111111-1111-4111-8111-111111111111", email: "new@example.invalid" });
+  if (url.includes("/auth/v1/signup")) return respond({ id: "11111111-1111-4111-8111-111111111111", email: "new@example.invalid", identities: [{ id: "i1", provider: "email" }] });
   if (url.includes("/auth/v1/user")) return respond({ id: "22222222-2222-4222-8222-222222222222", email: "vendor@example.invalid" });
   if (url.includes("/rpc/my_service_providers")) return respond([]);
   if (url.includes("/rpc/")) return respond(null, 204);
