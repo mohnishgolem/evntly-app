@@ -203,6 +203,31 @@ export async function verifySignupCode(_prevState: AuthFormState, formData: Form
   redirect(destination);
 }
 
+/** Sends a fresh sign-up code (and link). Rate limited per IP and email. */
+async function sendSignupCode(email: string, next: string | undefined): Promise<{ error?: string }> {
+  const [ipOk, emailOk] = await Promise.all([
+    checkRateLimit("signupResendIp", await clientIp()),
+    checkRateLimit("signupResendEmail", email),
+  ]);
+  if (!ipOk || !emailOk) return { error: RATE_LIMIT_ERROR };
+
+  const supabase = await createClient();
+  const confirmUrl = new URL("/auth/callback", await appOrigin());
+  confirmUrl.searchParams.set("flow", "signup");
+  confirmUrl.searchParams.set("next", safeNextPath(next, "/"));
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: confirmUrl.toString() },
+  });
+  // Don't reveal whether the address has an account: only rate limits and
+  // outages are reported, every other answer looks like a send.
+  if (error && (error.status === 429 || (error.status ?? 0) >= 500)) {
+    return { error: "We couldn't send a new code just now. Please wait a minute and try again." };
+  }
+  return {};
+}
+
 export async function resendSignupCode(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const rawEmail = formData.get("email")?.toString() ?? "";
   const next = formData.get("next")?.toString() || undefined;
@@ -211,27 +236,8 @@ export async function resendSignupCode(_prevState: AuthFormState, formData: Form
   const parsed = z.email().safeParse(rawEmail);
   if (!parsed.success) return { ...keep, error: "Enter the email you signed up with." };
 
-  const [ipOk, emailOk] = await Promise.all([
-    checkRateLimit("signupResendIp", await clientIp()),
-    checkRateLimit("signupResendEmail", parsed.data),
-  ]);
-  if (!ipOk || !emailOk) return { ...keep, error: RATE_LIMIT_ERROR };
-
-  const supabase = await createClient();
-  const confirmUrl = new URL("/auth/callback", await appOrigin());
-  confirmUrl.searchParams.set("flow", "signup");
-  confirmUrl.searchParams.set("next", safeNextPath(next, "/"));
-  const { error } = await supabase.auth.resend({
-    type: "signup",
-    email: parsed.data,
-    options: { emailRedirectTo: confirmUrl.toString() },
-  });
-  // Don't reveal whether the address has an account: only rate limits and
-  // outages are reported, every other answer looks like a send.
-  if (error && (error.status === 429 || (error.status ?? 0) >= 500)) {
-    return { ...keep, error: "We couldn't send a new code just now. Please wait a minute and try again." };
-  }
-  return { ...keep, resent: true };
+  const sent = await sendSignupCode(parsed.data, next);
+  return sent.error ? { ...keep, error: sent.error } : { ...keep, resent: true };
 }
 
 const loginSchema = z.object({
@@ -262,6 +268,15 @@ export async function login(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    // Right password, email never confirmed (e.g. they closed the code
+    // screen): send a fresh code and show the code form, instead of
+    // "Incorrect email or password", which left them stuck (17 Nov). Supabase
+    // only returns this after the password matched, so it reveals nothing.
+    if (error.code === "email_not_confirmed") {
+      const next = formData.get("next")?.toString() || undefined;
+      const sent = await sendSignupCode(parsed.data.email, next);
+      return { needsEmailConfirmation: true, email: parsed.data.email, next, resent: !sent.error, error: sent.error };
+    }
     return { error: "Incorrect email or password." };
   }
 
