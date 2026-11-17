@@ -6,7 +6,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { ClaimLink } from "@/components/founding/claim-link";
-import { getFoundingPlaces, getLiveFoundingVendors, getSampleListing, type SampleListing } from "@/lib/data/founding";
+import { getFoundingPlaces, getSampleListing, type SampleListing } from "@/lib/data/founding";
 import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
@@ -95,11 +95,10 @@ export default async function FoundingVendorsPage({
   const referral = referralFromParams(params);
   const campaign = campaignFromParams(params);
   const variant = landingVariant(params);
-  const [places, session, sample, live] = await Promise.all([
+  const [places, session, sample] = await Promise.all([
     getFoundingPlaces(),
     getCurrentUser(),
     getSampleListing(variant?.category ?? null),
-    getLiveFoundingVendors(),
   ]);
   const role = navRole(session?.profile?.role, !!session);
   const hasTabBar = role === "customer" || role === "vendor";
@@ -141,8 +140,7 @@ export default async function FoundingVendorsPage({
           ))}
         </ul>
 
-        <LiveVendors live={live} />
-        <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
           <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
         </p>
 
@@ -337,16 +335,4 @@ function FounderNote() {
       </p>
     </section>
   );
-}
-
-// How many real Founding Vendors are listed, instead of a "places left" meter:
-// a meter at 8 of 200 read as "nobody has joined" (17 Nov). Names aren't shown
-// (Sai, 17 Nov).
-const LIVE_VENDORS_MIN = 3;
-
-function LiveVendors({ live }: { live: { total: number } }) {
-  if (live.total < LIVE_VENDORS_MIN) {
-    return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
-  }
-  return <p className="mt-6 text-[15px] font-medium">{live.total} Sydney vendors are already listed as Founding Vendors</p>;
 }

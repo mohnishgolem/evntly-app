@@ -99,30 +99,3 @@ export const getSampleListing = cache(async function getSampleListing(category: 
     priceSummary: priceSummary(pick),
   };
 });
-
-export type LiveFoundingVendor = { id: string; name: string; category: string; city: string | null };
-
-/**
- * Real, approved Founding Vendors (never sample listings), newest first, for
- * the founding page's proof line. Only public listing fields.
- */
-export const getLiveFoundingVendors = cache(async function getLiveFoundingVendors(limit = 6): Promise<{
-  total: number;
-  vendors: LiveFoundingVendor[];
-}> {
-  const supabase = await createClient();
-  const { data, count, error } = await supabase
-    .from("service_providers")
-    .select("id, name, service_type, city", { count: "exact" })
-    .eq("status", "approved")
-    .eq("founding_vendor", true)
-    .eq("is_demo", false)
-    .order("created_at", { ascending: false })
-    .order("id")
-    .limit(limit);
-  if (error || !data) return { total: 0, vendors: [] };
-  return {
-    total: count ?? data.length,
-    vendors: data.map((v) => ({ id: v.id, name: v.name.trim(), category: v.service_type, city: v.city })),
-  };
-});
