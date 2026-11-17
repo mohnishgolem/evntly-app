@@ -78,7 +78,7 @@ export default async function VendorProfilePage() {
 
   const supabase = await createClient();
   const [{ data: listings }, { data: stripe }, payments] = await Promise.all([
-    supabase.rpc("my_service_providers").select("id, name, service_type, status, verified, abn").order("created_at"),
+    supabase.rpc("my_service_providers").select("id, name, service_type, status, verified, abn, created_at").order("created_at"),
     supabase.from("stripe_accounts").select("transfers_active").eq("user_id", session.user.id).maybeSingle(),
     getPaymentsStatus(),
   ]);
