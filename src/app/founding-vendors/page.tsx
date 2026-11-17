@@ -37,8 +37,8 @@ const PERKS: Point[] = [
 ];
 
 const STEPS: Point[] = [
-  { icon: Users, title: "Claim your account", body: "Sign up, or log in if you already have an Evntly account. You'll confirm your email." },
-  { icon: FileText, title: "Create your listing", body: "Business name, category, the Sydney areas you service, contact details and your portfolio." },
+  { icon: Users, title: "Claim your account", body: "Sign up, or log in if you already have an Evntly account. You'll confirm your email with a code." },
+  { icon: FileText, title: "Create your listing", body: "About 10 minutes: business name, category, your ABN, a starting rate and the Sydney areas you service. Photos can come after you submit." },
   { icon: CalendarCheck, title: "We review it", body: "Our team checks every listing. You'll see your status (Pending, Approved or Needs changes) and we'll email you." },
   { icon: MessageCircle, title: "Go live", body: "Once approved, your listing goes live with the Founding Vendor badge. Tell us what works and what doesn't from your dashboard." },
 ];
@@ -71,7 +71,15 @@ const FAQ = [
 ];
 
 // Said in the first screen: most ad visitors had never heard of Evntly.
-const WHAT_EVNTLY_IS = `Evntly is a ${LAUNCH_CITY} marketplace where people planning events browse vendors by category and area, then send you a quote request. You reply in Evntly, and customers pay you directly.`;
+const WHAT_EVNTLY_IS = `Evntly is a new ${LAUNCH_CITY} marketplace where people planning events browse vendors by category and area, then send a quote request. You reply in Evntly, and customers pay you directly.`;
+
+// Honest about where Evntly is (17 Nov 2026: a handful of customer enquiries a
+// month). Never imply steady enquiries until the numbers say so.
+const STAGE_NOTE =
+  "We're listing Sydney vendors first, so customer enquiries are only just starting. Founding Vendors are shown first as more customers arrive.";
+
+// What a vendor needs before starting, said before they tap Claim.
+const SETUP_NOTE = "Takes about 10 minutes. You'll need your ABN; photos can come later.";
 
 // The Vendor Service Agreement, Schedule 1 (fees). Keep in step with it.
 const DEAL_TERMS =
@@ -119,6 +127,7 @@ export default async function FoundingVendorsPage({
         <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">
           {WHAT_EVNTLY_IS}
         </p>
+        <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">{STAGE_NOTE}</p>
 
         <ul className="mx-auto mt-6 grid max-w-md gap-2.5 text-left text-[16px]">
           {PERKS.map((p) => (
@@ -131,8 +140,9 @@ export default async function FoundingVendorsPage({
           ))}
         </ul>
 
-        <PlacesMeter places={places} />
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{DEAL_TERMS}</p>
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
+        </p>
 
         <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
           {full ? (
@@ -142,6 +152,7 @@ export default async function FoundingVendorsPage({
           )}
           <Button size="lg" variant="outline" nativeButton={false} render={<a href="#how-it-works">How it works</a>} />
         </div>
+        {!full && <p className="mt-3 text-sm font-medium">{SETUP_NOTE}</p>}
         <p className="mt-3 text-sm text-muted-foreground">
           Already on Evntly?{" "}
           <Link href={`/login?next=${encodeURIComponent(claimPage)}`} className="font-medium text-foreground underline underline-offset-2">
@@ -323,37 +334,5 @@ function FounderNote() {
         on Instagram.
       </p>
     </section>
-  );
-}
-
-// Below this many approved vendors the meter reads as "nobody has joined",
-// which puts vendors off; show the plain line until there's some proof.
-const PLACES_METER_MIN_APPROVED = 5;
-
-function PlacesMeter({ places }: { places: Awaited<ReturnType<typeof getFoundingPlaces>> }) {
-  if (!places || (places.approved < PLACES_METER_MIN_APPROVED && places.remaining > 0)) {
-    return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
-  }
-  const { capacity, approved, remaining } = places;
-  const percent = capacity ? Math.min(100, Math.round((approved / capacity) * 100)) : 100;
-  return (
-    <div className="mx-auto mt-7 max-w-sm text-left">
-      <div className="mb-1.5 flex items-baseline justify-between text-sm">
-        <span className="font-semibold">
-          {remaining > 0 ? `${remaining} of ${capacity} Founding Vendor places left` : `All ${capacity} places filled`}
-        </span>
-        <span className="text-muted-foreground tabular-nums">{approved} approved</span>
-      </div>
-      <div
-        className="h-2 overflow-hidden rounded-full bg-muted"
-        role="progressbar"
-        aria-label="Founding vendor places taken"
-        aria-valuemin={0}
-        aria-valuemax={capacity}
-        aria-valuenow={approved}
-      >
-        <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-      </div>
-    </div>
   );
 }

@@ -5,7 +5,7 @@ describe("founding landing variants (?cat=)", () => {
   it("matches each Meta V2 ad's category", () => {
     expect(landingVariant({ cat: "photographer" })?.headline).toMatch(/details up front/);
     expect(landingVariant({ cat: "videographer" })?.category).toBe("photographer");
-    expect(landingVariant({ cat: "DJ" })?.headline).toMatch(/event organisers to find you/);
+    expect(landingVariant({ cat: "DJ" })?.headline).toMatch(/when the referral isn.t there/);
     expect(landingVariant({ cat: "decorator" })?.headline).toMatch(/event setups/);
     expect(landingVariant({ cat: ["planner", "dj"] })?.category).toBe("decorator");
   });

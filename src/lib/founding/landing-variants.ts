@@ -21,10 +21,12 @@ const VARIANTS: Record<string, LandingVariant> = {
     eyebrow: "For Sydney photographers and videographers",
     headline: "Get enquiries with the details up front, not another DM thread",
   },
+  // Mirrors the DJ ad (B-dj): "most of your bookings probably come from
+  // referrals … somewhere to find you when the referral isn't there".
   dj: {
     category: "dj",
     eyebrow: "For Sydney DJs and entertainers",
-    headline: "Make it easier for event organisers to find you",
+    headline: "Get found by Sydney event organisers when the referral isn't there",
   },
   decorator: {
     category: "decorator",
