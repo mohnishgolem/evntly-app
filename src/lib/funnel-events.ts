@@ -14,11 +14,13 @@ export const FUNNEL_EVENTS = [
   "signup_error",
   "account_created",
   "email_confirmed",
+  "listing_started",
+  "listing_submitted",
 ] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
 
 /** Events the browser may send to /api/track. The rest are server-only. */
-export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = ["claim_click", "signup_view", "signup_attempt"];
+export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = ["claim_click", "signup_view", "signup_attempt", "listing_started"];
 
 export function isFunnelEvent(value: unknown): value is FunnelEvent {
   return FUNNEL_EVENTS.includes(value as FunnelEvent);

@@ -149,3 +149,11 @@ describe("recordFunnelEvent", () => {
     expect(inserts.map((r) => r.detail)).toEqual(["weak_password", null]);
   });
 });
+
+describe("listing steps", () => {
+  it("accepts listing_started from the browser but never listing_submitted", async () => {
+    await post({ event: "listing_started", visitorId: "visitor-abc-123" });
+    await post({ event: "listing_submitted", visitorId: "visitor-abc-123" });
+    expect(inserts).toEqual([{ table: "funnel_events", event: "listing_started", source: "meta_ads", detail: null, visitor_id: "visitor-abc-123" }]);
+  });
+});

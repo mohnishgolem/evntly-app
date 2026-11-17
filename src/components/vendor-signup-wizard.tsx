@@ -14,6 +14,7 @@ import { submitVendorListing, type VendorSignupDraft } from "@/lib/actions/vendo
 import { CheckCircle2, Clock } from "lucide-react";
 import { isValidAbn } from "@/lib/abn";
 import { PricingFields } from "@/components/pricing-fields";
+import { trackFunnelEvent } from "@/lib/track-client";
 import { pricingComplete } from "@/lib/pricing-model";
 
 const STEPS = ["Business", "Services", "Pricing", "Locations", "Agreement"] as const;
@@ -70,10 +71,17 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
   });
   const [locationInput, setLocationInput] = useState("");
   const [agreed, setAgreed] = useState(false);
+  // Founding funnel: a fresh listing form was opened (not a restored draft).
+  useEffect(() => {
+    if (persist && !saved) trackFunnelEvent("listing_started");
+  }, [persist, saved]);
+
   useEffect(() => {
     if (!persist) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, step }));
+      // ABN and phone aren't kept: a successful submit redirects before the
+      // draft can be cleared, so only low-sensitivity fields stay behind.
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft: { ...draft, abn: "", phone: "" }, step }));
     } catch {
       // Ignore: saving is a convenience only.
     }

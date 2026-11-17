@@ -39,6 +39,8 @@ vi.spyOn(client.auth, "getUser").mockResolvedValue({
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => client }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => null }));
 vi.mock("@/lib/email", () => ({ notify: vi.fn() }));
+const recordFunnelEvent = vi.fn();
+vi.mock("@/lib/funnel-events", () => ({ recordFunnelEvent }));
 vi.mock("@/lib/founding/notify", () => ({ emailApplicationReceived: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
@@ -95,6 +97,15 @@ describe("vendor sign-up saves the chosen pricing model", () => {
     expect(await submit({ pricingModel: "fixed", basePrice: 0 })).toEqual({ error: "Enter a price, or choose Custom quote." });
     expect(calls.some((c) => c.url.includes("record_legal_acceptance"))).toBe(false);
     expect(inserted()).toBeUndefined();
+  });
+
+  it("records listing_submitted for the founding funnel only when the listing is saved", async () => {
+    recordFunnelEvent.mockClear();
+    await submit({ pricingModel: "quote" });
+    expect(recordFunnelEvent).toHaveBeenCalledWith("listing_submitted");
+    recordFunnelEvent.mockClear();
+    await submit({ pricingModel: "fixed", basePrice: 0 });
+    expect(recordFunnelEvent).not.toHaveBeenCalled();
   });
 
   it("still accepts the old hourly-only draft shape", async () => {

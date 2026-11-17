@@ -12,6 +12,7 @@ import { friendlyLegalError } from "@/lib/legal/status";
 import { emailApplicationReceived } from "@/lib/founding/notify";
 import { CLAIM_PATH } from "@/lib/founding/sources";
 import { pricingColumns } from "@/lib/pricing-model";
+import { recordFunnelEvent } from "@/lib/funnel-events";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -125,6 +126,8 @@ export async function submitVendorListing(
   // (not just one that signed up as "I'm a vendor") still needs isVendor
   // checks in the header to send them to /vendor-dashboard.
   await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
+  // Founding funnel: the listing reached review (source from the founding cookie).
+  await recordFunnelEvent("listing_submitted");
 
   // Vendors who claimed a founding place first go back to their application
   // (the insert moved it to "submitted" via a DB trigger).
