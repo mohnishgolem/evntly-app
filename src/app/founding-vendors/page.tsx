@@ -6,7 +6,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { ClaimLink } from "@/components/founding/claim-link";
-import { getFoundingPlaces, getLiveFoundingVendors, getSampleListing, type LiveFoundingVendor, type SampleListing } from "@/lib/data/founding";
+import { getFoundingPlaces, getLiveFoundingVendors, getSampleListing, type SampleListing } from "@/lib/data/founding";
 import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
@@ -339,33 +339,14 @@ function FounderNote() {
   );
 }
 
-// Real Founding Vendors already listed, instead of a "places left" meter: a
-// meter at 8 of 200 read as "nobody has joined" (17 Nov). Names link to their
-// public listings so a visitor can check they're real.
+// How many real Founding Vendors are listed, instead of a "places left" meter:
+// a meter at 8 of 200 read as "nobody has joined" (17 Nov). Names aren't shown
+// (Sai, 17 Nov).
 const LIVE_VENDORS_MIN = 3;
 
-function LiveVendors({ live }: { live: { total: number; vendors: LiveFoundingVendor[] } }) {
+function LiveVendors({ live }: { live: { total: number } }) {
   if (live.total < LIVE_VENDORS_MIN) {
     return <p className="mt-6 text-[15px] font-medium">Founding Vendor places are limited</p>;
   }
-  return (
-    <div className="mx-auto mt-7 max-w-md text-left">
-      <p className="text-sm font-semibold">
-        {live.total} Sydney vendors are already listed as Founding Vendors
-      </p>
-      <ul className="mt-2 flex flex-wrap gap-2">
-        {live.vendors.map((v) => (
-          <li key={v.id}>
-            <Link
-              href={`/vendor/${v.id}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[13px] hover:bg-muted/60"
-            >
-              <span className="font-medium">{v.name}</span>
-              <span className="text-muted-foreground">· {categoryLabel(v.category)}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <p className="mt-6 text-[15px] font-medium">{live.total} Sydney vendors are already listed as Founding Vendors</p>;
 }
