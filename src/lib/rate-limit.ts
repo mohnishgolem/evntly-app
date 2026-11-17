@@ -22,7 +22,10 @@ export const RATE_LIMITS = {
   // Per target email: slows guessing one account from many IPs, but
   // generous enough that it can't easily be used to lock a victim out.
   loginEmail: { max: 10, windowSeconds: 15 * 60 },
-  signupIp: { max: 5, windowSeconds: 60 * 60 },
+  // Every attempt counts, including ones Supabase rejects for a weak or
+  // leaked password, and vendors on shared Wi-Fi share an IP. 5/hour locked
+  // out a vendor (and our own QA) after a few password retries (17 Nov).
+  signupIp: { max: 20, windowSeconds: 60 * 60 },
   // Sign-up confirmation codes: guessing a 6-digit code needs ~10^6 tries,
   // so a handful per email per 15 minutes makes that hopeless.
   signupCodeIp: { max: 30, windowSeconds: 15 * 60 },

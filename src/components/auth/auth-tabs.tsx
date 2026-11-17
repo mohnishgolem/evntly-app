@@ -400,6 +400,19 @@ function ConfirmByCode({ email, next }: { email: string; next?: string }) {
 function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boolean }) {
   const [state, formAction, pending] = useActionState(login, initialState);
 
+  // Signed up but never confirmed: the login sent a fresh code, so finish here.
+  if (state?.needsEmailConfirmation && state.email) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Your email isn&apos;t confirmed yet{state.resent ? ", so we've sent you a new code" : ""}.
+        </p>
+        {state.error && <p className="text-sm text-destructive">{state.error}</p>}
+        <ConfirmByCode email={state.email} next={state.next ?? next} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <SocialButtons next={next} inAppBrowser={inAppBrowser} />
