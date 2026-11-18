@@ -36,6 +36,18 @@ export function formatAudDollars(amount: number | string | null | undefined) {
   return Number.isFinite(n) ? formatAud(Math.round(n * 100)) : "";
 }
 
+/**
+ * "$1,234.50" / "$650" without Intl, for client components: Intl output can
+ * differ between the server and iPhone Safari and break hydration (#418).
+ */
+export function formatAudPlain(cents: number) {
+  const rounded = Math.round(cents);
+  const abs = Math.abs(rounded);
+  const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const rest = abs % 100;
+  return `${rounded < 0 ? "-" : ""}$${whole}${rest ? `.${String(rest).padStart(2, "0")}` : ""}`;
+}
+
 /** Parses "1,234.5" / "$1234" into cents; null when not a positive amount. */
 export function parseDollarsToCents(input: string): number | null {
   const cleaned = input.replace(/[$,\s]/g, "");

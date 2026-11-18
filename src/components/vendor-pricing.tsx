@@ -18,6 +18,8 @@ import {
   type ServiceAreaInput,
 } from "@/lib/actions/vendor-pricing";
 import { cn } from "@/lib/utils";
+import { formatAudPlain } from "@/lib/payments/money";
+import type { StarterPackage } from "@/lib/listing-guidance";
 
 export type VendorPackageRow = {
   id: string;
@@ -34,7 +36,8 @@ export type VendorPackageRow = {
   sort_order: number;
 };
 
-const dollars = (cents: number) => `$${(cents / 100).toLocaleString("en-AU", { maximumFractionDigits: 2 })}`;
+// No Intl here: this is a client component (Safari hydration #418).
+const dollars = formatAudPlain;
 
 /** "" → null, otherwise a finite number (NaN → undefined = invalid). */
 function parseOptional(raw: string): number | null | undefined {
@@ -192,12 +195,16 @@ export function PackageList({
   listingId,
   listing,
   packages,
+  starter,
 }: {
   listingId: string;
   listing: PricedListing;
   packages: VendorPackageRow[];
+  /** A first package drafted from the listing's pricing, offered while there are none. */
+  starter?: StarterPackage;
 }) {
   const price = vendorPrice(listing);
+  const offerStarter = !!starter && packages.length === 0;
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -211,8 +218,9 @@ export function PackageList({
                 : `Without packages, customers see "${price.label}" and you quote each event.`}
           </p>
         </div>
-        {packages.length < 12 && <PackageEditor listingId={listingId} />}
+        {packages.length < 12 && !offerStarter && <PackageEditor listingId={listingId} inclusionExample={starter?.inclusionExample} />}
       </div>
+      {offerStarter && starter && <StarterPackageCard listingId={listingId} starter={starter} />}
       {packages.length > 0 && (
         <ul className="divide-y divide-border">
           {packages.map((p) => (
@@ -247,16 +255,70 @@ function useSheetSide() {
   return side;
 }
 
-function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPackageRow }) {
+// Empty state for packages: we draft the first one from the price the vendor
+// gave in the sign-up form, so the step is "check and save" instead of a
+// blank 8-field form. Nothing is saved until they tap Save.
+export function StarterPackageCard({ listingId, starter }: { listingId: string; starter: StarterPackage }) {
+  const summary = [
+    starter.price != null ? dollars(Math.round(starter.price * 100)) : "Your price",
+    starter.includedHours ? `${starter.includedHours} hrs` : "flat price",
+    starter.extraHourPrice ? `extra hours ${dollars(Math.round(starter.extraHourPrice * 100))}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
+      <p className="text-xs font-semibold tracking-wide text-primary uppercase">Drafted from your listing</p>
+      <p className="mt-1 font-medium">{starter.name}</p>
+      <p className="text-sm text-muted-foreground">{summary}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {starter.price != null
+          ? "Check the details, add what's included, and save. You can change it any time."
+          : "Add your usual price and what's included, then save. You can change it any time."}
+      </p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <PackageEditor
+          listingId={listingId}
+          initial={starter}
+          inclusionExample={starter.inclusionExample}
+          triggerLabel="Check and save this package"
+          triggerVariant="default"
+        />
+        <PackageEditor listingId={listingId} inclusionExample={starter.inclusionExample} triggerLabel="Start from blank" triggerVariant="ghost" />
+      </div>
+    </div>
+  );
+}
+
+function PackageEditor({
+  listingId,
+  pkg,
+  initial,
+  inclusionExample,
+  triggerLabel = "Add package",
+  triggerVariant = "outline",
+}: {
+  listingId: string;
+  pkg?: VendorPackageRow;
+  /** Pre-filled values for a new package (not saved until the vendor taps Save). */
+  initial?: StarterPackage;
+  inclusionExample?: string;
+  triggerLabel?: string;
+  triggerVariant?: "outline" | "ghost" | "default";
+}) {
   const side = useSheetSide();
   const [open, setOpen] = useState(false);
   const { pending, error, setError, run } = useSaver();
   const [form, setForm] = useState(() => ({
-    name: pkg?.name ?? "",
+    name: pkg ? pkg.name : (initial?.name ?? ""),
     description: pkg?.description ?? "",
-    price: pkg ? String(pkg.price_cents / 100) : "",
-    includedHours: pkg?.included_hours != null ? String(Number(pkg.included_hours)) : "",
-    extraHourPrice: pkg?.extra_hour_cents != null ? String(pkg.extra_hour_cents / 100) : "",
+    price: pkg ? String(pkg.price_cents / 100) : initial?.price != null ? String(initial.price) : "",
+    includedHours: pkg
+      ? pkg.included_hours != null ? String(Number(pkg.included_hours)) : ""
+      : initial?.includedHours != null ? String(initial.includedHours) : "",
+    extraHourPrice: pkg
+      ? pkg.extra_hour_cents != null ? String(pkg.extra_hour_cents / 100) : ""
+      : initial?.extraHourPrice != null ? String(initial.extraHourPrice) : "",
     inclusions: (pkg?.inclusions ?? []).join("\n"),
     deliveryDays: pkg?.delivery_days != null ? String(pkg.delivery_days) : "",
     depositPercent: pkg?.deposit_percent != null ? String(pkg.deposit_percent) : "",
@@ -306,11 +368,11 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
           pkg ? (
             <Button variant="ghost" size="icon-lg" aria-label={`Edit ${pkg.name}`} />
           ) : (
-            <Button variant="outline" size="lg" />
+            <Button variant={triggerVariant} size="lg" />
           )
         }
       >
-        {pkg ? <Pencil aria-hidden /> : (<><Plus aria-hidden /> Add package</>)}
+        {pkg ? <Pencil aria-hidden /> : (<><Plus aria-hidden /> {triggerLabel}</>)}
       </SheetTrigger>
       <SheetContent
         side={side}
@@ -349,7 +411,7 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
           </div>
           <div className="space-y-1.5">
             <Label htmlFor={id("incl")}>What&apos;s included (one per line)</Label>
-            <Textarea id={id("incl")} rows={4} placeholder={"Edited online gallery\n200+ photos"} {...field("inclusions")} />
+            <Textarea id={id("incl")} rows={4} placeholder={inclusionExample ?? "Edited online gallery\n200+ photos"} {...field("inclusions")} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor={id("desc")}>Description (optional)</Label>

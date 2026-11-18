@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Circle, Send } from "lucide-react";
+import { CheckCircle2, Circle, PartyPopper, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils";
 
 export function CompletionChecklist({ steps }: { steps: CompletionStep[] }) {
   const done = steps.filter((s) => s.done).length;
+  // One clear next action: the first unfinished step is highlighted and
+  // jumps to where it's done on the page.
+  const next = steps.find((s) => !s.done)?.key;
   return (
     <div className="rounded-2xl border border-border p-4 sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -23,31 +26,63 @@ export function CompletionChecklist({ steps }: { steps: CompletionStep[] }) {
       <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(done / steps.length) * 100}%` }} />
       </div>
-      <ol className="space-y-3">
-        {steps.map((s) => (
-          <li key={s.key} className="flex items-start gap-3">
-            {s.done ? (
-              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
-            ) : (
-              <Circle className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
-            )}
-            <span className="min-w-0">
-              <span className={cn("block text-sm font-medium", !s.done && "text-foreground")}>{s.label}</span>
-              <span className="block text-xs text-muted-foreground">{s.detail}</span>
-            </span>
-            <span className="sr-only">{s.done ? "(done)" : "(to do)"}</span>
-          </li>
-        ))}
+      <ol className="space-y-1">
+        {steps.map((s) => {
+          const isNext = s.key === next;
+          const body = (
+            <>
+              {s.done ? (
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+              ) : (
+                <Circle className={cn("mt-0.5 size-5 shrink-0", isNext ? "text-primary" : "text-muted-foreground")} aria-hidden />
+              )}
+              <span className="min-w-0 flex-1">
+                <span className={cn("block text-sm font-medium", s.done && "text-muted-foreground")}>{s.label}</span>
+                <span className="block text-xs text-muted-foreground">{s.detail}</span>
+              </span>
+              {isNext && (
+                <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                  Next
+                </span>
+              )}
+              <span className="sr-only">{s.done ? "(done)" : "(to do)"}</span>
+            </>
+          );
+          return (
+            <li key={s.key}>
+              {!s.done && s.href ? (
+                <a
+                  href={s.href}
+                  className={cn(
+                    "-mx-2 flex min-h-11 items-start gap-3 rounded-xl px-2 py-1.5 outline-none hover:bg-muted/60 focus-visible:bg-muted/60",
+                    isNext && "bg-primary/5"
+                  )}
+                >
+                  {body}
+                </a>
+              ) : (
+                <div className="-mx-2 flex items-start gap-3 px-2 py-1.5">{body}</div>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );
 }
 
-export function SubmitForReviewButton({ providerId, ready }: { providerId: string; ready: boolean }) {
+export function SubmitForReviewButton({ providerId, remaining }: { providerId: string; remaining: string | null }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const ready = remaining === null;
   return (
     <div>
+      {ready && (
+        <p role="status" className="mb-3 flex items-center gap-2 rounded-2xl bg-success/10 p-4 text-sm font-medium">
+          <PartyPopper className="size-5 shrink-0 text-success" aria-hidden />
+          Your listing is ready. Submit it and we&apos;ll email you when it&apos;s live.
+        </p>
+      )}
       <Button
         size="lg"
         className="w-full"
@@ -64,7 +99,7 @@ export function SubmitForReviewButton({ providerId, ready }: { providerId: strin
       </Button>
       {!ready && (
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Add 3 photos and a package to submit. Everything you add is saved, so you can finish later.
+          Add {remaining} to submit. Everything you add is saved, so you can finish later.
         </p>
       )}
       {error && (

@@ -6,9 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 import { PortfolioUploader } from "@/components/portfolio-uploader";
 import { PackageList, type VendorPackageRow } from "@/components/vendor-pricing";
 import { CompletionChecklist, SetupRequestForm, SubmitForReviewButton } from "@/components/listing-completion";
+import { ListingPreview } from "@/components/listing-preview";
 import { Button } from "@/components/ui/button";
 import { PORTFOLIO_COLUMNS } from "@/lib/public-columns";
-import { FINISH_PATH, MIN_PHOTOS, completionSteps, isListingComplete } from "@/lib/listing-completion";
+import { FINISH_PATH, MIN_PHOTOS, completionSteps, isListingComplete, remainingSummary } from "@/lib/listing-completion";
+import { photoTips, starterPackage } from "@/lib/listing-guidance";
+import { vendorPrice } from "@/lib/pricing-model";
+import { categoryLabel, LAUNCH_CITY } from "@/lib/config";
+import { formatAud } from "@/lib/payments/money";
 
 export const metadata: Metadata = {
   title: "Finish your listing",
@@ -25,7 +30,7 @@ export default async function FinishListingPage() {
 
   const { data: listing, error: listingError } = await supabase
     .rpc("my_service_providers")
-    .select("id, name, status, hourly_rate, pricing_model, base_price, created_at")
+    .select("id, name, status, service_type, city, hourly_rate, pricing_model, base_price, created_at")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -61,6 +66,11 @@ export default async function FinishListingPage() {
   const complete = isListingComplete(counts);
   const steps = completionSteps({ ...counts, status: listing.status });
   const isDraft = listing.status === "draft";
+  const activePackages = ((packages ?? []) as VendorPackageRow[]).filter((p) => p.active);
+  const first = activePackages[0];
+  const firstPackage = first
+    ? `${first.name} · ${formatAud(first.price_cents)}${first.included_hours ? ` · ${Number(first.included_hours)} hrs` : ""}`
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -94,31 +104,54 @@ export default async function FinishListingPage() {
       <div className="space-y-6">
         <CompletionChecklist steps={isDraft ? steps : steps.filter((s) => s.key !== "submit")} />
 
-        <section id="photos" aria-labelledby="photos-heading" className="space-y-3">
+        <ListingPreview
+          name={listing.name}
+          category={categoryLabel(listing.service_type)}
+          city={listing.city || LAUNCH_CITY}
+          priceLabel={vendorPrice(listing).label}
+          photos={items ?? []}
+          firstPackage={firstPackage}
+          complete={complete}
+          offerSetup={isDraft && !setupRequest}
+        />
+
+        <section id="photos" aria-labelledby="photos-heading" className="scroll-mt-20 space-y-3">
           <h2 id="photos-heading" className="text-lg font-semibold">
             Photos of your work
           </h2>
-          <PortfolioUploader providerId={listing.id} userId={session.user.id} items={items ?? []} />
+          <PortfolioUploader
+            providerId={listing.id}
+            userId={session.user.id}
+            items={items ?? []}
+            tips={photoTips(listing.service_type)}
+          />
         </section>
 
-        <section id="packages" aria-labelledby="packages-heading" className="space-y-3">
+        <section id="packages" aria-labelledby="packages-heading" className="scroll-mt-20 space-y-3">
           <h2 id="packages-heading" className="text-lg font-semibold">
             Packages
           </h2>
-          <PackageList listingId={listing.id} listing={listing} packages={(packages ?? []) as VendorPackageRow[]} />
+          <PackageList
+            listingId={listing.id}
+            listing={listing}
+            packages={(packages ?? []) as VendorPackageRow[]}
+            starter={starterPackage(listing)}
+          />
         </section>
 
         {isDraft && (
           <>
-            <SubmitForReviewButton providerId={listing.id} ready={complete} />
-            {setupRequest?.status === "open" ? (
-              <p className="rounded-2xl bg-secondary p-4 text-sm">
-                We have your &quot;set it up for me&quot; request and will email you when your listing is ready to
-                check.
-              </p>
-            ) : (
-              !complete && setupRequest?.status !== "ready" && <SetupRequestForm providerId={listing.id} />
-            )}
+            <SubmitForReviewButton providerId={listing.id} remaining={remainingSummary(counts)} />
+            <div id="setup" className="scroll-mt-20">
+              {setupRequest?.status === "open" ? (
+                <p className="rounded-2xl bg-secondary p-4 text-sm">
+                  We have your &quot;set it up for me&quot; request and will email you when your listing is ready to
+                  check.
+                </p>
+              ) : (
+                !complete && setupRequest?.status !== "ready" && <SetupRequestForm providerId={listing.id} />
+              )}
+            </div>
           </>
         )}
 
