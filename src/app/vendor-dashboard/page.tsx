@@ -11,6 +11,7 @@ import {
   Eye,
   FileText,
   ImagePlus,
+  MapPin,
   Inbox,
   PartyPopper,
   PencilLine,
@@ -433,6 +434,9 @@ export default async function VendorHomePage() {
           <QuickAction href="/vendor-dashboard/calendar" icon={CalendarDays} label="Update availability" />
           {primary.status === "approved" && (
             <QuickAction href={`/vendor/${primary.id}`} icon={Eye} label="View as a customer" />
+          )}
+          {primary.status === "approved" && (
+            <QuickAction href="/vendor-dashboard/google" icon={MapPin} label="Get bookings from Google" />
           )}
         </div>
       </section>
