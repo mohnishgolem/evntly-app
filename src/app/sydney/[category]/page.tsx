@@ -49,27 +49,27 @@ export async function generateMetadata({ params }: PageProps<"/sydney/[category]
 }
 
 export default async function CategoryLandingPage({ params }: PageProps<"/sydney/[category]">) {
-  const category = categoryFromSlug((await params).category);
-  if (!category) notFound();
+  const { category: slug } = await params;
+  // Everything rendered comes from the fixed list of category pages, never
+  // from the URL itself.
+  const page = categoryPages().find((p) => p.slug === slug);
+  if (!page) notFound();
 
-  const heading = categoryHeading(category);
+  const { category, heading, path } = page;
   const [vendors, session] = await Promise.all([vendorsIn(category), getCurrentUser()]);
-  const path = categoryPath(category);
   const others = categoryPages().filter((p) => p.category !== category);
-  const jsonLd = [
-    breadcrumbJsonLd([
-      { name: "Evntly", path: "/" },
-      { name: `${heading} in ${LAUNCH_CITY}`, path },
-    ]),
-    ...(vendors.length ? [vendorItemListJsonLd(`${heading} in ${LAUNCH_CITY}`, vendors)] : []),
-  ];
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Evntly", path: "/" },
+    { name: `${heading} in ${LAUNCH_CITY}`, path },
+  ]);
+  const itemList = vendorItemListJsonLd(`${heading} in ${LAUNCH_CITY}`, vendors);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <script
         type="application/ld+json"
         // Vendor names are user-supplied — see serializeJsonLd.
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd([breadcrumbs, itemList]) }}
       />
       <nav aria-label="Breadcrumb" className="mb-3 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">Home</Link>
