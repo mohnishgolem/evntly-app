@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { PartyPopper } from "lucide-react";
 import { requireAdminPage } from "@/lib/data/user";
-import { getAllVendorsForAdmin } from "@/lib/data/admin";
+import { getAllVendorsForAdmin, getListingCompletionCounts } from "@/lib/data/admin";
+import { MIN_PHOTOS, isListingComplete } from "@/lib/listing-completion";
 import { categoryLabel } from "@/lib/config";
 import { formatAbn } from "@/lib/abn";
 import { AdminVendorActions } from "@/components/admin-vendor-actions";
@@ -20,12 +21,15 @@ export default async function AdminApprovalsPage() {
   const all = await getAllVendorsForAdmin();
   // Oldest first: whoever has waited longest gets reviewed first.
   const pending = all.filter((v) => v.status === "pending_review").reverse();
+  // Only complete listings can be approved (the database enforces it too).
+  const completion = await getListingCompletionCounts(pending.map((v) => v.id));
   // Progress toward the launch goal counts real businesses only.
   const real = all.filter((v) => !v.is_demo);
   const tally = (status: string) => real.filter((v) => v.status === status).length;
   const progress = [
     { label: "Live", value: tally("approved") },
     { label: "Waiting for review", value: tally("pending_review") },
+    { label: "Drafts (not submitted)", value: tally("draft") },
     { label: "Rejected", value: tally("rejected") },
     { label: "Suspended", value: tally("suspended") },
   ];
@@ -36,7 +40,7 @@ export default async function AdminApprovalsPage() {
         title="Vendor approvals"
         description={`${pending.length} listing${pending.length === 1 ? "" : "s"} waiting for review.`}
       />
-      <dl className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {progress.map((p) => (
           <div key={p.label} className="rounded-2xl border border-border p-3">
             <dt className="text-xs text-muted-foreground">{p.label}</dt>
@@ -88,7 +92,19 @@ export default async function AdminApprovalsPage() {
               {!!v.locations_serviced?.length && (
                 <p className="mt-1 text-xs text-muted-foreground">Services: {v.locations_serviced.join(", ")}</p>
               )}
-              <AdminVendorActions vendorId={v.id} />
+              {(() => {
+                const c = completion.get(v.id) ?? { photos: 0, packages: 0 };
+                const complete = isListingComplete(c);
+                return (
+                  <>
+                    <p className={complete ? "mt-2 text-sm text-success" : "mt-2 text-sm font-medium text-warning"}>
+                      {c.photos} photo{c.photos === 1 ? "" : "s"} · {c.packages} active package{c.packages === 1 ? "" : "s"}
+                      {complete ? "" : ` · Incomplete: needs ${MIN_PHOTOS}+ photos and 1 package before it can be approved`}
+                    </p>
+                    <AdminVendorActions vendorId={v.id} canApprove={complete} />
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>

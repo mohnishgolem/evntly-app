@@ -9,6 +9,7 @@ export function AdminVendorActions({
   vendorId,
   currentStatus,
   founding = false,
+  canApprove = true,
 }: {
   vendorId: string;
   // Omitted for the pending-review queue (Approve/Reject). Passed for
@@ -16,6 +17,8 @@ export function AdminVendorActions({
   // previously there was no way to suspend an approved vendor at all.
   currentStatus?: Exclude<VendorStatus, "pending_review">;
   founding?: boolean;
+  /** False while the listing lacks 3 photos and 1 package (the database refuses it anyway). */
+  canApprove?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -75,7 +78,7 @@ export function AdminVendorActions({
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      <Button size="lg" disabled={pending} onClick={() => act("approved")}>
+      <Button size="lg" disabled={pending || !canApprove} onClick={() => act("approved")}>
         Approve
       </Button>
       <Button size="lg" variant="outline" disabled={pending} onClick={() => act("rejected")}>

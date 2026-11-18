@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: string }> = {
+  draft: { icon: PencilLine, label: "Not submitted yet", color: "text-muted-foreground" },
   pending_review: { icon: Clock, label: "Under review", color: "text-warning" },
   approved: { icon: ShieldCheck, label: "Live", color: "text-success" },
   rejected: { icon: XCircle, label: "Not approved", color: "text-destructive" },
@@ -105,6 +106,9 @@ export default async function VendorBusinessPage() {
                     </Link>
                     <ListingPauseToggle listingId={listing.id} accepting={listing.available !== false} />
                   </>
+                )}
+                {listing.status === "draft" && (
+                  <Button nativeButton={false} render={<Link href="/vendor-dashboard/finish">Finish your listing</Link>} />
                 )}
                 {listing.status === "pending_review" && (
                   <p className="text-sm text-muted-foreground">

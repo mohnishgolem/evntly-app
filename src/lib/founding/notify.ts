@@ -7,7 +7,7 @@ import { CLAIM_PATH } from "@/lib/founding/sources";
 // invite-email.ts). Kept out of the "use server" actions file so they can't
 // be called from the browser.
 
-/** Called by submitVendorListing: the vendor came through the beta, so confirm and tell admins. */
+/** Called by submitListingForReview: the vendor came through the beta, so confirm and tell admins. */
 export async function emailApplicationReceived(email: string | null | undefined) {
   notify({
     to: email,
@@ -15,15 +15,18 @@ export async function emailApplicationReceived(email: string | null | undefined)
     subject: "We've received your Evntly founding vendor application",
     heading: "Thanks — your application is in",
     lines: [
-      "Your listing has been submitted for review. Our team checks every listing before it goes live, and we'll email you as soon as there's a decision on your founding vendor place.",
-      "In the meantime you can add photos of your work and set up packages. Complete listings are reviewed faster.",
+      "Your listing, photos and packages have been submitted for review. Our team checks every listing before it goes live, and we'll email you as soon as there's a decision on your founding vendor place.",
     ],
     cta: { label: "See your application", path: CLAIM_PATH },
   });
   await emailAdmins("New founding vendor application", `${email ?? "A vendor"} submitted a listing for the founding vendor beta.`);
 }
 
-export async function emailAdmins(subject: string, line: string) {
+export async function emailAdmins(
+  subject: string,
+  line: string,
+  cta: { label: string; path: string } = { label: "Open Beta Vendors", path: "/admin/beta-vendors" },
+) {
   const admin = createAdminClient();
   if (!admin) return;
   const { data: admins } = await admin.from("users").select("email").eq("role", "admin");
@@ -34,7 +37,7 @@ export async function emailAdmins(subject: string, line: string) {
       subject,
       heading: subject,
       lines: [line],
-      cta: { label: "Open Beta Vendors", path: "/admin/beta-vendors" },
+      cta,
     });
   }
 }

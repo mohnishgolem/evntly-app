@@ -143,6 +143,6 @@ describe("vendor onboarding", () => {
     expect(acceptIdx).toBeGreaterThan(-1);
     expect(insertIdx).toBeGreaterThan(acceptIdx);
     expect(calls[acceptIdx].body).toEqual({ p_documents: ["vendor_agreement", "vendor_fee_schedule"], p_context: "vendor_onboarding" });
-    expect(calls[insertIdx].body).toMatchObject({ abn: "51824753556", status: "pending_review" });
+    expect(calls[insertIdx].body).toMatchObject({ abn: "51824753556", status: "draft" });
   });
 });

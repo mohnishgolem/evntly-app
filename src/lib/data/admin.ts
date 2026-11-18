@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function getPendingVendors() {
   const supabase = await createClient();
@@ -96,4 +97,22 @@ export async function getFunnelForAdmin() {
     byStep.set(r.step, row);
   }
   return [...byStep.entries()].sort(([a], [b]) => a - b).map(([step, v]) => ({ step, ...v }));
+}
+
+/**
+ * Photo and active-package counts per listing, for the approval gate. Read
+ * with the service role: admins can't see an unapproved listing's portfolio
+ * through RLS. Call only from pages that already checked admin access.
+ */
+export async function getListingCompletionCounts(ids: string[]) {
+  const counts = new Map<string, { photos: number; packages: number }>(ids.map((id) => [id, { photos: 0, packages: 0 }]));
+  const admin = createAdminClient();
+  if (!admin || ids.length === 0) return counts;
+  const [{ data: photos }, { data: packages }] = await Promise.all([
+    admin.from("portfolio_items").select("provider_id").in("provider_id", ids),
+    admin.from("vendor_packages").select("provider_id").in("provider_id", ids).eq("active", true),
+  ]);
+  for (const r of photos ?? []) counts.get(r.provider_id)!.photos++;
+  for (const r of packages ?? []) counts.get(r.provider_id)!.packages++;
+  return counts;
 }

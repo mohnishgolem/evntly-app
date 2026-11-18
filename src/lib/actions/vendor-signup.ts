@@ -2,17 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { notify } from "@/lib/email";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 import { isValidAbn, normalizeAbn } from "@/lib/abn";
 import { isLaunchCategory, isVendorCategory } from "@/lib/config";
 import { VENDOR_DOCUMENTS } from "@/lib/legal/versions";
 import { friendlyLegalError } from "@/lib/legal/status";
-import { emailApplicationReceived } from "@/lib/founding/notify";
-import { CLAIM_PATH } from "@/lib/founding/sources";
 import { pricingColumns } from "@/lib/pricing-model";
-import { recordFunnelEvent } from "@/lib/funnel-events";
+import { FINISH_PATH } from "@/lib/listing-completion";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -116,7 +112,8 @@ export async function submitVendorListing(
     phone: draft.phone || null,
     abn,
     gst_registered: !!draft.gstRegistered,
-    status: "pending_review",
+    // Forced to "draft" by the database for vendors; set here to match.
+    status: "draft",
     available: true,
   });
 
@@ -126,41 +123,11 @@ export async function submitVendorListing(
   // (not just one that signed up as "I'm a vendor") still needs isVendor
   // checks in the header to send them to /vendor-dashboard.
   await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
-  // Founding funnel: the listing reached review (source from the founding cookie).
-  await recordFunnelEvent("listing_submitted");
 
-  // Vendors who claimed a founding place first go back to their application
-  // (the insert moved it to "submitted" via a DB trigger).
-  const { data: beta } = await supabase
-    .from("beta_applications")
-    .select("status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (beta?.status === "submitted") {
-    await emailApplicationReceived(user.email);
-    redirect(CLAIM_PATH);
-  }
-
-  await emailAdminsNewListing(draft.businessName, draft.serviceType, draft.city);
-  redirect("/vendor-dashboard");
-}
-
-// New vendors wait for approval before anyone can see them, so tell the
-// admins straight away instead of relying on someone checking /admin.
-async function emailAdminsNewListing(name: string, serviceType: string, city: string) {
-  const admin = createAdminClient();
-  if (!admin) return;
-  const { data: admins } = await admin.from("users").select("email").eq("role", "admin");
-  for (const { email } of admins ?? []) {
-    notify({
-      to: email,
-      category: "enquiries",
-      subject: `New vendor to approve: ${name}`,
-      heading: "A new vendor is waiting for approval",
-      lines: [`${name} (${serviceType}${city ? `, ${city}` : ""}) just submitted a listing.`],
-      cta: { label: "Review approvals", path: "/admin/approvals" },
-    });
-  }
+  // The listing is saved as a draft (the database sets status 'draft'). It
+  // goes to review only from the finish page, once it has photos and a
+  // package: submitListingForReview in listing-completion.ts.
+  redirect(FINISH_PATH);
 }
 
 export async function updateVendorListing(

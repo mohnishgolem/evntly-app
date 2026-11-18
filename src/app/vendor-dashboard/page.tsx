@@ -320,13 +320,22 @@ export default async function VendorHomePage() {
             {missingPhotos.map((l) => (
               <li key={`photos-${l.id}`}>
                 <Link
-                  href="/vendor-dashboard/portfolio"
+                  href="/vendor-dashboard/finish"
                   className="flex items-center gap-3 px-4 py-3.5 outline-none hover:bg-muted/60 focus-visible:bg-muted/60"
                 >
                   <ImagePlus className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
                   <span className="min-w-0 flex-1 text-sm">
-                    <span className="font-medium">Add photos to {l.name}.</span>{" "}
-                    <span className="text-muted-foreground">Listings without photos are easy to skip.</span>
+                    {l.status === "draft" ? (
+                      <>
+                        <span className="font-medium">Finish {l.name}.</span>{" "}
+                        <span className="text-muted-foreground">Add 3 photos and a package, then submit it for review.</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium">Add photos to {l.name}.</span>{" "}
+                        <span className="text-muted-foreground">Listings without photos are easy to skip.</span>
+                      </>
+                    )}
                   </span>
                   <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
                 </Link>

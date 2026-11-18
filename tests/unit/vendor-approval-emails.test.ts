@@ -56,7 +56,7 @@ describe("vendor approval emails", () => {
     expect(notified).toHaveLength(0);
   });
 
-  it("tells every admin when a new listing is submitted", async () => {
+  it("doesn't email admins when a draft is saved (only a complete listing sent for review does)", async () => {
     const result = await submitVendorListing(
       {
         businessName: "Lens & Light", bio: "", serviceType: "photographer", hourlyRate: 150, city: "Parramatta",
@@ -65,7 +65,6 @@ describe("vendor approval emails", () => {
       { acceptedVendorAgreement: true },
     );
     expect(result).toBeUndefined();
-    expect(notified.map((n) => n.to)).toEqual(["admin@realdomain.com.au", "ops@realdomain.com.au"]);
-    expect(notified.every((n) => n.cta.path === "/admin/approvals")).toBe(true);
+    expect(notified).toHaveLength(0);
   });
 });
