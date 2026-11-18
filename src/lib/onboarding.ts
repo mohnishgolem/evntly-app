@@ -27,7 +27,8 @@ export function onboardingStatus(metadata: Record<string, unknown> | null | unde
 // documents (the Terms prompt sends people there), vendor signup, admin and
 // printable invoices. Also the founding claim pages: a new vendor should
 // finish their first listing before a 7-step tour (it covered the Claim
-// button on phones, 17 Nov).
+// button on phones, 17 Nov), and the page where they finish it (photos and
+// packages): the tour covered the uploader there in mobile QA, 18 Nov.
 const QUIET_PATHS = [
   "/founding-vendors",
   "/login",
@@ -36,6 +37,7 @@ const QUIET_PATHS = [
   "/reset-password",
   "/auth",
   "/vendor-signup",
+  "/vendor-dashboard/finish",
   "/terms",
   "/privacy-policy",
   "/vendor-agreement",
