@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ImagePlus, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
@@ -14,17 +14,25 @@ import {
   portfolioPath,
 } from "@/lib/portfolio-media";
 import type { PublicPortfolioItem } from "@/lib/public-columns";
+import { MIN_PHOTOS } from "@/lib/profile-completeness";
 
 type PortfolioItem = PublicPortfolioItem;
+
+// Shown until a listing has its 3 photos (MIN_PHOTOS): one labelled slot per
+// photo, so "add 3 photos" turns into three small, concrete asks.
+const DEFAULT_TIPS: readonly string[] = ["Your best work", "You in action at an event", "A close-up or setup shot"];
 
 export function PortfolioUploader({
   providerId,
   userId,
   items,
+  tips = DEFAULT_TIPS,
 }: {
   providerId: string;
   userId: string;
   items: PortfolioItem[];
+  /** What to show in each required photo, in order (category-specific). */
+  tips?: readonly string[];
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -74,6 +82,9 @@ export function PortfolioUploader({
     });
   }
 
+  const pick = () => fileRef.current?.click();
+  const missing = Math.max(0, MIN_PHOTOS - items.length);
+
   function remove(id: string) {
     startTransition(async () => {
       await deletePortfolioItem(id);
@@ -99,7 +110,7 @@ export function PortfolioUploader({
           onChange={(e) => setCaption(e.target.value)}
           disabled={pending}
         />
-        <Button size="lg" className="w-full" disabled={pending} onClick={() => fileRef.current?.click()}>
+        <Button size="lg" className="w-full" disabled={pending} onClick={pick}>
           <ImagePlus />{" "}
           {progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : pending ? "Uploading…" : "Add photos or videos"}
         </Button>
@@ -120,11 +131,15 @@ export function PortfolioUploader({
         )}
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          <Plus className="mr-1 inline h-4 w-4" /> Add your first photo or video clip above.
+      {missing > 0 && (
+        <p className="mb-3 text-sm font-medium">
+          {items.length === 0
+            ? `Add ${MIN_PHOTOS} photos to show customers your work.`
+            : `${missing} more to go.`}{" "}
+          <span className="font-normal text-muted-foreground">Real photos from your own events work best.</span>
         </p>
-      ) : (
+      )}
+      {(items.length > 0 || missing > 0) && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {items.map((item) => (
             <div key={item.id} className="group relative aspect-square overflow-hidden rounded-xl">
@@ -141,16 +156,35 @@ export function PortfolioUploader({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.media_url} alt={item.caption ?? ""} className="h-full w-full object-cover" />
               )}
+              {/* Always visible on touch screens (there's no hover there);
+                  on a mouse it appears on hover or keyboard focus. */}
               <button
                 type="button"
                 onClick={() => remove(item.id)}
                 disabled={pending}
-                className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label="Remove this photo"
+                className="absolute top-1.5 right-1.5 flex size-8 items-center justify-center rounded-full bg-black/60 text-white transition-opacity focus-visible:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
               >
-                <Trash2 className="size-3.5" />
+                <Trash2 className="size-3.5" aria-hidden />
               </button>
             </div>
           ))}
+          {Array.from({ length: missing }, (_, i) => {
+            const slot = items.length + i;
+            return (
+              <button
+                key={`slot-${slot}`}
+                type="button"
+                onClick={pick}
+                disabled={pending}
+                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border p-3 text-center outline-none hover:border-primary/60 hover:bg-muted/40 focus-visible:border-primary"
+              >
+                <ImagePlus className="size-6 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+                <span className="text-xs font-semibold text-muted-foreground">Photo {slot + 1}</span>
+                <span className="text-xs leading-snug">{tips[slot] ?? DEFAULT_TIPS[slot] ?? "Another favourite"}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

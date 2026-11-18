@@ -17,6 +17,8 @@ export type CompletionStep = {
   label: string;
   detail: string;
   done: boolean;
+  /** Where on the finish page the vendor does this step. */
+  href?: string;
 };
 
 export function isListingComplete(c: { photos: number; packages: number }) {
@@ -33,12 +35,14 @@ export function completionSteps(c: { photos: number; packages: number; status: s
       label: `Add at least ${MIN_PHOTOS} photos of your work`,
       detail: `${Math.min(c.photos, MIN_PHOTOS)} of ${MIN_PHOTOS} added`,
       done: c.photos >= MIN_PHOTOS,
+      href: "#photos",
     },
     {
       key: "packages",
       label: "Add at least one package",
       detail: c.packages > 0 ? `${c.packages} active` : "What's included and the price",
       done: c.packages >= MIN_PACKAGES,
+      href: "#packages",
     },
     {
       key: "submit",
@@ -47,6 +51,23 @@ export function completionSteps(c: { photos: number; packages: number; status: s
       done: submitted,
     },
   ];
+}
+
+/**
+ * Exactly what's still missing, for the line under the Submit button:
+ * "3 photos and a package", "1 more photo", or null when the listing is
+ * complete.
+ */
+export function remainingSummary(c: { photos: number; packages: number }): string | null {
+  const parts: string[] = [];
+  const photosLeft = Math.max(0, MIN_PHOTOS - c.photos);
+  if (photosLeft > 0) {
+    const noun = photosLeft === 1 ? "photo" : "photos";
+    parts.push(c.photos > 0 ? `${photosLeft} more ${noun}` : `${photosLeft} ${noun}`);
+  }
+  const packagesLeft = Math.max(0, MIN_PACKAGES - c.packages);
+  if (packagesLeft > 0) parts.push(packagesLeft === 1 ? "a package" : `${packagesLeft} packages`);
+  return parts.length ? parts.join(" and ") : null;
 }
 
 /** Hours after a draft was created when each reminder is due. */
