@@ -3206,6 +3206,18 @@ export type Database = {
           step: number
         }[]
       }
+      admin_verified_vendor_funnel: {
+        Args: never
+        Returns: {
+          accounts: number
+          approved: number
+          completed: number
+          is_test: boolean
+          listings_created: number
+          source: string
+          verified: number
+        }[]
+      }
       admin_mark_risk_reviewed: {
         Args: { p_note: string; p_user_id: string }
         Returns: undefined

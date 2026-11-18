@@ -232,6 +232,53 @@ export function BetaVendorsView({
   );
 }
 
+// Genuine vendors only (test/internal accounts excluded), straight from
+// admin_verified_vendor_funnel(). This is the number to report, not clicks.
+function VerifiedFunnelCard({ verified }: { verified: AcquisitionData["verified"] }) {
+  if (!verified) {
+    return (
+      <p className="mb-4 rounded-2xl border border-border p-4 text-sm">
+        Apply migration <code>20261120090000_admin_verified_vendor_funnel.sql</code> to show verified registrations and completed listings here.
+      </p>
+    );
+  }
+  const goal = verified.target;
+  return (
+    <div className="mb-6 grid gap-3 rounded-2xl border border-border p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-medium">Verified vendors (test accounts excluded)</h3>
+        <span className="text-xs text-muted-foreground">
+          {verified.testExcluded} test/internal account{verified.testExcluded === 1 ? "" : "s"} left out · 200 by 30 Nov needs {goal.perDay}/day for {goal.daysLeft} days
+        </span>
+      </div>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <Stat label="Accounts" value={verified.accounts} />
+        <Stat label="Email verified" value={verified.verified} sub="verified registrations" />
+        <Stat label="Listing started" value={verified.listingsCreated} />
+        <Stat label="Approved" value={verified.approved} />
+        <Stat label="Completed" value={verified.completed} sub="3 photos + 1 package" />
+      </dl>
+      {verified.bySource.length > 0 && (
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs text-muted-foreground">
+            <tr><th className="font-normal">Source</th><th className="text-right font-normal">Verified</th><th className="text-right font-normal">Approved</th><th className="text-right font-normal">Completed</th></tr>
+          </thead>
+          <tbody>
+            {verified.bySource.map((r) => (
+              <tr key={r.source} className="border-t border-border">
+                <td className="py-1">{r.source}</td>
+                <td className="py-1 text-right tabular-nums">{r.verified}</td>
+                <td className="py-1 text-right tabular-nums">{r.approved}</td>
+                <td className="py-1 text-right tabular-nums">{r.completed}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 function AcquisitionOverview({ acquisition }: { acquisition: AcquisitionData }) {
   if (!acquisition.deployed) {
     return (
@@ -249,6 +296,7 @@ function AcquisitionOverview({ acquisition }: { acquisition: AcquisitionData }) 
       title="Vendor acquisition"
       description="From research to an active vendor. The first six stages are prospects; Registered onwards counts every founding applicant, whatever brought them."
     >
+      <VerifiedFunnelCard verified={acquisition.verified} />
       <div className="grid gap-6 md:grid-cols-2">
         <AcquisitionFunnel funnel={funnel} />
         <dl className="grid grid-cols-2 gap-3">
