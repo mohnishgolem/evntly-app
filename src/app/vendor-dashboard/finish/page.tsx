@@ -152,7 +152,7 @@ function SendUsYourPhotos({ listingName }: { listingName: string }) {
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Button nativeButton={false} render={<a href={`mailto:hello@evntlyapp.com?subject=${subject}&body=${body}`}>Email your photos</a>} />
-        <Button variant="outline" nativeButton={false} render={<a href="https://ig.me/m/evntly.au">DM @evntly.au</a>} />
+        <Button variant="outline" nativeButton={false} render={<a href="https://www.instagram.com/evntly.au/">Message @evntly.au</a>} />
       </div>
     </section>
   );
