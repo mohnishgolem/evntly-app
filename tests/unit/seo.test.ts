@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HIDDEN_CATEGORIES, LAUNCH_CATEGORIES, SITE_URL } from "@/lib/config";
 import { CANONICAL_HOST, isNonCanonicalHost } from "@/lib/canonical-host";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { LIVE_CATEGORY_SLUGS, isUnknownCategoryPage } from "@/lib/category-page-paths";
 import {
   absoluteUrl,
   breadcrumbJsonLd,
@@ -66,6 +67,17 @@ describe("category landing pages", () => {
     expect(categoryPath("dj")).toBe("/sydney/djs");
     expect(categoryPath("cakes_desserts")).toBe("/sydney/cakes-desserts");
     expect(categoryFromSlug("nope")).toBeNull();
+  });
+
+  it("keeps the proxy's slug list in step with the live categories", () => {
+    expect([...LIVE_CATEGORY_SLUGS]).toEqual(categoryPages().map((p) => p.slug));
+  });
+
+  it("sends a real 404 for unknown category slugs only", () => {
+    for (const p of categoryPages()) expect(isUnknownCategoryPage(p.path)).toBe(false);
+    expect(isUnknownCategoryPage("/sydney/djs/")).toBe(false);
+    for (const path of ["/sydney/venues", "/sydney/nope", "/sydney/%E0%A4%A"]) expect(isUnknownCategoryPage(path)).toBe(true);
+    for (const path of ["/sydney", "/sydney/djs/x", "/explore", "/vendor/djs"]) expect(isUnknownCategoryPage(path)).toBe(false);
   });
 
   it("lists only categories with listings in the sitemap, dated by the newest", () => {

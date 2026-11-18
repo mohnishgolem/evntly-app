@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { buildCsp, generateNonce } from "@/lib/csp";
 import { isNonCanonicalHost } from "@/lib/canonical-host";
+import { isUnknownCategoryPage } from "@/lib/category-page-paths";
 import { BOOK_INTENT_COOKIE, BOOK_INTENT_MAX_AGE_SECONDS, bookIntentPath, bookIntentRedirect } from "@/lib/booking-intent";
 
 // Next.js 16 renamed Middleware to Proxy (same runtime semantics).
@@ -56,6 +57,13 @@ export async function proxy(request: NextRequest) {
       notFound.headers.set("Content-Security-Policy", csp);
       return notFound;
     }
+  }
+
+  if ((request.method === "GET" || request.method === "HEAD") && isUnknownCategoryPage(pathname)) {
+    const notFound = NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404, request: { headers: requestHeaders } });
+    response.cookies.getAll().forEach((c) => notFound.cookies.set(c));
+    notFound.headers.set("Content-Security-Policy", csp);
+    return notFound;
   }
 
   if (!signedIn && (request.method === "GET" || request.method === "HEAD") && isAccountOnly(pathname)) {
