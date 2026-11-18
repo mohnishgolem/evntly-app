@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { buildCsp, generateNonce } from "@/lib/csp";
+import { isNonCanonicalHost } from "@/lib/canonical-host";
 import { BOOK_INTENT_COOKIE, BOOK_INTENT_MAX_AGE_SECONDS, bookIntentPath, bookIntentRedirect } from "@/lib/booking-intent";
 
 // Next.js 16 renamed Middleware to Proxy (same runtime semantics).
@@ -68,6 +69,13 @@ export async function proxy(request: NextRequest) {
   }
 
   response.headers.set("Content-Security-Policy", csp);
+  // The old evntly-tau.vercel.app address and preview deployments serve the
+  // same pages as evntlyapp.com: keep them out of search results so they
+  // don't compete with it. (They stay reachable — auth emails still link to
+  // the legacy address.)
+  if (isNonCanonicalHost(request.headers.get("host"))) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   return response;
 }
 

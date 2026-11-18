@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/components/site/logo";
 import { AdChoicesLink } from "@/components/ad-choices-link";
+import { LAUNCH_CITY } from "@/lib/config";
+import { categoryPages } from "@/lib/seo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
 
@@ -41,6 +43,21 @@ export function SiteFooter() {
             </a>
           </nav>
         </div>
+        {/* Every category landing page, linked from every page. */}
+        <nav aria-label={`Event vendors in ${LAUNCH_CITY}`} className="mb-6">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Event vendors in {LAUNCH_CITY}
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+            {categoryPages().map((p) => (
+              <li key={p.slug}>
+                <Link href={p.path} className="hover:text-foreground">
+                  {p.heading}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
         <p className="text-xs text-muted-foreground">
           Sai Mohnish Golem trading as Evntly · ABN 49 193 658 959 · Sydney, Australia
         </p>

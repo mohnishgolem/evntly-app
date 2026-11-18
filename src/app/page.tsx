@@ -8,7 +8,18 @@ import { HeroVideo } from "@/components/hero-video";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
 import { getFeaturedVendors, launchCity } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
-import { FEATURED_CATEGORIES, VENDOR_CATEGORIES, categoryPlural } from "@/lib/config";
+import type { Metadata } from "next";
+import { FEATURED_CATEGORIES, LAUNCH_CITY, VENDOR_CATEGORIES, categoryPlural, isLaunchCategory } from "@/lib/config";
+import { serializeJsonLd } from "@/lib/json-ld";
+import { categoryPath, organizationJsonLd, pageMetadata, websiteJsonLd } from "@/lib/seo";
+
+const HOME_TITLE = `${LAUNCH_CITY} Event Vendors: Photographers, DJs & More | Evntly`;
+const HOME_DESCRIPTION = `Find ${LAUNCH_CITY} photographers, decorators, DJs, celebrants and caterers for birthdays, engagements, corporate and cultural events. Browse free — no account needed.`;
+
+export const metadata: Metadata = {
+  ...pageMetadata({ title: HOME_TITLE, description: HOME_DESCRIPTION, path: "/", socialTitle: "Evntly — Find trusted event vendors" }),
+  title: { absolute: HOME_TITLE },
+};
 
 const HERO_SCENARIOS = ["Weddings", "Birthdays", "Corporate events", "Engagements"];
 
@@ -21,6 +32,10 @@ export default function HomePage() {
 
   return (
     <div className="pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd([organizationJsonLd(), websiteJsonLd()]) }}
+      />
       {/* Hero — one clear message, one primary CTA, one secondary. No sign-up wall. */}
       <section className="relative overflow-hidden border-b border-border/40 px-4 py-20 md:py-28">
         {/* Poster stays underneath: it's the LCP image, the loading fallback, and what
@@ -69,7 +84,7 @@ export default function HomePage() {
           {featuredCategories.map((c) => (
             <Link
               key={c.value}
-              href={`/explore?category=${c.value}`}
+              href={isLaunchCategory(c.value) ? categoryPath(c.value) : `/explore?category=${c.value}`}
               className="flex items-center gap-2 rounded-full border border-white/40 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-900 shadow-sm backdrop-blur-sm transition-colors hover:border-highlight/40 hover:text-highlight"
             >
               <c.icon className="size-4" />

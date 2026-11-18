@@ -5,7 +5,9 @@ import { getVendorById, getVendorPackages, getVendorPortfolio, getVendorReviews 
 import { formatAud } from "@/lib/payments/money";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { categoryLabel, LAUNCH_CITY, SITE_URL } from "@/lib/config";
+import Link from "next/link";
+import { categoryLabel, isLaunchCategory, LAUNCH_CITY } from "@/lib/config";
+import { absoluteUrl, breadcrumbJsonLd, categoryHeading, categoryPath, pageMetadata, vendorJsonLd } from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { BookVendor, type OpenRequest } from "@/components/request-quote";
@@ -39,16 +41,10 @@ export async function generateMetadata({
   const description =
     vendor.bio ||
     `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}${priceSummary(vendor) ? `, ${priceSummary(vendor)}` : ""} on Evntly.`;
-  const url = `${SITE_URL}/vendor/${id}`;
-
   return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: { title, description, url, type: "profile" },
+    ...pageMetadata({ title, description, path: `/vendor/${id}`, socialTitle: title, type: "profile" }),
     // Sample listings aren't real businesses: keep them out of search.
     ...(vendor.is_demo ? { robots: { index: false, follow: false } } : {}),
-    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -114,28 +110,13 @@ export default async function VendorDetailPage({
   const priceLabel =
     price.amount == null && fromPackage != null ? `Packages from ${formatAud(fromPackage)}` : price.label;
 
-  const vendorUrl = `${SITE_URL}/vendor/${vendor.id}`;
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: vendor.name,
-    description: vendor.bio ?? undefined,
-    image: vendor.avatar_url ?? undefined,
-    url: vendorUrl,
-    priceRange: price.amount != null ? price.label : undefined,
-    address: vendor.city
-      ? { "@type": "PostalAddress", addressLocality: vendor.city, addressCountry: "AU" }
-      : undefined,
-    ...(vendor.rating && vendor.rating > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: vendor.rating,
-            reviewCount: vendor.review_count ?? 0,
-          },
-        }
-      : {}),
-  };
+  const jsonLd = vendorJsonLd(vendor, price.amount != null ? price.label : undefined);
+  const category = isLaunchCategory(vendor.service_type) ? vendor.service_type : null;
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Evntly", path: "/" },
+    ...(category ? [{ name: `${categoryHeading(category)} in ${LAUNCH_CITY}`, path: categoryPath(category) }] : []),
+    { name: vendor.name, path: `/vendor/${vendor.id}` },
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -143,7 +124,7 @@ export default async function VendorDetailPage({
         <script
           type="application/ld+json"
           // Vendor name/bio are attacker-controlled — see serializeJsonLd.
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd([jsonLd, breadcrumbs]) }}
         />
       )}
       <div className="grid gap-8 md:grid-cols-3">
@@ -156,7 +137,17 @@ export default async function VendorDetailPage({
               </div>
               {vendor.founding_vendor && <FoundingBadge className="mb-2" />}
               {vendor.is_demo && <SampleBadge className="mb-2" />}
-              <p className="text-muted-foreground">{categoryLabel(vendor.service_type)}</p>
+              <p className="text-muted-foreground">
+                {category ? (
+                  // Links each listing to its category page (/sydney/djs) for
+                  // browsing and so search engines can follow the hierarchy.
+                  <Link href={categoryPath(category)} className="hover:text-foreground hover:underline">
+                    {categoryLabel(vendor.service_type)}
+                  </Link>
+                ) : (
+                  categoryLabel(vendor.service_type)
+                )}
+              </p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 {!!vendor.rating && vendor.rating > 0 && (
                   <span className="flex items-center gap-1">
@@ -183,7 +174,7 @@ export default async function VendorDetailPage({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <ShareButton
-                url={vendorUrl}
+                url={absoluteUrl(`/vendor/${vendor.id}`)}
                 title={vendor.name}
                 text={`${vendor.name} — ${categoryLabel(vendor.service_type)} on Evntly`}
                 size="lg"

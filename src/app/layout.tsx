@@ -48,7 +48,7 @@ const SPLASH_SCREENS: [number, number, number][] = [
 ];
 
 const DEFAULT_DESCRIPTION =
-  `Book photographers, decorators, DJs, celebrants and more for your wedding, birthday or corporate event in ${LAUNCH_CITY}.`;
+  `Book photographers, decorators, DJs, celebrants and more for your birthday, engagement, corporate or cultural event in ${LAUNCH_CITY}.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -91,12 +91,15 @@ export const metadata: Metadata = {
     "caterer",
     "event planning",
   ],
+  // No og:url here: pages without their own openGraph inherit this block
+  // wholesale (metadata merges shallowly), and a fixed url made every such
+  // page preview as the home page. Pages set theirs via lib/seo pageMetadata.
   openGraph: {
     type: "website",
     siteName: "Evntly",
+    locale: "en_AU",
     title: "Evntly — Find trusted event vendors",
     description: DEFAULT_DESCRIPTION,
-    url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",

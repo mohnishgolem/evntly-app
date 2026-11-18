@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { CUSTOMER_GUIDE, helpArticles } from "@/lib/help/content";
 import { GuideView } from "@/components/help/guide-view";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Customer guide",
   description: "How to plan an event on Evntly: finding vendors, requesting and accepting quotes, messaging, bookings, paying and cancelling.",
-  alternates: { canonical: "/help/customers" },
-};
+  path: "/help/customers",
+});
 
 export default async function CustomerGuidePage() {
   const { enabled } = await getPaymentsStatus();

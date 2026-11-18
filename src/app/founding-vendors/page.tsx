@@ -14,6 +14,7 @@ import { navRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Founding vendors — private beta",
@@ -22,6 +23,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Become an Evntly Founding Vendor",
     description: `Limited Founding Vendor places for ${LAUNCH_CITY} event vendors. Free to take part.`,
+    url: absoluteUrl("/founding-vendors"),
+    type: "website",
+    siteName: "Evntly",
+    locale: "en_AU",
   },
 };
 
