@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicVendor } from "@/lib/vendor-columns";
+import { onFirstEngagement } from "@/lib/user-engaged";
 
 type Vendor = PublicVendor;
 
@@ -14,10 +15,12 @@ const VendorMap = dynamic(
 );
 
 /**
- * deferUntilVisible: don't download or start MapLibre until the map is about
- * to scroll into view. On the home page the map sits below the fold, and
- * evaluating it at load was most of the page's main-thread blocking time
- * (PageSpeed mobile, 18 Nov 2026: TBT 1,120 ms).
+ * deferUntilVisible: don't download or start MapLibre until the visitor has
+ * started using the page (first scroll, tap, key or mouse movement) AND the
+ * map is about to scroll into view. On the home page it was most of the
+ * page's main-thread blocking time at load (PageSpeed mobile, 18 Nov 2026:
+ * TBT 1,120–1,700 ms). Visibility alone wasn't enough: on phones the map
+ * starts just below the hero, inside the first screen plus margin.
  */
 export function VendorMapLoader({
   vendors,
@@ -29,10 +32,16 @@ export function VendorMapLoader({
   deferUntilVisible?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [engaged, setEngaged] = useState(!deferUntilVisible);
   const [show, setShow] = useState(!deferUntilVisible);
 
   useEffect(() => {
-    if (show) return;
+    if (engaged) return;
+    return onFirstEngagement(window, () => setEngaged(true));
+  }, [engaged]);
+
+  useEffect(() => {
+    if (show || !engaged) return;
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") {
       setShow(true);
@@ -49,7 +58,7 @@ export function VendorMapLoader({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [show]);
+  }, [show, engaged]);
 
   if (show) return <VendorMap vendors={vendors} embedded={embedded} />;
   return (
