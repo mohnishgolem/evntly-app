@@ -8,6 +8,9 @@ type Call = { method: string; url: string; body: unknown };
 const calls: Call[] = [];
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
 let drafts: unknown[] = [];
+let approved: unknown[] = [];
+let settings: { key: string; value: string }[] = [];
+let sentRows: { provider_id: string; kind: string }[] = [];
 let alreadyLogged = false;
 
 const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -15,11 +18,14 @@ const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
   const method = init?.method ?? "GET";
   calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : null });
   const json = (data: unknown) => new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } });
+  // The approved-incomplete switch and skip list (key=in.(...)); otherwise the cron secret.
+  if (url.includes("/app_settings") && url.includes("key=in.")) return json(settings);
   if (url.includes("/app_settings")) return json({ value: "s3cret" });
+  if (url.includes("/service_providers") && url.includes("status=eq.approved")) return json(approved);
   if (url.includes("/service_providers")) return json(drafts);
   if (url.includes("/portfolio_items")) return json([{ provider_id: "sp-a" }]);
   if (url.includes("/vendor_packages")) return json([]);
-  if (url.includes("/listing_completion_reminders") && method === "GET") return json([]);
+  if (url.includes("/listing_completion_reminders") && method === "GET") return json(sentRows);
   if (url.includes("/listing_completion_reminders") && method === "POST")
     return json(alreadyLogged ? [] : [{ provider_id: "sp-a" }]);
   if (url.includes("/users")) return json([{ id: "u-a", email: "vendor-a@realdomain.com.au" }]);
@@ -48,6 +54,60 @@ beforeEach(() => {
   notified.length = 0;
   alreadyLogged = false;
   drafts = [{ id: "sp-a", name: "Lens & Light", owner_user_id: "u-a", created_at: hoursAgo(30) }];
+  approved = [];
+  settings = [];
+  sentRows = [];
+});
+
+// Live listings approved before the gate: one email each, only when Sai
+// switches it on in app_settings, never to ids on the skip list.
+describe("approved-but-incomplete reminder", () => {
+  beforeEach(() => {
+    drafts = [];
+    approved = [{ id: "sp-a", name: "DJ Example", owner_user_id: "u-a" }];
+  });
+
+  it("is off by default: doesn't even look up approved listings", async () => {
+    expect(await (await POST(request("s3cret"))).json()).toEqual({ sent: 0 });
+    expect(calls.some((c) => c.url.includes("status=eq.approved"))).toBe(false);
+    expect(notified).toHaveLength(0);
+  });
+
+  it("stays off for any value other than 'on'", async () => {
+    settings = [{ key: "approved_incomplete_reminders", value: "off" }];
+    await POST(request("s3cret"));
+    expect(notified).toHaveLength(0);
+  });
+
+  it("when on, logs once then emails a live listing missing photos or a package", async () => {
+    settings = [{ key: "approved_incomplete_reminders", value: "on" }];
+    expect(await (await POST(request("s3cret"))).json()).toEqual({ sent: 1 });
+    const q = calls.find((c) => c.url.includes("status=eq.approved"))!.url;
+    expect(q).toContain("is_demo=eq.false");
+    const log = calls.find((c) => c.method === "POST" && c.url.includes("/listing_completion_reminders"));
+    expect(log?.body).toEqual({ provider_id: "sp-a", kind: "approved_incomplete" });
+    expect(notified[0]).toMatchObject({
+      to: "vendor-a@realdomain.com.au",
+      category: "reminders",
+      cta: { path: "/vendor-dashboard/finish" },
+    });
+    expect(notified[0].subject).toContain("DJ Example is live on Evntly");
+  });
+
+  it("never sends twice, and skips ids on the skip list", async () => {
+    settings = [{ key: "approved_incomplete_reminders", value: "on" }];
+    sentRows = [{ provider_id: "sp-a", kind: "approved_incomplete" }];
+    await POST(request("s3cret"));
+    expect(notified).toHaveLength(0);
+
+    sentRows = [];
+    settings = [
+      { key: "approved_incomplete_reminders", value: "on" },
+      { key: "approved_incomplete_reminders_skip", value: "sp-x, sp-a" },
+    ];
+    await POST(request("s3cret"));
+    expect(notified).toHaveLength(0);
+  });
 });
 
 describe("listing reminder job", () => {

@@ -2,7 +2,17 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notify } from "@/lib/email";
-import { FINISH_PATH, REMINDER_MAX_AGE_HOURS, pickListingReminders } from "@/lib/listing-completion";
+import { reminderEmail } from "@/lib/listing-reminder-email";
+import {
+  APPROVED_INCOMPLETE_SKIP,
+  APPROVED_INCOMPLETE_SWITCH,
+  REMINDER_MAX_AGE_HOURS,
+  parseSkipList,
+  pickApprovedIncompleteReminders,
+  pickListingReminders,
+  type DueApprovedReminder,
+  type DueListingReminder,
+} from "@/lib/listing-completion";
 
 // Called hourly by pg_cron (pg_net), see the listing_completion_gate
 // migration. Authenticated with the shared secret in app_settings.
@@ -10,7 +20,14 @@ import { FINISH_PATH, REMINDER_MAX_AGE_HOURS, pickListingReminders } from "@/lib
 // Emails a vendor whose listing is still an unsubmitted draft without 3
 // photos and a package, 24 h and 72 h after they saved it. Nothing else:
 // listings that are complete, submitted, live or decided get no reminder,
-// and neither do listings saved before this feature existed. Each reminder
+// and neither do listings saved before this feature existed.
+//
+// Second, OFF unless app_settings.approved_incomplete_reminders = 'on': one
+// email (ever) to each live listing that was approved before the gate and
+// still has no photos or package. Ids in approved_incomplete_reminders_skip
+// are left out. The 'approved_incomplete' log kind needs migration
+// 20261120090000; until it's applied the log insert fails and nothing is
+// sent. Each reminder
 // is logged in listing_completion_reminders first, so it is sent at most
 // once, and notify() honours the vendor's "Reminders" email setting.
 
@@ -33,26 +50,11 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date();
-  const oldest = new Date(now.getTime() - REMINDER_MAX_AGE_HOURS * 3600_000).toISOString();
-  const { data: drafts, error } = await admin
-    .from("service_providers")
-    .select("id, name, owner_user_id, created_at")
-    .eq("status", "draft")
-    .eq("is_demo", false)
-    .gte("created_at", oldest)
-    .order("created_at", { ascending: true })
-    .limit(BATCH);
-  if (error) return NextResponse.json({ error: "query failed" }, { status: 500 });
-  if (!drafts?.length) return NextResponse.json({ sent: 0 });
+  const drafts = await draftReminders(admin, now);
+  if (drafts === null) return NextResponse.json({ error: "query failed" }, { status: 500 });
+  const approved = await approvedIncompleteReminders(admin);
 
-  const ids = drafts.map((d) => d.id);
-  const [{ data: photos }, { data: packages }, { data: sentRows }] = await Promise.all([
-    admin.from("portfolio_items").select("provider_id").in("provider_id", ids),
-    admin.from("vendor_packages").select("provider_id").in("provider_id", ids).eq("active", true),
-    admin.from("listing_completion_reminders").select("provider_id, kind").in("provider_id", ids),
-  ]);
-
-  const due = pickListingReminders(drafts, { photos: photos ?? [], packages: packages ?? [], sent: sentRows ?? [] }, now);
+  const due: (DueListingReminder | DueApprovedReminder)[] = [...drafts, ...approved];
   if (!due.length) return NextResponse.json({ sent: 0 });
 
   const userIds = [...new Set(due.map((d) => d.ownerUserId).filter((id): id is string => !!id))];
@@ -71,24 +73,61 @@ export async function POST(request: NextRequest) {
       .upsert({ provider_id: d.providerId, kind: d.kind }, { onConflict: "provider_id,kind", ignoreDuplicates: true })
       .select("provider_id");
     if (!logged?.length) continue;
-
-    const missing = [
-      d.photos < 3 ? `${3 - d.photos} more photo${3 - d.photos === 1 ? "" : "s"} of your work` : null,
-      d.packages < 1 ? "one package (what's included and the price)" : null,
-    ].filter(Boolean);
-    notify({
-      category: "reminders",
-      to,
-      subject: d.kind === "24h" ? `Finish your ${d.name} listing on Evntly` : `Your ${d.name} listing is still a draft`,
-      heading: d.kind === "24h" ? "Your listing is almost ready" : "Customers can't see your listing yet",
-      lines: [
-        `${d.name} is saved as a draft. To send it for review, add ${missing.join(" and ")}.`,
-        "Short on time? Choose \"Set it up for me\" on the same page, send us your prices and photos, and we'll prepare it for you to check.",
-      ],
-      cta: { label: "Finish my listing", path: FINISH_PATH },
-    });
+    notify({ category: "reminders", to, ...reminderEmail(d) });
     sent++;
   }
 
   return NextResponse.json({ sent });
+}
+
+type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
+
+async function draftReminders(admin: Admin, now: Date): Promise<DueListingReminder[] | null> {
+  const oldest = new Date(now.getTime() - REMINDER_MAX_AGE_HOURS * 3600_000).toISOString();
+  const { data: drafts, error } = await admin
+    .from("service_providers")
+    .select("id, name, owner_user_id, created_at")
+    .eq("status", "draft")
+    .eq("is_demo", false)
+    .gte("created_at", oldest)
+    .order("created_at", { ascending: true })
+    .limit(BATCH);
+  if (error) return null;
+  if (!drafts?.length) return [];
+  const ids = drafts.map((d) => d.id);
+  const [{ data: photos }, { data: packages }, { data: sentRows }] = await Promise.all([
+    admin.from("portfolio_items").select("provider_id").in("provider_id", ids),
+    admin.from("vendor_packages").select("provider_id").in("provider_id", ids).eq("active", true),
+    admin.from("listing_completion_reminders").select("provider_id, kind").in("provider_id", ids),
+  ]);
+  return pickListingReminders(drafts, { photos: photos ?? [], packages: packages ?? [], sent: sentRows ?? [] }, now);
+}
+
+async function approvedIncompleteReminders(admin: Admin): Promise<DueApprovedReminder[]> {
+  const { data: settings } = await admin
+    .from("app_settings")
+    .select("key, value")
+    .in("key", [APPROVED_INCOMPLETE_SWITCH, APPROVED_INCOMPLETE_SKIP]);
+  const setting = (key: string) => settings?.find((r) => r.key === key)?.value ?? null;
+  if (setting(APPROVED_INCOMPLETE_SWITCH)?.trim() !== "on") return [];
+
+  const { data: listings, error } = await admin
+    .from("service_providers")
+    .select("id, name, owner_user_id")
+    .eq("status", "approved")
+    .eq("is_demo", false)
+    .order("created_at", { ascending: true })
+    .limit(BATCH);
+  if (error || !listings?.length) return [];
+  const ids = listings.map((l) => l.id);
+  const [{ data: photos }, { data: packages }, { data: sentRows }] = await Promise.all([
+    admin.from("portfolio_items").select("provider_id").in("provider_id", ids),
+    admin.from("vendor_packages").select("provider_id").in("provider_id", ids).eq("active", true),
+    admin.from("listing_completion_reminders").select("provider_id, kind").in("provider_id", ids),
+  ]);
+  return pickApprovedIncompleteReminders(
+    listings,
+    { photos: photos ?? [], packages: packages ?? [], sent: sentRows ?? [] },
+    parseSkipList(setting(APPROVED_INCOMPLETE_SKIP)),
+  );
 }

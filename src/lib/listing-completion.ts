@@ -132,3 +132,57 @@ export function pickListingReminders(
   }
   return due;
 }
+
+// ── Live listings approved before the completion gate ───────────────────
+// Listings approved before 18 Nov went live without photos or packages.
+// They get ONE email, and only once Sai turns it on (app_settings key below
+// set to "on"); provider ids in the skip key (comma-separated) never get it,
+// e.g. vendors Sai is messaging personally or who asked for no more email.
+
+export const APPROVED_INCOMPLETE_KIND = "approved_incomplete";
+export const APPROVED_INCOMPLETE_SWITCH = "approved_incomplete_reminders";
+export const APPROVED_INCOMPLETE_SKIP = "approved_incomplete_reminders_skip";
+
+export type DueApprovedReminder = Omit<DueListingReminder, "kind"> & { kind: typeof APPROVED_INCOMPLETE_KIND };
+
+/** Comma/space-separated provider ids from the skip setting. */
+export function parseSkipList(value: string | null | undefined): Set<string> {
+  return new Set((value ?? "").split(/[\s,]+/).map((s) => s.trim()).filter(Boolean));
+}
+
+/**
+ * Approved listings still missing photos or a package that haven't had the
+ * one-off email and aren't on the skip list.
+ */
+export function pickApprovedIncompleteReminders(
+  listings: { id: string; name: string; owner_user_id: string | null }[],
+  rows: {
+    photos: { provider_id: string }[];
+    packages: { provider_id: string }[];
+    sent: { provider_id: string; kind: string }[];
+  },
+  skip: ReadonlySet<string>,
+): DueApprovedReminder[] {
+  const count = (list: { provider_id: string }[], id: string) => list.filter((r) => r.provider_id === id).length;
+  const due: DueApprovedReminder[] = [];
+  for (const l of listings) {
+    if (skip.has(l.id)) continue;
+    if (rows.sent.some((s) => s.provider_id === l.id && s.kind === APPROVED_INCOMPLETE_KIND)) continue;
+    const photos = count(rows.photos, l.id);
+    const packages = count(rows.packages, l.id);
+    if (isListingComplete({ photos, packages })) continue;
+    due.push({ providerId: l.id, name: l.name, ownerUserId: l.owner_user_id, kind: APPROVED_INCOMPLETE_KIND, photos, packages });
+  }
+  return due;
+}
+
+/** "3 photos of your work and one package (what's included and the price)". */
+export function missingForEmail(photos: number, packages: number) {
+  const left = Math.max(0, MIN_PHOTOS - photos);
+  return [
+    left > 0 ? `${left} ${photos > 0 ? "more " : ""}photo${left === 1 ? "" : "s"} of your work` : null,
+    packages < MIN_PACKAGES ? "one package (what's included and the price)" : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
+}
