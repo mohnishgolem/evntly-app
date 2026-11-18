@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { HELP_TOPICS, helpArticle, helpArticles } from "@/lib/help/content";
 import { HelpArticleBody } from "@/components/help/help-blocks";
+import { pageMetadata } from "@/lib/seo";
 
 // Article metadata doesn't depend on the payments switch.
 const STATIC_CONTEXT = { paymentsEnabled: false };
@@ -13,11 +14,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = helpArticle(slug, STATIC_CONTEXT);
   if (!article) return { title: "Help article not found" };
-  return {
+  return pageMetadata({
     title: article.title,
     description: article.summary,
-    alternates: { canonical: `/help/articles/${article.slug}` },
-  };
+    path: `/help/articles/${article.slug}`, type: "article",
+  });
 }
 
 export default async function HelpArticlePage({ params }: { params: Promise<{ slug: string }> }) {

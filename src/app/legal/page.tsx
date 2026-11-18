@@ -3,12 +3,13 @@ import Link from "next/link";
 import { ChevronRight, FileText } from "lucide-react";
 import { LEGAL_DOCUMENTS } from "@/lib/legal/documents";
 import { LEGAL_CONTACT_EMAIL, LEGAL_DRAFT, LEGAL_ENTITY } from "@/lib/legal/versions";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Legal",
   description: "Evntly's Terms, Privacy Policy, Cancellation, Refund & Dispute Policy and Vendor Service Agreement.",
-  alternates: { canonical: "/legal" },
-};
+  path: "/legal",
+});
 
 export default function LegalIndexPage() {
   return (

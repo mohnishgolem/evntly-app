@@ -7,12 +7,13 @@ import { HELP_TOPICS, helpArticles } from "@/lib/help/content";
 import { searchIndex } from "@/lib/help/search";
 import { HelpSearch } from "@/components/help/help-search";
 import { ReplayWalkthroughButton } from "@/components/help/replay-walkthrough-button";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Help & Guides",
   description: "Guides and answers for planning an event or running your business on Evntly: quotes, messages, bookings, payments and cancellations.",
-  alternates: { canonical: "/help" },
-};
+  path: "/help",
+});
 
 export default async function HelpCentrePage() {
   const [session, payments] = await Promise.all([getCurrentUser(), getPaymentsStatus()]);

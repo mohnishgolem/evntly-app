@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { searchVendors } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
-import { PRICE_BUCKETS, categoryLabel, LAUNCH_CITY } from "@/lib/config";
+import { PRICE_BUCKETS } from "@/lib/config";
+import { exploreMetadata } from "@/lib/seo";
 import { ExploreFilters } from "@/components/explore-filters";
 import { ExploreResults } from "@/components/explore-results";
 
@@ -13,26 +14,9 @@ function parsePriceBucket(price?: string): [number | undefined, number | undefin
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; q?: string; event?: string; price?: string }>;
 }): Promise<Metadata> {
-  const { category, q } = await searchParams;
-  if (q) {
-    return {
-      title: `"${q}" — Search results`,
-      description: `Vendors matching "${q}" in ${LAUNCH_CITY}.`,
-    };
-  }
-  if (category) {
-    const label = categoryLabel(category);
-    return {
-      title: `${label} in ${LAUNCH_CITY}`,
-      description: `Browse trusted ${label.toLowerCase()} for your event in ${LAUNCH_CITY}.`,
-    };
-  }
-  return {
-    title: "Explore vendors",
-    description: `Browse every approved event vendor on Evntly in ${LAUNCH_CITY} — no account needed.`,
-  };
+  return exploreMetadata(await searchParams);
 }
 
 export default async function ExplorePage({

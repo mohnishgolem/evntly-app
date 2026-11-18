@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { BUNDLES_PUBLIC, LAUNCH_CATEGORIES, SITE_URL } from "@/lib/config";
 import { helpArticles } from "@/lib/help/content";
+import { categoryPageEntries } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
@@ -9,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [{ data: vendors }, { data: bundles }] = await Promise.all([
     supabase
       .from("service_providers")
-      .select("id, updated_at")
+      .select("id, updated_at, service_type")
       .eq("status", "approved")
       .eq("is_demo", false)
       .in("service_type", LAUNCH_CATEGORIES),
@@ -24,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(BUNDLES_PUBLIC ? [{ url: `${SITE_URL}/bundles`, changeFrequency: "daily" as const, priority: 0.7 }] : []),
     { url: `${SITE_URL}/plan`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE_URL}/vendor-signup`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/founding-vendors`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/how-it-works`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/help`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/help/customers`, changeFrequency: "monthly", priority: 0.4 },
@@ -54,5 +56,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...vendorRoutes, ...bundleRoutes];
+  // Category landing pages that have at least one listing (empty ones are
+  // noindex, so listing them would only waste crawl budget).
+  const categoryRoutes: MetadataRoute.Sitemap = categoryPageEntries(vendors ?? []).map((c) => ({
+    url: `${SITE_URL}${c.path}`,
+    lastModified: c.lastModified,
+    changeFrequency: "daily",
+    priority: 0.85,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes, ...vendorRoutes, ...bundleRoutes];
 }

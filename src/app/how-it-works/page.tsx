@@ -17,12 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { LAUNCH_CITY } from "@/lib/config";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "How it works",
   description: `How Evntly works for people planning events and for the vendors who run them in ${LAUNCH_CITY}: quotes, bookings, messages and payments.`,
-  alternates: { canonical: "/how-it-works" },
-};
+  path: "/how-it-works",
+});
 
 type Step = { icon: LucideIcon; title: string; body: string };
 
