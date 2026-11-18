@@ -21,3 +21,18 @@ describe("founding landing variants (?cat=)", () => {
     }
   });
 });
+
+describe("founding landing variants (Meta V5 ad headlines)", () => {
+  it("repeats the ad's headline and keeps the category eyebrow", () => {
+    const b = landingVariant({ cat: "dj", utm_content: "v5b_dj" })!;
+    expect(b.headline).toBe("Free listing for Sydney event vendors");
+    expect(b.eyebrow).toMatch(/DJs/);
+    expect(landingVariant({ cat: "photographer", utm_content: "V5A_photo" })?.headline).toBe("Your next booking could start here");
+    expect(landingVariant({ c: "v5b_decor" })?.headline).toBe("Free listing for Sydney event vendors");
+  });
+
+  it("ignores other campaign tags", () => {
+    expect(landingVariant({ cat: "dj", utm_content: "b_dj" })?.headline).toMatch(/referral/);
+    expect(landingVariant({ utm_content: "qa_audit" })).toBeNull();
+  });
+});

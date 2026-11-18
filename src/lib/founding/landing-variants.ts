@@ -40,9 +40,29 @@ const VARIANTS: Record<string, LandingVariant> = {
   },
 };
 
-/** The variant for ?cat=, or null for the default page. */
+// Meta V5 ads (Nov 2026) all link with ?cat=<category>&utm_content=v5a_… or
+// v5b_…. The headline repeats the ad's own headline so the page says what
+// the ad said; ?cat= still picks the eyebrow and sample category. Approved ad
+// copy only: keep these word for word in step with the live ads.
+const AD_HEADLINES: { prefix: string; headline: string }[] = [
+  { prefix: "v5b_", headline: "Free listing for Sydney event vendors" },
+  { prefix: "v5a_", headline: "Your next booking could start here" },
+];
+
+function first(value: string | string[] | undefined): string {
+  return ((Array.isArray(value) ? value[0] : value) ?? "").trim().toLowerCase();
+}
+
+/** The variant for ?cat= (and the ad headline for utm_content), or null for the default page. */
 export function landingVariant(params: Record<string, string | string[] | undefined>): LandingVariant | null {
-  const raw = Array.isArray(params.cat) ? params.cat[0] : params.cat;
-  const key = raw?.trim().toLowerCase() ?? "";
-  return Object.hasOwn(VARIANTS, key) ? VARIANTS[key] : null;
+  const key = first(params.cat);
+  const base = Object.hasOwn(VARIANTS, key) ? VARIANTS[key] : null;
+  const content = first(params.utm_content) || first(params.c);
+  const ad = AD_HEADLINES.find((a) => content.startsWith(a.prefix));
+  if (!ad) return base;
+  return {
+    category: base?.category ?? "photographer",
+    eyebrow: base?.eyebrow ?? "Founding Vendors · Sydney",
+    headline: ad.headline,
+  };
 }

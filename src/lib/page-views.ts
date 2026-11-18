@@ -61,3 +61,15 @@ export function parseSourceParams(value: unknown): SourceParams | null {
   }
   return Object.keys(out).length ? out : null;
 }
+
+// Crawlers and headless browsers that run our page-view beacon. Meta's ad
+// review loads every landing page when a campaign is published (Nov 2026: 43
+// one-page "Meta ad" visits in the hour V5 went live, against 45 impressions),
+// which made the founding page's claim rate look far worse than it was.
+const BOT_USER_AGENT =
+  /bot\b|bot\/|crawl|spider|slurp|facebookexternalhit|facebookcatalog|meta-externalagent|meta-externalfetcher|headlesschrome|lighthouse|pagespeed|ptst|bingpreview|google-inspectiontool|adsbot|python-requests|curl\/|wget\//i;
+
+/** True for crawlers and headless browsers, whose views and events aren't recorded. */
+export function isBotUserAgent(userAgent: string | null | undefined): boolean {
+  return !!userAgent && BOT_USER_AGENT.test(userAgent);
+}

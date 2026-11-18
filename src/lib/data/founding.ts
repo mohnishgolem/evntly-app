@@ -18,6 +18,25 @@ export const getFoundingPlaces = cache(async function getFoundingPlaces(): Promi
   return { capacity: Number(row.capacity), approved: Number(row.approved), remaining: Number(row.remaining) };
 });
 
+/**
+ * How many real (non-sample) vendors have a live listing. Shown on the
+ * founding page as proof that real Sydney vendors are already on Evntly;
+ * null on error so the line is simply left out.
+ */
+export const getLiveVendorCount = cache(async function getLiveVendorCount(): Promise<number | null> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("service_providers")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "approved")
+    .eq("is_demo", false);
+  if (error) {
+    console.warn("[founding] live vendor count unavailable:", error.message);
+    return null;
+  }
+  return count ?? null;
+});
+
 export type FoundingApplicationStatus = "started" | "submitted" | "approved" | "needs_changes" | "rejected" | "withdrawn";
 
 export type MyFoundingStatus = {
