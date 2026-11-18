@@ -11,8 +11,13 @@ import {
   categoryPageEntries,
   categoryPages,
   categoryPath,
+  categoryTips,
   exploreMetadata,
+  listingLocalities,
+  metaDescription,
   organizationJsonLd,
+  parseLocality,
+  serviceAreas,
   pageMetadata,
   realListings,
   vendorItemListJsonLd,
@@ -74,6 +79,8 @@ describe("category landing pages", () => {
     for (const p of categoryPages()) {
       // "<Heading> in Sydney | Evntly" fits Google's ~60-character title.
       expect(`${p.heading} in Sydney | Evntly`.length).toBeLessThanOrEqual(60);
+      expect(`${p.title} in Sydney | Evntly`.length).toBeLessThanOrEqual(60);
+      expect(categoryTips(p.category).length).toBeGreaterThanOrEqual(3);
       const d = categoryDescription(p.category);
       expect(d.length).toBeLessThanOrEqual(160);
       expect(d.length).toBeGreaterThan(70);
@@ -107,6 +114,41 @@ describe("category landing pages", () => {
   });
 });
 
+describe("vendor search snippets", () => {
+  it("cuts long bios at a word boundary for the meta description", () => {
+    const bio = "We are a Sydney wedding DJ team ".repeat(20);
+    const d = metaDescription(bio);
+    expect(d.length).toBeLessThanOrEqual(155);
+    expect(d.endsWith("…")).toBe(true);
+    expect(d).not.toMatch(/\s…$/);
+    expect(metaDescription("  Short   bio. ")).toBe("Short bio.");
+  });
+
+  it("turns free-text cities into a suburb and postcode", () => {
+    expect(parseLocality("Penrith, NSW 2750")).toEqual({ locality: "Penrith", postcode: "2750" });
+    expect(parseLocality("2100")).toEqual({ locality: "Sydney", postcode: "2100" });
+    expect(parseLocality("Sydney, NSW")).toEqual({ locality: "Sydney", postcode: null });
+    expect(parseLocality("Ryde")).toEqual({ locality: "Ryde", postcode: null });
+    expect(parseLocality(null)).toEqual({ locality: null, postcode: null });
+  });
+
+  it("tidies a vendor's service areas without inventing any", () => {
+    expect(serviceAreas([" manly", "Manly", "Inner West", "", "north shore"])).toEqual(["Manly", "Inner West", "North Shore"]);
+    expect(serviceAreas(null)).toEqual([]);
+  });
+
+  it("lists distinct real suburbs for a category page, skipping samples", () => {
+    expect(
+      listingLocalities([
+        { city: "Parramatta, NSW 2150", is_demo: false },
+        { city: "parramatta", is_demo: false },
+        { city: "Bondi", is_demo: true },
+        { city: "2100", is_demo: false },
+      ])
+    ).toEqual(["Parramatta", "Sydney"]);
+  });
+});
+
 describe("realListings", () => {
   it("drops sample listings so they never make a page indexable", () => {
     const list = [
@@ -130,7 +172,7 @@ describe("exploreMetadata", () => {
   it("points a lone category filter at the category landing page", () => {
     const m = exploreMetadata({ category: "dj" });
     expect(m.alternates?.canonical).toBe(`${SITE_URL}/sydney/djs`);
-    expect(m.title).toBe("DJs in Sydney");
+    expect(m.title).toBe("DJs for Hire in Sydney");
     expect(m.robots).toBeUndefined();
   });
 
@@ -192,5 +234,14 @@ describe("JSON-LD", () => {
     expect(ld).not.toHaveProperty("telephone");
     expect(serializeJsonLd([ld])).not.toContain("<");
     expect(vendorJsonLd({ ...vendor, city: null }).address).toBeUndefined();
+    expect(vendorJsonLd({ ...vendor, city: "Penrith, NSW 2750" }).address).toMatchObject({ addressLocality: "Penrith", postalCode: "2750" });
+  });
+
+  it("uses the vendor's own service areas when given", () => {
+    expect(vendorJsonLd({ ...vendor, locations_serviced: ["Inner West", "inner west", "Bondi"] }).areaServed).toEqual([
+      { "@type": "Place", name: "Inner West" },
+      { "@type": "Place", name: "Bondi" },
+    ]);
+    expect(vendorJsonLd(vendor).areaServed).toMatchObject({ "@type": "City", name: "Sydney" });
   });
 });

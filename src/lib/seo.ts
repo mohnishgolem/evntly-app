@@ -89,18 +89,101 @@ const CATEGORY_SLUGS: Record<VendorCategory, string> = {
 // One factual line per category: what they do at the kinds of events people
 // book through Evntly. No claims about vendor counts, prices or quality.
 const CATEGORY_INTROS: Record<VendorCategory, string> = {
-  photographer: "Capture birthdays, engagements, corporate functions and cultural celebrations with a photographer who knows Sydney's venues.",
-  decorator: "Balloon garlands, backdrops, table styling and themed set-ups for birthdays, engagements, baby showers and cultural events.",
-  dj: "Keep the dance floor full at your birthday party, engagement, corporate function or cultural celebration.",
+  photographer: "Wedding, engagement, birthday, corporate and cultural event photographers who know Sydney's venues.",
+  decorator: "Balloon garlands, backdrops and table styling for weddings, engagements, birthdays, baby showers and cultural events.",
+  dj: "DJs for weddings, birthday parties, engagements, corporate functions and cultural celebrations across Sydney.",
   celebrant: "Find a celebrant for your wedding, vow renewal, commitment ceremony or naming day.",
   venue: "Find a venue for your party, function or celebration.",
-  florist: "Flowers for engagements, birthdays, corporate events and ceremonies, from table arrangements to statement installations.",
+  florist: "Flowers for weddings, engagements, birthdays and corporate events, from table arrangements to statement installations.",
   caterer: "Food for parties, corporate functions and family celebrations, from grazing tables to full-service catering.",
-  cakes_desserts: "Custom cakes, dessert tables and sweet treats for birthdays, engagements and every kind of celebration.",
-  videographer: "Film your engagement, milestone birthday, corporate event or cultural celebration.",
-  mc: "An MC to host your engagement party, milestone birthday, corporate event or cultural celebration.",
-  makeup_artist: "Hair and makeup for engagements, formals, parties, photoshoots and cultural celebrations.",
-  event_planner: "Hand the planning to someone who does it every week: birthdays, engagements, corporate events and more.",
+  cakes_desserts: "Custom wedding and birthday cakes, dessert tables and sweet treats for every kind of celebration.",
+  videographer: "Film your wedding, engagement, milestone birthday, corporate event or cultural celebration.",
+  mc: "An MC to host your wedding reception, engagement party, milestone birthday, corporate event or cultural celebration.",
+  makeup_artist: "Bridal and event hair and makeup for weddings, engagements, formals, parties and photoshoots.",
+  event_planner: "Hand the planning to someone who does it every week: weddings, birthdays, engagements, corporate events and more.",
+};
+
+// Search-facing page titles and H1s, phrased the way people search
+// ("wedding photographers Sydney", "DJs for hire Sydney"). Short headings
+// above stay in navigation, breadcrumbs and pills.
+const CATEGORY_TITLES: Record<VendorCategory, string> = {
+  photographer: "Wedding & Event Photographers",
+  decorator: "Event Decorators & Stylists",
+  dj: "DJs for Hire",
+  celebrant: "Wedding Celebrants",
+  venue: "Event Venues",
+  florist: "Wedding & Event Florists",
+  caterer: "Event Caterers",
+  cakes_desserts: "Cakes & Dessert Tables",
+  videographer: "Wedding & Event Videographers",
+  mc: "MCs for Hire",
+  makeup_artist: "Bridal & Event Makeup Artists",
+  event_planner: "Event & Party Planners",
+};
+
+// "Before you book" checklists: practical questions to ask, written for
+// Evntly. General advice only: no prices, statistics or claims about vendors.
+const CATEGORY_TIPS: Record<VendorCategory, string[]> = {
+  photographer: [
+    "Ask to see a full gallery from one event, not just highlights, so you know how they cover a whole day.",
+    "Check how many hours are included, when you'll get your photos and how they're delivered.",
+    "Confirm whether travel to your venue, a second shooter or prints cost extra.",
+  ],
+  decorator: [
+    "Share photos of your venue and its rules on hanging items, open flames and set-up times.",
+    "Ask what's hired and what you keep, and who packs down at the end of the night.",
+    "Confirm delivery, set-up and pack-down times fit your venue booking.",
+  ],
+  dj: [
+    "Share your must-play and do-not-play lists, and ask how they read the room.",
+    "Check what's included: speakers, lighting, a microphone for speeches and set-up time.",
+    "Confirm your venue's noise limits, power and finish time with the DJ before the day.",
+  ],
+  celebrant: [
+    "Meet first to check you're comfortable with how they'll tell your story.",
+    "Ask which paperwork they handle for you and when they need your documents.",
+    "Confirm whether a rehearsal, PA system or signing table is included.",
+  ],
+  venue: [
+    "Check capacity, access and parking for your guest numbers.",
+    "Ask what's included: furniture, staff, cleaning and AV.",
+    "Confirm finish times, noise limits and which suppliers you can bring in.",
+  ],
+  florist: [
+    "Bring photos of your venue and colour palette so they can suggest what's in season.",
+    "Ask which pieces can move from the ceremony to the reception.",
+    "Confirm delivery, set-up and collection times.",
+  ],
+  caterer: [
+    "Share guest numbers and dietary needs early, including allergies.",
+    "Ask whether staff, crockery and cleaning are included or extra.",
+    "Check what your venue's kitchen allows and whether the caterer has worked there before.",
+  ],
+  cakes_desserts: [
+    "Order early for busy dates and ask whether tastings are available.",
+    "Check delivery, set-up and how the cake should be stored on the day.",
+    "Share allergy needs and ask about separate dietary options.",
+  ],
+  videographer: [
+    "Watch a complete film, not only a trailer, to see how they tell the story of a whole event.",
+    "Ask what you get: highlight film length, full speeches, raw footage and delivery time.",
+    "Check whether drone footage or a second camera operator is included or extra.",
+  ],
+  mc: [
+    "Ask for a short video of them hosting so you can hear their style and timing.",
+    "Plan the run sheet together: introductions, speeches, games and key moments.",
+    "Check whether they speak the languages your guests do and how they handle name pronunciations.",
+  ],
+  makeup_artist: [
+    "Book a trial so you can see how the look holds up in photos.",
+    "Check how many people they can get ready and how early they need to start.",
+    "Ask whether they come to you and if travel or early-start fees apply.",
+  ],
+  event_planner: [
+    "Agree on what's included: full planning, on-the-day coordination, or both.",
+    "Ask how they work with your other vendors and who your contact is on the day.",
+    "Check how they charge: a flat fee, hourly or a percentage of the budget.",
+  ],
 };
 
 export function categoryHeading(category: VendorCategory) {
@@ -114,6 +197,70 @@ export function categoryDescription(category: VendorCategory) {
 
 export function categoryIntro(category: VendorCategory) {
   return CATEGORY_INTROS[category];
+}
+
+/** Search-facing title/H1 for a category page, e.g. "DJs for Hire". */
+export function categoryTitle(category: VendorCategory) {
+  return CATEGORY_TITLES[category] ?? categoryHeading(category);
+}
+
+export function categoryTips(category: VendorCategory) {
+  return CATEGORY_TIPS[category] ?? [];
+}
+
+/**
+ * A meta description from free text (a vendor bio): whitespace collapsed and
+ * cut at a word boundary so Google shows it whole (~155 characters).
+ */
+export function metaDescription(text: string, max = 155) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const atWord = cut.slice(0, cut.lastIndexOf(" ") > max * 0.6 ? cut.lastIndexOf(" ") : cut.length);
+  return `${atWord.replace(/[\s,;:.\-–—]+$/, "")}…`;
+}
+
+/**
+ * Split a listing's free-text city ("Penrith, NSW 2750", "2100", "Ryde") into
+ * a suburb and postcode. A postcode on its own becomes "Sydney" so titles
+ * never read "DJ in 2100".
+ */
+export function parseLocality(city: string | null | undefined): { locality: string | null; postcode: string | null } {
+  const raw = (city ?? "").replace(/\s+/g, " ").trim();
+  if (!raw) return { locality: null, postcode: null };
+  const postcode = raw.match(/\b(\d{4})\b/)?.[1] ?? null;
+  const locality = raw
+    .replace(/\b\d{4}\b/, "")
+    .replace(/,?\s*\b(NSW|New South Wales)\b\.?/i, "")
+    .replace(/[\s,]+$/, "")
+    .trim();
+  return { locality: locality || (postcode ? LAUNCH_CITY : null), postcode };
+}
+
+/**
+ * A vendor's own list of the areas they cover, tidied for display: trimmed,
+ * de-duplicated (case-insensitively) and capitalised when typed in lower case.
+ */
+export function serviceAreas(list: string[] | null | undefined, limit = 40) {
+  const seen = new Map<string, string>();
+  for (const raw of list ?? []) {
+    const name = raw.replace(/\s+/g, " ").trim();
+    if (!name) continue;
+    const pretty = name === name.toLowerCase() ? name.replace(/\b\w/g, (c) => c.toUpperCase()) : name;
+    if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), pretty);
+  }
+  return [...seen.values()].slice(0, limit);
+}
+
+/** Distinct suburbs from real listings, for "areas covered" copy. */
+export function listingLocalities(vendors: { city: string | null; is_demo: boolean | null }[], limit = 8) {
+  const seen = new Map<string, string>();
+  for (const v of vendors) {
+    if (v.is_demo) continue;
+    const loc = parseLocality(v.city).locality;
+    if (loc && !seen.has(loc.toLowerCase())) seen.set(loc.toLowerCase(), loc);
+  }
+  return [...seen.values()].slice(0, limit);
 }
 
 export function categorySlug(category: VendorCategory) {
@@ -138,6 +285,7 @@ export function categoryPages() {
     slug: CATEGORY_SLUGS[category],
     path: categoryPath(category),
     heading: categoryHeading(category),
+    title: categoryTitle(category),
   }));
 }
 
@@ -220,6 +368,7 @@ export type VendorForJsonLd = {
   service_type: string;
   rating: number | null;
   review_count: number | null;
+  locations_serviced?: string[] | null;
 };
 
 /**
@@ -241,9 +390,18 @@ export function vendorJsonLd(vendor: VendorForJsonLd, priceRange?: string) {
     priceRange: priceRange || undefined,
     knowsAbout: categoryLabel(vendor.service_type),
     address: vendor.city
-      ? { "@type": "PostalAddress", addressLocality: vendor.city, addressRegion: "NSW", addressCountry: "AU" }
+      ? {
+          "@type": "PostalAddress",
+          addressLocality: parseLocality(vendor.city).locality ?? undefined,
+          postalCode: parseLocality(vendor.city).postcode ?? undefined,
+          addressRegion: "NSW",
+          addressCountry: "AU",
+        }
       : undefined,
-    areaServed: GREATER_SYDNEY,
+    // The vendor's own list of areas when they gave one; otherwise Sydney.
+    areaServed: serviceAreas(vendor.locations_serviced).length
+      ? serviceAreas(vendor.locations_serviced).map((name) => ({ "@type": "Place", name }))
+      : GREATER_SYDNEY,
     ...(vendor.rating && vendor.rating > 0 && reviews > 0
       ? {
           aggregateRating: {
@@ -278,7 +436,7 @@ export function exploreMetadata(params: { category?: string; q?: string; event?:
   if (live) {
     const heading = categoryHeading(live);
     const base = pageMetadata({
-      title: `${heading} in ${LAUNCH_CITY}`,
+      title: `${categoryTitle(live)} in ${LAUNCH_CITY}`,
       description: `Browse ${heading.toLowerCase()} for your event in ${LAUNCH_CITY}.`,
       path: categoryPath(live),
     });
