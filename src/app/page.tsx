@@ -51,7 +51,11 @@ export default function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        <HeroVideo src="/videos/hero-celebrations.mp4" poster="/images/hero-celebrations-poster.jpg" />
+        <HeroVideo
+          src="/videos/hero-celebrations.mp4"
+          mobileSrc="/videos/hero-celebrations-mobile.mp4"
+          poster="/images/hero-celebrations-poster.jpg"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/75" />
 
         <div className="relative mx-auto max-w-3xl text-center">
