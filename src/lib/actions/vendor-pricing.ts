@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { packageRow, packageSchema } from "@/lib/package-schema";
 
 export type PricingActionState = { error?: string; success?: boolean } | null;
 
@@ -23,6 +24,7 @@ async function ownListing(listingId: unknown) {
 
 function revalidate(listingId: string) {
   revalidatePath("/vendor-dashboard/pricing");
+  revalidatePath("/vendor-dashboard/finish");
   revalidatePath(`/vendor/${listingId}`);
 }
 
@@ -66,18 +68,6 @@ export async function updateServiceArea(listingId: string, input: ServiceAreaInp
 
 // ── Packages ────────────────────────────────────────────────────────────
 
-const packageSchema = z.object({
-  name: z.string().trim().min(1, "Give the package a name.").max(80),
-  description: z.string().trim().max(1000),
-  price: z.number().min(1, "Enter a price.").max(100_000),
-  includedHours: z.number().min(0.5).max(72).nullable(),
-  extraHourPrice: z.number().min(1).max(10_000).nullable(),
-  inclusions: z.array(z.string().trim().min(1).max(120)).max(20),
-  deliveryDays: z.number().int().min(0).max(365).nullable(),
-  depositPercent: z.number().int().min(0).max(100).nullable(),
-  active: z.boolean(),
-});
-
 export type PackageInput = z.input<typeof packageSchema>;
 
 export async function savePackage(listingId: string, input: PackageInput, packageId?: string): Promise<PricingActionState> {
@@ -91,17 +81,7 @@ export async function savePackage(listingId: string, input: PackageInput, packag
   const { supabase, listing } = await ownListing(listingId);
   if (!listing) return { error: "Listing not found." };
 
-  const row = {
-    name: d.name,
-    description: d.description || null,
-    price_cents: cents(d.price),
-    included_hours: d.includedHours,
-    extra_hour_cents: d.extraHourPrice == null ? null : cents(d.extraHourPrice),
-    inclusions: d.inclusions,
-    delivery_days: d.deliveryDays,
-    deposit_percent: d.depositPercent,
-    active: d.active,
-  };
+  const row = packageRow(d);
 
   const { error } = packageId
     ? await supabase.from("vendor_packages").update(row).eq("id", packageId).eq("provider_id", listingId)

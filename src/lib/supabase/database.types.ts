@@ -428,6 +428,63 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_completion_reminders: {
+        Row: {
+          kind: string
+          provider_id: string
+          sent_at: string
+        }
+        Insert: {
+          kind: string
+          provider_id: string
+          sent_at?: string
+        }
+        Update: {
+          kind?: string
+          provider_id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
+      listing_setup_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          photo_links: string | null
+          photo_permission: boolean
+          provider_id: string
+          services: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          photo_links?: string | null
+          photo_permission: boolean
+          provider_id: string
+          services: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          photo_links?: string | null
+          photo_permission?: boolean
+          provider_id?: string
+          services?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       legal_consents: {
         Row: {
           context: string
@@ -3099,6 +3156,10 @@ export type Database = {
         Returns: undefined
       }
       request_account_deletion: { Args: { p_reason: string }; Returns: string }
+      submit_listing_for_review: {
+        Args: { p_provider_id: string }
+        Returns: string
+      }
       set_marketing_consent: {
         Args: { p_context: string; p_granted: boolean }
         Returns: undefined

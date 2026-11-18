@@ -21,8 +21,8 @@ export const MIN_PHOTOS = 3;
 export function profileChecklist(l: CompletenessInput): ChecklistItem[] {
   const edit = `/vendor-dashboard/edit/${l.id}`;
   return [
-    { key: "photos", label: `Add at least ${MIN_PHOTOS} photos of your work`, done: l.photoCount >= MIN_PHOTOS, href: "/vendor-dashboard/portfolio" },
-    { key: "packages", label: "Add a package so customers see what's included", done: l.packageCount > 0, href: "/vendor-dashboard/pricing" },
+    { key: "photos", label: `Add at least ${MIN_PHOTOS} photos of your work`, done: l.photoCount >= MIN_PHOTOS, href: "/vendor-dashboard/finish#photos" },
+    { key: "packages", label: "Add a package so customers see what's included", done: l.packageCount > 0, href: "/vendor-dashboard/finish#packages" },
     { key: "bio", label: "Write a short description of your business", done: (l.bio?.trim().length ?? 0) >= MIN_BIO_LENGTH, href: edit },
     { key: "areas", label: "List the areas you service", done: !!l.locations_serviced?.length, href: edit },
     { key: "events", label: "Choose the events you cover", done: !!l.event_types?.length, href: edit },

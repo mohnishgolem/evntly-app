@@ -89,8 +89,9 @@ describe("vendor sign-up saves the chosen pricing model", () => {
     [{ pricingModel: "quote" }, { pricing_model: "quote", hourly_rate: null, base_price: null }],
   ])("%o", async (draft, expected) => {
     const res = await submit(draft);
-    expect(res).toEqual({ redirected: "REDIRECT:/vendor-dashboard" });
-    expect(inserted()).toMatchObject({ ...expected, name: "MC Test", status: "pending_review" });
+    // Saved as a draft; photos, a package and Submit come next on the finish page.
+    expect(res).toEqual({ redirected: "REDIRECT:/vendor-dashboard/finish" });
+    expect(inserted()).toMatchObject({ ...expected, name: "MC Test", status: "draft" });
   });
 
   it("refuses a missing amount before recording anything", async () => {
@@ -99,12 +100,9 @@ describe("vendor sign-up saves the chosen pricing model", () => {
     expect(inserted()).toBeUndefined();
   });
 
-  it("records listing_submitted for the founding funnel only when the listing is saved", async () => {
+  it("doesn't record listing_submitted when the draft is saved (that's on Submit for review)", async () => {
     recordFunnelEvent.mockClear();
     await submit({ pricingModel: "quote" });
-    expect(recordFunnelEvent).toHaveBeenCalledWith("listing_submitted");
-    recordFunnelEvent.mockClear();
-    await submit({ pricingModel: "fixed", basePrice: 0 });
     expect(recordFunnelEvent).not.toHaveBeenCalled();
   });
 

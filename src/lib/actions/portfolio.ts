@@ -73,6 +73,7 @@ export async function addPortfolioItem(
   if (error) return { error: error.message };
 
   revalidatePath("/vendor-dashboard/portfolio");
+  revalidatePath("/vendor-dashboard/finish");
   revalidatePath("/vendor-dashboard");
   revalidatePath(`/vendor/${providerId}`);
   return { success: true };
@@ -105,6 +106,7 @@ export async function deletePortfolioItem(itemId: string): Promise<ActionState> 
   }
 
   revalidatePath("/vendor-dashboard/portfolio");
+  revalidatePath("/vendor-dashboard/finish");
   if (item?.provider_id) revalidatePath(`/vendor/${item.provider_id}`);
   return { success: true };
 }

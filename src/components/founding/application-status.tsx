@@ -30,6 +30,7 @@ export function ApplicationStatusView({
 }) {
   const s = STATUS[application.status];
   const photosDone = checklist.find((c) => c.key === "photos")?.done ?? false;
+  const packagesDone = checklist.find((c) => c.key === "packages")?.done ?? false;
   const steps = [
     { label: "Account created and email confirmed", done: true },
     {
@@ -37,7 +38,8 @@ export function ApplicationStatusView({
       done: !!listing,
       href: listing ? undefined : "/vendor-signup",
     },
-    { label: `Add at least ${MIN_PHOTOS} photos of your work`, done: photosDone, href: listing && !photosDone ? "/vendor-dashboard/portfolio" : undefined },
+    { label: `Add at least ${MIN_PHOTOS} photos of your work`, done: photosDone, href: listing && !photosDone ? "/vendor-dashboard/finish" : undefined },
+    { label: "Add a package (what's included and the price)", done: packagesDone, href: listing && !packagesDone ? "/vendor-dashboard/finish" : undefined },
     { label: "Submitted for review", done: application.status !== "started" && application.status !== "withdrawn" },
     { label: "Approved by the Evntly team", done: application.status === "approved" },
   ];
@@ -52,6 +54,24 @@ export function ApplicationStatusView({
         <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-semibold", s.tone)}>{s.label}</span>
       </p>
 
+      {application.status === "started" && listing && (
+        <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/5 p-5">
+          <p className="font-semibold">Almost there: finish your listing</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add 3 photos of your work and a package, then submit. Your application goes to our team with it.
+          </p>
+          <Button
+            className="mt-4 w-full sm:w-auto"
+            size="lg"
+            nativeButton={false}
+            render={
+              <Link href="/vendor-dashboard/finish">
+                Finish my listing <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            }
+          />
+        </div>
+      )}
       {application.status === "started" && !listing && (
         // Right after claiming, the next step must be the obvious one: before
         // this box the only button on the page was "Withdraw my application"
@@ -59,7 +79,7 @@ export function ApplicationStatusView({
         <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/5 p-5">
           <p className="font-semibold">Your place is saved. One step left: your listing</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            About 5 minutes: business name, ABN, a short bio, your rate and the Sydney areas you cover. Photos come after you submit.
+            Business name, ABN, a short bio, your rate and the Sydney areas you cover, then 3 photos and a package. It all saves as you go.
           </p>
           <Button
             className="mt-4 w-full sm:w-auto"

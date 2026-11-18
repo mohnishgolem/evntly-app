@@ -46,6 +46,7 @@ export const getVendorAttention = cache(async function getVendorAttention() {
   const withPhotos = new Set((portfolioRows ?? []).map((r) => r.provider_id));
   const missingPhotos = listings.filter((l) => !withPhotos.has(l.id));
   const underReview = listings.filter((l) => l.status === "pending_review");
+  const drafts = listings.filter((l) => l.status === "draft");
 
   const items: AttentionItem[] = [
     ...enquiries.map((q) => ({
@@ -62,6 +63,13 @@ export const getVendorAttention = cache(async function getVendorAttention() {
       detail: [b.event_date, b.event_time].filter(Boolean).join(" · "),
       href: "/vendor-dashboard/bookings",
     })),
+    ...drafts.map((l) => ({
+      key: `finish-${l.id}`,
+      kind: "photos" as const,
+      title: `Finish ${l.name}`,
+      detail: "Add 3 photos and a package, then submit it for review.",
+      href: "/vendor-dashboard/finish",
+    })),
     ...underReview.map((l) => ({
       key: `review-${l.id}`,
       kind: "review" as const,
@@ -69,7 +77,7 @@ export const getVendorAttention = cache(async function getVendorAttention() {
       detail: "We'll email you when it's live.",
       href: "/vendor-dashboard/business",
     })),
-    ...missingPhotos.map((l) => ({
+    ...missingPhotos.filter((l) => l.status !== "draft").map((l) => ({
       key: `photos-${l.id}`,
       kind: "photos" as const,
       title: `Add photos to ${l.name}`,

@@ -404,9 +404,9 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
           </Button>
         ) : (
           <Button className="flex-1" disabled={!canAdvance || pending} onClick={submit}>
-            {pending ? "Submitting…" : (
+            {pending ? "Saving…" : (
               <>
-                <CheckCircle2 /> Submit for review
+                <CheckCircle2 /> Save and add photos
               </>
             )}
           </Button>

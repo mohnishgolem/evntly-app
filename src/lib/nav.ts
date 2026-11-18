@@ -29,7 +29,7 @@ import {
   UserRound,
   Users,
   type LucideIcon,
-} from "lucide-react";
+ Wand2 } from "lucide-react";
 import { BUNDLES_PUBLIC } from "@/lib/config";
 
 // Single source of truth for every navigation surface: the dark drawer,
@@ -210,6 +210,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/approvals", label: "Vendor Approvals", icon: ShieldCheck },
   { href: "/admin/beta-vendors", label: "Beta Vendors", icon: Award },
+  { href: "/admin/setup-requests", label: "Setup Requests", icon: Wand2 },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/events", label: "Events", icon: CalendarDays },

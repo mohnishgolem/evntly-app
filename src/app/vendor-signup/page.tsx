@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 
 const WHAT_YOU_NEED = [
   "Your business name, a short description and your ABN",
-  "Your hourly rate (you can add packages later)",
-  "The suburbs you service",
-  "A few photos of your work — add them after you submit",
+  "Your pricing and the suburbs you service",
+  "At least 3 photos of your work and one package (what's included and the price)",
+  "Everything saves as you go, so you can finish later",
 ];
 
 // Signed-out visitors create an account first: the wizard's submit needs
@@ -23,9 +23,11 @@ export default async function VendorSignupPage() {
     const supabase = await createClient();
     const { data: existing } = await supabase
       .rpc("my_service_providers")
-      .select("id")
+      .select("id, status")
       .limit(1)
       .maybeSingle();
+    // A saved draft is finished on its own page (photos, packages, submit).
+    if (existing?.status === "draft") redirect("/vendor-dashboard/finish");
     if (existing) redirect("/vendor-dashboard/business");
   }
 
