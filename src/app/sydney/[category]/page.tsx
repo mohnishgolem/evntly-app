@@ -9,6 +9,7 @@ import { ExploreResults } from "@/components/explore-results";
 import { serializeJsonLd } from "@/lib/json-ld";
 import {
   breadcrumbJsonLd,
+  categoryDescription,
   categoryFromSlug,
   categoryHeading,
   categoryIntro,
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: PageProps<"/sydney/[category]
   return {
     ...pageMetadata({
       title: `${heading} in ${LAUNCH_CITY}`,
-      description: `${categoryIntro(category)} Compare ${heading.toLowerCase()} in ${LAUNCH_CITY} on Evntly and request a quote — no account needed to browse.`,
+      description: categoryDescription(category),
       path: categoryPath(category),
     }),
     // A page with no real listings yet (sample listings don't count) is thin

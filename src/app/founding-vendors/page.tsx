@@ -17,7 +17,7 @@ import { LAUNCH_CITY } from "@/lib/config";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Founding vendors — private beta",
+  title: `Founding Vendors: Free Beta Listing for ${LAUNCH_CITY} Vendors`,
   description: `Get found by people planning events in ${LAUNCH_CITY}. Founding Vendors get a free listing, a Founding Vendor badge and first spot in search.`,
   alternates: { canonical: "/founding-vendors" },
   openGraph: {

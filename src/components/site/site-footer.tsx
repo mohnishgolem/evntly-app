@@ -35,6 +35,9 @@ export function SiteFooter() {
             <a href="mailto:hello@evntlyapp.com" className="hover:text-foreground">
               Contact
             </a>
+            <Link href="/founding-vendors" className="hover:text-foreground">
+              Founding vendors
+            </Link>
             <Link href="/vendor-signup" className="hover:text-foreground">
               List your business
             </Link>
