@@ -12,6 +12,7 @@ import {
   exploreMetadata,
   organizationJsonLd,
   pageMetadata,
+  realListings,
   vendorItemListJsonLd,
   vendorJsonLd,
   websiteJsonLd,
@@ -78,6 +79,18 @@ describe("category landing pages", () => {
       { path: "/sydney/photographers", lastModified: undefined },
       { path: "/sydney/djs", lastModified: "2026-11-10T00:00:00Z" },
     ]);
+  });
+});
+
+describe("realListings", () => {
+  it("drops sample listings so they never make a page indexable", () => {
+    const list = [
+      { id: "s", is_demo: true },
+      { id: "r", is_demo: false },
+      { id: "n", is_demo: null },
+    ];
+    expect(realListings(list).map((v) => v.id)).toEqual(["r", "n"]);
+    expect(realListings([{ id: "s", is_demo: true }])).toEqual([]);
   });
 });
 

@@ -15,6 +15,7 @@ import {
   categoryPages,
   categoryPath,
   pageMetadata,
+  realListings,
   vendorItemListJsonLd,
 } from "@/lib/seo";
 
@@ -35,16 +36,16 @@ export async function generateMetadata({ params }: PageProps<"/sydney/[category]
   const category = categoryFromSlug((await params).category);
   if (!category) return {};
   const heading = categoryHeading(category);
-  const vendors = await vendorsIn(category);
+  const real = realListings(await vendorsIn(category));
   return {
     ...pageMetadata({
       title: `${heading} in ${LAUNCH_CITY}`,
       description: `${categoryIntro(category)} Compare ${heading.toLowerCase()} in ${LAUNCH_CITY} on Evntly and request a quote — no account needed to browse.`,
       path: categoryPath(category),
     }),
-    // A page with no listings yet is thin content: keep it out of the index
-    // until a vendor in this category is approved.
-    ...(vendors.length === 0 ? { robots: { index: false, follow: true } } : {}),
+    // A page with no real listings yet (sample listings don't count) is thin
+    // content: keep it out of the index until a vendor here is approved.
+    ...(real.length === 0 ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -62,7 +63,7 @@ export default async function CategoryLandingPage({ params }: PageProps<"/sydney
     { name: "Evntly", path: "/" },
     { name: `${heading} in ${LAUNCH_CITY}`, path },
   ]);
-  const itemList = vendorItemListJsonLd(`${heading} in ${LAUNCH_CITY}`, vendors);
+  const itemList = vendorItemListJsonLd(`${heading} in ${LAUNCH_CITY}`, realListings(vendors));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">

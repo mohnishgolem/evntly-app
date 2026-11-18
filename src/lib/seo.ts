@@ -303,3 +303,12 @@ export function categoryPageEntries(vendors: { service_type: string; updated_at:
     return [{ path: p.path, lastModified: latest }];
   });
 }
+
+/**
+ * Listings that count for search: real businesses only. Seeded sample
+ * listings (is_demo) may still show on the page while HIDE_SAMPLE_LISTINGS is
+ * off, but they mustn't make a page indexable or appear in structured data.
+ */
+export function realListings<T extends { is_demo: boolean | null }>(vendors: T[]): T[] {
+  return vendors.filter((v) => !v.is_demo);
+}
