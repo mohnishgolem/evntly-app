@@ -11,6 +11,10 @@ export const AUTH_NOTICES = {
     text: "That link has expired or was already used.",
     action: { label: "Request a new password reset link", href: "/forgot-password" },
   },
+  "signup-link-used": {
+    tone: "error",
+    text: "That link was already used or has expired. If your email is confirmed, just log in below. If not, sign up again with the same email to get a new code.",
+  },
   "signin-failed": {
     tone: "error",
     text: "We couldn't sign you in. Please try again.",
