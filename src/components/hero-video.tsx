@@ -17,25 +17,38 @@ export function prefersLightweightMedia(
   return connection.saveData === true || ["slow-2g", "2g", "3g"].includes(connection.effectiveType ?? "");
 }
 
-export function HeroVideo({ src, poster }: { src: string; poster: string }) {
-  const [ready, setReady] = useState(false);
+// Phones in portrait only ever see the centre of the 16:9 clip (the hero
+// crops it to fill), so they get a 480x720 centre crop of the same footage:
+// ~1.1 MB instead of ~3.3 MB. Tablets and landscape keep the full frame.
+export const PORTRAIT_PHONE_QUERY = "(max-width: 767px) and (orientation: portrait)";
+
+export function pickHeroSrc(
+  src: string,
+  mobileSrc: string | undefined,
+  matches: (query: string) => boolean = (q) => globalThis.matchMedia?.(q).matches ?? false
+) {
+  return mobileSrc && matches(PORTRAIT_PHONE_QUERY) ? mobileSrc : src;
+}
+
+export function HeroVideo({ src, mobileSrc, poster }: { src: string; mobileSrc?: string; poster: string }) {
+  const [ready, setReady] = useState<string | null>(null);
 
   useEffect(() => {
     // Data Saver or a slow connection: keep the poster and skip the ~3MB clip.
     if (prefersLightweightMedia()) return;
-    const start = () => setReady(true);
+    const start = () => setReady(pickHeroSrc(src, mobileSrc));
     if (document.readyState === "complete") {
       start();
       return;
     }
     window.addEventListener("load", start, { once: true });
     return () => window.removeEventListener("load", start);
-  }, []);
+  }, [src, mobileSrc]);
 
   if (!ready) return null;
   return (
     <video
-      src={src}
+      src={ready}
       poster={poster}
       autoPlay
       muted
