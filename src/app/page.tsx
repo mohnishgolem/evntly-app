@@ -13,8 +13,11 @@ import { FEATURED_CATEGORIES, LAUNCH_CITY, VENDOR_CATEGORIES, categoryPlural, is
 import { serializeJsonLd } from "@/lib/json-ld";
 import { categoryPath, organizationJsonLd, pageMetadata, websiteJsonLd } from "@/lib/seo";
 
-const HOME_TITLE = `${LAUNCH_CITY} Event Vendors: Photographers, DJs & More | Evntly`;
-const HOME_DESCRIPTION = `Find ${LAUNCH_CITY} photographers, decorators, DJs, celebrants and caterers for birthdays, engagements, corporate and cultural events. Browse free — no account needed.`;
+const HOME_TITLE = `Evntly | Find & Book Event Vendors in ${LAUNCH_CITY}`;
+// Brand first so searches for "Evntly" match the title; the categories
+// named are ones with real listings. Customers book and pay vendors
+// directly (online payments are off).
+const HOME_DESCRIPTION = `Discover ${LAUNCH_CITY} photographers, DJs, caterers, videographers and more on Evntly. Browse event vendors, request quotes and book directly.`;
 
 export const metadata: Metadata = {
   ...pageMetadata({ title: HOME_TITLE, description: HOME_DESCRIPTION, path: "/", socialTitle: "Evntly — Find trusted event vendors" }),
@@ -95,7 +98,7 @@ export default function HomePage() {
             href="/explore"
             className="flex items-center gap-1 rounded-full border border-white/40 bg-white/15 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/25"
           >
-            More <ChevronRight className="size-4" />
+            All vendors <ChevronRight className="size-4" />
           </Link>
         </div>
       </section>
@@ -129,7 +132,7 @@ async function HomeVendors() {
             Discover event vendors available in your area
           </p>
           <div className="relative h-72 overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-            <VendorMapLoader vendors={vendors} embedded />
+            <VendorMapLoader vendors={vendors} embedded deferUntilVisible />
             <Link
               href="/explore?view=map"
               className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-background shadow-lg transition-colors hover:bg-foreground/90"

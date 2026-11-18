@@ -107,6 +107,11 @@ export function categoryHeading(category: VendorCategory) {
   return CATEGORY_HEADINGS[category] ?? categoryLabel(category);
 }
 
+/** Meta description: the intro plus a call to action, kept under ~160 chars. */
+export function categoryDescription(category: VendorCategory) {
+  return `${CATEGORY_INTROS[category]} Request quotes on Evntly.`;
+}
+
 export function categoryIntro(category: VendorCategory) {
   return CATEGORY_INTROS[category];
 }
@@ -280,8 +285,8 @@ export function exploreMetadata(params: { category?: string; q?: string; event?:
     return event || price ? { ...base, ...noindex } : base;
   }
   const base = pageMetadata({
-    title: "Explore vendors",
-    description: `Browse every approved event vendor on Evntly in ${LAUNCH_CITY} — no account needed.`,
+    title: `Browse Event Vendors in ${LAUNCH_CITY}`,
+    description: `Browse every approved event vendor on Evntly in ${LAUNCH_CITY}: photographers, DJs, caterers and more. No account needed.`,
     path: "/explore",
   });
   return category || event || price ? { ...base, ...noindex } : base;

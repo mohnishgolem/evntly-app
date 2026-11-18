@@ -6,6 +6,7 @@ import { LIVE_CATEGORY_SLUGS, isUnknownCategoryPage } from "@/lib/category-page-
 import {
   absoluteUrl,
   breadcrumbJsonLd,
+  categoryDescription,
   categoryFromSlug,
   categoryPageEntries,
   categoryPages,
@@ -69,6 +70,18 @@ describe("category landing pages", () => {
     expect(categoryFromSlug("nope")).toBeNull();
   });
 
+  it("gives every category page a search-length title and description", () => {
+    for (const p of categoryPages()) {
+      // "<Heading> in Sydney | Evntly" fits Google's ~60-character title.
+      expect(`${p.heading} in Sydney | Evntly`.length).toBeLessThanOrEqual(60);
+      const d = categoryDescription(p.category);
+      expect(d.length).toBeLessThanOrEqual(160);
+      expect(d.length).toBeGreaterThan(70);
+      // Lower-casing headings produced "Compare djs in Sydney".
+      expect(d).not.toMatch(/\b(djs|mcs)\b/);
+    }
+  });
+
   it("keeps the proxy's slug list in step with the live categories", () => {
     expect([...LIVE_CATEGORY_SLUGS]).toEqual(categoryPages().map((p) => p.slug));
   });
@@ -110,6 +123,7 @@ describe("exploreMetadata", () => {
   it("indexes the plain page with its own canonical", () => {
     const m = exploreMetadata({});
     expect(m.alternates?.canonical).toBe(`${SITE_URL}/explore`);
+    expect(m.title).toBe("Browse Event Vendors in Sydney");
     expect(m.robots).toBeUndefined();
   });
 
