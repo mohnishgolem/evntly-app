@@ -10,6 +10,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { LEGACY_SITE_URL, SITE_URL } from "@/lib/config";
 import { safeNextPath } from "@/lib/safe-redirect";
+import { parseConfirmLink } from "@/lib/auth-links";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { isFoundingPath } from "@/lib/founding/sources";
 import { recordSignupConsents } from "@/lib/actions/legal";
@@ -170,8 +171,12 @@ const codeSchema = z.object({
 });
 
 // Supabase Auth answers a wrong code and an expired one the same way
-// ("Token has expired or is invalid"), so one message covers both.
-const CODE_FAILED = "That code didn't work or has expired. Check the newest email, or send a new code below.";
+// ("Token has expired or is invalid"), so one message covers both. The link
+// and the code in the email share one token: once the link has been opened
+// (by the person, or by an email security scanner), the code stops working
+// although the email is already confirmed, so say that too.
+const CODE_FAILED =
+  "That code didn't work or has expired. If you already tapped the link in the email, your email is confirmed: log in instead. Otherwise check the newest email, or send a new code below.";
 
 /** Where a newly confirmed account goes: their founding claim page, the listing set-up, or `next`. */
 function afterConfirmPath(rawNext: string | undefined, role: unknown): string {
@@ -393,4 +398,45 @@ export async function updatePassword(
   }
 
   redirect("/dashboard");
+}
+
+// ---------------------------------------------------------------------------
+// Email links (sign-up confirmation, password reset) — /auth/confirm
+// ---------------------------------------------------------------------------
+
+/**
+ * The person pressed Continue on /auth/confirm: only now is the one-time
+ * token used (see lib/auth-links.ts for why it isn't used on page load).
+ * verifyOtp with the token hash signs them in on this browser, whichever
+ * device asked for the email.
+ */
+export async function confirmEmailLink(formData: FormData): Promise<void> {
+  const link = parseConfirmLink({
+    token_hash: formData.get("token_hash")?.toString(),
+    type: formData.get("type")?.toString(),
+    next: formData.get("next")?.toString() || undefined,
+  });
+  if (!link) redirect("/login?notice=signin-failed");
+
+  if (!(await checkRateLimit("emailLinkIp", await clientIp()))) redirect("/login?notice=signin-failed");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({ token_hash: link.tokenHash, type: link.type });
+  const recovery = link.type === "recovery";
+  const back = !recovery && link.next ? `&next=${encodeURIComponent(link.next)}` : "";
+
+  if (error || !data.user) {
+    redirect(`/login?notice=${recovery ? "link-expired" : "signup-link-used"}${back}`);
+  }
+
+  if (recovery) redirect("/reset-password");
+
+  const role = data.user.user_metadata?.role;
+  const destination = afterConfirmPath(link.next ?? undefined, role);
+  if (role === "vendor") {
+    await recordFunnelEvent("email_confirmed", { detail: "link" });
+    // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
+    await recordVendorRegistration(data.user, new URL(destination, SITE_URL).toString());
+  }
+  redirect(destination);
 }
