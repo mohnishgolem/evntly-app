@@ -12,6 +12,9 @@
 --   * email domain evntlyapp.com (team + QA inboxes)
 --   * beta_applications.campaign starts with 'qa'
 --   * listing name contains the word QA or TEST
+--   * email alias with +qa or +test (e.g. name+qa-vendor@gmail.com)
+--   * account name contains the word QA or TEST
+--   * a known internal test account id ("saim", the QA vendor login)
 -- If a new test account slips through, add a rule here AND in the migration
 -- 20261120090000_admin_verified_vendor_funnel.sql, then rerun the tests.
 --
@@ -46,6 +49,9 @@ with vendors as (
       or split_part(lower(u.email), '@', 2) = 'evntlyapp.com'
       or coalesce(ba.campaign, '') ilike 'qa%'
       or coalesce(sp.name, '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+      or split_part(lower(u.email), '@', 1) ~ '\+(qa|test)'
+      or coalesce(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+      or u.id::text in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa') -- "saim", internal test vendor
     )                                      as is_test
   from public.users u
   join auth.users au on au.id::text = u.id::text

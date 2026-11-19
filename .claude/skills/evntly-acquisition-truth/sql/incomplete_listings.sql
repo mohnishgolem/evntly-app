@@ -20,6 +20,9 @@ with v as (
       or split_part(lower(u.email), '@', 2) = 'evntlyapp.com'
       or coalesce(ba.campaign, '') ilike 'qa%'
       or coalesce(sp.name, '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+      or split_part(lower(u.email), '@', 1) ~ '\+(qa|test)'
+      or coalesce(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+      or u.id::text in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa') -- "saim", internal test vendor
     )
   order by lower(u.email), (sp.status = 'approved') desc, u.created_at
 )
