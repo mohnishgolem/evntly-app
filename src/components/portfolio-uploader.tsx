@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { addPortfolioItem, deletePortfolioItem } from "@/lib/actions/portfolio";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -35,6 +42,9 @@ export function PortfolioUploader({
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [added, setAdded] = useState<number | null>(null);
+  // The item waiting for "Remove it?" confirmation, and any error from removing it.
+  const [confirming, setConfirming] = useState<PortfolioItem | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   // Choosing files starts the upload: on phones a separate "Upload" button
   // after the picker was easy to miss, and nothing looked like it happened.
@@ -85,20 +95,26 @@ export function PortfolioUploader({
     });
   }
 
+  function askRemove(item: PortfolioItem) {
+    setRemoveError(null);
+    setConfirming(item);
+  }
+
   function remove(id: string) {
-    setError(null);
+    setRemoveError(null);
     setAdded(null);
     startTransition(async () => {
       try {
         const res = await deletePortfolioItem(id);
         if (res?.error) {
-          setError(res.error);
+          setRemoveError(res.error);
           return;
         }
       } catch {
-        setError(`Couldn't remove that item: ${CONNECTION_LOST}`);
+        setRemoveError(`Couldn't remove it: ${CONNECTION_LOST}`);
         return;
       }
+      setConfirming(null);
       router.refresh();
     });
   }
@@ -163,18 +179,50 @@ export function PortfolioUploader({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.media_url} alt={item.caption ?? ""} className="h-full w-full object-cover" />
               )}
+              {/* Always visible on touch screens (there's no hover there); on
+                  mouse devices it appears on hover or keyboard focus. */}
               <button
                 type="button"
-                onClick={() => remove(item.id)}
+                onClick={() => askRemove(item)}
                 disabled={pending}
-                className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label={item.media_type === "video" ? "Remove video" : "Remove photo"}
+                className="absolute top-1 right-1 flex size-9 items-center justify-center rounded-full bg-black/60 text-white transition-opacity focus-visible:opacity-100 disabled:opacity-50 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
               >
-                <Trash2 className="size-3.5" />
+                <Trash2 className="size-4" aria-hidden />
               </button>
             </div>
           ))}
         </div>
       )}
+
+      <Dialog
+        open={confirming !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending) setConfirming(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove this {confirming?.media_type === "video" ? "video" : "photo"}?</DialogTitle>
+            <DialogDescription>
+              It will be taken off your listing straight away. This can&apos;t be undone, but you can upload it again.
+            </DialogDescription>
+          </DialogHeader>
+          {removeError && (
+            <p role="alert" className="text-sm text-destructive">
+              {removeError}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={pending} onClick={() => setConfirming(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={pending} onClick={() => confirming && remove(confirming.id)}>
+              {pending ? "Removing…" : "Remove"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
