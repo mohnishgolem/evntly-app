@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Copy, Crop, Download, ImageIcon, Link2, RotateCcw, Share, X } from "lucide-react";
+import { Check, Copy, Crop, Download, ImageIcon, Link2, RotateCcw, Share, X, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSheetSide } from "@/lib/use-sheet-side";
 import { copyText } from "@/components/copy-link-field";
 import { canvasToFile, drawArtwork, loadArtworkFonts, loadArtworkImage } from "@/lib/share-artwork";
 import {
@@ -89,7 +91,9 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<{ key: string; file: File } | null>(null);
   const filePromise = useRef<Promise<File> | null>(null);
-  const drag = useRef<{ x: number; y: number; id: number } | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+  const sheetSide = useSheetSide();
 
   const storyUrl = shareProfileUrl(vendorId, "share_story", siteUrl);
   const linkUrl = shareProfileUrl(vendorId, "share_link", siteUrl);
@@ -155,22 +159,39 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
     setCrops((c) => ({ ...c, [cropKey(format, photoUrl)]: clampCrop(next) }));
   }
 
-  // --- photo crop by dragging the preview -----------------------------------
+  // --- photo crop: drag to move, pinch to zoom (as in Photos) ---------------
+  const distance = () => {
+    const [a, b] = [...pointers.current.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!adjusting || !img) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Capture is a nicety (keeps the drag when the finger leaves the preview).
+    }
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pinch.current = pointers.current.size === 2 ? { dist: distance(), zoom: crop.zoom } : null;
   }
   function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
-    if (!drag.current || drag.current.id !== e.pointerId || !img) return;
+    const last = pointers.current.get(e.pointerId);
+    if (!last || !img) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch.current && pointers.current.size === 2) {
+      const d = distance();
+      if (pinch.current.dist > 0) setCrop({ ...crop, zoom: (pinch.current.zoom * d) / pinch.current.dist });
+      return;
+    }
+    if (pointers.current.size !== 1) return;
     const scale = spec.width / e.currentTarget.getBoundingClientRect().width; // CSS px → artwork px
-    const dx = (e.clientX - drag.current.x) * scale;
-    const dy = (e.clientY - drag.current.y) * scale;
-    drag.current = { ...drag.current, x: e.clientX, y: e.clientY };
+    const dx = (e.clientX - last.x) * scale;
+    const dy = (e.clientY - last.y) * scale;
     setCrop(panCrop(crop, dx, dy, img.width, img.height, spec.photo.w, spec.photo.h));
   }
-  function onPointerUp() {
-    drag.current = null;
+  function onPointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
   }
 
   // --- actions --------------------------------------------------------------
@@ -253,29 +274,30 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
 
   return (
     <div className="mx-auto max-w-md">
-      <div role="tablist" aria-label="Share format" className="mb-4 grid grid-cols-2 rounded-full bg-muted p-1">
-        {(["story", "card"] as const).map((f) => (
-          <button
-            key={f}
-            role="tab"
-            type="button"
-            aria-selected={format === f}
-            onClick={() => {
-              setFormat(f);
-              setAdjusting(false);
-            }}
-            className={cn(
-              "min-h-10 rounded-full text-sm font-semibold transition-colors",
-              format === f ? "bg-foreground text-background shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            {f === "story" ? "Story" : "Profile card"}
-          </button>
-        ))}
-      </div>
+      {/* A segmented control (Apple HIG): 44 pt tall, the selected segment raised. */}
+      <Tabs
+        value={format}
+        onValueChange={(v) => {
+          setFormat(v as ShareFormat);
+          setAdjusting(false);
+        }}
+        className="mb-4"
+      >
+        <TabsList aria-label="Share format" className="h-12! w-full rounded-xl p-0.5">
+          <TabsTrigger value="story" className={SEGMENT_CLASS}>
+            Story
+          </TabsTrigger>
+          <TabsTrigger value="card" className={SEGMENT_CLASS}>
+            Profile card
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <div className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-black shadow-sm"         // Keep the actions in view on a phone: the preview is at most ~58% of the screen height.
-        style={{ aspectRatio: `${spec.width} / ${spec.height}`, width: `min(100%, ${format === "story" ? 340 : 400}px, calc(58dvh * ${spec.width / spec.height}))` }}>
+      <div
+        className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-black shadow-sm"
+        // Keep the actions in view on a phone: the preview is at most ~58% of the screen height.
+        style={{ aspectRatio: `${spec.width} / ${spec.height}`, width: `min(100%, ${format === "story" ? 340 : 400}px, calc(58dvh * ${spec.width / spec.height}))` }}
+      >
         <canvas
           ref={canvasRef}
           width={spec.width}
@@ -304,22 +326,23 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
             Link sticker goes here
           </div>
         )}
-        {loading && <div className="absolute inset-0 animate-pulse bg-muted" aria-label="Loading photo" />}
+        {loading && <div className="absolute inset-0 bg-muted motion-safe:animate-pulse" role="progressbar" aria-label="Loading photo" />}
         {adjusting && (
-          <p className="pointer-events-none absolute inset-x-0 top-2 text-center text-xs font-medium text-white drop-shadow">Drag to reposition</p>
+          <p className="pointer-events-none absolute inset-x-0 top-2 text-center text-xs font-semibold text-white drop-shadow">Drag to move · Pinch to zoom</p>
         )}
       </div>
 
       {imgState === "failed" && (
         <p role="alert" className="mt-2 text-center text-sm text-destructive">
-          That photo couldn&apos;t be loaded. Pick another one.
+          That photo couldn&apos;t be loaded. Choose another one.
         </p>
       )}
 
       {adjusting ? (
-        <div className="mt-3 space-y-3 rounded-2xl border border-border p-3">
-          <label className="flex items-center gap-3 text-sm font-medium">
-            Zoom
+        <div className="mt-3 space-y-2 rounded-2xl border border-border p-3">
+          <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
+            <ZoomOut className="size-4 text-muted-foreground" aria-hidden />
+            <span className="sr-only">Zoom</span>
             <input
               type="range"
               min={1}
@@ -327,31 +350,33 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
               step={0.01}
               value={crop.zoom}
               onChange={(e) => setCrop({ ...crop, zoom: Number(e.target.value) })}
-              className="flex-1 accent-primary"
+              className="h-11 flex-1 accent-primary"
             />
+            <ZoomIn className="size-4 text-muted-foreground" aria-hidden />
           </label>
           <div className="flex gap-2">
-            <Button variant="outline" className="min-h-11 flex-1" onClick={() => setCrop(DEFAULT_CROP)}>
+            <Button variant="outline" size="lg" className="flex-1" onClick={() => setCrop(DEFAULT_CROP)}>
               <RotateCcw className="size-4" aria-hidden /> Reset
             </Button>
-            <Button className="min-h-11 flex-1" onClick={() => setAdjusting(false)}>
+            <Button size="lg" className="flex-1" onClick={() => setAdjusting(false)}>
               <Check className="size-4" aria-hidden /> Done
             </Button>
           </div>
         </div>
       ) : (
         <div className="mt-3 flex justify-center gap-2">
-          <Button variant="outline" className="min-h-11" onClick={() => setPicker(true)}>
+          <Button variant="outline" size="lg" onClick={() => setPicker(true)}>
             <ImageIcon className="size-4" aria-hidden /> Change photo
           </Button>
           {img && (
-            <Button variant="ghost" className="min-h-11" onClick={() => setAdjusting(true)}>
+            <Button variant="ghost" size="lg" onClick={() => setAdjusting(true)}>
               <Crop className="size-4" aria-hidden /> Adjust crop
             </Button>
           )}
         </div>
       )}
 
+      {/* One prominent action per tab; the alternatives sit underneath as secondary buttons. */}
       <div className="mt-5 space-y-2">
         {format === "story" ? (
           <>
@@ -359,10 +384,10 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
               <Download className="size-4" aria-hidden /> Save Story &amp; Copy Link
             </Button>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="min-h-11" disabled={busy || loading} onClick={saveOnly}>
+              <Button variant="outline" size="lg" disabled={busy || loading} onClick={saveOnly}>
                 <Download className="size-4" aria-hidden /> Save Story
               </Button>
-              <Button variant="outline" className="min-h-11" disabled={busy} onClick={copyOnly}>
+              <Button variant="outline" size="lg" disabled={busy} onClick={copyOnly}>
                 <Link2 className="size-4" aria-hidden /> Copy link
               </Button>
             </div>
@@ -373,14 +398,14 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
           </>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" className="min-h-11" disabled={busy} onClick={copyOnly}>
+            <Button size="lg" className="w-full" disabled={busy || loading} onClick={shareCard}>
+              <Share className="size-4" aria-hidden /> Share
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="lg" disabled={busy} onClick={copyOnly}>
                 <Copy className="size-4" aria-hidden /> Copy link
               </Button>
-              <Button className="min-h-11" disabled={busy || loading} onClick={shareCard}>
-                <Share className="size-4" aria-hidden /> Share
-              </Button>
-              <Button variant="outline" className="min-h-11" disabled={busy || loading} onClick={saveOnly}>
+              <Button variant="outline" size="lg" disabled={busy || loading} onClick={saveOnly}>
                 <Download className="size-4" aria-hidden /> Save image
               </Button>
             </div>
@@ -396,12 +421,14 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
         />
       </div>
 
-      <Dialog open={picker} onOpenChange={setPicker}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Choose a photo</DialogTitle>
-            <DialogDescription>Only this share image changes — your listing stays the same.</DialogDescription>
-          </DialogHeader>
+      {/* Phones get a bottom sheet (as iOS presents pickers); wider screens a side panel. */}
+      <Sheet open={picker} onOpenChange={setPicker}>
+        <SheetContent side={sheetSide} className={SHEET_CLASS}>
+          <Grabber side={sheetSide} />
+          <SheetHeader className="px-0">
+            <SheetTitle>Choose a photo</SheetTitle>
+            <SheetDescription>Only this share image changes — your listing stays the same.</SheetDescription>
+          </SheetHeader>
           {photos.length === 0 ? (
             <p className="text-sm text-muted-foreground">Add portfolio photos to your listing to use one here. Until then, the Evntly design is used.</p>
           ) : (
@@ -418,22 +445,27 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
                     setAdjusting(true);
                   }}
                   className={cn(
-                    "relative aspect-square overflow-hidden rounded-xl border-2 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "relative aspect-square overflow-hidden rounded-xl border-2 bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     p.url === photoUrl ? "border-primary" : "border-transparent"
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- storage thumbnails, sized by Supabase */}
-                  <img src={shareImageUrl(p.url, 300)} alt="" className="h-full w-full object-cover" loading="lazy" />
-                  {p.kind === "avatar" && <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[10px] font-medium text-white">Profile photo</span>}
+                  <img src={shareImageUrl(p.url, 300)} alt="" className="h-full w-full object-cover" />
+                  {p.url === photoUrl && (
+                    <span className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="size-4" aria-hidden />
+                    </span>
+                  )}
+                  {p.kind === "avatar" && <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[11px] font-medium text-white">Profile photo</span>}
                 </button>
               ))}
             </div>
           )}
-          {selected && <p className="text-xs text-muted-foreground">After choosing, drag the preview to adjust the crop for this format.</p>}
-        </DialogContent>
-      </Dialog>
+          {selected && <p className="text-xs text-muted-foreground">After choosing, drag or pinch the preview to adjust the crop for this format.</p>}
+        </SheetContent>
+      </Sheet>
 
-      <Dialog
+      <Sheet
         open={!!manualImage}
         onOpenChange={(o) => {
           if (!o && manualImage) {
@@ -442,18 +474,30 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
           }
         }}
       >
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Save your image</DialogTitle>
-            <DialogDescription>Press and hold the image, then choose Save to Photos. If that isn&apos;t offered, open this page in Safari or Chrome.</DialogDescription>
-          </DialogHeader>
+        <SheetContent side={sheetSide} className={SHEET_CLASS}>
+          <Grabber side={sheetSide} />
+          <SheetHeader className="px-0">
+            <SheetTitle>Save your image</SheetTitle>
+            <SheetDescription>Press and hold the image, then choose Save to Photos. If that isn&apos;t offered, open this page in Safari or Chrome.</SheetDescription>
+          </SheetHeader>
           {/* eslint-disable-next-line @next/next/no-img-element -- a local blob of the exported artwork */}
           {manualImage && <img src={manualImage} alt={`${name} share image`} className="mx-auto max-h-[60dvh] w-auto rounded-xl" />}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
+
+// iOS dark mode raises the selected segment with a lighter grey, not a border.
+const SEGMENT_CLASS = "h-full rounded-[10px] text-[15px] font-semibold dark:data-active:border-transparent dark:data-active:bg-white/20";
+
+/** The grabber iOS shows at the top of a bottom sheet. */
+function Grabber({ side }: { side: "bottom" | "right" }) {
+  return side === "bottom" ? <div aria-hidden className="mx-auto -mb-2 h-1.5 w-9 shrink-0 rounded-full bg-muted-foreground/30" /> : null;
+}
+
+const SHEET_CLASS =
+  "max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-md sm:rounded-none";
 
 function OutcomeNote({
   format,
@@ -481,7 +525,7 @@ function OutcomeNote({
             {saved === "saved" ? `${what} saved` : saved === "manual" ? `${what} ready to save` : saved === "cancelled" ? `${what} not saved` : `Couldn't save the ${what.toLowerCase()}`}
           </span>
           {!savedOk && (
-            <Button size="sm" variant="outline" onClick={onRetrySave}>
+            <Button variant="outline" className="min-h-11 px-4" onClick={onRetrySave}>
               Try again
             </Button>
           )}
@@ -492,7 +536,7 @@ function OutcomeNote({
           {copied ? <Check className="size-4 text-success" aria-hidden /> : <X className="size-4 text-destructive" aria-hidden />}
           <span className="flex-1">{copied ? "Link copied" : "Couldn't copy the link"}</span>
           {!copied && (
-            <Button size="sm" variant="outline" onClick={onRetryCopy}>
+            <Button variant="outline" className="min-h-11 px-4" onClick={onRetryCopy}>
               Try again
             </Button>
           )}
@@ -504,7 +548,7 @@ function OutcomeNote({
           value={link}
           aria-label="Your profile link"
           onFocus={(e) => e.currentTarget.select()}
-          className="min-h-10 w-full rounded-lg border border-border bg-muted/40 px-2 text-xs"
+          className="min-h-11 w-full rounded-lg border border-border bg-muted/40 px-3 text-base"
         />
       )}
     </div>

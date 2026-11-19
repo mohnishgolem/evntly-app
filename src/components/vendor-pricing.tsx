@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useSheetSide } from "@/lib/use-sheet-side";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   deletePackage,
@@ -237,14 +238,6 @@ export function PackageList({
       )}
     </div>
   );
-}
-
-// Bottom sheet on phones, side panel from tablet up (as on the Event Board).
-function useSheetSide() {
-  const [side] = useState<"bottom" | "right">(() =>
-    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches ? "right" : "bottom"
-  );
-  return side;
 }
 
 function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPackageRow }) {
