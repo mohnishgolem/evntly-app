@@ -142,7 +142,7 @@
   {
     "name": "page view carries src=share_qr",
     "ok": true,
-    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"cff12eba-03bd-4a56-b7a3-3814e650b8ab\",\"params\":{\"src\":\"share_qr\"}}"
+    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"7ca2655a-5928-4cf0-9cd4-a64268447038\",\"params\":{\"src\":\"share_qr\"}}"
   },
   {
     "name": "guest Book link keeps the share tag through sign-up",
@@ -163,5 +163,65 @@
     "name": "untagged visit sets no share cookie",
     "ok": true,
     "detail": ""
+  },
+  {
+    "name": "Story: every control is at least 44 × 44 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Story: no text under 11 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "segmented control works from the keyboard",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Profile card: every control is at least 44 × 44 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Profile card: no text under 11 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Adjust crop: every control is at least 44 × 44 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Adjust crop: no text under 11 pt",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "pinch out zooms in",
+    "ok": true,
+    "detail": "1 → 3"
+  },
+  {
+    "name": "picker shows all 3 of DJ Valgen's photos",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "photo picker is a bottom sheet on a phone",
+    "ok": true,
+    "detail": "{\"side\":\"bottom\",\"bottom\":0}"
+  },
+  {
+    "name": "dark appearance applied",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no loading animation with Reduce Motion",
+    "ok": true,
+    "detail": "none"
   }
 ]
