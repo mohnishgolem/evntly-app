@@ -30,6 +30,9 @@ type Props = {
   vendorId: string;
   name: string;
   category: string;
+  /** Events they cover, for the line under their name. */
+  events?: string[];
+  founding?: boolean;
   photos: SharePhoto[];
   /** Instagram/Facebook in-app browser: no file sharing or downloads there. */
   inAppBrowser: boolean;
@@ -71,7 +74,7 @@ function coarsePointer() {
   }
 }
 
-export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, siteUrl, hasTabBar = true }: Props) {
+export function ShareProfile({ vendorId, name, category, events, founding, photos, inAppBrowser, siteUrl, hasTabBar = true }: Props) {
   const [format, setFormat] = useState<ShareFormat>("story");
   // This browser's last choice, if that photo is still on the listing. Only
   // the canvas (drawn after mount) depends on it, so server and client markup match.
@@ -151,7 +154,7 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || imgState === "loading") return;
-    drawArtwork(canvas, format, img, crop, { name, category, qrUrl: format === "card" ? qrUrl : undefined, logo });
+    drawArtwork(canvas, format, img, crop, { name, category, events, founding, qrUrl: format === "card" ? qrUrl : undefined, logo });
     fileRef.current = null;
     const key = artKey;
     const t = setTimeout(() => {
@@ -163,7 +166,7 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
     }, 200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artKey, img, name, category, qrUrl, logo]);
+  }, [artKey, img, name, category, events, founding, qrUrl, logo]);
 
   const getFile = useCallback(async () => {
     if (fileRef.current?.key === artKey) return fileRef.current.file;

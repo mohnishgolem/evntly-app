@@ -63,6 +63,34 @@ export function preparedSource(action: SharePreparedAction): ShareSource {
 }
 
 // ---------------------------------------------------------------------------
+// Text on the artwork (no location: some vendors don't want it shown)
+// ---------------------------------------------------------------------------
+
+const EVENT_LABELS: Record<string, string> = {
+  Wedding: "Weddings",
+  Birthday: "Birthdays",
+  Corporate: "Corporate events",
+  Engagement: "Engagements",
+  Cultural: "Cultural events",
+  Party: "Parties",
+};
+
+/**
+ * The events a vendor covers, as they ticked them on their listing, for the
+ * line under their name ("Weddings · Birthdays · Corporate events"). The
+ * renderer drops items from the end until the line fits.
+ */
+export function shareEventLabels(types: string[] | null | undefined, max = 3): string[] {
+  const out: string[] = [];
+  for (const t of types ?? []) {
+    const label = EVENT_LABELS[t.trim()] ?? t.trim();
+    if (label && !out.includes(label)) out.push(label);
+    if (out.length === max) break;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Photos
 // ---------------------------------------------------------------------------
 

@@ -10,12 +10,18 @@ export type ArtworkDetails = {
   category: string;
   /** Profile card only: what the QR code opens. */
   qrUrl?: string;
+  /** Events they cover, e.g. ["Weddings", "Birthdays", "Corporate events"]. */
+  events?: string[];
+  /** A founding vendor gets the same badge as on their profile. */
+  founding?: boolean;
   /** The Evntly app icon (public/icons/icon-512.png) for the QR's centre badge. */
   logo?: CanvasImageSource | null;
 };
 
 const CORAL = "#e8604a";
 const INK = "#1d1d1f";
+const MUTED = "#5f5f66";
+const CHAMPAGNE = "#c99a3f";
 const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 /** The wordmark's font family (next/font hashes the name; see app/layout.tsx). */
@@ -122,7 +128,54 @@ function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   ctx.textBaseline = "middle";
   ctx.fillText(label, x + padX, y + h / 2 + 1);
   ctx.textBaseline = "alphabetic";
-  return h;
+  return w;
+}
+
+/** The founding vendor award (the site's Award icon, simplified). */
+function award(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.save();
+  ctx.strokeStyle = CHAMPAGNE;
+  ctx.fillStyle = CHAMPAGNE;
+  ctx.lineWidth = r * 0.32;
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.55, cy + r * 0.55);
+  ctx.lineTo(cx - r * 0.75, cy + r * 1.75);
+  ctx.lineTo(cx, cy + r * 1.35);
+  ctx.lineTo(cx + r * 0.75, cy + r * 1.75);
+  ctx.lineTo(cx + r * 0.55, cy + r * 0.55);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** "Founding vendor" chip, white with the champagne award, like FoundingBadge. */
+function foundingChip(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  ctx.font = `700 ${size}px ${SANS}`;
+  const label = "Founding vendor";
+  const h = size * 1.9;
+  const r = size * 0.42;
+  const padX = size * 0.7;
+  const w = padX + r * 2 + size * 0.45 + ctx.measureText(label).width + padX;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, h / 2);
+  ctx.fill();
+  award(ctx, x + padX + r, y + h / 2 - r * 0.45, r);
+  ctx.fillStyle = INK;
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x + padX + r * 2 + size * 0.45, y + h / 2 + 1);
+  ctx.textBaseline = "alphabetic";
+  return w;
+}
+
+/** "Weddings · Birthdays · Corporate events", dropping items until it fits. */
+function eventsLine(ctx: CanvasRenderingContext2D, events: string[] | undefined, maxW: number) {
+  const items = [...(events ?? [])];
+  while (items.length > 1 && ctx.measureText(items.join("  ·  ")).width > maxW) items.pop();
+  return items.length ? wrap(ctx, items.join("  ·  "), maxW, 1)[0] : "";
 }
 
 function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
@@ -137,18 +190,27 @@ function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
 
   // Vendor details sit below the link-sticker space (STORY_STICKER_ZONE) and
   // above Instagram's reply bar.
-  const name = fitText(ctx, d.name, 936, 2, [96, 88, 80, 72, 64]);
+  // Category (+ founding badge), name, then the events they cover. No
+  // location: some vendors don't want it shown. A two-line name is capped
+  // smaller so the block stays below the sticker space (y ≥ 1390).
+  let name = fitText(ctx, d.name, 936, 2, [96, 88]);
+  if (name.lines.length > 1) name = fitText(ctx, d.name, 936, 2, [80, 72, 64]);
   const lineH = Math.round(name.size * 1.08);
-  // No location: some vendors don't want it shown.
-  const nameLast = 1690;
+  const eventsBaseline = 1712;
+  const nameLast = eventsBaseline - 66;
   const nameFirst = nameLast - lineH * (name.lines.length - 1);
-  const pillTop = nameFirst - name.size - 40 - 58;
+  const pillTop = nameFirst - name.size - 30 - 58;
 
-  pill(ctx, d.category, 72, pillTop, 30);
+  const pw = pill(ctx, d.category, 72, pillTop, 30);
+  if (d.founding) foundingChip(ctx, 72 + pw + 14, pillTop, 30);
 
   ctx.fillStyle = "#fff";
   ctx.font = `800 ${name.size}px ${SANS}`;
   name.lines.forEach((l, i) => ctx.fillText(l, 72, nameFirst + i * lineH));
+
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.font = `600 40px ${SANS}`;
+  ctx.fillText(eventsLine(ctx, d.events, 936), 72, eventsBaseline);
 }
 
 /**
@@ -316,10 +378,30 @@ function drawCard(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   name.lines.forEach((l, i) => ctx.fillText(l, left, y + i * lineH));
   y += lineH * (name.lines.length - 1) + 44;
 
+  // Category, then the founding badge beside it when it fits.
   ctx.font = `700 28px ${SANS}`;
   ctx.fillStyle = CORAL;
-  const cat = d.category.toUpperCase();
-  ctx.fillText(wrap(ctx, cat, maxW, 1)[0], left, y);
+  const cat = wrap(ctx, d.category.toUpperCase(), maxW, 1)[0];
+  ctx.fillText(cat, left, y);
+  const catW = ctx.measureText(cat).width;
+  if (d.founding) {
+    ctx.font = `700 26px ${SANS}`;
+    const fw = 26 * 0.84 + 26 * 0.45 + ctx.measureText("Founding vendor").width;
+    if (catW + 26 + fw <= maxW) {
+      award(ctx, left + catW + 26 + 26 * 0.42, y - 26 * 0.55, 26 * 0.42);
+      ctx.fillStyle = INK;
+      ctx.fillText("Founding vendor", left + catW + 26 + 26 * 0.84 + 26 * 0.45, y);
+    }
+  }
+
+  // The events they cover.
+  ctx.fillStyle = MUTED;
+  ctx.font = `500 28px ${SANS}`;
+  const events = eventsLine(ctx, d.events, maxW);
+  if (events) {
+    y += 44;
+    ctx.fillText(events, left, y);
+  }
 
   // Call to action (up to two lines) under the details.
   ctx.fillStyle = INK;

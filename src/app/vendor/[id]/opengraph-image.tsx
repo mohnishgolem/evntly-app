@@ -4,12 +4,13 @@ import { join } from "node:path";
 import { getVendorById } from "@/lib/data/vendors";
 import { categoryLabel } from "@/lib/config";
 import { listingCoverUrl } from "@/lib/portfolio-media";
+import { shareEventLabels } from "@/lib/share-profile";
 import { sampleListingsHidden } from "@/lib/sample-listings";
 
 // Link preview for a vendor profile (iMessage, WhatsApp, Instagram DMs,
 // Facebook): the vendor's cover photo — the same one their listing card and
-// Share profile default to — beside their name and category (no location: some vendors
-// don't want it shown).
+// Share profile default to — beside their name, category and the events they cover (no
+// location: some vendors don't want it shown).
 
 export const alt = "Event vendor profile on Evntly";
 export const size = { width: 1200, height: 630 };
@@ -64,7 +65,11 @@ export default async function Image({ params }: { params: Promise<{ id: string }
               <span style={{ fontSize: name.length > 22 ? 52 : 64, color: "#1d1d1f", lineHeight: 1.08, marginTop: 14 }}>
                 {name.length > 48 ? `${name.slice(0, 47)}…` : name}
               </span>
-              <span style={{ fontSize: 26, color: "#1d1d1f", marginTop: 44 }}>View profile & request a quote</span>
+              {shareEventLabels(vendor.event_types, 2).length > 0 && (
+                // Two events keep it to one line in the preview panel.
+                <span style={{ fontSize: 28, color: "#5f5f66", marginTop: 16 }}>{shareEventLabels(vendor.event_types, 2).join(" · ")}</span>
+              )}
+              <span style={{ fontSize: 26, color: "#1d1d1f", marginTop: 40 }}>View profile & request a quote</span>
             </div>
           ) : (
             <span style={{ fontSize: 44, color: "#1d1d1f" }}>Book event vendors in Sydney</span>

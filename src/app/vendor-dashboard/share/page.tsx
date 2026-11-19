@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getVendorPortfolio } from "@/lib/data/vendors";
 import { categoryLabel, SITE_URL } from "@/lib/config";
 import { isInAppBrowser } from "@/lib/in-app-browser";
-import { sharePhotoOptions } from "@/lib/share-profile";
+import { shareEventLabels, sharePhotoOptions } from "@/lib/share-profile";
 import { ShareProfile } from "@/components/share-profile";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +23,7 @@ export default async function ShareProfilePage() {
   const supabase = await createClient();
   const { data: listing } = await supabase
     .rpc("my_service_providers")
-    .select("id, name, service_type, avatar_url, status, is_demo")
+    .select("id, name, service_type, event_types, founding_vendor, avatar_url, status, is_demo")
     .eq("status", "approved")
     .eq("is_demo", false)
     .limit(1)
@@ -52,6 +52,8 @@ export default async function ShareProfilePage() {
         vendorId={listing.id}
         name={listing.name.trim()}
         category={categoryLabel(listing.service_type)}
+        events={shareEventLabels(listing.event_types)}
+        founding={!!listing.founding_vendor}
         photos={sharePhotoOptions(portfolio, listing.avatar_url)}
         inAppBrowser={isInAppBrowser((await headers()).get("user-agent"))}
         siteUrl={SITE_URL}

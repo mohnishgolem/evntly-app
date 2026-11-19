@@ -10,6 +10,7 @@ import {
   shareFileName,
   shareImageUrl,
   shareProfileUrl,
+  shareEventLabels,
   sharePhotoOptions,
   shareSourceFromUrl,
   STORY_STICKER_ZONE,
@@ -46,6 +47,13 @@ describe("share links", () => {
 });
 
 describe("artwork details", () => {
+  it("lists the events a vendor covers, in their order", () => {
+    expect(shareEventLabels(["Wedding", "Birthday", "Corporate", "Engagement"])).toEqual(["Weddings", "Birthdays", "Corporate events"]);
+    expect(shareEventLabels(["Corporate", "Party"])).toEqual(["Corporate events", "Parties"]);
+    expect(shareEventLabels(["Cultural", " Cultural", "Gala"])).toEqual(["Cultural events", "Gala"]);
+    expect(shareEventLabels(null)).toEqual([]);
+  });
+
   it("picks the first displayable portfolio photo, then the profile photo", () => {
     const items = [
       { media_type: "video", media_url: "https://x/a.mp4" },
