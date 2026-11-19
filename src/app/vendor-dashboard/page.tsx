@@ -16,6 +16,7 @@ import {
   PartyPopper,
   PencilLine,
   Share2,
+  Star,
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
@@ -218,6 +219,20 @@ export default async function VendorHomePage() {
           <span className="flex-1 text-sm">
             <span className="block font-semibold">Share profile</span>
             <span className="block text-muted-foreground">Post your listing to Instagram Stories or share a card with a QR code.</span>
+          </span>
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
+
+      {listings.some((l) => l.status === "approved") && (
+        <Link
+          href="/vendor-dashboard/reviews"
+          className="-mt-5 mb-8 flex items-center gap-3 rounded-2xl border border-border p-4 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Star className="size-5 shrink-0 text-champagne" strokeWidth={1.75} aria-hidden />
+          <span className="flex-1 text-sm">
+            <span className="block font-semibold">Get reviews from past clients</span>
+            <span className="block text-muted-foreground">Send clients you worked with before Evntly a link to review you.</span>
           </span>
           <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </Link>

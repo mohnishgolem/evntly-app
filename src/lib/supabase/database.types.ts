@@ -2520,12 +2520,15 @@ export type Database = {
           created_by: string | null
           description: string | null
           event_type: string | null
+          hidden_at: string | null
+          hidden_reason: string | null
           id: string
           provider_id: string
           rating: number
           reviewer_email: string
           reviewer_name: string | null
           reviewer_user_id: string | null
+          source: string
           updated_at: string
         }
         Insert: {
@@ -2535,12 +2538,15 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_type?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           provider_id: string
           rating: number
           reviewer_email: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          source?: string
           updated_at?: string
         }
         Update: {
@@ -2550,12 +2556,15 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_type?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           provider_id?: string
           rating?: number
           reviewer_email?: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          source?: string
           updated_at?: string
         }
         Relationships: [

@@ -24,7 +24,7 @@ import { SHARE_SOURCE_COOKIE, SHARE_SOURCE_MAX_AGE_SECONDS, shareSourceFromUrl }
 // /vendor/<id>?src=share_* (a vendor's Share profile link) sets a cookie for
 // that vendor's page; see lib/share-profile.ts.
 //
-// A /vendor/<id> page for a listing the visitor can't see (suspended,
+// A /vendor/<id> (or /vendor/<id>/review) page for a listing the visitor can't see (suspended,
 // pending, removed or a bad id) gets a real 404 here: the page itself
 // streams behind app/loading.tsx, so its notFound() could only send a 200.
 // The lookup uses the visitor's own session, so it matches what the page
@@ -104,9 +104,9 @@ export async function proxy(request: NextRequest) {
 
 const ACCOUNT_ONLY = ["/dashboard", "/messages", "/profile", "/saved", "/bookings", "/vendor-dashboard", "/admin"];
 
-/** The listing id for a vendor profile page (/vendor/<id>), else null. */
+/** The listing id for a vendor profile or review page (/vendor/<id>, /vendor/<id>/review), else null. */
 function vendorPageId(pathname: string) {
-  const match = pathname.match(/^\/vendor\/([^/]+)$/);
+  const match = pathname.match(/^\/vendor\/([^/]+)(?:\/review)?$/);
   return match ? decodeURIComponent(match[1]) : null;
 }
 

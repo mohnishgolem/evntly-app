@@ -294,11 +294,22 @@ export default async function VendorDetailPage({
               <div className="space-y-4">
                 {reviews.map((r) => (
                   <div key={r.id} className="border-b border-border/60 pb-4 last:border-0">
-                    <div className="mb-1 flex items-center gap-2">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-sm font-medium">{r.reviewer_name ?? "Anonymous"}</span>
                       <span className="flex items-center gap-0.5 text-sm">
                         <Star className="h-3.5 w-3.5 fill-champagne text-champagne" />
                         {r.rating}
+                      </span>
+                      {r.event_type && <span className="text-xs text-muted-foreground">· {r.event_type}</span>}
+                      {/* Reviews from clients who booked outside Evntly are always labelled. */}
+                      <span
+                        className={
+                          r.source === "past_client"
+                            ? "rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
+                            : "rounded-full bg-success/10 px-2 py-0.5 text-xs text-success"
+                        }
+                      >
+                        {r.source === "past_client" ? "Past client · not booked on Evntly" : "Booked on Evntly"}
                       </span>
                     </div>
                     {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
