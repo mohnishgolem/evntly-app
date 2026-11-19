@@ -58,7 +58,7 @@ export default async function VendorDetailPage({
 }) {
   const { id } = await params;
   const cookieStore = await cookies();
-  // The customer pressed "Book this vendor" before signing in: the proxy
+  // The customer pressed "Request a quote" before signing in: the proxy
   // turned ?book=1 into this cookie, so reopen the booking form now they're
   // back (see lib/booking-intent.ts).
   const autoOpenBooking = cookieStore.get(BOOK_INTENT_COOKIE)?.value === "1";

@@ -19,10 +19,12 @@ import {
   shareProfileUrl,
   STORY_STICKER_ZONE,
   type ShareCrop,
+  type SharePreparedAction,
   type ShareFormat,
   type SharePhoto,
 } from "@/lib/share-profile";
 import { cn } from "@/lib/utils";
+import { analyticsVisitorId, sendTrack } from "@/lib/track-client";
 
 type Props = {
   vendorId: string;
@@ -34,10 +36,12 @@ type Props = {
   inAppBrowser: boolean;
   /** Site origin for the links (the dashboard passes SITE_URL). */
   siteUrl: string;
+  /** Signed-in phones show the app's bottom tab bar; the action bar sits above it. */
+  hasTabBar?: boolean;
 };
 
 type SaveResult = "saved" | "manual" | "cancelled" | "failed";
-type Outcome = { saved?: SaveResult; copied?: boolean };
+type Outcome = { saved?: SaveResult; copied?: boolean; shared?: boolean };
 
 // Per-browser memory of the chosen photo and crops, so coming back to Share
 // profile shows the same artwork. Never sent anywhere; the listing is unchanged.
@@ -68,7 +72,7 @@ function coarsePointer() {
   }
 }
 
-export function ShareProfile({ vendorId, name, category, area, photos, inAppBrowser, siteUrl }: Props) {
+export function ShareProfile({ vendorId, name, category, area, photos, inAppBrowser, siteUrl, hasTabBar = true }: Props) {
   const [format, setFormat] = useState<ShareFormat>("story");
   // This browser's last choice, if that photo is still on the listing. Only
   // the canvas (drawn after mount) depends on it, so server and client markup match.
@@ -94,6 +98,17 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; zoom: number } | null>(null);
   const sheetSide = useSheetSide();
+  const barRef = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(88);
+
+  // Reserve room under the page for the pinned action bar (phones only).
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setBarHeight(el.offsetHeight + 8));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const storyUrl = shareProfileUrl(vendorId, "share_story", siteUrl);
   const linkUrl = shareProfileUrl(vendorId, "share_link", siteUrl);
@@ -233,11 +248,29 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
     }
   }
 
+  // Counts a share the vendor got ready (saved, copied, shared). That's intent
+  // only: nothing here can tell whether they went on to post it.
+  function trackPrepared(f: ShareFormat, next: Outcome) {
+    if (!analyticsVisitorId()) return; // Do Not Track / Global Privacy Control
+    const actions: SharePreparedAction[] = [];
+    const saved = next.saved === "saved" || next.saved === "manual";
+    if (f === "story") {
+      if (saved) actions.push("story_save");
+      if (next.copied) actions.push("story_copy");
+    } else {
+      if (saved) actions.push("card_save");
+      if (next.copied) actions.push("card_copy");
+      if (next.shared) actions.push("card_share");
+    }
+    for (const action of actions) sendTrack({ share: { action, vendorId } });
+  }
+
   async function run(f: ShareFormat, fn: () => Promise<Outcome>) {
     setBusy(true);
     try {
       const next = await fn();
       setOutcome((o) => ({ ...o, [f]: { ...o[f], ...next } }));
+      trackPrepared(f, next);
     } finally {
       setBusy(false);
     }
@@ -261,7 +294,7 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
         const text = `${name} on Evntly — view my profile & request a quote: ${linkUrl}`;
         if (navigator.canShare?.({ files: [file], text })) await navigator.share({ files: [file], text });
         else await navigator.share({ title: `${name} on Evntly`, text: `${name} on Evntly`, url: linkUrl });
-        return { saved: "saved" as const };
+        return { shared: true };
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return {};
         return { copied: await copyText(linkUrl) };
@@ -270,6 +303,19 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
 
   const current = outcome[format];
   const loading = imgState === "loading";
+  const primary =
+    format === "story" ? (
+      <Button size="lg" className="w-full" disabled={busy || loading} onClick={saveStoryAndCopy}>
+        <Download className="size-4" aria-hidden /> Save Story &amp; Copy Link
+      </Button>
+    ) : (
+      <Button size="lg" className="w-full" disabled={busy || loading} onClick={shareCard}>
+        <Share className="size-4" aria-hidden /> Share
+      </Button>
+    );
+  const note = (
+    <OutcomeNote format={format} outcome={current} onRetrySave={saveOnly} onRetryCopy={copyOnly} link={format === "story" ? storyUrl : linkUrl} />
+  );
   const selected = photos.find((p) => p.url === photoUrl);
 
   return (
@@ -296,7 +342,7 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
       <div
         className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-black shadow-sm"
         // Keep the actions in view on a phone: the preview is at most ~58% of the screen height.
-        style={{ aspectRatio: `${spec.width} / ${spec.height}`, width: `min(100%, ${format === "story" ? 340 : 400}px, calc(58dvh * ${spec.width / spec.height}))` }}
+        style={{ aspectRatio: `${spec.width} / ${spec.height}`, width: `min(100%, ${format === "story" ? 340 : 400}px, calc(50dvh * ${spec.width / spec.height}))` }}
       >
         <canvas
           ref={canvasRef}
@@ -376,49 +422,49 @@ export function ShareProfile({ vendorId, name, category, area, photos, inAppBrow
         </div>
       )}
 
-      {/* One prominent action per tab; the alternatives sit underneath as secondary buttons. */}
+      {/* One prominent action per tab; the alternatives sit underneath as
+          secondary buttons. On phones the main action is pinned above the tab
+          bar so it's always in reach, with the result and next step above it. */}
       <div className="mt-5 space-y-2">
-        {format === "story" ? (
-          <>
-            <Button size="lg" className="w-full" disabled={busy || loading} onClick={saveStoryAndCopy}>
-              <Download className="size-4" aria-hidden /> Save Story &amp; Copy Link
-            </Button>
-            <div className="grid grid-cols-2 gap-2">
+        <div className="hidden md:block">{primary}</div>
+        <div className="grid grid-cols-2 gap-2">
+          {format === "story" ? (
+            <>
               <Button variant="outline" size="lg" disabled={busy || loading} onClick={saveOnly}>
                 <Download className="size-4" aria-hidden /> Save Story
               </Button>
               <Button variant="outline" size="lg" disabled={busy} onClick={copyOnly}>
                 <Link2 className="size-4" aria-hidden /> Copy link
               </Button>
-            </div>
-            <p className="rounded-xl bg-secondary/60 px-3 py-2.5 text-sm text-muted-foreground">
-              Post the Story on Instagram, then add the copied link as a <strong className="text-foreground">Link sticker</strong> labelled{" "}
-              <strong className="text-foreground">“Check availability”</strong> and place it in the clear space.
-            </p>
-          </>
-        ) : (
-          <>
-            <Button size="lg" className="w-full" disabled={busy || loading} onClick={shareCard}>
-              <Share className="size-4" aria-hidden /> Share
-            </Button>
-            <div className="grid grid-cols-2 gap-2">
+            </>
+          ) : (
+            <>
               <Button variant="outline" size="lg" disabled={busy} onClick={copyOnly}>
                 <Copy className="size-4" aria-hidden /> Copy link
               </Button>
               <Button variant="outline" size="lg" disabled={busy || loading} onClick={saveOnly}>
                 <Download className="size-4" aria-hidden /> Save image
               </Button>
-            </div>
-            <p className="text-center text-xs text-muted-foreground">The QR code opens your Evntly profile, where customers can request a quote.</p>
-          </>
+            </>
+          )}
+        </div>
+        {format === "card" && <p className="text-center text-xs text-muted-foreground">The QR code opens your Evntly profile, where customers can request a quote.</p>}
+        <div className="hidden md:block">{note}</div>
+      </div>
+
+      <div aria-hidden className="md:hidden" style={{ height: barHeight }} />
+      <div
+        ref={barRef}
+        data-testid="share-action-bar"
+        className={cn(
+          "glass-material fixed inset-x-0 z-30 m-0 space-y-2 border-t border-border/60 px-4 pt-3 md:hidden",
+          hasTabBar ? "bottom-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))] pb-3" : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
-        <OutcomeNote
-          format={format}
-          outcome={current}
-          onRetrySave={saveOnly}
-          onRetryCopy={copyOnly}
-          link={format === "story" ? storyUrl : linkUrl}
-        />
+      >
+        <div className="mx-auto max-w-md space-y-2">
+          {note}
+          {primary}
+        </div>
       </div>
 
       {/* Phones get a bottom sheet (as iOS presents pickers); wider screens a side panel. */}
@@ -499,6 +545,9 @@ function Grabber({ side }: { side: "bottom" | "right" }) {
 const SHEET_CLASS =
   "max-h-[90dvh] overflow-y-auto rounded-t-3xl px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-md sm:rounded-none";
 
+/** The one thing to do after saving the Story. */
+export const STORY_STICKER_INSTRUCTION = "Add a link sticker in Instagram and label it ‘Check availability’.";
+
 function OutcomeNote({
   format,
   outcome,
@@ -512,44 +561,51 @@ function OutcomeNote({
   onRetryCopy: () => void;
   link: string;
 }) {
-  const { saved, copied } = outcome;
-  if (saved === undefined && copied === undefined) return null;
+  const { saved, copied, shared } = outcome;
+  if (saved === undefined && copied === undefined && !shared) return null;
   const what = format === "story" ? "Story" : "Image";
   const savedOk = saved === "saved" || saved === "manual";
+  const done = [
+    shared && "Shared",
+    saved === "saved" && `${what} saved`,
+    saved === "manual" && `${what} ready to save`,
+    copied && "Link copied",
+  ].filter(Boolean) as string[];
   return (
-    <div role="status" className="space-y-2 rounded-xl border border-border px-3 py-2.5 text-sm">
-      {saved !== undefined && (
-        <p className="flex items-center gap-2">
-          {savedOk ? <Check className="size-4 text-success" aria-hidden /> : <X className="size-4 text-destructive" aria-hidden />}
-          <span className="flex-1">
-            {saved === "saved" ? `${what} saved` : saved === "manual" ? `${what} ready to save` : saved === "cancelled" ? `${what} not saved` : `Couldn't save the ${what.toLowerCase()}`}
-          </span>
-          {!savedOk && (
-            <Button variant="outline" className="min-h-11 px-4" onClick={onRetrySave}>
-              Try again
-            </Button>
-          )}
+    <div role="status" className="space-y-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm">
+      {done.length > 0 && (
+        <p className="flex items-center gap-2 text-muted-foreground">
+          <Check className="size-4 shrink-0 text-success" aria-hidden />
+          {done.join(" · ")}
         </p>
       )}
-      {copied !== undefined && (
+      {format === "story" && (savedOk || copied) && <p className="text-[15px] font-semibold">{STORY_STICKER_INSTRUCTION}</p>}
+      {saved !== undefined && !savedOk && (
         <p className="flex items-center gap-2">
-          {copied ? <Check className="size-4 text-success" aria-hidden /> : <X className="size-4 text-destructive" aria-hidden />}
-          <span className="flex-1">{copied ? "Link copied" : "Couldn't copy the link"}</span>
-          {!copied && (
-            <Button variant="outline" className="min-h-11 px-4" onClick={onRetryCopy}>
-              Try again
-            </Button>
-          )}
+          <X className="size-4 shrink-0 text-destructive" aria-hidden />
+          <span className="flex-1">{saved === "cancelled" ? `${what} not saved` : `Couldn't save the ${what.toLowerCase()}`}</span>
+          <Button variant="outline" className="min-h-11 px-4" onClick={onRetrySave}>
+            Try again
+          </Button>
         </p>
       )}
       {copied === false && (
-        <input
-          readOnly
-          value={link}
-          aria-label="Your profile link"
-          onFocus={(e) => e.currentTarget.select()}
-          className="min-h-11 w-full rounded-lg border border-border bg-muted/40 px-3 text-base"
-        />
+        <>
+          <p className="flex items-center gap-2">
+            <X className="size-4 shrink-0 text-destructive" aria-hidden />
+            <span className="flex-1">Couldn&apos;t copy the link</span>
+            <Button variant="outline" className="min-h-11 px-4" onClick={onRetryCopy}>
+              Try again
+            </Button>
+          </p>
+          <input
+            readOnly
+            value={link}
+            aria-label="Your profile link"
+            onFocus={(e) => e.currentTarget.select()}
+            className="min-h-11 w-full rounded-lg border border-border bg-muted/40 px-3 text-base"
+          />
+        </>
       )}
     </div>
   );

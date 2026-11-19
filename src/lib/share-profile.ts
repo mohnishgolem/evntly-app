@@ -35,6 +35,33 @@ export function shareSourceFromUrl(url: URL): { vendorId: string; source: ShareS
   return match ? { vendorId: match[1], source } : null;
 }
 
+/**
+ * The share visit a sign-up started from, read from its return path
+ * (?next=/vendor/<id>?book=1&src=share_qr — see BookVendor). Server-side and
+ * cookie-free, so it holds even when the cookie never reached this request.
+ */
+export function shareFromNext(next: string | null | undefined): { vendorId: string; source: ShareSource } | null {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return null;
+  try {
+    return shareSourceFromUrl(new URL(next, "https://evntly.invalid"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A vendor got a share ready: saved or copied artwork or a link. This shows
+ * intent to share, never that anything was posted. Which channel it feeds
+ * follows the link it carries: Story → share_story; card link or Share →
+ * share_link; the saved card image carries the QR code → share_qr.
+ */
+export const SHARE_PREPARED_ACTIONS = ["story_save", "story_copy", "card_copy", "card_share", "card_save"] as const;
+export type SharePreparedAction = (typeof SHARE_PREPARED_ACTIONS)[number];
+export function preparedSource(action: SharePreparedAction): ShareSource {
+  if (action.startsWith("story_")) return "share_story";
+  return action === "card_save" ? "share_qr" : "share_link";
+}
+
 // ---------------------------------------------------------------------------
 // Vendor details on the artwork
 // ---------------------------------------------------------------------------

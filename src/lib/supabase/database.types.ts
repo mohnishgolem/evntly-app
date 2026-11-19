@@ -2589,6 +2589,36 @@ export type Database = {
         }
         Relationships: []
       }
+      share_funnel_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: number
+          source: string
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: number
+          source: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: number
+          source?: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
       service_providers: {
         Row: {
           abn: string | null
@@ -3227,6 +3257,18 @@ export type Database = {
       }
       admin_matching_report: { Args: { p_days?: number }; Returns: Json }
       admin_risk_overview: { Args: { p_days?: number }; Returns: Json }
+      admin_share_funnel: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          source: string
+          verified: number
+          visitors: number
+        }[]
+      }
       admin_service_providers: {
         Args: never
         Returns: {

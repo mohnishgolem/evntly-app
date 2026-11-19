@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import { PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind } from "@/lib/page-views";
 import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/lib/founding/sources";
-import { isShareSource } from "@/lib/share-profile";
+import { isShareSource, SHARE_PREPARED_ACTIONS, type SharePreparedAction } from "@/lib/share-profile";
+import { recordSharePrepared } from "@/lib/share-funnel";
 import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
@@ -16,10 +17,29 @@ export async function POST(request: NextRequest) {
 
   const raw = await request.text();
   if (!raw || raw.length > 512) return done;
-  let body: { kind?: unknown; event?: unknown; visitorId?: unknown; vendorId?: unknown; params?: unknown };
+  let body: { kind?: unknown; event?: unknown; visitorId?: unknown; vendorId?: unknown; params?: unknown; share?: unknown };
   try {
     body = JSON.parse(raw);
   } catch {
+    return done;
+  }
+
+  // Share profile: a vendor saved, copied or shared their artwork or link.
+  // Counted as "prepared to share" only — it can't tell whether they posted.
+  // Signed-in owners of the listing only.
+  if (body.share !== undefined) {
+    const share = body.share as { action?: unknown; vendorId?: unknown } | null;
+    const action = share?.action as SharePreparedAction;
+    const vendorId = typeof share?.vendorId === "string" && /^[0-9a-f-]{36}$/.test(share.vendorId) ? share.vendorId : null;
+    if (!vendorId || !SHARE_PREPARED_ACTIONS.includes(action)) return done;
+    if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return done;
+    const { data: own } = await supabase.rpc("my_service_providers").select("id").eq("id", vendorId).maybeSingle();
+    if (own) await recordSharePrepared(user.id, vendorId, action);
     return done;
   }
 

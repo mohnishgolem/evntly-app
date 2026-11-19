@@ -99,6 +99,31 @@ export async function getFunnelForAdmin() {
   return [...byStep.entries()].sort(([a], [b]) => a - b).map(([step, v]) => ({ step, ...v }));
 }
 
+export type ShareFunnelRow = {
+  source: string;
+  visitors: number;
+  accounts: number;
+  verified: number;
+  quotes: number;
+  quotesNew: number;
+  prepared: number;
+};
+
+/** Share profile funnel per channel (admin_share_funnel), for the last `days` days. */
+export async function getShareFunnelForAdmin(days: number): Promise<ShareFunnelRow[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_share_funnel", { p_days: days });
+  return (data ?? []).map((r) => ({
+    source: r.source,
+    visitors: Number(r.visitors),
+    accounts: Number(r.accounts),
+    verified: Number(r.verified),
+    quotes: Number(r.quotes),
+    quotesNew: Number(r.quotes_new),
+    prepared: Number(r.prepared),
+  }));
+}
+
 /**
  * Photo and active-package counts per listing, for the approval gate. Read
  * with the service role: admins can't see an unapproved listing's portfolio

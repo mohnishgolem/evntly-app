@@ -56,6 +56,7 @@ export default async function ShareProfilePage() {
         photos={sharePhotoOptions(portfolio, listing.avatar_url)}
         inAppBrowser={isInAppBrowser((await headers()).get("user-agent"))}
         siteUrl={SITE_URL}
+        hasTabBar
       />
     </div>
   );
