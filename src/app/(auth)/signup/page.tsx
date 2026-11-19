@@ -3,7 +3,7 @@ import { isInAppBrowser } from "@/lib/in-app-browser";
 import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
 import { BookingReturnNote, ReviewReturnNote } from "@/components/auth/booking-return-note";
-import { isReviewReturn } from "@/lib/past-client-reviews";
+import { isReviewReturn } from "@/lib/profile-reviews";
 import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
 import { isFoundingPath } from "@/lib/founding/sources";
 import { FunnelPing } from "@/components/founding/funnel-ping";

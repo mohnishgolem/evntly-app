@@ -231,8 +231,8 @@ export default async function VendorHomePage() {
         >
           <Star className="size-5 shrink-0 text-champagne" strokeWidth={1.75} aria-hidden />
           <span className="flex-1 text-sm">
-            <span className="block font-semibold">Get reviews from past clients</span>
-            <span className="block text-muted-foreground">Send clients you worked with before Evntly a link to review you.</span>
+            <span className="block font-semibold">Get reviews</span>
+            <span className="block text-muted-foreground">Ask clients, including ones from before Evntly, to review you on your profile.</span>
           </span>
           <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
         </Link>

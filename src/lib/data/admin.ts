@@ -106,6 +106,7 @@ export type ShareFunnelRow = {
   verified: number;
   quotes: number;
   quotesNew: number;
+  reviews: number;
   prepared: number;
 };
 
@@ -120,6 +121,7 @@ export async function getShareFunnelForAdmin(days: number): Promise<ShareFunnelR
     verified: Number(r.verified),
     quotes: Number(r.quotes),
     quotesNew: Number(r.quotes_new),
+    reviews: Number(r.reviews),
     prepared: Number(r.prepared),
   }));
 }
@@ -139,6 +141,7 @@ export async function getShareFunnelByVendorForAdmin(days: number): Promise<Shar
     verified: Number(r.verified),
     quotes: Number(r.quotes),
     quotesNew: Number(r.quotes_new),
+    reviews: Number(r.reviews),
     prepared: Number(r.prepared),
   }));
 }

@@ -21,9 +21,10 @@ export function AdminShareFunnel({ rows, byVendor, days }: { rows: ShareFunnelRo
       verified: t.verified + r.verified,
       quotes: t.quotes + r.quotes,
       quotesNew: t.quotesNew + r.quotesNew,
+      reviews: t.reviews + r.reviews,
       prepared: t.prepared + r.prepared,
     }),
-    { source: "total", visitors: 0, accounts: 0, verified: 0, quotes: 0, quotesNew: 0, prepared: 0 }
+    { source: "total", visitors: 0, accounts: 0, verified: 0, quotes: 0, quotesNew: 0, reviews: 0, prepared: 0 }
   );
   return (
     <div className="space-y-3">
@@ -36,7 +37,8 @@ export function AdminShareFunnel({ rows, byVendor, days }: { rows: ShareFunnelRo
               <th className="px-2 py-2 text-right font-medium">Profile visitors</th>
               <th className="px-2 py-2 text-right font-medium">New accounts</th>
               <th className="px-2 py-2 text-right font-medium">Verified</th>
-              <th className="px-4 py-2 text-right font-medium">Quote requests</th>
+              <th className="px-2 py-2 text-right font-medium">Quote requests</th>
+              <th className="px-4 py-2 text-right font-medium">Reviews</th>
             </tr>
           </thead>
           <tbody>
@@ -51,12 +53,13 @@ export function AdminShareFunnel({ rows, byVendor, days }: { rows: ShareFunnelRo
                   {r.verified}
                   <span className="ml-1.5 text-xs font-normal text-muted-foreground">{pct(r.verified, r.visitors)}</span>
                 </td>
-                <td className="px-4 py-2.5 text-right tabular-nums">
+                <td className="px-2 py-2.5 text-right tabular-nums">
                   {r.quotes}
                   <span className="ml-1.5 text-xs font-normal text-muted-foreground" title="From the verified new accounts">
                     {r.quotesNew} new
                   </span>
                 </td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{r.reviews}</td>
               </tr>
             ))}
           </tbody>
@@ -72,7 +75,7 @@ export function AdminShareFunnel({ rows, byVendor, days }: { rows: ShareFunnelRo
       </p>
       <p className="text-xs text-muted-foreground">
         Last {days} days. Visitors are browsers that opened a vendor profile from a shared link or QR code (anonymous; Do Not Track is respected).
-        New accounts are customers whose sign-up started from that visit; verified means their email is confirmed. Quote requests carry the
+        New accounts are customers whose sign-up started from that visit (to request a quote or write a review); verified means their email is confirmed. Reviews are those written from a shared profile. Quote requests carry the
         channel of the visit they came from (30-day window on that vendor&apos;s page). The Story link is only counted as Story when the vendor
         pasted the Story tab&apos;s link into their sticker. Admin activity is excluded.
       </p>
@@ -91,7 +94,7 @@ function ByVendor({ rows }: { rows: ShareFunnelVendorRow[] }) {
     v.rows.push(r);
     vendors.set(r.vendorId, v);
   }
-  const sum = (rs: ShareFunnelVendorRow[], k: "visitors" | "verified" | "quotes" | "prepared") => rs.reduce((t, r) => t + r[k], 0);
+  const sum = (rs: ShareFunnelVendorRow[], k: "visitors" | "verified" | "quotes" | "reviews" | "prepared") => rs.reduce((t, r) => t + r[k], 0);
   const sorted = [...vendors.entries()].sort(([, a], [, b]) => sum(b.rows, "visitors") - sum(a.rows, "visitors") || a.name.localeCompare(b.name));
   return (
     <div className="overflow-x-auto rounded-2xl border border-border">
@@ -103,6 +106,7 @@ function ByVendor({ rows }: { rows: ShareFunnelVendorRow[] }) {
             <th className="px-2 py-2 text-right font-medium">Visitors</th>
             <th className="px-2 py-2 text-right font-medium">Verified accounts</th>
             <th className="px-2 py-2 text-right font-medium">Quote requests</th>
+            <th className="px-2 py-2 text-right font-medium">Reviews</th>
             <th className="px-4 py-2 text-right font-medium">Prepared</th>
           </tr>
         </thead>
@@ -117,6 +121,7 @@ function ByVendor({ rows }: { rows: ShareFunnelVendorRow[] }) {
               <td className="px-2 pt-2.5 pb-1 text-right tabular-nums">{sum(v.rows, "visitors")}</td>
               <td className="px-2 pt-2.5 pb-1 text-right tabular-nums">{sum(v.rows, "verified")}</td>
               <td className="px-2 pt-2.5 pb-1 text-right tabular-nums">{sum(v.rows, "quotes")}</td>
+              <td className="px-2 pt-2.5 pb-1 text-right tabular-nums">{sum(v.rows, "reviews")}</td>
               <td className="px-4 pt-2.5 pb-1 text-right tabular-nums">{sum(v.rows, "prepared")}</td>
             </tr>
             {v.rows.map((r) => (
@@ -127,6 +132,7 @@ function ByVendor({ rows }: { rows: ShareFunnelVendorRow[] }) {
                 <td className="px-2 py-1 text-right tabular-nums">{r.visitors}</td>
                 <td className="px-2 py-1 text-right tabular-nums">{r.verified}</td>
                 <td className="px-2 py-1 text-right tabular-nums">{r.quotes}</td>
+                <td className="px-2 py-1 text-right tabular-nums">{r.reviews}</td>
                 <td className="px-4 py-1 text-right tabular-nums">{r.prepared}</td>
               </tr>
             ))}

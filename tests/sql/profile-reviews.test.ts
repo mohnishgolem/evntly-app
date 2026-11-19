@@ -1,13 +1,18 @@
 import { expect, it } from "vitest";
 import { readMigration, setupDb } from "./supabase-stub";
 
-// 20261126090000_past_client_reviews. Offline in PGlite, never against
+// 20261126090000_profile_reviews. Offline in PGlite, never against
 // production. The reviews table, policies, grants and triggers below mirror
 // production as read on 19 Nov 2026.
 const prereqs = `
   alter table auth.users add column email_confirmed_at timestamptz;
   alter table public.service_providers add column review_count int default 0, add column rating_sum float default 0, add column rating float default 0;
-  create table public.bookings (id text primary key, provider_id text, client_user_id uuid, status text);
+  alter table auth.users add column created_at timestamptz default now();
+  create table public.bookings (id text primary key, provider_id text, client_user_id uuid, status text, created_at timestamptz default now());
+  create table public.quote_requests (id bigserial primary key, vendor_id text, client_email text, client_user_id uuid, quoted_amount numeric,
+    created_at timestamptz default now(), origin text, status text default 'pending');
+  create table public.beta_applications (id bigserial primary key, user_id uuid, provider_id text, submitted_at timestamptz);
+  create table public.vendor_waitlist (id uuid primary key default gen_random_uuid(), email text not null, business_name text, invite_consent boolean not null default false);
   create table public.reviews (
     id text primary key default gen_random_uuid()::text,
     created_at timestamptz not null default now(), updated_at timestamptz not null default now(), created_by text,
@@ -27,11 +32,20 @@ const prereqs = `
   create function public.guard_reviews_write() returns trigger language plpgsql security definer set search_path to '' as $$ begin return new; end $$;
   create trigger trg_reviews_write_guard before insert or update on public.reviews for each row execute function public.guard_reviews_write();
 `;
-const up = readMigration("migrations/20261126090000_past_client_reviews.sql");
-const down = readMigration("rollbacks/20261126090000_past_client_reviews.down.sql");
+// The share report this migration extends, and what it depends on.
+const funnel = [
+  readMigration("migrations/20261020120000_funnel_analytics.sql").replace(/select cron\.schedule\([\s\S]*?\);\s*$/, ""),
+  readMigration("migrations/20261107090000_founding_page_views.sql"),
+  readMigration("migrations/20261112090000_founding_funnel_events.sql"),
+  readMigration("migrations/20261115090000_meta_v2_funnel.sql"),
+  readMigration("migrations/20261123090000_vendor_share_profile.sql"),
+  readMigration("migrations/20261124090000_share_funnel.sql"),
+];
+const up = readMigration("migrations/20261126090000_profile_reviews.sql");
+const down = readMigration("rollbacks/20261126090000_profile_reviews.down.sql");
 
-it("lets verified past clients review live vendors, once, labelled and hideable", { timeout: 60_000 }, async () => {
-  const { db, as, err, ADMIN, A, B, C } = await setupDb([prereqs]);
+it("one review flow: verified past clients and Evntly bookings, labelled, hideable, tracked from shares", { timeout: 60_000 }, async () => {
+  const { db, as, err, ADMIN, A, B, C } = await setupDb([prereqs, ...funnel]);
   // A owns "Photo Co" (live); B owns a sample listing; C is a customer.
   await db.exec(`
     insert into public.service_providers (id, owner_user_id, name, status, is_demo) values
@@ -99,11 +113,34 @@ it("lets verified past clients review live vendors, once, labelled and hideable"
   for (let i = 0; i < 4; i++) expect(await post(C, `v${i}`)).toBe("");
   expect(await post(C, "v4")).toMatch(/up to 5 past-client reviews a day/);
 
+  // The share channel of a review is recorded once and can't be changed.
+  await db.exec(`insert into public.service_providers (id, owner_user_id, name, status, is_demo) values ('shared', '${A}', 'Shared Co', 'approved', false)`);
+  await db.query("update auth.users set email_confirmed_at = now() where id = $1", [B]);
+  expect(await as(B, () => err(db.exec(`insert into public.reviews (provider_id, reviewer_email, reviewer_user_id, rating, comment, source, share_source)
+    values ('shared', 'b@example.invalid', '${B}', 5, 'Found them through their Instagram story, great job.', 'past_client', 'share_story')`)))).toBe("");
+  expect(await as(B, () => err(db.exec(`update public.reviews set share_source = 'share_qr' where provider_id = 'shared'`)))).toMatch(/Not authorized/);
+  expect(await as(B, () => err(db.exec(`insert into public.reviews (provider_id, reviewer_email, reviewer_user_id, rating, comment, source, share_source)
+    values ('v5', 'b@example.invalid', '${B}', 5, 'Another honest review from a past client.', 'past_client', 'share_instagram')`)))).toMatch(/share_source_check/);
+
+  // It shows up in the share report as a review from the Story link.
+  const report = await as(ADMIN, async () => (await db.query("select source, reviews::int from public.admin_share_funnel(30)")).rows);
+  expect(report).toEqual([{ source: "share_story", reviews: 1 }, { source: "share_link", reviews: 0 }, { source: "share_qr", reviews: 0 }]);
+  const perVendor = await as(ADMIN, async () => (await db.query("select vendor_name, source, reviews::int from public.admin_share_funnel_by_vendor(30)")).rows);
+  expect(perVendor).toEqual([{ vendor_name: "Shared Co", source: "share_story", reviews: 1 }]);
+
+  // Drafts are server-only: customers and guests can't read or write them.
+  await db.exec(`insert into public.review_drafts (provider_id, rating, comment) values ('live', 5, 'Draft text from a guest before sign-up')`);
+  expect(await as(C, () => err(db.query("select * from public.review_drafts")))).toMatch(/permission denied/);
+  expect(await as("anon", () => err(db.exec(`insert into public.review_drafts (provider_id) values ('live')`)))).toMatch(/permission denied/);
+
   // Booking reviews still follow the old rule.
   expect(await as(C, () => err(db.exec(`insert into public.reviews (provider_id, booking_id, reviewer_email, reviewer_user_id, rating) values ('live', 'nope', 'x', '${C}', 5)`)))).toMatch(/after a completed booking/);
 
-  // Rollback removes past-client reviews and the new columns.
+  // Rollback removes past-client reviews, drafts, the new columns, and puts
+  // the share report back as it was.
   await db.exec(down);
   expect((await db.query("select count(*)::int as n from public.reviews")).rows[0].n).toBe(1);
+  expect((await db.query("select to_regclass('public.review_drafts') as t")).rows[0].t).toBeNull();
+  await as(ADMIN, async () => expect(Object.keys((await db.query("select * from public.admin_share_funnel(30)")).rows[0])).not.toContain("reviews"));
   expect((await db.query("select count(*)::int as n from information_schema.columns where table_name = 'reviews' and column_name in ('source', 'hidden_at')")).rows[0].n).toBe(0);
 });

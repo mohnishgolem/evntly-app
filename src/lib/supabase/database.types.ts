@@ -2512,6 +2512,39 @@ export type Database = {
         }
         Relationships: []
       }
+      review_drafts: {
+        Row: {
+          comment: string | null
+          created_at: string
+          event_type: string | null
+          id: string
+          provider_id: string
+          rating: number | null
+          share_source: string | null
+          used_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          provider_id: string
+          rating?: number | null
+          share_source?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          provider_id?: string
+          rating?: number | null
+          share_source?: string | null
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string | null
@@ -2528,6 +2561,7 @@ export type Database = {
           reviewer_email: string
           reviewer_name: string | null
           reviewer_user_id: string | null
+          share_source: string | null
           source: string
           updated_at: string
         }
@@ -2546,6 +2580,7 @@ export type Database = {
           reviewer_email: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          share_source?: string | null
           source?: string
           updated_at?: string
         }
@@ -2564,6 +2599,7 @@ export type Database = {
           reviewer_email?: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          share_source?: string | null
           source?: string
           updated_at?: string
         }
@@ -3273,6 +3309,7 @@ export type Database = {
           prepared: number
           quotes: number
           quotes_new: number
+          reviews: number
           source: string
           verified: number
           visitors: number
@@ -3285,6 +3322,7 @@ export type Database = {
           prepared: number
           quotes: number
           quotes_new: number
+          reviews: number
           source: string
           vendor_id: string
           vendor_name: string

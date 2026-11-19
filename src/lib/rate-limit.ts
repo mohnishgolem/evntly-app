@@ -42,6 +42,8 @@ export const RATE_LIMITS = {
   quoteUser: { max: 20, windowSeconds: 60 * 60 },
   reportUser: { max: 10, windowSeconds: 60 * 60 },
   reviewUser: { max: 10, windowSeconds: 60 * 60 },
+  // Guests saving a review draft before signing up (server-side drafts).
+  reviewDraftIp: { max: 20, windowSeconds: 60 * 60 },
   // Payment actions (checkout, plan changes, reviews), per user.
   paymentUser: { max: 30, windowSeconds: 10 * 60 },
   // Browser error reports (/api/client-errors), per IP.

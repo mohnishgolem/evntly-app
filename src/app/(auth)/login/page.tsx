@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
 import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
 import { BookingReturnNote, ReviewReturnNote } from "@/components/auth/booking-return-note";
-import { isReviewReturn } from "@/lib/past-client-reviews";
+import { isReviewReturn } from "@/lib/profile-reviews";
 import { authNotice } from "@/lib/auth-notices";
 import Link from "next/link";
 
