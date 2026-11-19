@@ -17,11 +17,11 @@ import type { SimilarVendor } from "@/lib/data/vendors";
 import { formatAudDollars } from "@/lib/payments/money";
 import { vendorPrice } from "@/lib/pricing-model";
 
-// Follow-up bookkeeping columns aren't part of what the list shows (and the
-// my_quote_requests RPC doesn't return them).
+// Follow-up bookkeeping and attribution columns aren't part of what the list
+// shows (and the my_quote_requests RPC doesn't return them).
 type Quote = Omit<
   Database["public"]["Tables"]["quote_requests"]["Row"],
-  "vendor_reminder_sent_at" | "client_reminder_sent_at" | "expiry_notice_sent_at"
+  "vendor_reminder_sent_at" | "client_reminder_sent_at" | "expiry_notice_sent_at" | "share_source"
 >;
 
 const STATUS_META: Record<string, { label: string; className: string }> = {

@@ -4,6 +4,7 @@ import { buildCsp, generateNonce } from "@/lib/csp";
 import { isNonCanonicalHost } from "@/lib/canonical-host";
 import { isUnknownCategoryPage } from "@/lib/category-page-paths";
 import { BOOK_INTENT_COOKIE, BOOK_INTENT_MAX_AGE_SECONDS, bookIntentPath, bookIntentRedirect } from "@/lib/booking-intent";
+import { SHARE_SOURCE_COOKIE, SHARE_SOURCE_MAX_AGE_SECONDS, shareSourceFromUrl } from "@/lib/share-profile";
 
 // Next.js 16 renamed Middleware to Proxy (same runtime semantics).
 // This refreshes the Supabase session cookie. Public pages (home, explore,
@@ -20,6 +21,8 @@ import { BOOK_INTENT_COOKIE, BOOK_INTENT_MAX_AGE_SECONDS, bookIntentPath, bookIn
 //
 // /vendor/<id>?book=1 (back from sign-up to book) becomes a short-lived
 // cookie plus a redirect to the clean URL; see lib/booking-intent.ts.
+// /vendor/<id>?src=share_* (a vendor's Share profile link) sets a cookie for
+// that vendor's page; see lib/share-profile.ts.
 //
 // A /vendor/<id> page for a listing the visitor can't see (suspended,
 // pending, removed or a bad id) gets a real 404 here: the page itself
@@ -56,6 +59,18 @@ export async function proxy(request: NextRequest) {
       response.cookies.getAll().forEach((c) => notFound.cookies.set(c));
       notFound.headers.set("Content-Security-Policy", csp);
       return notFound;
+    }
+    // A visit from a vendor's Share profile link or QR code
+    // (/vendor/<id>?src=share_*): remember it for this vendor's page only, so
+    // a quote request sent after signing up is credited to it.
+    const share = data ? shareSourceFromUrl(request.nextUrl) : null;
+    if (share) {
+      response.cookies.set(SHARE_SOURCE_COOKIE, share.source, {
+        path: bookIntentPath(share.vendorId),
+        maxAge: SHARE_SOURCE_MAX_AGE_SECONDS,
+        sameSite: "lax",
+        secure: request.nextUrl.protocol === "https:",
+      });
     }
   }
 

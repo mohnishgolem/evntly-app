@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
 import { PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind } from "@/lib/page-views";
 import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/lib/founding/sources";
+import { isShareSource } from "@/lib/share-profile";
 import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
@@ -65,10 +66,15 @@ export async function POST(request: NextRequest) {
   // landing view can arrive before <SourceCookie> has saved them, and the
   // cookie may still hold an earlier visit's source. Without tags, the cookie
   // (the same one funnel events use) carries the source between pages.
-  let source = null;
+  let source: string | null = null;
   if (kind === "founding" || kind === "founding_claim") {
     const params = parseSourceParams(body.params);
     source = (params && sourceFromParams(params)) || (await foundingSourceFromCookie());
+  } else if (kind === "vendor") {
+    // A vendor's Share profile link or QR code (?src=share_*); other vendor
+    // page views keep no source.
+    const src = parseSourceParams(body.params)?.src;
+    if (isShareSource(src)) source = src;
   }
   // Only sent when there is one, so other page views keep working if this
   // code is ever live before the page_views.source migration.

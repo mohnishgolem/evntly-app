@@ -1,0 +1,512 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Copy, Crop, Download, ImageIcon, Link2, RotateCcw, Share, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { copyText } from "@/components/copy-link-field";
+import { canvasToFile, drawArtwork, loadArtworkFonts, loadArtworkImage } from "@/lib/share-artwork";
+import {
+  clampCrop,
+  DEFAULT_CROP,
+  MAX_ZOOM,
+  panCrop,
+  SHARE_FORMATS,
+  shareFileName,
+  shareImageUrl,
+  shareProfileUrl,
+  STORY_STICKER_ZONE,
+  type ShareCrop,
+  type ShareFormat,
+  type SharePhoto,
+} from "@/lib/share-profile";
+import { cn } from "@/lib/utils";
+
+type Props = {
+  vendorId: string;
+  name: string;
+  category: string;
+  area: string;
+  photos: SharePhoto[];
+  /** Instagram/Facebook in-app browser: no file sharing or downloads there. */
+  inAppBrowser: boolean;
+  /** Site origin for the links (the dashboard passes SITE_URL). */
+  siteUrl: string;
+};
+
+type SaveResult = "saved" | "manual" | "cancelled" | "failed";
+type Outcome = { saved?: SaveResult; copied?: boolean };
+
+// Per-browser memory of the chosen photo and crops, so coming back to Share
+// profile shows the same artwork. Never sent anywhere; the listing is unchanged.
+type Stored = { photo?: string | null; crops?: Record<string, ShareCrop> };
+const storageKey = (vendorId: string) => `evntly_share_${vendorId}`;
+function readStored(vendorId: string): Stored {
+  try {
+    const raw = localStorage.getItem(storageKey(vendorId));
+    return raw ? (JSON.parse(raw) as Stored) : {};
+  } catch {
+    return {};
+  }
+}
+function writeStored(vendorId: string, value: Stored) {
+  try {
+    localStorage.setItem(storageKey(vendorId), JSON.stringify(value));
+  } catch {
+    // Private mode etc.: the edits just aren't remembered.
+  }
+}
+const cropKey = (format: ShareFormat, url: string | null) => `${format}:${url ?? "fallback"}`;
+
+function coarsePointer() {
+  try {
+    return matchMedia("(pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
+
+export function ShareProfile({ vendorId, name, category, area, photos, inAppBrowser, siteUrl }: Props) {
+  const [format, setFormat] = useState<ShareFormat>("story");
+  // This browser's last choice, if that photo is still on the listing. Only
+  // the canvas (drawn after mount) depends on it, so server and client markup match.
+  const [stored] = useState(() => (typeof window === "undefined" ? {} : readStored(vendorId)));
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() =>
+    stored.photo !== undefined && (stored.photo === null || photos.some((p) => p.url === stored.photo)) ? stored.photo : (photos[0]?.url ?? null)
+  );
+  const [crops, setCrops] = useState<Record<string, ShareCrop>>(() =>
+    Object.fromEntries(Object.entries(stored.crops ?? {}).map(([k, c]) => [k, clampCrop(c)]))
+  );
+  const [loaded, setLoaded] = useState<{ url: string; img: HTMLImageElement } | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [fontsReady, setFontsReady] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
+  const [outcome, setOutcome] = useState<Record<ShareFormat, Outcome>>({ story: {}, card: {} });
+  const [manualImage, setManualImage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<{ key: string; file: File } | null>(null);
+  const filePromise = useRef<Promise<File> | null>(null);
+  const drag = useRef<{ x: number; y: number; id: number } | null>(null);
+
+  const storyUrl = shareProfileUrl(vendorId, "share_story", siteUrl);
+  const linkUrl = shareProfileUrl(vendorId, "share_link", siteUrl);
+  const qrUrl = shareProfileUrl(vendorId, "share_qr", siteUrl);
+  const crop = crops[cropKey(format, photoUrl)] ?? DEFAULT_CROP;
+  const spec = SHARE_FORMATS[format];
+
+  useEffect(() => {
+    void loadArtworkFonts().then(() => setFontsReady(true));
+  }, []);
+
+  useEffect(() => {
+    writeStored(vendorId, { photo: photoUrl, crops });
+  }, [vendorId, photoUrl, crops]);
+
+  // Load the chosen photo (a resized copy, else the original).
+  useEffect(() => {
+    if (!photoUrl) return;
+    let cancelled = false;
+    loadArtworkImage(shareImageUrl(photoUrl, 2000))
+      .catch(() => loadArtworkImage(photoUrl))
+      .then(
+        (i) => !cancelled && setLoaded({ url: photoUrl, img: i }),
+        () => !cancelled && setFailedUrl(photoUrl)
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [photoUrl]);
+
+  const img = photoUrl && loaded?.url === photoUrl ? loaded.img : null;
+  const imgState: "loading" | "ready" | "failed" = !photoUrl || img ? "ready" : failedUrl === photoUrl ? "failed" : "loading";
+
+  const artKey = `${format}|${photoUrl}|${crop.zoom}|${crop.fx}|${crop.fy}|${fontsReady}|${imgState}`;
+
+  // Draw, then prepare the file in the background so Save can hand it to the
+  // share sheet straight from the tap (iOS wants that within the gesture).
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || imgState === "loading") return;
+    drawArtwork(canvas, format, img, crop, { name, category, area, qrUrl: format === "card" ? qrUrl : undefined });
+    fileRef.current = null;
+    const key = artKey;
+    const t = setTimeout(() => {
+      const p = canvasToFile(canvas, shareFileName(name, format));
+      filePromise.current = p;
+      p.then((file) => {
+        if (filePromise.current === p) fileRef.current = { key, file };
+      }).catch(() => {});
+    }, 200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artKey, img, name, category, area, qrUrl]);
+
+  const getFile = useCallback(async () => {
+    if (fileRef.current?.key === artKey) return fileRef.current.file;
+    const canvas = canvasRef.current;
+    if (!canvas) throw new Error("no_canvas");
+    return canvasToFile(canvas, shareFileName(name, format));
+  }, [artKey, name, format]);
+
+  function setCrop(next: ShareCrop) {
+    setCrops((c) => ({ ...c, [cropKey(format, photoUrl)]: clampCrop(next) }));
+  }
+
+  // --- photo crop by dragging the preview -----------------------------------
+  function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!adjusting || !img) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!drag.current || drag.current.id !== e.pointerId || !img) return;
+    const scale = spec.width / e.currentTarget.getBoundingClientRect().width; // CSS px → artwork px
+    const dx = (e.clientX - drag.current.x) * scale;
+    const dy = (e.clientY - drag.current.y) * scale;
+    drag.current = { ...drag.current, x: e.clientX, y: e.clientY };
+    setCrop(panCrop(crop, dx, dy, img.width, img.height, spec.photo.w, spec.photo.h));
+  }
+  function onPointerUp() {
+    drag.current = null;
+  }
+
+  // --- actions --------------------------------------------------------------
+  async function saveFile(): Promise<SaveResult> {
+    let file: File;
+    try {
+      file = await getFile();
+    } catch {
+      return "failed";
+    }
+    // Instagram's and Facebook's own browsers can't download or share files:
+    // show the image so it can be saved with a long-press.
+    if (inAppBrowser) {
+      setManualImage(URL.createObjectURL(file));
+      return "manual";
+    }
+    if (coarsePointer() && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return "saved";
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return "cancelled";
+        // Not allowed here (e.g. the tap's permission ran out): download instead.
+      }
+    }
+    try {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      return "saved";
+    } catch {
+      setManualImage(URL.createObjectURL(file));
+      return "manual";
+    }
+  }
+
+  async function run(f: ShareFormat, fn: () => Promise<Outcome>) {
+    setBusy(true);
+    try {
+      const next = await fn();
+      setOutcome((o) => ({ ...o, [f]: { ...o[f], ...next } }));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Copy first: it must happen inside the tap, before the share sheet opens.
+  const saveStoryAndCopy = () =>
+    run("story", async () => {
+      const copied = await copyText(storyUrl);
+      const saved = await saveFile();
+      return { copied, saved };
+    });
+  const saveOnly = () => run(format, async () => ({ saved: await saveFile() }));
+  const copyOnly = () => run(format, async () => ({ copied: await copyText(format === "story" ? storyUrl : linkUrl) }));
+
+  const shareCard = () =>
+    run("card", async () => {
+      if (inAppBrowser || !navigator.share) return { copied: await copyText(linkUrl) };
+      try {
+        const file = await getFile();
+        const text = `${name} on Evntly — view my profile & request a quote: ${linkUrl}`;
+        if (navigator.canShare?.({ files: [file], text })) await navigator.share({ files: [file], text });
+        else await navigator.share({ title: `${name} on Evntly`, text: `${name} on Evntly`, url: linkUrl });
+        return { saved: "saved" as const };
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return {};
+        return { copied: await copyText(linkUrl) };
+      }
+    });
+
+  const current = outcome[format];
+  const loading = imgState === "loading";
+  const selected = photos.find((p) => p.url === photoUrl);
+
+  return (
+    <div className="mx-auto max-w-md">
+      <div role="tablist" aria-label="Share format" className="mb-4 grid grid-cols-2 rounded-full bg-muted p-1">
+        {(["story", "card"] as const).map((f) => (
+          <button
+            key={f}
+            role="tab"
+            type="button"
+            aria-selected={format === f}
+            onClick={() => {
+              setFormat(f);
+              setAdjusting(false);
+            }}
+            className={cn(
+              "min-h-10 rounded-full text-sm font-semibold transition-colors",
+              format === f ? "bg-foreground text-background shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            {f === "story" ? "Story" : "Profile card"}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative mx-auto overflow-hidden rounded-2xl border border-border bg-black shadow-sm"         // Keep the actions in view on a phone: the preview is at most ~58% of the screen height.
+        style={{ aspectRatio: `${spec.width} / ${spec.height}`, width: `min(100%, ${format === "story" ? 340 : 400}px, calc(58dvh * ${spec.width / spec.height}))` }}>
+        <canvas
+          ref={canvasRef}
+          width={spec.width}
+          height={spec.height}
+          data-testid="share-canvas"
+          aria-label={`${format === "story" ? "Story" : "Profile card"} preview for ${name}`}
+          role="img"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className={cn("block h-full w-full", adjusting && "cursor-grab touch-none active:cursor-grabbing")}
+        />
+        {format === "story" && !adjusting && (
+          // A guide only — never part of the exported image.
+          <div
+            aria-hidden
+            className="pointer-events-none absolute flex items-center justify-center rounded-xl border-2 border-dashed border-white/70 text-[11px] font-semibold text-white/90"
+            style={{
+              left: `${(STORY_STICKER_ZONE.x / 1080) * 100}%`,
+              top: `${(STORY_STICKER_ZONE.y / 1920) * 100}%`,
+              width: `${(STORY_STICKER_ZONE.w / 1080) * 100}%`,
+              height: `${(STORY_STICKER_ZONE.h / 1920) * 100}%`,
+            }}
+          >
+            Link sticker goes here
+          </div>
+        )}
+        {loading && <div className="absolute inset-0 animate-pulse bg-muted" aria-label="Loading photo" />}
+        {adjusting && (
+          <p className="pointer-events-none absolute inset-x-0 top-2 text-center text-xs font-medium text-white drop-shadow">Drag to reposition</p>
+        )}
+      </div>
+
+      {imgState === "failed" && (
+        <p role="alert" className="mt-2 text-center text-sm text-destructive">
+          That photo couldn&apos;t be loaded. Pick another one.
+        </p>
+      )}
+
+      {adjusting ? (
+        <div className="mt-3 space-y-3 rounded-2xl border border-border p-3">
+          <label className="flex items-center gap-3 text-sm font-medium">
+            Zoom
+            <input
+              type="range"
+              min={1}
+              max={MAX_ZOOM}
+              step={0.01}
+              value={crop.zoom}
+              onChange={(e) => setCrop({ ...crop, zoom: Number(e.target.value) })}
+              className="flex-1 accent-primary"
+            />
+          </label>
+          <div className="flex gap-2">
+            <Button variant="outline" className="min-h-11 flex-1" onClick={() => setCrop(DEFAULT_CROP)}>
+              <RotateCcw className="size-4" aria-hidden /> Reset
+            </Button>
+            <Button className="min-h-11 flex-1" onClick={() => setAdjusting(false)}>
+              <Check className="size-4" aria-hidden /> Done
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex justify-center gap-2">
+          <Button variant="outline" className="min-h-11" onClick={() => setPicker(true)}>
+            <ImageIcon className="size-4" aria-hidden /> Change photo
+          </Button>
+          {img && (
+            <Button variant="ghost" className="min-h-11" onClick={() => setAdjusting(true)}>
+              <Crop className="size-4" aria-hidden /> Adjust crop
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="mt-5 space-y-2">
+        {format === "story" ? (
+          <>
+            <Button size="lg" className="w-full" disabled={busy || loading} onClick={saveStoryAndCopy}>
+              <Download className="size-4" aria-hidden /> Save Story &amp; Copy Link
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="min-h-11" disabled={busy || loading} onClick={saveOnly}>
+                <Download className="size-4" aria-hidden /> Save Story
+              </Button>
+              <Button variant="outline" className="min-h-11" disabled={busy} onClick={copyOnly}>
+                <Link2 className="size-4" aria-hidden /> Copy link
+              </Button>
+            </div>
+            <p className="rounded-xl bg-secondary/60 px-3 py-2.5 text-sm text-muted-foreground">
+              Post the Story on Instagram, then add the copied link as a <strong className="text-foreground">Link sticker</strong> labelled{" "}
+              <strong className="text-foreground">“Check availability”</strong> and place it in the clear space.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              <Button variant="outline" className="min-h-11" disabled={busy} onClick={copyOnly}>
+                <Copy className="size-4" aria-hidden /> Copy link
+              </Button>
+              <Button className="min-h-11" disabled={busy || loading} onClick={shareCard}>
+                <Share className="size-4" aria-hidden /> Share
+              </Button>
+              <Button variant="outline" className="min-h-11" disabled={busy || loading} onClick={saveOnly}>
+                <Download className="size-4" aria-hidden /> Save image
+              </Button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground">The QR code opens your Evntly profile, where customers can request a quote.</p>
+          </>
+        )}
+        <OutcomeNote
+          format={format}
+          outcome={current}
+          onRetrySave={saveOnly}
+          onRetryCopy={copyOnly}
+          link={format === "story" ? storyUrl : linkUrl}
+        />
+      </div>
+
+      <Dialog open={picker} onOpenChange={setPicker}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose a photo</DialogTitle>
+            <DialogDescription>Only this share image changes — your listing stays the same.</DialogDescription>
+          </DialogHeader>
+          {photos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Add portfolio photos to your listing to use one here. Until then, the Evntly design is used.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((p) => (
+                <button
+                  key={p.url}
+                  type="button"
+                  aria-pressed={p.url === photoUrl}
+                  aria-label={p.kind === "avatar" ? "Profile photo" : "Portfolio photo"}
+                  onClick={() => {
+                    setPhotoUrl(p.url);
+                    setPicker(false);
+                    setAdjusting(true);
+                  }}
+                  className={cn(
+                    "relative aspect-square overflow-hidden rounded-xl border-2 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    p.url === photoUrl ? "border-primary" : "border-transparent"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- storage thumbnails, sized by Supabase */}
+                  <img src={shareImageUrl(p.url, 300)} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  {p.kind === "avatar" && <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[10px] font-medium text-white">Profile photo</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          {selected && <p className="text-xs text-muted-foreground">After choosing, drag the preview to adjust the crop for this format.</p>}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!manualImage}
+        onOpenChange={(o) => {
+          if (!o && manualImage) {
+            URL.revokeObjectURL(manualImage);
+            setManualImage(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save your image</DialogTitle>
+            <DialogDescription>Press and hold the image, then choose Save to Photos. If that isn&apos;t offered, open this page in Safari or Chrome.</DialogDescription>
+          </DialogHeader>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a local blob of the exported artwork */}
+          {manualImage && <img src={manualImage} alt={`${name} share image`} className="mx-auto max-h-[60dvh] w-auto rounded-xl" />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function OutcomeNote({
+  format,
+  outcome,
+  onRetrySave,
+  onRetryCopy,
+  link,
+}: {
+  format: ShareFormat;
+  outcome: Outcome;
+  onRetrySave: () => void;
+  onRetryCopy: () => void;
+  link: string;
+}) {
+  const { saved, copied } = outcome;
+  if (saved === undefined && copied === undefined) return null;
+  const what = format === "story" ? "Story" : "Image";
+  const savedOk = saved === "saved" || saved === "manual";
+  return (
+    <div role="status" className="space-y-2 rounded-xl border border-border px-3 py-2.5 text-sm">
+      {saved !== undefined && (
+        <p className="flex items-center gap-2">
+          {savedOk ? <Check className="size-4 text-success" aria-hidden /> : <X className="size-4 text-destructive" aria-hidden />}
+          <span className="flex-1">
+            {saved === "saved" ? `${what} saved` : saved === "manual" ? `${what} ready to save` : saved === "cancelled" ? `${what} not saved` : `Couldn't save the ${what.toLowerCase()}`}
+          </span>
+          {!savedOk && (
+            <Button size="sm" variant="outline" onClick={onRetrySave}>
+              Try again
+            </Button>
+          )}
+        </p>
+      )}
+      {copied !== undefined && (
+        <p className="flex items-center gap-2">
+          {copied ? <Check className="size-4 text-success" aria-hidden /> : <X className="size-4 text-destructive" aria-hidden />}
+          <span className="flex-1">{copied ? "Link copied" : "Couldn't copy the link"}</span>
+          {!copied && (
+            <Button size="sm" variant="outline" onClick={onRetryCopy}>
+              Try again
+            </Button>
+          )}
+        </p>
+      )}
+      {copied === false && (
+        <input
+          readOnly
+          value={link}
+          aria-label="Your profile link"
+          onFocus={(e) => e.currentTarget.select()}
+          className="min-h-10 w-full rounded-lg border border-border bg-muted/40 px-2 text-xs"
+        />
+      )}
+    </div>
+  );
+}

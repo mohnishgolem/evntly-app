@@ -2330,6 +2330,7 @@ export type Database = {
           responded_at: string | null
           service_description: string | null
           service_type: string | null
+          share_source: string | null
           status: string
           stripe_session_id: string | null
           travel_fee_cents: number | null
@@ -2374,6 +2375,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null
@@ -2418,6 +2420,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status?: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null

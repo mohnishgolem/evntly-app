@@ -19,6 +19,7 @@ import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
 import { BOOK_INTENT_COOKIE, bookIntentPath } from "@/lib/booking-intent";
 import { EVENT_TYPES } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import type { ShareSource } from "@/lib/share-profile";
 
 // Mirrors the vendor's calendar settings so the form can warn before
 // submitting; fill_quote_request_vendor enforces the same rules in the DB.
@@ -85,6 +86,7 @@ export function BookVendor({
   availability,
   openRequest,
   autoOpen,
+  shareSource,
   priceLabel,
   paymentsEnabled,
   hasTabBar,
@@ -98,6 +100,8 @@ export function BookVendor({
   availability?: VendorAvailability;
   openRequest?: OpenRequest | null;
   autoOpen?: boolean;
+  /** The vendor's Share profile tag this visit came with (?src=share_*). */
+  shareSource?: ShareSource | null;
   priceLabel?: string | null;
   paymentsEnabled: boolean;
   /** Signed-in phones show the app's bottom tab bar; sit the sticky bar above it. */
@@ -123,7 +127,9 @@ export function BookVendor({
     if (autoOpen) document.cookie = `${BOOK_INTENT_COOKIE}=; Max-Age=0; Path=${bookIntentPath(vendorId)}`;
   }, [autoOpen, vendorId]);
 
-  const bookPath = `/vendor/${vendorId}?book=1`;
+  // Keeps the Share profile tag through sign-up, so the request is credited
+  // even when sign-up ends in a different browser (e.g. the email's link).
+  const bookPath = `/vendor/${vendorId}?book=1${shareSource ? `&src=${shareSource}` : ""}`;
   const signupHref = `/signup?next=${encodeURIComponent(bookPath)}`;
 
   function primary(className?: string) {

@@ -25,6 +25,7 @@ import { sampleListingsHidden } from "@/lib/sample-listings";
 import { cookies } from "next/headers";
 import { BOOK_INTENT_COOKIE } from "@/lib/booking-intent";
 import { priceSummary, vendorPrice } from "@/lib/pricing-model";
+import { isShareSource, SHARE_SOURCE_COOKIE } from "@/lib/share-profile";
 
 export async function generateMetadata({
   params,
@@ -50,14 +51,22 @@ export async function generateMetadata({
 
 export default async function VendorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const cookieStore = await cookies();
   // The customer pressed "Book this vendor" before signing in: the proxy
   // turned ?book=1 into this cookie, so reopen the booking form now they're
   // back (see lib/booking-intent.ts).
-  const autoOpenBooking = (await cookies()).get(BOOK_INTENT_COOKIE)?.value === "1";
+  const autoOpenBooking = cookieStore.get(BOOK_INTENT_COOKIE)?.value === "1";
+  // Arrived from the vendor's Share profile link or QR code: the sign-up
+  // round trip keeps the tag, so the quote request is still credited even if
+  // sign-up finishes in another browser (see lib/share-profile.ts).
+  const srcParam = (await searchParams).src;
+  const shareSource = [Array.isArray(srcParam) ? srcParam[0] : srcParam, cookieStore.get(SHARE_SOURCE_COOKIE)?.value].find(isShareSource) ?? null;
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 
@@ -335,6 +344,7 @@ export default async function VendorDetailPage({
                 }}
                 openRequest={openRequest}
                 autoOpen={autoOpenBooking}
+                shareSource={shareSource}
                 priceLabel={priceLabel}
                 paymentsEnabled={payments.enabled}
                 hasTabBar={role === "customer" || role === "vendor"}
