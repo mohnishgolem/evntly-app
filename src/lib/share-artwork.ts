@@ -10,6 +10,8 @@ export type ArtworkDetails = {
   category: string;
   /** Profile card only: what the QR code opens. */
   qrUrl?: string;
+  /** The Evntly app icon (public/icons/icon-512.png) for the QR's centre badge. */
+  logo?: CanvasImageSource | null;
 };
 
 const CORAL = "#e8604a";
@@ -150,37 +152,43 @@ function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
 }
 
 /**
- * The QR code as an Evntly tile: a white rounded card with a black outline,
- * rounded finder squares, joined rounded modules, the Evntly badge in the
- * middle and a "Scan for a quote" pill. Error correction Q (25%) covers the
- * badge, and at least ~5 modules of white stay around the code (quiet zone).
- * Returns the tile's height.
+ * The QR code as an Evntly tile: a white rounded card with a black outline
+ * and a soft shadow, rounded finder squares, joined rounded modules, the
+ * Evntly app icon in the middle and a "Scan for a quote" pill. Error
+ * correction Q (25%) covers the logo, and at least ~5 modules of white stay
+ * around the code (quiet zone). Returns the tile's height.
  */
-export function drawQrTile(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, w: number) {
-  const border = 6;
+export function drawQrTile(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, w: number, logo?: CanvasImageSource | null) {
+  const border = 5;
   const pad = 26;
   const area = w - 2 * (border + pad);
   const qr = QRCode.create(text, { errorCorrectionLevel: "Q" });
   const n = qr.modules.size;
   const m = Math.floor(area / n); // whole pixels per module keep edges crisp
   const size = m * n;
-  const pillH = 54;
+  const pillH = 58;
   const h = border + pad + area + 14 + pillH + 18 + border;
   const ox = x + Math.round((w - size) / 2);
   const oy = y + border + pad + Math.round((area - size) / 2);
 
-  // Tile.
+  // Tile, lifted off the artwork by a soft shadow.
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.22)";
+  ctx.shadowBlur = 36;
+  ctx.shadowOffsetY = 12;
   ctx.fillStyle = "#000";
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, 46);
+  ctx.roundRect(x, y, w, h, 48);
   ctx.fill();
+  ctx.restore();
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.roundRect(x + border, y + border, w - 2 * border, h - 2 * border, 40);
+  ctx.roundRect(x + border, y + border, w - 2 * border, h - 2 * border, 43);
   ctx.fill();
 
-  // Centre badge: an odd number of modules wide, ~22% of the code.
-  let L = Math.round(n * 0.22);
+  // Centre logo: an odd number of modules wide, ~25% of the code, with a
+  // one-module white ring so it never touches the dots.
+  let L = Math.round(n * 0.25);
   if (L % 2 === 0) L += 1;
   const c0 = (n - L) / 2;
   const isFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
@@ -223,20 +231,31 @@ export function drawQrTile(ctx: CanvasRenderingContext2D, text: string, x: numbe
     ctx.fill();
   }
 
-  // Evntly badge.
+  // Evntly logo: the app icon (wordmark on black), cropped in so the
+  // wordmark fills the badge, in a rounded square like the home-screen icon.
   const bs = L * m;
   const bx = ox + c0 * m, by = oy + c0 * m;
-  ctx.fillStyle = "#000";
+  ctx.save();
   ctx.beginPath();
-  ctx.roundRect(bx, by, bs, bs, bs * 0.26);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  let fs = Math.round(bs * 0.36);
-  ctx.font = `${fs}px ${logoFamily()}`;
-  while (fs > 8 && ctx.measureText("Evntly").width > bs * 0.82) ctx.font = `${--fs}px ${logoFamily()}`;
-  ctx.fillText("Evntly", bx + bs / 2, by + bs / 2 + fs * 0.06);
+  ctx.roundRect(bx, by, bs, bs, bs * 0.24);
+  ctx.clip();
+  ctx.fillStyle = "#000";
+  ctx.fillRect(bx, by, bs, bs);
+  if (logo) {
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(logo, 64, 64, 384, 384, bx, by, bs, bs);
+  } else {
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    let fs = Math.round(bs * 0.36);
+    ctx.font = `${fs}px ${logoFamily()}`;
+    while (fs > 8 && ctx.measureText("Evntly").width > bs * 0.78) ctx.font = `${--fs}px ${logoFamily()}`;
+    ctx.fillText("Evntly", bx + bs / 2, by + bs / 2 + fs * 0.06);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+  ctx.restore();
 
   // "Scan for a quote" pill with the coral scan corners.
   const px = x + border + 16, pw = w - 2 * (border + 16);
@@ -245,9 +264,10 @@ export function drawQrTile(ctx: CanvasRenderingContext2D, text: string, x: numbe
   ctx.beginPath();
   ctx.roundRect(px, py, pw, pillH, pillH / 2);
   ctx.fill();
-  ctx.font = `600 23px ${SANS}`;
+  ctx.font = `600 26px ${SANS}`;
+  ctx.textBaseline = "middle";
   const label = "Scan for a quote";
-  const icon = 24, gap = 12;
+  const icon = 26, gap = 14;
   const tw = ctx.measureText(label).width;
   const sx = px + (pw - (icon + gap + tw)) / 2;
   const iy = py + (pillH - icon) / 2;
@@ -276,10 +296,11 @@ function drawCard(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   ctx.fillStyle = CORAL;
   ctx.fillRect(0, top, 1080, 8);
 
-  // QR tile on the right, details on the left.
-  const tileW = 330;
+  // QR tile on the right, floating over the edge of the photo (444 px tall,
+  // so it ends ~100 px above the bottom); details on the left.
+  const tileW = 380;
   const tileX = 1080 - 52 - tileW;
-  if (d.qrUrl) drawQrTile(ctx, d.qrUrl, tileX, top + 8 + 12, tileW); // 390 px tall, fits the 430 px footer
+  if (d.qrUrl) drawQrTile(ctx, d.qrUrl, tileX, top - 110, tileW, d.logo);
 
   // Details on the left, laid out top to bottom so nothing can overlap:
   // name (1–2 lines), category, call to action (no location). The QR tile

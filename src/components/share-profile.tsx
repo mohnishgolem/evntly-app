@@ -85,6 +85,7 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
   const [loaded, setLoaded] = useState<{ url: string; img: HTMLImageElement } | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [fontsReady, setFontsReady] = useState(false);
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [picker, setPicker] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const [outcome, setOutcome] = useState<Record<ShareFormat, Outcome>>({ story: {}, card: {} });
@@ -117,6 +118,8 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
 
   useEffect(() => {
     void loadArtworkFonts().then(() => setFontsReady(true));
+    // The Evntly app icon for the QR code's centre (same origin).
+    loadArtworkImage("/icons/icon-512.png").then(setLogo, () => {});
   }, []);
 
   useEffect(() => {
@@ -141,14 +144,14 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
   const img = photoUrl && loaded?.url === photoUrl ? loaded.img : null;
   const imgState: "loading" | "ready" | "failed" = !photoUrl || img ? "ready" : failedUrl === photoUrl ? "failed" : "loading";
 
-  const artKey = `${format}|${photoUrl}|${crop.zoom}|${crop.fx}|${crop.fy}|${fontsReady}|${imgState}`;
+  const artKey = `${format}|${photoUrl}|${crop.zoom}|${crop.fx}|${crop.fy}|${fontsReady}|${imgState}|${!!logo}`;
 
   // Draw, then prepare the file in the background so Save can hand it to the
   // share sheet straight from the tap (iOS wants that within the gesture).
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || imgState === "loading") return;
-    drawArtwork(canvas, format, img, crop, { name, category, qrUrl: format === "card" ? qrUrl : undefined });
+    drawArtwork(canvas, format, img, crop, { name, category, qrUrl: format === "card" ? qrUrl : undefined, logo });
     fileRef.current = null;
     const key = artKey;
     const t = setTimeout(() => {
@@ -160,7 +163,7 @@ export function ShareProfile({ vendorId, name, category, photos, inAppBrowser, s
     }, 200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artKey, img, name, category, qrUrl]);
+  }, [artKey, img, name, category, qrUrl, logo]);
 
   const getFile = useCallback(async () => {
     if (fileRef.current?.key === artKey) return fileRef.current.file;
