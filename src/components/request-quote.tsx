@@ -205,7 +205,9 @@ export function BookVendor({
       <div aria-hidden className="h-20 md:hidden print:hidden" />
       <div
         className={cn(
-          "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 md:hidden print:hidden",
+          // m-0: the vendor page wraps this in space-y-2, whose 8px margin
+          // lifted the fixed bar off the tab bar and left a see-through gap.
+          "glass-material fixed inset-x-0 z-30 m-0 border-t border-border/60 px-4 py-3 md:hidden print:hidden",
           hasTabBar
             ? "bottom-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
