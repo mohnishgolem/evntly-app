@@ -6,68 +6,124 @@ import { categoryPages } from "@/lib/seo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
 
+const linkClass = "hover:text-foreground";
+const headingClass = "mb-3 text-xs font-semibold tracking-wide text-foreground uppercase";
+
+// Links grouped into three short columns (19 Nov: one wrapped row of 11 links
+// read as clutter). Every page still links every category landing page.
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 print:hidden">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-          <Logo />
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <Link href="/how-it-works" className="hover:text-foreground">
-              How it works
-            </Link>
-            <Link href="/help" className="hover:text-foreground">
-              Help &amp; Guides
-            </Link>
-            <Link href="/terms" className="hover:text-foreground">
-              Terms &amp; Conditions
-            </Link>
-            <Link href="/privacy-policy" className="hover:text-foreground">
-              Privacy Policy
-            </Link>
-            <AdChoicesLink className="text-left hover:text-foreground" />
-            <Link href="/cancellation-refund-dispute-policy" className="hover:text-foreground">
-              Cancellations &amp; refunds
-            </Link>
-            <Link href="/vendor-agreement" className="hover:text-foreground">
-              Vendor Agreement
-            </Link>
-            <a href="mailto:hello@evntlyapp.com" className="hover:text-foreground">
-              Contact
-            </a>
-            <Link href="/founding-vendors" className="hover:text-foreground">
-              Founding vendors
-            </Link>
-            <Link href="/vendor-signup" className="hover:text-foreground">
-              List your business
-            </Link>
-            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
-              Instagram
-            </a>
-          </nav>
+        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="max-w-xs">
+            <Logo />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Find and book trusted event vendors in {LAUNCH_CITY}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:contents">
+            <nav aria-label="Evntly">
+              <p className={headingClass}>Evntly</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="/how-it-works" className={linkClass}>
+                    How it works
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className={linkClass}>
+                    Help &amp; Guides
+                  </Link>
+                </li>
+                <li>
+                  <a href="mailto:hello@evntlyapp.com" className={linkClass}>
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    Instagram
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            <nav aria-label="For vendors">
+              <p className={headingClass}>For vendors</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="/vendor-signup" className={linkClass}>
+                    List your business
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/founding-vendors" className={linkClass}>
+                    Founding vendors
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/vendor-agreement" className={linkClass}>
+                    Vendor Agreement
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            <nav aria-label="Legal">
+              <p className={headingClass}>Legal</p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="/terms" className={linkClass}>
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy-policy" className={linkClass}>
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cancellation-refund-dispute-policy" className={linkClass}>
+                    Cancellations &amp; refunds
+                  </Link>
+                </li>
+                <AdChoicesListItem />
+              </ul>
+            </nav>
+          </div>
         </div>
+
         {/* Every category landing page, linked from every page. */}
-        <nav aria-label={`Event vendors in ${LAUNCH_CITY}`} className="mb-6">
-          <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Event vendors in {LAUNCH_CITY}
-          </p>
+        <nav aria-label={`Event vendors in ${LAUNCH_CITY}`} className="mt-10 border-t border-border/60 pt-6">
+          <p className={headingClass}>Event vendors in {LAUNCH_CITY}</p>
           <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
             {categoryPages().map((p) => (
               <li key={p.slug}>
-                <Link href={p.path} className="hover:text-foreground">
+                <Link href={p.path} className={linkClass}>
                   {p.heading}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        <p className="text-xs text-muted-foreground">
-          Sai Mohnish Golem trading as Evntly · ABN 49 193 658 959 · Sydney, Australia
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Evntly. All rights reserved.
-        </p>
+
+        <div className="mt-6 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+          <p>Sai Mohnish Golem trading as Evntly · ABN 49 193 658 959 · Sydney, Australia</p>
+          <p>© {new Date().getFullYear()} Evntly. All rights reserved.</p>
+        </div>
       </div>
     </footer>
+  );
+}
+
+// AdChoicesLink renders nothing when the Meta pixel isn't configured; wrap it
+// so that case doesn't leave an empty <li>.
+function AdChoicesListItem() {
+  return (
+    <li className="empty:hidden">
+      <AdChoicesLink className={`text-left ${linkClass}`} />
+    </li>
   );
 }
