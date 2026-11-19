@@ -1,0 +1,167 @@
+[
+  {
+    "name": "opens on the Story tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Story canvas is 1080 × 1920",
+    "ok": true,
+    "detail": "1080×1920"
+  },
+  {
+    "name": "crop changes the artwork",
+    "ok": true,
+    "detail": "mean diff 38.4"
+  },
+  {
+    "name": "Story export is exactly 1080 × 1920",
+    "ok": true,
+    "detail": "dj-valgen-evntly-story.jpg 1080×1920"
+  },
+  {
+    "name": "Story export matches the cropped preview",
+    "ok": true,
+    "detail": "mean abs diff 0.76 / 255 (JPEG)"
+  },
+  {
+    "name": "Story has no QR code",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Card canvas is 1080 × 1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "card crop is separate from the Story crop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Card export is exactly 1080 × 1350",
+    "ok": true,
+    "detail": "dj-valgen-evntly-profile-card.jpg 1080×1350"
+  },
+  {
+    "name": "Card export matches the cropped preview",
+    "ok": true,
+    "detail": "mean abs diff 1.00"
+  },
+  {
+    "name": "QR in the exported card scans",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7?src=share_qr"
+  },
+  {
+    "name": "QR opens the public listing tagged share_qr",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "QR still scans at 400 px wide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "crop survives a reload (local only)",
+    "ok": true,
+    "detail": "diff 0.00"
+  },
+  {
+    "name": "partial: link copied + Story not saved shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Story link copied is tagged share_story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "retry save succeeds",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "card link is tagged share_link",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "partial: Story saved + copy failed shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "manual link field offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "copy retry button offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "in-app browser: long-press image shown at full size",
+    "ok": true,
+    "detail": "1080×1920"
+  },
+  {
+    "name": "fallback uses Evntly coral",
+    "ok": true,
+    "detail": "231,95,73"
+  },
+  {
+    "name": "no Adjust crop without a photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "og:title names the vendor",
+    "ok": true,
+    "detail": "DJ Valgen — DJ in Sydney, NSW"
+  },
+  {
+    "name": "og:image is the per-vendor image",
+    "ok": true,
+    "detail": "http://localhost:3007/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7/opengraph-image?1a47031a8a768f66"
+  },
+  {
+    "name": "OG image is 1200 × 630 PNG",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "QR visit sets the share cookie for this vendor only",
+    "ok": true,
+    "detail": "share_qr path=/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7"
+  },
+  {
+    "name": "page view carries src=share_qr",
+    "ok": true,
+    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"cff12eba-03bd-4a56-b7a3-3814e650b8ab\",\"params\":{\"src\":\"share_qr\"}}"
+  },
+  {
+    "name": "guest Book link keeps the share tag through sign-up",
+    "ok": true,
+    "detail": "/signup?next=%2Fvendor%2Fd5984a9a-70dc-4e42-a1ce-dcdd2022d1d7%3Fbook%3D1%26src%3Dshare_qr"
+  },
+  {
+    "name": "switching to Log in keeps the return path",
+    "ok": true,
+    "detail": "/login?next=%2Fvendor%2Fd5984a9a-70dc-4e42-a1ce-dcdd2022d1d7%3Fbook%3D1%26src%3Dshare_qr"
+  },
+  {
+    "name": "return URL drops book=1, keeps src and re-sets the cookie",
+    "ok": true,
+    "detail": "/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7?src=share_qr cookie=share_qr status=200"
+  },
+  {
+    "name": "untagged visit sets no share cookie",
+    "ok": true,
+    "detail": ""
+  }
+]
