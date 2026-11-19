@@ -8,14 +8,12 @@ import { coverRect, SHARE_FORMATS, type ShareCrop, type ShareFormat } from "@/li
 export type ArtworkDetails = {
   name: string;
   category: string;
-  area: string;
   /** Profile card only: what the QR code opens. */
   qrUrl?: string;
 };
 
 const CORAL = "#e8604a";
 const INK = "#1d1d1f";
-const MUTED = "#5f5f66";
 const SANS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 /** The wordmark's font family (next/font hashes the name; see app/layout.tsx). */
@@ -125,22 +123,6 @@ function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   return h;
 }
 
-/** A small map pin, drawn so it never depends on an emoji font. */
-function pin(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, color: string) {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(x + s / 2, y + s * 0.38, s * 0.38, Math.PI, 0);
-  ctx.lineTo(x + s / 2, y + s);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.beginPath();
-  ctx.arc(x + s / 2, y + s * 0.38, s * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
 function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   // Shade top and bottom so the logo and details read on any photo.
   verticalShade(ctx, 0, 420, 0.45, 0);
@@ -155,8 +137,8 @@ function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   // above Instagram's reply bar.
   const name = fitText(ctx, d.name, 936, 2, [96, 88, 80, 72, 64]);
   const lineH = Math.round(name.size * 1.08);
-  const areaBaseline = 1700;
-  const nameLast = areaBaseline - 70;
+  // No location: some vendors don't want it shown.
+  const nameLast = 1690;
   const nameFirst = nameLast - lineH * (name.lines.length - 1);
   const pillTop = nameFirst - name.size - 40 - 58;
 
@@ -165,26 +147,126 @@ function drawStory(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   ctx.fillStyle = "#fff";
   ctx.font = `800 ${name.size}px ${SANS}`;
   name.lines.forEach((l, i) => ctx.fillText(l, 72, nameFirst + i * lineH));
-
-  pin(ctx, 72, areaBaseline - 36, 38, CORAL);
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  ctx.font = `600 42px ${SANS}`;
-  ctx.fillText(d.area, 124, areaBaseline);
 }
 
-function drawQr(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, box: number) {
-  const qr = QRCode.create(text, { errorCorrectionLevel: "M" });
+/**
+ * The QR code as an Evntly tile: a white rounded card with a black outline,
+ * rounded finder squares, joined rounded modules, the Evntly badge in the
+ * middle and a "Scan for a quote" pill. Error correction Q (25%) covers the
+ * badge, and at least ~5 modules of white stay around the code (quiet zone).
+ * Returns the tile's height.
+ */
+export function drawQrTile(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, w: number) {
+  const border = 6;
+  const pad = 26;
+  const area = w - 2 * (border + pad);
+  const qr = QRCode.create(text, { errorCorrectionLevel: "Q" });
   const n = qr.modules.size;
-  const m = Math.floor(box / n); // whole pixels per module keep the edges sharp
+  const m = Math.floor(area / n); // whole pixels per module keep edges crisp
   const size = m * n;
-  const ox = x + Math.floor((box - size) / 2);
-  const oy = y + Math.floor((box - size) / 2);
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(ox - m * 4, oy - m * 4, size + m * 8, size + m * 8); // quiet zone
+  const pillH = 54;
+  const h = border + pad + area + 14 + pillH + 18 + border;
+  const ox = x + Math.round((w - size) / 2);
+  const oy = y + border + pad + Math.round((area - size) / 2);
+
+  // Tile.
   ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 46);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.roundRect(x + border, y + border, w - 2 * border, h - 2 * border, 40);
+  ctx.fill();
+
+  // Centre badge: an odd number of modules wide, ~22% of the code.
+  let L = Math.round(n * 0.22);
+  if (L % 2 === 0) L += 1;
+  const c0 = (n - L) / 2;
+  const isFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+  const inBadge = (r: number, c: number) => r >= c0 - 1 && r < c0 + L + 1 && c >= c0 - 1 && c < c0 + L + 1;
+  const dark = (r: number, c: number) => r >= 0 && c >= 0 && r < n && c < n && !!qr.modules.get(r, c) && !isFinder(r, c) && !inBadge(r, c);
+
+  // Modules: each corner is rounded unless a neighbour joins it, so runs of
+  // modules read as one soft shape.
+  ctx.fillStyle = "#000";
+  const rad = m * 0.5;
   for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) if (qr.modules.get(r, c)) ctx.fillRect(ox + c * m, oy + r * m, m, m);
+    for (let c = 0; c < n; c++) {
+      if (!dark(r, c)) continue;
+      const up = dark(r - 1, c), down = dark(r + 1, c), left = dark(r, c - 1), right = dark(r, c + 1);
+      ctx.beginPath();
+      ctx.roundRect(ox + c * m, oy + r * m, m, m, [
+        up || left ? 0 : rad,
+        up || right ? 0 : rad,
+        down || right ? 0 : rad,
+        down || left ? 0 : rad,
+      ]);
+      ctx.fill();
+    }
   }
+
+  // Finder squares.
+  for (const [fr, fc] of [[0, 0], [0, n - 7], [n - 7, 0]]) {
+    const fx = ox + fc * m, fy = oy + fr * m;
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.roundRect(fx, fy, 7 * m, 7 * m, 2.2 * m);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.roundRect(fx + m, fy + m, 5 * m, 5 * m, 1.5 * m);
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.roundRect(fx + 2 * m, fy + 2 * m, 3 * m, 3 * m, 0.9 * m);
+    ctx.fill();
+  }
+
+  // Evntly badge.
+  const bs = L * m;
+  const bx = ox + c0 * m, by = oy + c0 * m;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bs, bs, bs * 0.26);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  let fs = Math.round(bs * 0.36);
+  ctx.font = `${fs}px ${logoFamily()}`;
+  while (fs > 8 && ctx.measureText("Evntly").width > bs * 0.82) ctx.font = `${--fs}px ${logoFamily()}`;
+  ctx.fillText("Evntly", bx + bs / 2, by + bs / 2 + fs * 0.06);
+
+  // "Scan for a quote" pill with the coral scan corners.
+  const px = x + border + 16, pw = w - 2 * (border + 16);
+  const py = y + h - border - 18 - pillH;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, pillH, pillH / 2);
+  ctx.fill();
+  ctx.font = `600 23px ${SANS}`;
+  const label = "Scan for a quote";
+  const icon = 24, gap = 12;
+  const tw = ctx.measureText(label).width;
+  const sx = px + (pw - (icon + gap + tw)) / 2;
+  const iy = py + (pillH - icon) / 2;
+  ctx.strokeStyle = CORAL;
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = "round";
+  const k = 8;
+  for (const [cx, cy, dx, dy] of [[sx, iy, 1, 1], [sx + icon, iy, -1, 1], [sx, iy + icon, 1, -1], [sx + icon, iy + icon, -1, -1]]) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + dy * k);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx + dx * k, cy);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "left";
+  ctx.fillText(label, sx + icon + gap, py + pillH / 2 + 1);
+  ctx.textBaseline = "alphabetic";
+  return h;
 }
 
 function drawCard(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
@@ -194,41 +276,34 @@ function drawCard(ctx: CanvasRenderingContext2D, d: ArtworkDetails) {
   ctx.fillStyle = CORAL;
   ctx.fillRect(0, top, 1080, 8);
 
-  // QR on the right, details on the left.
-  const qrBox = 252;
-  const qrX = 1080 - 60 - qrBox;
-  const qrY = top + 8 + Math.round((1350 - top - 8 - qrBox) / 2);
-  if (d.qrUrl) drawQr(ctx, d.qrUrl, qrX, qrY, qrBox);
+  // QR tile on the right, details on the left.
+  const tileW = 330;
+  const tileX = 1080 - 52 - tileW;
+  if (d.qrUrl) drawQrTile(ctx, d.qrUrl, tileX, top + 8 + 12, tileW); // 390 px tall, fits the 430 px footer
 
+  // Details on the left, laid out top to bottom so nothing can overlap:
+  // name (1–2 lines), category, call to action (no location). The QR tile
+  // carries the Evntly badge. A two-line name uses a smaller size.
   const left = 64;
-  const maxW = qrX - left - 48;
-  const name = fitText(ctx, d.name, maxW, 2, [64, 58, 52, 46, 40]);
+  const maxW = tileX - left - 44;
+  let name = fitText(ctx, d.name, maxW, 2, [62, 56, 50]);
+  if (name.lines.length > 1) name = fitText(ctx, d.name, maxW, 2, [46, 42, 38]);
   const lineH = Math.round(name.size * 1.1);
-  let y = top + 8 + 40 + name.size;
+  let y = top + 8 + 60 + name.size;
   ctx.fillStyle = INK;
   ctx.font = `800 ${name.size}px ${SANS}`;
   name.lines.forEach((l, i) => ctx.fillText(l, left, y + i * lineH));
-  y += lineH * (name.lines.length - 1) + 50;
+  y += lineH * (name.lines.length - 1) + 44;
 
-  ctx.font = `700 30px ${SANS}`;
+  ctx.font = `700 28px ${SANS}`;
   ctx.fillStyle = CORAL;
   const cat = d.category.toUpperCase();
-  ctx.fillText(cat, left, y);
-  const catW = ctx.measureText(cat).width;
-  ctx.fillStyle = MUTED;
-  ctx.font = `500 32px ${SANS}`;
-  const area = wrap(ctx, `· ${d.area}`, maxW - catW - 10, 1)[0];
-  ctx.fillText(area, left + catW + 10, y);
+  ctx.fillText(wrap(ctx, cat, maxW, 1)[0], left, y);
 
-  // Call to action, and the wordmark at the bottom.
+  // Call to action (up to two lines) under the details.
   ctx.fillStyle = INK;
-  ctx.font = `600 29px ${SANS}`;
-  const cta = wrap(ctx, "Scan to view profile & request a quote.", maxW, 2);
-  const ctaY = 1350 - 104 - (cta.length - 1) * 36;
-  cta.forEach((l, i) => ctx.fillText(l, left, ctaY + i * 36));
-  ctx.fillStyle = CORAL;
-  ctx.font = `48px ${logoFamily()}`;
-  ctx.fillText("Evntly", left, 1350 - 40);
+  ctx.font = `600 30px ${SANS}`;
+  wrap(ctx, "Scan to view profile & request a quote.", maxW, 2).forEach((l, i) => ctx.fillText(l, left, y + 64 + i * 40));
 }
 
 /** Draws the whole artwork for a format onto a canvas sized to it. */

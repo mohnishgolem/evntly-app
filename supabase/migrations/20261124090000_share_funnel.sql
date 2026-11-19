@@ -19,6 +19,8 @@
 --      prepared     vendor save/copy/share actions (intent, not posts)
 --    Admin accounts and browsers admins have used are left out, as in
 --    admin_funnel.
+-- 3. admin_share_funnel_by_vendor(p_days): the same numbers per vendor and
+--    channel, for every vendor with any share activity in the window.
 --
 -- Depends on 20261123090000_vendor_share_profile (page_views share sources,
 -- quote_requests.share_source).
@@ -92,3 +94,57 @@ $$;
 
 revoke execute on function public.admin_share_funnel(integer) from public, anon;
 grant execute on function public.admin_share_funnel(integer) to authenticated;
+
+-- 3 ---------------------------------------------------------------------------
+create or replace function public.admin_share_funnel_by_vendor(p_days integer default 30)
+returns table (vendor_id text, vendor_name text, source text, visitors bigint, accounts bigint, verified bigint, quotes bigint, quotes_new bigint, prepared bigint)
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  with since as (select now() - make_interval(days => least(greatest(p_days, 1), 365)) as t),
+  admins as (select u.id::uuid as id from public.users u where u.role = 'admin'),
+  admin_browsers as (select distinct v.visitor_id from public.page_views v where v.visitor_id is not null and v.user_id in (select id from admins)),
+  views as (
+    select v.vendor_id::text as vendor_id, v.source, v.visitor_id from public.page_views v, since
+    where v.kind = 'vendor' and v.source in ('share_story', 'share_link', 'share_qr') and v.created_at >= since.t
+      and (v.user_id is null or v.user_id not in (select id from admins))
+      and v.visitor_id not in (select visitor_id from admin_browsers)
+  ),
+  accounts as (
+    select e.vendor_id, e.source, e.user_id, au.email_confirmed_at is not null as verified
+    from public.share_funnel_events e
+    join auth.users au on au.id = e.user_id, since
+    where e.event = 'account_created' and e.created_at >= since.t and e.user_id not in (select id from admins)
+  ),
+  quotes as (
+    select q.vendor_id::text as vendor_id, q.share_source as source, q.client_user_id from public.quote_requests q, since
+    where q.share_source is not null and q.created_at >= since.t
+      and (q.client_user_id is null or q.client_user_id not in (select id from admins))
+  ),
+  prepared as (
+    select e.vendor_id, e.source, count(*) as n from public.share_funnel_events e, since
+    where e.event = 'prepared' and e.created_at >= since.t and (e.user_id is null or e.user_id not in (select id from admins))
+    group by e.vendor_id, e.source
+  ),
+  pairs as (
+    select vendor_id, source from views union select vendor_id, source from accounts
+    union select vendor_id, source from quotes union select vendor_id, source from prepared
+  )
+  select p.vendor_id, sp.name, p.source,
+    (select count(distinct v.visitor_id) from views v where v.vendor_id = p.vendor_id and v.source = p.source),
+    (select count(*) from accounts a where a.vendor_id = p.vendor_id and a.source = p.source),
+    (select count(*) from accounts a where a.vendor_id = p.vendor_id and a.source = p.source and a.verified),
+    (select count(*) from quotes q where q.vendor_id = p.vendor_id and q.source = p.source),
+    (select count(*) from quotes q where q.vendor_id = p.vendor_id and q.source = p.source
+       and q.client_user_id in (select a.user_id from accounts a where a.vendor_id = p.vendor_id and a.source = p.source and a.verified)),
+    coalesce((select pr.n from prepared pr where pr.vendor_id = p.vendor_id and pr.source = p.source), 0)
+  from pairs p
+  left join public.service_providers sp on sp.id = p.vendor_id
+  where public.is_admin() and p.vendor_id is not null
+  order by sp.name nulls last, p.source;
+$$;
+
+revoke execute on function public.admin_share_funnel_by_vendor(integer) from public, anon;
+grant execute on function public.admin_share_funnel_by_vendor(integer) to authenticated;

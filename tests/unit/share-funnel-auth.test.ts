@@ -106,7 +106,8 @@ describe("after verifying, the customer goes straight back to the vendor's quote
   });
 
   it("by the email link (/auth/confirm)", async () => {
-    const f = form({ token_hash: "pkce_abcdefabcdef1234567890", type: "signup", next: NEXT });
+    // A placeholder that only has the shape of a one-time hash (repeated "a").
+    const f = form({ token_hash: "pkce_" + "a".repeat(24), type: "signup", next: NEXT });
     expect(await redirectedTo(confirmEmailLink(f))).toBe(NEXT);
   });
 

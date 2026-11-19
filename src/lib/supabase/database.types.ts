@@ -3269,6 +3269,20 @@ export type Database = {
           visitors: number
         }[]
       }
+      admin_share_funnel_by_vendor: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          source: string
+          vendor_id: string
+          vendor_name: string
+          verified: number
+          visitors: number
+        }[]
+      }
       admin_service_providers: {
         Args: never
         Returns: {

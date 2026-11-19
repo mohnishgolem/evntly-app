@@ -5,11 +5,11 @@ import { getVendorById } from "@/lib/data/vendors";
 import { categoryLabel } from "@/lib/config";
 import { listingCoverUrl } from "@/lib/portfolio-media";
 import { sampleListingsHidden } from "@/lib/sample-listings";
-import { shareServiceArea } from "@/lib/share-profile";
 
 // Link preview for a vendor profile (iMessage, WhatsApp, Instagram DMs,
 // Facebook): the vendor's cover photo — the same one their listing card and
-// Share profile default to — beside their name, category and area.
+// Share profile default to — beside their name and category (no location: some vendors
+// don't want it shown).
 
 export const alt = "Event vendor profile on Evntly";
 export const size = { width: 1200, height: 630 };
@@ -41,6 +41,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const show = vendor && !(vendor.is_demo && sampleListingsHidden());
   const photo = show ? await coverDataUrl(listingCoverUrl(vendor, 1200)) : null;
   // Passing fonts replaces next/og's default, so the text face is listed too.
+  const name = vendor?.name.trim() ?? "";
   const fonts = [
     { name: "Inter", data: textFont, style: "normal" as const, weight: 400 as const },
     { name: "Magnolia", data: logoFont, style: "normal" as const, weight: 400 as const },
@@ -60,10 +61,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           {show ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span style={{ fontSize: 26, color: CORAL, letterSpacing: 2, textTransform: "uppercase", fontWeight: 400 }}>{categoryLabel(vendor.service_type)}</span>
-              <span style={{ fontSize: vendor.name.length > 22 ? 52 : 64, color: "#1d1d1f", lineHeight: 1.08, marginTop: 14 }}>
-                {vendor.name.length > 48 ? `${vendor.name.slice(0, 47)}…` : vendor.name}
+              <span style={{ fontSize: name.length > 22 ? 52 : 64, color: "#1d1d1f", lineHeight: 1.08, marginTop: 14 }}>
+                {name.length > 48 ? `${name.slice(0, 47)}…` : name}
               </span>
-              <span style={{ fontSize: 30, color: "#5f5f66", marginTop: 18 }}>{shareServiceArea(vendor)}</span>
               <span style={{ fontSize: 26, color: "#1d1d1f", marginTop: 44 }}>View profile & request a quote</span>
             </div>
           ) : (

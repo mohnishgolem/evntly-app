@@ -63,26 +63,6 @@ export function preparedSource(action: SharePreparedAction): ShareSource {
 }
 
 // ---------------------------------------------------------------------------
-// Vendor details on the artwork
-// ---------------------------------------------------------------------------
-
-const state = /,\s*(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i;
-
-/**
- * A short service area for the artwork: one or two suburbs by name, a few
- * more as "Surry Hills, Newtown +3", and a long list (the vendor ticked most
- * of the city) as "Sydney-wide".
- */
-export function shareServiceArea(v: { city?: string | null; locations_serviced?: string[] | null }) {
-  const city = v.city?.trim().replace(state, "") || "Sydney";
-  const areas = (v.locations_serviced ?? []).map((a) => a.trim()).filter(Boolean);
-  if (areas.length === 0) return city;
-  if (areas.length >= 8) return `${city}-wide`;
-  if (areas.length <= 2) return areas.join(" & ");
-  return `${areas.slice(0, 2).join(", ")} +${areas.length - 2}`;
-}
-
-// ---------------------------------------------------------------------------
 // Photos
 // ---------------------------------------------------------------------------
 
@@ -136,7 +116,7 @@ export const SHARE_FORMATS: Record<ShareFormat, { width: number; height: number;
   // Full-height photo.
   story: { width: 1080, height: 1920, photo: { x: 0, y: 0, w: 1080, h: 1920 } },
   // One large photo above a white footer.
-  card: { width: 1080, height: 1350, photo: { x: 0, y: 0, w: 1080, h: 1010 } },
+  card: { width: 1080, height: 1350, photo: { x: 0, y: 0, w: 1080, h: 920 } },
 };
 
 /**
@@ -186,7 +166,7 @@ export function panCrop(crop: ShareCrop, dx: number, dy: number, iw: number, ih:
   });
 }
 
-/** File names for the exports, e.g. dj-valgen-evntly-story.jpg. */
+/** File names for the exports, e.g. sara-louise-photography-evntly-story.jpg. */
 export function shareFileName(vendorName: string, format: ShareFormat) {
   const slug = vendorName.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "evntly";
   return `${slug}-evntly-${format === "story" ? "story" : "profile-card"}.jpg`;

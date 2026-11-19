@@ -65,6 +65,22 @@ it("reports visits → verified accounts → quote requests per channel", { time
   expect(by.share_story).toEqual({ source: "share_story", visitors: 2, accounts: 0, verified: 0, quotes: 1, quotes_new: 0, prepared: 2 });
   expect(by.share_link).toEqual({ source: "share_link", visitors: 1, accounts: 0, verified: 0, quotes: 0, quotes_new: 0, prepared: 0 });
 
+  // Per vendor: every vendor with share activity gets its own rows.
+  const W = "a81b3dbf-1279-46d6-a45e-64b9f5e0c1a8";
+  await db.exec(`insert into public.service_providers (id, name, status) values ('${V}', 'DJ Valgen', 'approved'), ('${W}', 'Events BTS', 'approved');
+    insert into public.page_views (kind, visitor_id, vendor_id, source) values ('vendor', 'visitor-w1', '${W}', 'share_link'), ('vendor', 'visitor-w2', '${W}', 'share_link');
+    insert into public.quote_requests (vendor_id, client_user_id, share_source) values ('${W}', '${A}', 'share_link');`);
+  const per = await as(ADMIN, async () => (await db.query("select * from public.admin_share_funnel_by_vendor(30)")).rows);
+  const row = (name: string, source: string) => {
+    const r = per.find((x) => x.vendor_name === name && x.source === source);
+    return r && [r.visitors, r.accounts, r.verified, r.quotes, r.quotes_new, r.prepared].map(Number);
+  };
+  expect(row("DJ Valgen", "share_qr")).toEqual([3, 2, 1, 1, 1, 1]);
+  expect(row("DJ Valgen", "share_story")).toEqual([2, 0, 0, 1, 0, 2]);
+  expect(row("Events BTS", "share_link")).toEqual([2, 0, 0, 1, 0, 0]);
+  expect(per.some((x) => x.vendor_name === "Events BTS" && x.source === "share_qr")).toBe(false); // no activity, no row
+  expect(await as(C, async () => (await db.query("select * from public.admin_share_funnel_by_vendor(30)")).rows)).toEqual([]);
+
   // Admins only (with a second factor); customers can't read or write the events.
   expect(await as(C, async () => (await db.query("select * from public.admin_share_funnel(30)")).rows)).toEqual([]);
   expect(await as(C, () => err(db.query("select * from public.share_funnel_events")))).toMatch(/permission denied/);

@@ -11,7 +11,6 @@ import {
   shareImageUrl,
   shareProfileUrl,
   sharePhotoOptions,
-  shareServiceArea,
   shareSourceFromUrl,
   STORY_STICKER_ZONE,
 } from "@/lib/share-profile";
@@ -47,15 +46,6 @@ describe("share links", () => {
 });
 
 describe("artwork details", () => {
-  it("summarises the service area", () => {
-    expect(shareServiceArea({ city: "Sydney, NSW", locations_serviced: Array.from({ length: 33 }, (_, i) => `S${i}`) })).toBe("Sydney-wide");
-    expect(shareServiceArea({ city: "Sydney", locations_serviced: ["Newtown"] })).toBe("Newtown");
-    expect(shareServiceArea({ city: "Sydney", locations_serviced: ["Newtown", "Bondi"] })).toBe("Newtown & Bondi");
-    expect(shareServiceArea({ city: "Sydney", locations_serviced: ["Newtown", "Bondi", "Manly", "Penrith"] })).toBe("Newtown, Bondi +2");
-    expect(shareServiceArea({ city: null, locations_serviced: [] })).toBe("Sydney");
-    expect(shareServiceArea({ city: "Wollongong, NSW", locations_serviced: null })).toBe("Wollongong");
-  });
-
   it("picks the first displayable portfolio photo, then the profile photo", () => {
     const items = [
       { media_type: "video", media_url: "https://x/a.mp4" },
@@ -98,7 +88,7 @@ describe("formats and crop", () => {
       expect(r.x + r.w).toBeGreaterThanOrEqual(1080 - 1e-6);
       expect(r.y + r.h).toBeGreaterThanOrEqual(1920 - 1e-6);
     }
-    expect(coverRect(1000, 1000, 1080, 1010, DEFAULT_CROP)).toEqual({ x: 0, y: -35, w: 1080, h: 1080 });
+    expect(coverRect(1000, 1000, 1080, 920, DEFAULT_CROP)).toEqual({ x: 0, y: -80, w: 1080, h: 1080 });
   });
 
   it("pans with the drag and stops at the photo's edges", () => {

@@ -9,3 +9,8 @@
 # The first version of this file quoted that same code in its comment and was
 # flagged for it (same false positive, now reworded above).
 0737f6bedfe83368fe73d0fb611d0ae236cdfe2f:.gitleaksignore:generic-api-key:1
+
+# share-funnel-auth.test.ts: generic-api-key took a made-up one-time link hash
+# in a test form (placeholder letters and digits, never a real token). The
+# test now builds a low-entropy placeholder instead.
+8836d8b1852205b8f681ad0e84caaef99a1d3495:tests/unit/share-funnel-auth.test.ts:generic-api-key:109

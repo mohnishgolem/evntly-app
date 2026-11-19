@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdminPage } from "@/lib/data/user";
-import { getErrorSummaryForAdmin, getFunnelForAdmin, getShareFunnelForAdmin } from "@/lib/data/admin";
+import { getErrorSummaryForAdmin, getFunnelForAdmin, getShareFunnelByVendorForAdmin, getShareFunnelForAdmin } from "@/lib/data/admin";
 import { AdminShareFunnel } from "@/components/admin-share-funnel";
 import { AdminFunnel } from "@/components/admin-funnel";
 import { AdminErrorLog } from "@/components/admin-error-log";
@@ -15,7 +15,12 @@ export default async function AdminAnalyticsPage() {
   const { needsEnrol } = await requireAdminPage("/admin/analytics");
   if (needsEnrol) return <AdminMfaRequired />;
 
-  const [funnel, shareFunnel, errors] = await Promise.all([getFunnelForAdmin(), getShareFunnelForAdmin(30), getErrorSummaryForAdmin()]);
+  const [funnel, shareFunnel, shareByVendor, errors] = await Promise.all([
+    getFunnelForAdmin(),
+    getShareFunnelForAdmin(30),
+    getShareFunnelByVendorForAdmin(30),
+    getErrorSummaryForAdmin(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -26,7 +31,7 @@ export default async function AdminAnalyticsPage() {
       </section>
       <section aria-labelledby="share-funnel" className="mb-10">
         <h2 id="share-funnel" className="mb-4 text-lg font-semibold">Share profile funnel</h2>
-        <AdminShareFunnel rows={shareFunnel} days={30} />
+        <AdminShareFunnel rows={shareFunnel} byVendor={shareByVendor} days={30} />
       </section>
       <section aria-labelledby="errors">
         <h2 id="errors" className="mb-4 text-lg font-semibold">Errors{errors.length > 0 ? ` (${errors.length})` : ""}</h2>
