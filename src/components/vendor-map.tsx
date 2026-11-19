@@ -14,6 +14,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SampleBadge } from "@/components/sample-badge";
 import type { PublicVendor } from "@/lib/vendor-columns";
 import { vendorPrice } from "@/lib/pricing-model";
+import { listingCoverUrl } from "@/lib/portfolio-media";
 
 type Vendor = PublicVendor;
 type LocatedVendor = Vendor & { latitude: number; longitude: number };
@@ -215,6 +216,7 @@ function VendorCard({
 }) {
   const color = categoryColor(vendor.service_type);
   const CategoryIcon = categoryIcon(vendor.service_type);
+  const thumb = listingCoverUrl(vendor, 160);
   return (
     <div
       className={cn(
@@ -231,11 +233,13 @@ function VendorCard({
           className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-white"
           style={{ backgroundColor: color }}
         >
-          {vendor.avatar_url ? (
+          {thumb ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={vendor.avatar_url}
+              src={thumb}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="size-full object-cover"
             />
           ) : (

@@ -7,6 +7,7 @@ import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import type { PublicVendor } from "@/lib/vendor-columns";
 import { vendorPrice } from "@/lib/pricing-model";
+import { listingCoverUrl } from "@/lib/portfolio-media";
 
 type Vendor = PublicVendor;
 
@@ -21,15 +22,18 @@ export function VendorCard({
 }) {
   const CategoryIcon = categoryIcon(vendor.service_type);
   const price = vendorPrice(vendor);
+  const cover = listingCoverUrl(vendor, 600);
 
   return (
     <Link href={`/vendor/${vendor.id}`} className="group block">
       <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
-        {vendor.avatar_url ? (
+        {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={vendor.avatar_url}
+            src={cover}
             alt={vendor.name}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
