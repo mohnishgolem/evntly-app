@@ -19,6 +19,7 @@ import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
 import { BOOK_INTENT_COOKIE, bookIntentPath } from "@/lib/booking-intent";
 import { EVENT_TYPES } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import type { ShareSource } from "@/lib/share-profile";
 
 // Mirrors the vendor's calendar settings so the form can warn before
 // submitting; fill_quote_request_vendor enforces the same rules in the DB.
@@ -52,6 +53,37 @@ function formatDate(date: string) {
   });
 }
 
+// A guest's unsent quote details, kept in this browser while they sign up.
+// Only the event details the form asks for; dropped after a day or once sent.
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+const draftKey = (vendorId: string) => `evntly_quote_draft:${vendorId}`;
+function saveQuoteDraft(vendorId: string, draft: QuoteRequestDraft) {
+  try {
+    localStorage.setItem(draftKey(vendorId), JSON.stringify({ at: Date.now(), draft }));
+  } catch {
+    // Private mode: they'll fill the form in again after signing up.
+  }
+}
+export function readQuoteDraft(vendorId: string): QuoteRequestDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(draftKey(vendorId));
+    if (!raw) return null;
+    const { at, draft } = JSON.parse(raw) as { at: number; draft: QuoteRequestDraft };
+    if (Date.now() - at > DRAFT_TTL_MS || !draft?.eventDate) return null;
+    return draft;
+  } catch {
+    return null;
+  }
+}
+function clearQuoteDraft(vendorId: string) {
+  try {
+    localStorage.removeItem(draftKey(vendorId));
+  } catch {
+    // Nothing to clear.
+  }
+}
+
 // Booking on Evntly goes through a quote: the customer sends their event
 // details, the vendor replies with a price, and accepting that quote creates
 // the booking (accept_quote), which the vendor then confirms.
@@ -70,10 +102,11 @@ type BookState =
   | { kind: "bookable" };
 
 /**
- * The "Book this vendor" call to action on a vendor profile: a button in the
+ * The "Request a quote" call to action on a vendor profile: a button in the
  * sidebar card, plus a sticky bar on phones (where the card sits below the
- * whole profile). Guests go to sign-up and come straight back with the
- * booking form open (?book=1).
+ * whole profile). Guests see the profile and fill in the form first; only
+ * sending needs an account, and sign-up brings them straight back with the
+ * form open on their saved details (?book=1).
  */
 export function BookVendor({
   isAuthenticated,
@@ -85,6 +118,7 @@ export function BookVendor({
   availability,
   openRequest,
   autoOpen,
+  shareSource,
   priceLabel,
   paymentsEnabled,
   hasTabBar,
@@ -98,6 +132,8 @@ export function BookVendor({
   availability?: VendorAvailability;
   openRequest?: OpenRequest | null;
   autoOpen?: boolean;
+  /** The vendor's Share profile tag this visit came with (?src=share_*). */
+  shareSource?: ShareSource | null;
   priceLabel?: string | null;
   paymentsEnabled: boolean;
   /** Signed-in phones show the app's bottom tab bar; sit the sticky bar above it. */
@@ -123,7 +159,9 @@ export function BookVendor({
     if (autoOpen) document.cookie = `${BOOK_INTENT_COOKIE}=; Max-Age=0; Path=${bookIntentPath(vendorId)}`;
   }, [autoOpen, vendorId]);
 
-  const bookPath = `/vendor/${vendorId}?book=1`;
+  // Keeps the Share profile tag through sign-up, so the request is credited
+  // even when sign-up ends in a different browser (e.g. the email's link).
+  const bookPath = `/vendor/${vendorId}?book=1${shareSource ? `&src=${shareSource}` : ""}`;
   const signupHref = `/signup?next=${encodeURIComponent(bookPath)}`;
 
   function primary(className?: string) {
@@ -131,7 +169,7 @@ export function BookVendor({
       case "sample":
         return (
           <Button size="lg" className={className} disabled>
-            <CalendarCheck /> Book this vendor
+            <CalendarCheck /> Request a quote
           </Button>
         );
       case "own":
@@ -151,17 +189,11 @@ export function BookVendor({
           </Button>
         );
       case "guest":
+      case "bookable":
         return (
-          <Button
-            size="lg"
-            className={className}
-            nativeButton={false}
-            render={
-              <Link href={signupHref}>
-                <CalendarCheck /> Book this vendor
-              </Link>
-            }
-          />
+          <Button size="lg" className={className} onClick={() => setOpen(true)}>
+            <CalendarCheck /> Request a quote
+          </Button>
         );
       case "open":
         return (
@@ -171,12 +203,6 @@ export function BookVendor({
             nativeButton={false}
             render={<Link href="/dashboard/quotes">{state.request.status === "quoted" ? "Review their quote" : "View your request"}</Link>}
           />
-        );
-      case "bookable":
-        return (
-          <Button size="lg" className={className} onClick={() => setOpen(true)}>
-            <CalendarCheck /> Book this vendor
-          </Button>
         );
     }
   }
@@ -222,7 +248,7 @@ export function BookVendor({
         </div>
       </div>
 
-      {(state.kind === "bookable" || state.kind === "open") && (
+      {(state.kind === "bookable" || state.kind === "open" || state.kind === "guest") && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
             <BookingFlow
@@ -231,6 +257,7 @@ export function BookVendor({
               eventId={eventId}
               availability={availability}
               paymentsEnabled={paymentsEnabled}
+              guestSignupHref={state.kind === "guest" ? signupHref : undefined}
               onClose={() => setOpen(false)}
             />
           </DialogContent>
@@ -324,6 +351,7 @@ function BookingFlow({
   eventId,
   availability,
   paymentsEnabled,
+  guestSignupHref,
   onClose,
 }: {
   vendorId: string;
@@ -331,6 +359,8 @@ function BookingFlow({
   eventId?: string;
   availability?: VendorAvailability;
   paymentsEnabled: boolean;
+  /** Signed out: sending saves the draft and goes to sign-up, which returns here. */
+  guestSignupHref?: string;
   onClose: () => void;
 }) {
   const [today] = useState(() => earliestEventDate());
@@ -339,16 +369,28 @@ function BookingFlow({
   // can land before it. The ref blocks the second submit synchronously.
   const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<0 | 1 | 2>(0);
-  const [draft, setDraft] = useState<QuoteRequestDraft>({
-    eventDate: "",
-    eventType: EVENT_TYPES[0],
-    location: "",
-    estimatedGuests: 0,
-    estimatedHours: undefined,
-    budgetRange: "",
-    details: "",
-  });
+  // Details a guest filled in before signing up come back with them, already
+  // on the review step, so sending is one tap (this browser only).
+  const [restored] = useState(() => (guestSignupHref ? null : readQuoteDraft(vendorId)));
+  const [step, setStep] = useState<0 | 1 | 2>(restored ? 1 : 0);
+  const [draft, setDraft] = useState<QuoteRequestDraft>(
+    () =>
+      restored ?? {
+        eventDate: "",
+        eventType: EVENT_TYPES[0],
+        location: "",
+        estimatedGuests: 0,
+        estimatedHours: undefined,
+        budgetRange: "",
+        details: "",
+      }
+  );
+
+  function continueAsGuest() {
+    if (!guestSignupHref) return;
+    saveQuoteDraft(vendorId, draft);
+    window.location.assign(guestSignupHref);
+  }
 
   function submit() {
     if (submitting.current) return;
@@ -358,7 +400,10 @@ function BookingFlow({
       try {
         const res = await requestQuote(vendorId, draft, eventId);
         if (res?.error) setError(res.error);
-        else setStep(2);
+        else {
+          clearQuoteDraft(vendorId);
+          setStep(2);
+        }
       } catch {
         setError("Something went wrong sending your request. Check your connection and try again.");
       } finally {
@@ -369,7 +414,7 @@ function BookingFlow({
 
   const header = (
     <DialogHeader>
-      <DialogTitle>{step === 2 ? "Request sent" : `Book ${vendorName}`}</DialogTitle>
+      <DialogTitle>{step === 2 ? "Request sent" : `Request a quote from ${vendorName}`}</DialogTitle>
       <DialogDescription className="sr-only">Send your event details to {vendorName} for a quote.</DialogDescription>
       <StepDots step={step} />
     </DialogHeader>
@@ -436,9 +481,20 @@ function BookingFlow({
           </p>
         )}
         <div className="grid gap-2">
-          <Button disabled={pending} onClick={submit}>
-            {pending ? "Sending…" : "Send booking request"}
-          </Button>
+          {guestSignupHref ? (
+            <>
+              <Button size="lg" onClick={continueAsGuest}>
+                Create free account to send
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                We&apos;ll keep these details. After you verify your email you come straight back here to send them.
+              </p>
+            </>
+          ) : (
+            <Button size="lg" disabled={pending} onClick={submit}>
+              {pending ? "Sending…" : "Send quote request"}
+            </Button>
+          )}
           <Button variant="ghost" disabled={pending} onClick={() => setStep(0)}>
             <ChevronLeft /> Edit details
           </Button>

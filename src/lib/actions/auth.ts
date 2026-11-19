@@ -1,6 +1,7 @@
 "use server";
 
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { recordShareAccount } from "@/lib/share-funnel";
 import { EXISTING_ACCOUNT_MESSAGE } from "@/lib/auth-notices";
 import { recordVendorRegistration } from "@/lib/meta-capi";
 
@@ -138,6 +139,8 @@ export async function signup(
   if (role === "vendor" && data.user) {
     await recordFunnelEvent("account_created", { detail: "email" });
   }
+  // A customer signing up to request a quote from a shared vendor profile.
+  if (role === "customer" && data.user) await recordShareAccount(data.user.id, next, "email");
 
   // When email confirmation is required, signUp succeeds but returns no
   // session — redirecting to a protected page would just bounce the user

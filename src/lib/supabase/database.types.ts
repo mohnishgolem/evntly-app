@@ -2330,6 +2330,7 @@ export type Database = {
           responded_at: string | null
           service_description: string | null
           service_type: string | null
+          share_source: string | null
           status: string
           stripe_session_id: string | null
           travel_fee_cents: number | null
@@ -2374,6 +2375,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null
@@ -2418,6 +2420,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status?: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null
@@ -2583,6 +2586,36 @@ export type Database = {
           reviewed_at?: string
           reviewed_by?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      share_funnel_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: number
+          source: string
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: number
+          source: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: number
+          source?: string
+          user_id?: string | null
+          vendor_id?: string | null
         }
         Relationships: []
       }
@@ -3224,6 +3257,32 @@ export type Database = {
       }
       admin_matching_report: { Args: { p_days?: number }; Returns: Json }
       admin_risk_overview: { Args: { p_days?: number }; Returns: Json }
+      admin_share_funnel: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          source: string
+          verified: number
+          visitors: number
+        }[]
+      }
+      admin_share_funnel_by_vendor: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          source: string
+          vendor_id: string
+          vendor_name: string
+          verified: number
+          visitors: number
+        }[]
+      }
       admin_service_providers: {
         Args: never
         Returns: {
