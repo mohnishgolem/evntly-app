@@ -17,6 +17,8 @@ import type { PublicPortfolioItem } from "@/lib/public-columns";
 
 type PortfolioItem = PublicPortfolioItem;
 
+const CONNECTION_LOST = "the connection dropped before it saved. Check your connection and try again.";
+
 export function PortfolioUploader({
   providerId,
   userId,
@@ -59,7 +61,16 @@ export function PortfolioUploader({
           failures.push(`${file.name}: couldn't upload (${uploadError.message}). Check your connection and try again.`);
           continue;
         }
-        const res = await addPortfolioItem(providerId, { path, type: file.type, caption });
+        // A dropped connection makes the server action call throw (19 Nov:
+        // "Failed to fetch" on Android). Catch it so the rest of the batch
+        // still runs and the vendor sees what didn't save.
+        let res: Awaited<ReturnType<typeof addPortfolioItem>>;
+        try {
+          res = await addPortfolioItem(providerId, { path, type: file.type, caption });
+        } catch {
+          failures.push(`${file.name}: ${CONNECTION_LOST}`);
+          continue;
+        }
         if (res?.error) failures.push(`${file.name}: ${res.error}`);
         else ok++;
       }
@@ -75,8 +86,19 @@ export function PortfolioUploader({
   }
 
   function remove(id: string) {
+    setError(null);
+    setAdded(null);
     startTransition(async () => {
-      await deletePortfolioItem(id);
+      try {
+        const res = await deletePortfolioItem(id);
+        if (res?.error) {
+          setError(res.error);
+          return;
+        }
+      } catch {
+        setError(`Couldn't remove that item: ${CONNECTION_LOST}`);
+        return;
+      }
       router.refresh();
     });
   }

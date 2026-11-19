@@ -57,4 +57,26 @@ describe("reportClientError ignore list", () => {
     );
     expect(beacon).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ["TypeError: Failed to fetch", "TypeError: Failed to fetch\n    at n (https://evntlyapp.com/_next/static/immutable/chunks/0lmmpc4fpkcs3.js:2:36420)"],
+    ["Load failed", ""],
+    ["NetworkError when attempting to fetch resource.", ""],
+  ])("drops the bare network-drop error %j (logged 18-19 Nov)", async (message, stack) => {
+    const report = await load();
+    report(errorWith(message, stack));
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("drops Chrome's network error as thrown (message without the TypeError prefix)", async () => {
+    const report = await load();
+    report(new TypeError("Failed to fetch"));
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports errors that only mention a failed fetch", async () => {
+    const report = await load();
+    report(errorWith("Failed to fetch vendor packages: 500", "at loadPackages (https://evntlyapp.com/x.js:1:1)"));
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
 });
