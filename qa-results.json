@@ -12,7 +12,7 @@
   {
     "name": "crop changes the artwork",
     "ok": true,
-    "detail": "mean diff 38.4"
+    "detail": "mean diff 39.0"
   },
   {
     "name": "Story export is exactly 1080 × 1920",
@@ -22,7 +22,7 @@
   {
     "name": "Story export matches the cropped preview",
     "ok": true,
-    "detail": "mean abs diff 0.76 / 255 (JPEG)"
+    "detail": "mean abs diff 0.75 / 255 (JPEG)"
   },
   {
     "name": "Story has no QR code",
@@ -142,10 +142,10 @@
   {
     "name": "page view carries src=share_qr",
     "ok": true,
-    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"7ca2655a-5928-4cf0-9cd4-a64268447038\",\"params\":{\"src\":\"share_qr\"}}"
+    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"978a1c8a-43fa-44be-8101-be989c2cc619\",\"params\":{\"src\":\"share_qr\"}}"
   },
   {
-    "name": "guest Book link keeps the share tag through sign-up",
+    "name": "guest send keeps the share tag through sign-up",
     "ok": true,
     "detail": "/signup?next=%2Fvendor%2Fd5984a9a-70dc-4e42-a1ce-dcdd2022d1d7%3Fbook%3D1%26src%3Dshare_qr"
   },

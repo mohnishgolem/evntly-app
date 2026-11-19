@@ -1,0 +1,172 @@
+[
+  {
+    "name": "[no tab bar] opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] Save Story & Copy Link visible without scrolling",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] …still visible after scrolling 400px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] …still visible after scrolling 2000px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] no instruction before saving",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] after saving: the one instruction shows, in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] result line: Story saved · Link copied",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] main action still visible after saving",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] prepared beacons: story_save + story_copy",
+    "ok": true,
+    "detail": "[\"story_copy\",\"story_save\"]"
+  },
+  {
+    "name": "[no tab bar] card: Share pinned and visible",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] card: Share reports \"Shared\", no Story instruction",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[no tab bar] card_share beacon sent",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] Save Story & Copy Link visible without scrolling",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] …still visible after scrolling 400px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] …still visible after scrolling 2000px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] action bar sits right above the tab bar",
+    "ok": true,
+    "detail": "gap 0px"
+  },
+  {
+    "name": "[with tab bar] no instruction before saving",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] after saving: the one instruction shows, in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] result line: Story saved · Link copied",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] main action still visible after saving",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] prepared beacons: story_save + story_copy",
+    "ok": true,
+    "detail": "[\"story_copy\",\"story_save\"]"
+  },
+  {
+    "name": "[with tab bar] card: Share pinned and visible",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] card: Share reports \"Shared\", no Story instruction",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[with tab bar] card_share beacon sent",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Do Not Track: no prepared beacons",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "profile opens without sign-up (200, no redirect)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Request a quote visible on arrival (pinned on phones)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and while scrolling the profile",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "quote form opens for a guest (no sign-up first)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Send as guest → sign-up that returns to Valgen's quote flow",
+    "ok": true,
+    "detail": "/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7?book=1&src=share_story"
+  },
+  {
+    "name": "details kept for the return",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sign-up says they'll come straight back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no console/hydration errors on the vendor page",
+    "ok": true,
+    "detail": ""
+  }
+]
