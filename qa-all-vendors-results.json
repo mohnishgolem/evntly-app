@@ -1,0 +1,442 @@
+[
+  {
+    "name": "Events BTS: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/a81b3dbf-1279-46d6-a45e-64b9f5e0c1a8?src=share_qr"
+  },
+  {
+    "name": "Events BTS: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Events BTS: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/d8d7ce72-ad39-4b92-a647-509b7640cb98?src=share_qr"
+  },
+  {
+    "name": "Sara Louise Photography: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sara Louise Photography: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/6fd05a2b-be0e-4d19-9f98-ed73b5f5a69d?src=share_qr"
+  },
+  {
+    "name": "Shekhar Jay Photography: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Shekhar Jay Photography: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7?src=share_qr"
+  },
+  {
+    "name": "DJ Valgen: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Valgen: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/11809f12-bb51-4c67-8ccb-3cbd1e002a55?src=share_qr"
+  },
+  {
+    "name": "DJ Panda Wedding & Events: branded fallback (no photos)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "DJ Panda Wedding & Events: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/e0027174-4be0-4778-847d-53304d1bf130?src=share_qr"
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Alfio Stuto Master of Ceremonies: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/cf08938a-3c23-44cf-b8a9-7f52c8024f1c?src=share_qr"
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: branded fallback (no photos)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Dj Andrew James / Mr & Mrs Parkes: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/11109741-ded1-4cf7-aa93-f6416a5f38d1?src=share_qr"
+  },
+  {
+    "name": "MB Photomedia Sports and Events: branded fallback (no photos)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "MB Photomedia Sports and Events: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/2d48faf3-629d-42a5-86ea-3942aece7ae1?src=share_qr"
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: branded fallback (no photos)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Sugar Princess handcrafted cakes: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/41f23bf1-be2e-4f9b-819c-009ff5411c24?src=share_qr"
+  },
+  {
+    "name": "sur le coeur photography: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sur le coeur photography: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: opens on Story",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: Story 1080×1920",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: card 1080×1350",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: QR opens this vendor",
+    "ok": true,
+    "detail": "https://evntlyapp.com/vendor/dbf9067f-eef6-408c-9401-e0a9611a07a4?src=share_qr"
+  },
+  {
+    "name": "Panesar Productions: uses their photo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: link preview 1200×630",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Panesar Productions: guest quote → sign-up returns to this vendor",
+    "ok": true,
+    "detail": ""
+  }
+]

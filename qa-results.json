@@ -12,7 +12,7 @@
   {
     "name": "crop changes the artwork",
     "ok": true,
-    "detail": "mean diff 39.0"
+    "detail": "mean diff 38.7"
   },
   {
     "name": "Story export is exactly 1080 × 1920",
@@ -22,7 +22,7 @@
   {
     "name": "Story export matches the cropped preview",
     "ok": true,
-    "detail": "mean abs diff 0.75 / 255 (JPEG)"
+    "detail": "mean abs diff 0.74 / 255 (JPEG)"
   },
   {
     "name": "Story has no QR code",
@@ -47,7 +47,7 @@
   {
     "name": "Card export matches the cropped preview",
     "ok": true,
-    "detail": "mean abs diff 1.00"
+    "detail": "mean abs diff 0.94"
   },
   {
     "name": "QR in the exported card scans",
@@ -127,7 +127,7 @@
   {
     "name": "og:image is the per-vendor image",
     "ok": true,
-    "detail": "http://localhost:3007/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7/opengraph-image?1a47031a8a768f66"
+    "detail": "http://localhost:3007/vendor/d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7/opengraph-image?4b5cb47074605eda"
   },
   {
     "name": "OG image is 1200 × 630 PNG",
@@ -142,7 +142,7 @@
   {
     "name": "page view carries src=share_qr",
     "ok": true,
-    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"978a1c8a-43fa-44be-8101-be989c2cc619\",\"params\":{\"src\":\"share_qr\"}}"
+    "detail": "{\"kind\":\"vendor\",\"vendorId\":\"d5984a9a-70dc-4e42-a1ce-dcdd2022d1d7\",\"visitorId\":\"931e06c6-d6a5-493c-b083-f1d8170dbf70\",\"params\":{\"src\":\"share_qr\"}}"
   },
   {
     "name": "guest send keeps the share tag through sign-up",
