@@ -65,6 +65,16 @@ describe("test accounts (pinned: same rules as the SQL)", () => {
     expect(isTestVendorAccount({ ...base, listingName: "TEST-Evntly QA (do not book)" })).toBe(true);
     expect(isTestVendorAccount({ ...base, listingName: "QA Vendor Agent" })).toBe(true);
   });
+  it("drops test accounts that have no listing yet (19 Nov: 3 counted as genuine)", () => {
+    expect(isTestVendorAccount({ ...base, email: "someone+qa-vendor@gmail.com" })).toBe(true);
+    expect(isTestVendorAccount({ ...base, email: "someone+test@gmail.com" })).toBe(true);
+    expect(isTestVendorAccount({ ...base, accountName: "krishiv test" })).toBe(true);
+    expect(isTestVendorAccount({ ...base, userId: "75ff584a-0dc5-41cc-b69e-566f4bd731fa" })).toBe(true);
+    // Real people are still counted.
+    expect(isTestVendorAccount({ ...base, email: "alex+dj@gmail.com", accountName: "Alex Manchester" })).toBe(false);
+    expect(isTestVendorAccount({ ...base, accountName: "Celeste Testa" })).toBe(false);
+    expect(isTestVendorAccount({ ...base, email: "quality@x.com.au", userId: "00000000-0000-0000-0000-000000000001" })).toBe(false);
+  });
   it("finds the furthest stage", () => {
     expect(vendorStage({ verified: false, listingStatus: "approved", photos: 9, packages: 9 })).toBe("account");
     expect(vendorStage({ verified: true, listingStatus: null, photos: 0, packages: 0 })).toBe("verified");
