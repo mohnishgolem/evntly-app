@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveOnboardingStatus } from "@/lib/actions/onboarding";
-import { isQuietPath, type OnboardingStatus } from "@/lib/onboarding";
+import { isFinishingAction, isQuietPath, type OnboardingStatus } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 export const REPLAY_ONBOARDING_EVENT = "evntly:replay-onboarding";
@@ -167,7 +167,7 @@ export function OnboardingWalkthrough({
   const last = index === steps.length - 1;
 
   useEffect(() => {
-    if (autoStart && !readLocal(userId) && !isQuietPath(window.location.pathname)) {
+    if (autoStart && !readLocal(userId) && !isQuietPath(window.location.pathname) && !isFinishingAction(window.location.pathname, window.location.search)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(true);
     }

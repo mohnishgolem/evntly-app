@@ -152,12 +152,26 @@ export function BookVendor({
             : { kind: "bookable" };
 
   const [open, setOpen] = useState(() => !!autoOpen && state.kind === "bookable");
-
-  // The booking intent from the sign-up round trip is one-shot: clear its
-  // cookie so a refresh or Back doesn't pop the form open again.
+  // Back from sign-up the form reopens once (?book=1 / the book intent
+  // cookie). Returning through the email link's "Continue" (/auth/confirm),
+  // the page first renders as a guest and then again signed in, so remember
+  // the intent across renders and open when the signed-in one arrives.
+  const wantsOpen = useRef(false);
+  const autoOpened = useRef(open);
   useEffect(() => {
-    if (autoOpen) document.cookie = `${BOOK_INTENT_COOKIE}=; Max-Age=0; Path=${bookIntentPath(vendorId)}`;
-  }, [autoOpen, vendorId]);
+    if (autoOpen) wantsOpen.current = true;
+    if (wantsOpen.current && state.kind === "bookable" && !autoOpened.current) {
+      autoOpened.current = true;
+      setOpen(true);
+    }
+  }, [autoOpen, state.kind]);
+
+  // The booking intent is one-shot: clear its cookie once the form has
+  // opened, so a refresh or Back doesn't pop it open again. (Clearing it on a
+  // guest render lost the intent before the signed-in render; PR #82 QA.)
+  useEffect(() => {
+    if (open && autoOpen) document.cookie = `${BOOK_INTENT_COOKIE}=; Max-Age=0; Path=${bookIntentPath(vendorId)}`;
+  }, [open, autoOpen, vendorId]);
 
   // Keeps the Share profile tag through sign-up, so the request is credited
   // even when sign-up ends in a different browser (e.g. the email's link).

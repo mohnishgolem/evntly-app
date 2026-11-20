@@ -64,7 +64,12 @@ export default async function VendorDetailPage({
   // The customer pressed "Request a quote" before signing in: the proxy
   // turned ?book=1 into this cookie, so reopen the booking form now they're
   // back (see lib/booking-intent.ts).
-  const autoOpenBooking = cookieStore.get(BOOK_INTENT_COOKIE)?.value === "1";
+  // ?book=1 itself counts too: returning through the email link's
+  // "Continue" (/auth/confirm) arrives by a client-side redirect, which never
+  // passes through the proxy's cookie swap, so the form didn't reopen (found
+  // in PR #82 QA on real Postgres, 20 Nov).
+  const sp0 = await searchParams;
+  const autoOpenBooking = cookieStore.get(BOOK_INTENT_COOKIE)?.value === "1" || sp0.book === "1";
   // Arrived from the vendor's Share profile link or QR code: the sign-up
   // round trip keeps the tag, so the quote request is still credited even if
   // sign-up finishes in another browser (see lib/share-profile.ts).
