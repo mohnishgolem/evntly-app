@@ -50,6 +50,18 @@ export function isQuietPath(pathname: string) {
   return QUIET_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) || /^\/bookings\/[^/]+\/invoice/.test(pathname);
 }
 
+/**
+ * Someone coming back to finish what they started before signing up: their
+ * saved review (?review=…) or their quote request (?book=1) reopening on a
+ * vendor profile. The 7-step tour covered both on phones (PR #82 QA on real
+ * Postgres, 20 Nov). It shows on their next page instead.
+ */
+export function isFinishingAction(pathname: string, search: string) {
+  if (!/^\/vendor\/[^/]+$/.test(pathname)) return false;
+  const q = new URLSearchParams(search);
+  return q.has("review") || q.get("book") === "1";
+}
+
 /** Whether to open the walkthrough on its own (it can always be replayed). */
 export function shouldAutoStartOnboarding({
   accountCreatedAt,

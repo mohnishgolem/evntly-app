@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { confirmEmailLink } from "@/lib/actions/auth";
 import { parseConfirmLink } from "@/lib/auth-links";
 
 export const metadata: Metadata = {
@@ -43,7 +42,8 @@ export default async function ConfirmEmailLinkPage({
           ? "Tap Continue to choose a new password."
           : "Tap Continue to confirm your email and finish setting up your account."}
       </p>
-      <form action={confirmEmailLink}>
+      {/* A plain post (not a server action): the route answers with a full-page redirect. */}
+      <form method="post" action="/auth/confirm/continue">
         <input type="hidden" name="token_hash" value={link.tokenHash} />
         <input type="hidden" name="type" value={link.type} />
         {link.next && <input type="hidden" name="next" value={link.next} />}

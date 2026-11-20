@@ -7,8 +7,8 @@ import type { Database } from "@/lib/supabase/database.types";
 type Tables = Database["public"]["Tables"];
 
 export const REVIEW_COLUMNS =
-  "id, created_at, updated_at, provider_id, booking_id, reviewer_name, rating, comment, event_type, description" as const;
-export type PublicReview = Omit<Tables["reviews"]["Row"], "reviewer_email" | "reviewer_user_id" | "created_by">;
+  "id, created_at, updated_at, provider_id, booking_id, reviewer_name, rating, comment, event_type, description, source" as const;
+export type PublicReview = Omit<Tables["reviews"]["Row"], "reviewer_email" | "reviewer_user_id" | "created_by" | "hidden_at" | "hidden_reason" | "share_source">;
 
 export const PORTFOLIO_COLUMNS =
   "id, created_at, updated_at, provider_id, media_type, media_url, thumbnail_url, caption, event_type_tag, sort_order" as const;

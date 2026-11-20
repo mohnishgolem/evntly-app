@@ -62,34 +62,40 @@ describe("admin actions", () => {
 });
 
 describe("submitReview (review manipulation)", () => {
+  const vendor = { service_providers: { data: { id: "p1", name: "Photo Co", status: "approved", is_demo: false } } };
+  const good = { rating: 5, comment: "Lovely to work with and the photos were stunning.", eventType: null, confirmed: true as const };
   beforeEach(() => {
-    current = fakeSupabase({ user });
+    current = fakeSupabase({ user, results: vendor });
   });
 
   it.each([0, 6, 100, 4.5, NaN])("rejects rating %s without writing", async (rating) => {
-    const res = await reviews.submitReview("p1", "b1", null, rating, "x");
+    const res = await reviews.submitReview("p1", { ...good, rating });
     expect(res?.error).toMatch(/rating/i);
     expect(current.writes).toHaveLength(0);
   });
 
-  it("rejects reviews without a completed booking with that vendor", async () => {
-    current = fakeSupabase({ user, results: { bookings: { data: null } } });
-    const res = await reviews.submitReview("p1", "b1", null, 5, "great");
-    expect(res?.error).toMatch(/completed booking/);
+  it("refuses a review of the reviewer's own listing", async () => {
+    current = fakeSupabase({ user, results: { ...vendor, "rpc:my_service_providers": { data: { id: "p1" } } } });
+    expect((await reviews.submitReview("p1", good))?.error).toMatch(/own business/);
     expect(current.writes).toHaveLength(0);
   });
 
-  it("rejects a second review of the same booking", async () => {
-    current = fakeSupabase({ user, results: { bookings: { data: { id: "b1" } }, reviews: { data: { id: "r1" } } } });
-    const res = await reviews.submitReview("p1", "b1", null, 5, "again");
-    expect(res?.error).toMatch(/already reviewed/);
+  it("refuses sample or unapproved listings", async () => {
+    current = fakeSupabase({ user, results: { service_providers: { data: { id: "p1", name: "S", status: "approved", is_demo: true } } } });
+    expect((await reviews.submitReview("p1", good))?.error).toMatch(/isn't taking reviews/);
     expect(current.writes).toHaveLength(0);
   });
 
-  it("accepts a review of a completed booking", async () => {
-    current = fakeSupabase({ user, results: { bookings: { data: { id: "b1" } }, reviews: { data: null } } });
-    expect(await reviews.submitReview("p1", "b1", "Wedding", 5, "great")).toEqual({ success: true });
-    expect(current.writes.map((w) => w.op)).toEqual(["insert"]);
+  it("reviews the completed Evntly booking when there is one", async () => {
+    current = fakeSupabase({ user, results: { ...vendor, bookings: { data: [{ id: "b1" }] } } });
+    expect(await reviews.submitReview("p1", good)).toEqual({ success: true });
+    expect(current.writes.find((w) => w.op === "insert")?.payload).toMatchObject({ booking_id: "b1", source: "booking" });
+  });
+
+  it("otherwise posts as a past client (no booking needed)", async () => {
+    current = fakeSupabase({ user, results: { ...vendor, bookings: { data: [] } } });
+    expect(await reviews.submitReview("p1", good)).toEqual({ success: true });
+    expect(current.writes.find((w) => w.op === "insert")?.payload).toMatchObject({ booking_id: null, source: "past_client" });
   });
 });
 
