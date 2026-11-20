@@ -43,14 +43,18 @@ function dateProblem(date: string, vendorName: string, availability?: VendorAvai
   return null;
 }
 
-function formatDate(date: string) {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-AU", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+// Fixed English names, not toLocaleDateString: Node and Safari ship different
+// ICU data, and this text is server-rendered in a client component, so any
+// difference is a React hydration error (#418).
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "Sat 15 Nov 2026" for a "YYYY-MM-DD" calendar day, identical everywhere. */
+export function formatEventDate(date: string) {
+  const [y, m, d] = date.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return date;
+  const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${weekday} ${d} ${MONTHS[m - 1]} ${y}`;
 }
 
 // A guest's unsent quote details, kept in this browser while they sign up.
@@ -319,8 +323,8 @@ function StateNote({
         <div className="text-sm text-muted-foreground">
           <p>
             {state.request.status === "quoted"
-              ? `${vendorName} has sent you a quote for ${formatDate(state.request.eventDate)}.`
-              : `You've asked ${vendorName} about ${formatDate(state.request.eventDate)} — they'll reply with a quote.`}
+              ? `${vendorName} has sent you a quote for ${formatEventDate(state.request.eventDate)}.`
+              : `You've asked ${vendorName} about ${formatEventDate(state.request.eventDate)} — they'll reply with a quote.`}
           </p>
           <button type="button" onClick={onBookAnother} className="mt-1 font-medium text-foreground underline underline-offset-2">
             Book a different date
@@ -458,7 +462,7 @@ function BookingFlow({
 
   if (step === 1) {
     const rows: [string, string][] = [
-      ["Date", formatDate(draft.eventDate)],
+      ["Date", formatEventDate(draft.eventDate)],
       ["Event", draft.eventType],
       ["Location", draft.location],
       ["Guests", String(draft.estimatedGuests)],

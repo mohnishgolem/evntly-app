@@ -36,6 +36,22 @@ describe("reportClientError ignore list", () => {
     expect(beacon).not.toHaveBeenCalled();
   });
 
+  it("drops Chrome's bare network DOMException (logged 20 Nov on /)", async () => {
+    const report = await load();
+    const e = new Error("A network error occurred.");
+    e.name = "NetworkError";
+    e.stack = "";
+    report(e);
+    report("NetworkError: A network error occurred.");
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports errors that only mention a network error", async () => {
+    const report = await load();
+    report(errorWith("Upload failed: A network error occurred. Retrying", "upload@https://evntlyapp.com/x.js:1:1"));
+    expect(beacon).toHaveBeenCalledOnce();
+  });
+
   it("still reports genuine Evntly errors", async () => {
     const report = await load();
     report(
