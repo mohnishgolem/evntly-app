@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSydney } from "@/lib/founding/schedule";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,8 +26,7 @@ export type DisputeView = {
   messages: { id: string; author_role: "customer" | "vendor" | "admin"; mine: boolean; body: string; created_at: string }[];
 };
 
-const when = (iso: string) =>
-  new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Australia/Sydney" });
+const when = (iso: string) => formatSydney(new Date(iso));
 
 function who(role: "customer" | "vendor" | "admin", mine: boolean) {
   if (mine) return "You";

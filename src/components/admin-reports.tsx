@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSydneyDay } from "@/lib/founding/schedule";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ function ReportRow({ report }: { report: Report }) {
           {status}
         </span>
         <span className="text-xs text-muted-foreground">
-          {new Date(report.created_at).toLocaleDateString()}
+          {formatSydneyDay(report.created_at)}
         </span>
       </div>
       <p className="mb-2 text-sm font-medium">{report.reason}</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { groupDigits } from "@/lib/founding/schedule";
 import { earliestEventDate } from "@/lib/event-dates";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -185,11 +186,11 @@ export default function PlanPage() {
         <Field title="Budget">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">${BUDGET_MIN.toLocaleString()}</span>
+              <span className="text-muted-foreground">${groupDigits(BUDGET_MIN)}</span>
               <span className="font-semibold text-highlight">
-                ${draft.budgetTotal.toLocaleString()}
+                ${groupDigits(draft.budgetTotal)}
               </span>
-              <span className="text-muted-foreground">${BUDGET_MAX.toLocaleString()}</span>
+              <span className="text-muted-foreground">${groupDigits(BUDGET_MAX)}</span>
             </div>
             <input
               type="range"

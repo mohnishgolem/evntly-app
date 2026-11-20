@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCalendarDay } from "@/lib/founding/schedule";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Truck, PackageCheck, ClipboardCheck } from "lucide-react";
@@ -28,11 +29,7 @@ type JobCard = ParticipantJobCard;
 type ChecklistItem = ParticipantChecklistItem;
 
 function formatDay(date: string) {
-  return new Date(`${date.slice(0, 10)}T00:00:00`).toLocaleDateString("en-AU", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  return formatCalendarDay(date);
 }
 
 const STEPS = [

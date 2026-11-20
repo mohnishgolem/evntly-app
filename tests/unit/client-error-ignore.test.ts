@@ -96,3 +96,25 @@ describe("reportClientError ignore list", () => {
     expect(beacon).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("reportClientError ignore list (Android in-app browser)", () => {
+  it("drops Facebook's Android in-app browser bridge error (logged 20 Nov on /founding-vendors and /signup)", async () => {
+    const report = await load();
+    report(
+      errorWith(
+        "Error invoking postMessage: Java object is gone",
+        "Error: Error invoking postMessage: Java object is gone\n" +
+          "    at sendDataToNative (iabjs://navigation_performance_logger_android:1:11722)\n" +
+          "    at sendJsBlockingTimeMessage (iabjs://navigation_performance_logger_android:1:16303)\n" +
+          "    at iabjs://navigation_performance_logger_android:1:20760",
+      ),
+    );
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports our own errors that happen to mention postMessage", async () => {
+    const report = await load();
+    report(errorWith("postMessage failed in share sheet", "Error: postMessage failed\n    at share (https://evntlyapp.com/_next/static/chunks/a.js:1:1)"));
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
+});

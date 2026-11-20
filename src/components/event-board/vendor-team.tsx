@@ -1,5 +1,6 @@
 "use client";
 
+import { groupDigits } from "@/lib/founding/schedule";
 import Link from "next/link";
 import { createElement, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -501,7 +502,7 @@ function StatusDetail({ vendor: v }: { vendor: TeamVendor }) {
   if (v.status === "quoted" && v.quotedAmount != null) {
     return (
       <span className="text-muted-foreground">
-        ${v.quotedAmount.toLocaleString()} quoted{v.quoteTimeLeft ? ` · expires ${v.quoteTimeLeft}` : ""}
+        ${groupDigits(v.quotedAmount)} quoted{v.quoteTimeLeft ? ` · expires ${v.quoteTimeLeft}` : ""}
       </span>
     );
   }
@@ -552,7 +553,7 @@ function RowActions({ eventId, vendor: v }: { eventId: string; vendor: TeamVendo
     actions = (
       <>
         <p className="w-full text-sm">
-          Book {v.name} for ${v.quotedAmount?.toLocaleString()}? They&apos;ll confirm, then set up payments.
+          Book {v.name} for ${groupDigits(v.quotedAmount ?? 0)}? They&apos;ll confirm, then set up payments.
         </p>
         <Button size="lg" disabled={pending} onClick={() => run("book", () => acceptQuote(v.quoteId!))}>
           {spinner("book")} Book
@@ -595,7 +596,7 @@ function RowActions({ eventId, vendor: v }: { eventId: string; vendor: TeamVendo
         actions = (
           <>
             <Button size="lg" disabled={pending} onClick={() => setConfirming("book")}>
-              Book for ${v.quotedAmount?.toLocaleString()}
+              Book for ${groupDigits(v.quotedAmount ?? 0)}
             </Button>
             <Button size="lg" variant="ghost" nativeButton={false} render={<Link href="/dashboard/quotes">Quote details</Link>} />
           </>

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSydneyDay } from "@/lib/founding/schedule";
 import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarCheck, Loader2 } from "lucide-react";
@@ -59,7 +60,7 @@ export function CalendarFreshness({
           </>
         ) : (
           <p className="text-muted-foreground">
-            Calendar confirmed {last ? new Date(last).toLocaleDateString("en-AU", { day: "numeric", month: "short" }) : ""}.
+            Calendar confirmed {last ? formatSydneyDay(new Date(last).toISOString(), "") : ""}.
             Customers see you as available on free days.
           </p>
         )}
