@@ -1,0 +1,137 @@
+[
+  {
+    "name": "PR migration applied on top of the prod baseline",
+    "ok": true,
+    "detail": "20260101000000,20261126090000"
+  },
+  {
+    "name": "test vendor is live",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "shared QR profile opens for a guest",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sign-up keeps vendor + draft + share tag",
+    "ok": true,
+    "detail": "/vendor/0f0f0f0f-0000-4000-8000-00000000000a?review=002b5ca3-3299-45e2-afa0-bf32563fb152&src=share_qr"
+  },
+  {
+    "name": "draft row in Postgres (QR channel)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed up; waiting for email verification",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "new account credited to the QR card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "verification email arrived in the local inbox with the /auth/confirm link",
+    "ok": true,
+    "detail": "http://localhost:3000/auth/confirm?token_hash=pkce_176cc814d27298e8c7aaca9ad103d"
+  },
+  {
+    "name": "its redirect carries the vendor + draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "second browser: verified and returned to the vendor",
+    "ok": true,
+    "detail": "/vendor/0f0f0f0f-0000-4000-8000-00000000000a?review=002b5ca3-3299-45e2-afa0-bf32563fb152&src=share_qr"
+  },
+  {
+    "name": "second browser: the same draft is restored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "review stored in Postgres: past client, QR, first name + initial",
+    "ok": true,
+    "detail": "past_client|share_qr|Mia D.|5|-"
+  },
+  {
+    "name": "draft used up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "star rating recalculated by the database",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors (phones A and B)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "public: 5.0 (1 review)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "public: labelled Past client · not booked on Evntly",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "database blocks a self-review",
+    "ok": true,
+    "detail": "400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"You can't review your own business\"}"
+  },
+  {
+    "name": "database blocks a duplicate past-client review",
+    "ok": true,
+    "detail": "400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"You have already reviewed this vendo"
+  },
+  {
+    "name": "database blocks changing a review's share channel",
+    "ok": true,
+    "detail": "400"
+  },
+  {
+    "name": "still exactly one review",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Admin → Analytics: QR card row = visitors ≥1, 1 new account, 1 verified, 0 quotes, 1 review",
+    "ok": true,
+    "detail": "2 | 1 | 150% | 00 new | 1"
+  },
+  {
+    "name": "Admin → Analytics: Harbour Lights in the by-vendor table",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "hide: rating drops to no reviews in Postgres",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "hide: public profile shows no reviews",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "restore: rating back to 5.0 (1 review) in Postgres",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "restore: public profile shows 5.0 (1 review) again",
+    "ok": true,
+    "detail": ""
+  }
+]
