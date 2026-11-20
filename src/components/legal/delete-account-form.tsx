@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSydneyLongDate } from "@/lib/founding/schedule";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ export function DeleteAccountForm({ pendingSince }: { pendingSince: string | nul
       <div className="space-y-3">
         <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-sm">
           We received your request on{" "}
-          {new Date(pendingSince).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}. We&apos;ll
+          {formatSydneyLongDate(pendingSince)}. We&apos;ll
           email you when your account has been deleted.
         </p>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

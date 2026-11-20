@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSydney } from "@/lib/founding/schedule";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, FileText, ShieldCheck } from "lucide-react";
@@ -456,7 +457,7 @@ function Activity({ events }: { events: PaymentEventView[] }) {
               {e.milestone_name && <span className="text-muted-foreground"> · {e.milestone_name}</span>}
             </span>
             <time dateTime={e.created_at} className="text-xs text-muted-foreground tabular-nums">
-              {new Date(e.created_at).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short", timeZone: "Australia/Sydney" })}
+              {formatSydney(new Date(e.created_at))}
             </time>
           </li>
         ))}

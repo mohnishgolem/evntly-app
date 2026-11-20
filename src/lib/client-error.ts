@@ -7,9 +7,10 @@ const MAX_PER_PAGE = 5;
 
 // Noise that isn't ours: browser extensions, cross-origin script errors with
 // no detail, the harmless ResizeObserver warning, and the native bridge that
-// Instagram/Facebook's iOS in-app browser injects into pages (its
-// sendDataToNative calls window.webkit.messageHandlers, which can be gone
-// while the page hides). Evntly never uses that bridge. Also the browser's
+// Instagram/Facebook's in-app browsers inject into pages (its
+// sendDataToNative calls window.webkit.messageHandlers on iOS, or a Java
+// bridge on Android — "Java object is gone" — either of which can be gone
+// while the page hides; Android's scripts load from iabjs:// URLs). Evntly never uses that bridge. Also the browser's
 // bare "the network dropped" errors (Chrome "Failed to fetch", Safari "Load
 // failed", Firefox "NetworkError when attempting to fetch resource.", Chrome's
 // DOMException "A network error occurred."): the
@@ -23,7 +24,9 @@ const IGNORED = [
   /^Script error\.?$/i,
   /extension:\/\//i,
   /window\.webkit\.messageHandlers/,
-  /\bsendDataToNative@/,
+  /\bsendDataToNative(@| \()/,
+  /\biabjs:\/\//,
+  /^(Error: )?Error invoking postMessage: Java object is gone$/,
 ];
 
 /**
