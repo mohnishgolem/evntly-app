@@ -1,6 +1,8 @@
 import { cache } from "react";
 import { priceSummary } from "@/lib/pricing-model";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { countGenuineLiveListings } from "@/lib/founding/live-count";
 import { getCurrentUser } from "@/lib/data/user";
 import { profileChecklist, type ChecklistItem } from "@/lib/profile-completeness";
 
@@ -16,6 +18,38 @@ export const getFoundingPlaces = cache(async function getFoundingPlaces(): Promi
   }
   const row = data[0];
   return { capacity: Number(row.capacity), approved: Number(row.approved), remaining: Number(row.remaining) };
+});
+
+/**
+ * How many genuine vendors have a live listing, shown on the founding page as
+ * proof that real Sydney vendors are already on Evntly. Same rule as the
+ * acquisition reports (isTestVendorAccount): no samples, admins, team/QA
+ * accounts or QA/TEST listings, and no listing whose owner is suspended.
+ * Runs on the server with the service role because owner details aren't
+ * public; only the number leaves the server. Null on any error, so the line
+ * is simply left out.
+ */
+export const getLiveVendorCount = cache(async function getLiveVendorCount(): Promise<number | null> {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data: listings, error } = await admin
+    .from("service_providers")
+    .select("name, owner_user_id, is_demo")
+    .eq("status", "approved")
+    .eq("is_demo", false);
+  if (error || !listings) {
+    if (error) console.warn("[founding] live vendor count unavailable:", error.message);
+    return null;
+  }
+  const ownerIds = [...new Set(listings.map((l) => l.owner_user_id).filter((id): id is string => !!id))];
+  if (!ownerIds.length) return 0;
+  const [{ data: owners, error: ownersError }, { data: applications, error: appsError }] = await Promise.all([
+    // Suspended owners are filtered out here, so their listings find no owner and aren't counted.
+    admin.from("users").select("id, role, email").in("id", ownerIds).is("suspended_at", null),
+    admin.from("beta_applications").select("user_id, campaign").in("user_id", ownerIds),
+  ]);
+  if (ownersError || appsError || !owners) return null;
+  return countGenuineLiveListings(listings, owners, applications ?? []);
 });
 
 export type FoundingApplicationStatus = "started" | "submitted" | "approved" | "needs_changes" | "rejected" | "withdrawn";

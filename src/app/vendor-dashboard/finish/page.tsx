@@ -122,10 +122,38 @@ export default async function FinishListingPage() {
           </>
         )}
 
+        {!isDraft && !complete && <SendUsYourPhotos listingName={listing.name} />}
+
         {!isDraft && (
           <Button variant="outline" nativeButton={false} render={<Link href="/vendor-dashboard/business">Back to your listing</Link>} />
         )}
       </div>
     </div>
+  );
+}
+
+// Live listings can't use "Set it up for me" (that flow prepares a draft for
+// the vendor to check before review). Approved vendors who haven't added
+// photos get the same done-with-you route by email or DM instead: they send
+// photos and a price, we add them with their written OK.
+function SendUsYourPhotos({ listingName }: { listingName: string }) {
+  const subject = encodeURIComponent(`Photos and packages for ${listingName}`);
+  const body = encodeURIComponent(
+    "Hi Evntly team,\n\nPlease add these to my listing. I'm happy for you to use the attached photos on my Evntly listing.\n\nMy usual package and price:\n\n"
+  );
+  return (
+    <section aria-labelledby="send-photos-heading" className="rounded-2xl border border-border p-5">
+      <h2 id="send-photos-heading" className="text-[17px] font-semibold">
+        Rather we add them for you?
+      </h2>
+      <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">
+        Send us 3 photos of your work and your usual package with its price. We&apos;ll add them to your listing,
+        usually within one business day.
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Button nativeButton={false} render={<a href={`mailto:hello@evntlyapp.com?subject=${subject}&body=${body}`}>Email your photos</a>} />
+        <Button variant="outline" nativeButton={false} render={<a href="https://www.instagram.com/evntly.au/">Message @evntly.au</a>} />
+      </div>
+    </section>
   );
 }
