@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { readMigration, setupDb } from "./supabase-stub";
 
-// 20261124090000_vendor_onboarding_reminders: the 'vendor_finish' page-view
+// 20261127090000_vendor_onboarding_reminders: the 'vendor_finish' page-view
 // kind and the onboarding reminder log. Runs in an in-memory Postgres
 // (PGlite), never against Supabase.
 const prereqs = `
@@ -12,7 +12,7 @@ const prereqs = `
 `;
 const base = readMigration("migrations/20261020120000_funnel_analytics.sql").replace(/select cron\.schedule\([\s\S]*?\);\s*$/, "");
 const pageViews = readMigration("migrations/20261107090000_founding_page_views.sql");
-const reminders = readMigration("migrations/20261124090000_vendor_onboarding_reminders.sql");
+const reminders = readMigration("migrations/20261127090000_vendor_onboarding_reminders.sql");
 
 it("counts the finish page and keeps every existing page-view kind", { timeout: 60_000 }, async () => {
   const { db, err } = await setupDb([prereqs, base, pageViews, reminders]);

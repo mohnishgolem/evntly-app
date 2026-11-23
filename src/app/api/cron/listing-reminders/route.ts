@@ -23,7 +23,7 @@ import {
 // is logged in listing_completion_reminders first, so it is sent at most
 // once, and notify() honours the vendor's "Reminders" email setting.
 //
-// Also (onboarding review item 2, needs migration 20261124090000): vendors who
+// Also (onboarding review item 2, needs migration 20261127090000): vendors who
 // claimed a Founding place but never saved a listing, and live listings still
 // missing photos or a package. See src/lib/onboarding-reminders.ts.
 

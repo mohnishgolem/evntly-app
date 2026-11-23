@@ -8,7 +8,7 @@ export const PAGE_VIEW_KINDS = [
   "bundles",
   "founding",
   "founding_claim",
-  // Needs migration 20261124090000_vendor_onboarding_reminders.
+  // Needs migration 20261127090000_vendor_onboarding_reminders.
   "vendor_finish",
 ] as const;
 export type PageViewKind = (typeof PAGE_VIEW_KINDS)[number];
