@@ -18,6 +18,7 @@ daily report task.
 | `evntly-listing-followup` | Find registered vendors with incomplete listings and draft the right nudge. | Drafts only |
 | `evntly-meta-verified-roi` | Judge Meta Ads on verified registrations / completed listings, not clicks. | No |
 | `evntly-daily-acquisition-report` | Daily targets, conversion report, what's waiting for Sai. | Local report + Desk snapshot |
+| `reverse-engineer-app` | Study a public competitor app (UI, journeys, observable tech) after checking its robots.txt and terms; compare with Evntly; ranked plan; build original versions only after approval. `/reverse-engineer-app <URL>` | Local analysis folder (gitignored); code only on a branch after Sai approves |
 
 ## Hard rules (apply to every skill)
 

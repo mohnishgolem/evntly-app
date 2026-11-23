@@ -1,0 +1,9 @@
+{
+  "name": "reverse-engineer-app-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Helper scripts for the reverse-engineer-app Claude Code skill. Isolated from the Evntly app's dependencies.",
+  "dependencies": {
+    "playwright-core": "^1.65.1"
+  }
+}
