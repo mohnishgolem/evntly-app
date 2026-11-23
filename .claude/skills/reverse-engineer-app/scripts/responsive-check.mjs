@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Responsive + basic quality check for YOUR OWN pages (Evntly local dev or preview).
+// Responsive + basic quality check for Evntly pages, ONLY on evntly-isolated
+// (http://localhost:3100, Supabase unreachable). Refuses anything else with exit
+// code 4: production, previews and evntly-dev (production database). No fallback.
 // For each URL × viewport × theme: horizontal overflow, small tap targets, tiny text,
 // images without alt, missing h1, console/page errors, failed same-origin requests.
 //
@@ -8,14 +10,14 @@
 // Exit code 1 if any CRITICAL issue (overflow, page error, HTTP >= 400 on the page itself).
 import fs from "node:fs";
 import path from "node:path";
-import { VIEWPORTS, SESSION_DIR, parseArgs, die, loadPlaywright, launchChrome, slug, ensureDir, redactUrl, isLocal } from "./lib.mjs";
+import { VIEWPORTS, SESSION_DIR, parseArgs, die, loadPlaywright, launchChrome, slug, ensureDir, redactUrl, assertIsolatedEvntly, blockProduction } from "./lib.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const urls = args._;
 if (!urls.length || !args.out) die("Usage: responsive-check.mjs <url…> --out <dir>");
-for (const u of urls) if (!isLocal(u) && !/evntly/.test(new URL(u).hostname)) {
-  console.warn(`! ${u} is not a local or Evntly host. This check is meant for your own app; it only reads the page.`);
-}
+for (const u of urls) if (!/^https?:\/\//.test(u)) die(`Not a URL: ${u}`);
+// Before anything else: verified evntly-isolated, or stop.
+await assertIsolatedEvntly(urls);
 const outDir = ensureDir(args.out);
 const viewports = (args.viewports || "desktop,tablet,mobile").split(",");
 const themes = (args.themes || "light,dark").split(",");
@@ -33,6 +35,7 @@ for (const url of urls) {
       const ctx = await browser.newContext({ ...VIEWPORTS[vp], colorScheme: theme, storageState });
       // Evntly sets .light/.dark from localStorage before paint; mirror the requested theme.
       await ctx.addInitScript((t) => { try { localStorage.setItem("evntly-theme", t); } catch {} }, theme);
+      const blocked = await blockProduction(ctx);
       const page = await ctx.newPage();
       const consoleErrors = [];
       const pageErrors = [];
@@ -97,6 +100,8 @@ for (const url of urls) {
       const shot = path.join(outDir, `${slug(new URL(url).pathname.replace(/^\/$/, "") || "home")}-${vp}-${theme}.png`);
       await page.screenshot({ path: shot, fullPage: true }).catch(() => page.screenshot({ path: shot }));
       await ctx.close();
+      // Any attempt to reach production is a failure of the isolation itself.
+      if (blocked.length) pageErrors.push(`blocked production request(s): ${blocked.slice(0, 3).join(", ")}`);
       const crit = (m.overflowPx > 1 && m.offenders.length > 0) || pageErrors.length > 0 || status >= 400;
       if (crit) critical++;
       rows.push({ url: redactUrl(url), viewport: vp, theme, status, critical: crit, ...m, consoleErrors, pageErrors, failedRequests: failed, screenshot: path.relative(outDir, shot) });

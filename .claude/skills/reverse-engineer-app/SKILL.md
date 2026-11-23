@@ -179,6 +179,12 @@ node $SKILL/scripts/responsive-check.mjs http://localhost:3100/<changed paths…
 node $SKILL/scripts/compare-visual.mjs <before.png> <after.png> --out <analysis>/captures/diff-<name>.png
 ```
 
+- **Isolation is enforced, not optional.** `responsive-check` (and `capture` on any local URL)
+  exits with code 4 unless the target is a running, verified `evntly-isolated`
+  (localhost:3100, Supabase at a closed loopback port, no service-role key; checked from the
+  server's own client code). It also blocks any request to Supabase, evntlyapp.com or Vercel during
+  the run. If it refuses, **stop and report**. Never retry against `evntly-dev`, a preview or
+  production, and do the manual browser check on `evntly-isolated` too.
 - `responsive-check` flags horizontal overflow, tap targets < 24 px (and < 44 px
   advisory), text < 12 px, images without alt, missing `h1`, console/page errors and
   failed same-origin requests at all three viewports, light **and** dark.

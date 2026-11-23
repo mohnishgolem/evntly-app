@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   VIEWPORTS, SESSION_DIR, parseArgs, die, loadPlaywright, launchChrome, isLocal, slug, ensureDir,
-  redactUrl, checkRobots, sleep,
+  redactUrl, checkRobots, sleep, assertIsolatedEvntly, blockProduction,
 } from "./lib.mjs";
 
 const args = parseArgs(process.argv.slice(2), ["headed"]);
@@ -17,19 +17,23 @@ const target = args._[0];
 if (!target || !/^https?:\/\//.test(target)) die("Usage: capture.mjs <http(s) url> --out <dir> [--label name]");
 if (!args.out) die("--out <dir> is required");
 const label = slug(args.label || new URL(target).pathname.replace(/\/$/, "") || "home");
-const outDir = ensureDir(path.join(args.out, label));
+const outDir = path.join(args.out, label); // created only after the access checks pass
 const viewports = (args.viewports || "desktop,tablet,mobile").split(",").map((s) => s.trim());
 for (const v of viewports) if (!VIEWPORTS[v]) die(`Unknown viewport "${v}" (use desktop,tablet,mobile)`);
 const extraWait = Number(args.wait || 2500);
 
 // ---------- robots.txt ----------
 let robots = { allowed: true, rule: "local dev host — robots not checked", crawlDelay: null };
+// A local target is an Evntly check: evntly-isolated only, never a
+// production-connected dev server.
+if (isLocal(target)) await assertIsolatedEvntly([target]);
 if (!isLocal(target)) {
   robots = await checkRobots(target);
   console.log(`robots.txt: ${robots.allowed ? "ALLOWED" : "DISALLOWED"} (${robots.rule})${robots.crawlDelay ? `, crawl-delay ${robots.crawlDelay}s` : ""}`);
   if (!robots.allowed) die("robots.txt disallows this path for automated agents. Not capturing. Use manual reading only, or pick another page.", 3);
 }
 const politeDelay = Math.max(3000, (robots.crawlDelay || 0) * 1000);
+ensureDir(outDir);
 
 // ---------- session (authorised accounts only) ----------
 let storageState;
@@ -211,6 +215,7 @@ const origin = new URL(target).origin;
 for (const [i, vp] of viewports.entries()) {
   if (i > 0) await sleep(politeDelay);
   const ctx = await browser.newContext({ ...VIEWPORTS[vp], storageState, colorScheme: args.theme || "light", locale: "en-AU", timezoneId: "Australia/Sydney" });
+  if (isLocal(target)) await blockProduction(ctx);
   const page = await ctx.newPage();
   const record = i === 0; // record network once (desktop pass) to keep it small
   if (record) {
