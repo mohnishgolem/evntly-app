@@ -18,9 +18,11 @@ import { SETUP_TIME } from "@/lib/vendor-terms";
 /**
  * Nothing before this moment gets a reminder. Vendors who signed up earlier
  * are being followed up by hand (outreach/queue), and a second, automatic
- * message would break the "two nudges max" rule. SET THIS TO THE DEPLOY DAY.
+ * message would break the "two nudges max" rule. Set to the merge/deploy day
+ * (24 Nov 2026, Sydney); everyone in the manual follow-up queue claimed or
+ * went live before it.
  */
-export const ONBOARDING_REMINDERS_FROM = Date.parse("2026-11-25T00:00:00+11:00");
+export const ONBOARDING_REMINDERS_FROM = Date.parse("2026-11-24T00:00:00+11:00");
 
 export const NO_LISTING_SCHEDULE = [
   { kind: "no_listing_24h", afterHours: 24 },
