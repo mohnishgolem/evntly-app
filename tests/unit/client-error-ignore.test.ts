@@ -36,6 +36,22 @@ describe("reportClientError ignore list", () => {
     expect(beacon).not.toHaveBeenCalled();
   });
 
+  it("drops Chrome's bare network DOMException (logged 20 Nov on /)", async () => {
+    const report = await load();
+    const e = new Error("A network error occurred.");
+    e.name = "NetworkError";
+    e.stack = "";
+    report(e);
+    report("NetworkError: A network error occurred.");
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports errors that only mention a network error", async () => {
+    const report = await load();
+    report(errorWith("Upload failed: A network error occurred. Retrying", "upload@https://evntlyapp.com/x.js:1:1"));
+    expect(beacon).toHaveBeenCalledOnce();
+  });
+
   it("still reports genuine Evntly errors", async () => {
     const report = await load();
     report(
@@ -55,6 +71,50 @@ describe("reportClientError ignore list", () => {
         "Actor.process@https://evntlyapp.com/maplibre/maplibre-gl-shared.mjs:5:100",
       ),
     );
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["TypeError: Failed to fetch", "TypeError: Failed to fetch\n    at n (https://evntlyapp.com/_next/static/immutable/chunks/0lmmpc4fpkcs3.js:2:36420)"],
+    ["Load failed", ""],
+    ["NetworkError when attempting to fetch resource.", ""],
+  ])("drops the bare network-drop error %j (logged 18-19 Nov)", async (message, stack) => {
+    const report = await load();
+    report(errorWith(message, stack));
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("drops Chrome's network error as thrown (message without the TypeError prefix)", async () => {
+    const report = await load();
+    report(new TypeError("Failed to fetch"));
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports errors that only mention a failed fetch", async () => {
+    const report = await load();
+    report(errorWith("Failed to fetch vendor packages: 500", "at loadPackages (https://evntlyapp.com/x.js:1:1)"));
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reportClientError ignore list (Android in-app browser)", () => {
+  it("drops Facebook's Android in-app browser bridge error (logged 20 Nov on /founding-vendors and /signup)", async () => {
+    const report = await load();
+    report(
+      errorWith(
+        "Error invoking postMessage: Java object is gone",
+        "Error: Error invoking postMessage: Java object is gone\n" +
+          "    at sendDataToNative (iabjs://navigation_performance_logger_android:1:11722)\n" +
+          "    at sendJsBlockingTimeMessage (iabjs://navigation_performance_logger_android:1:16303)\n" +
+          "    at iabjs://navigation_performance_logger_android:1:20760",
+      ),
+    );
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it("still reports our own errors that happen to mention postMessage", async () => {
+    const report = await load();
+    report(errorWith("postMessage failed in share sheet", "Error: postMessage failed\n    at share (https://evntlyapp.com/_next/static/chunks/a.js:1:1)"));
     expect(beacon).toHaveBeenCalledTimes(1);
   });
 });

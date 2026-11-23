@@ -11,6 +11,8 @@ import { checkRateLimit, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { SAMPLE_LISTING_CONTACT_ERROR } from "@/lib/sample-listings";
 import type { Database } from "@/lib/supabase/database.types";
 import { friendlyLegalError } from "@/lib/legal/status";
+import { cookies } from "next/headers";
+import { isShareSource, SHARE_SOURCE_COOKIE } from "@/lib/share-profile";
 
 export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
 
@@ -92,6 +94,19 @@ export async function requestQuote(
     .maybeSingle();
   if (open) return { error: "You've already sent this vendor a request for that date. Check Bookings for their reply." };
 
+  // Sent from a vendor page the customer reached through that vendor's Share
+  // profile link or QR code: the proxy left a cookie on /vendor/<id> (the
+  // path this action is posted from), so only that vendor's request gets it.
+  let shareSource: string | null = null;
+  if (origin === "vendor_profile") {
+    try {
+      const value = (await cookies()).get(SHARE_SOURCE_COOKIE)?.value;
+      if (isShareSource(value)) shareSource = value;
+    } catch {
+      // No request cookies: no attribution.
+    }
+  }
+
   // Vendor details come from the DB, never the caller — this is a server
   // action, so a client-supplied email would let anyone point the quote (and
   // its notification email) at an arbitrary address. The
@@ -99,27 +114,34 @@ export async function requestQuote(
   // service_type from vendor_id (and rejects vendors that aren't approved).
   // Neither side can read the other's email back, so the notification
   // address is looked up server-side.
-  const { data: quote, error } = await supabase
-    .from("quote_requests")
-    .insert({
-      vendor_id: vendorId,
-      client_email: user.email,
-      client_name: (user.user_metadata?.full_name as string | undefined)?.trim() || null,
-      event_date: draft.eventDate,
-      event_type: draft.eventType,
-      location: draft.location,
-      estimated_guests: draft.estimatedGuests,
-      estimated_hours: draft.estimatedHours ?? null,
-      budget_range: draft.budgetRange,
-      details: draft.details || null,
-      status: "pending",
-      origin,
-      event_id: eventId ?? null,
-    })
-    .select("id, service_type")
-    .single();
+  const row = {
+    vendor_id: vendorId,
+    client_email: user.email,
+    client_name: (user.user_metadata?.full_name as string | undefined)?.trim() || null,
+    event_date: draft.eventDate,
+    event_type: draft.eventType,
+    location: draft.location,
+    estimated_guests: draft.estimatedGuests,
+    estimated_hours: draft.estimatedHours ?? null,
+    budget_range: draft.budgetRange,
+    details: draft.details || null,
+    status: "pending",
+    origin,
+    event_id: eventId ?? null,
+  };
+  const insert = (withShare: boolean) =>
+    supabase
+      .from("quote_requests")
+      .insert({ ...row, ...(withShare && shareSource ? { share_source: shareSource } : {}) })
+      .select("id, service_type")
+      .single();
+  let { data: quote, error } = await insert(true);
+  // Attribution must never cost a quote request: if this code is live before
+  // the share_source migration, send it again without the column.
+  if (error && shareSource && /share_source/.test(error.message)) ({ data: quote, error } = await insert(false));
 
-  if (error) {
+  if (error || !quote) {
+    if (!error) return { error: "Something went wrong. Please try again." };
     // quote_requests_live_invite_uniq: one open request per vendor per event.
     if (error.code === "23505") return { error: "You've already asked this vendor for a quote for this event." };
     return { error: friendlyError(error.message) };

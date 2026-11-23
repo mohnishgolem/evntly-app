@@ -19,7 +19,10 @@ export function PageViewTracker() {
     // Founding pages also send their own link tags (utm_*, src, ref), so the
     // landing view is credited to the link that brought the visitor even
     // before <SourceCookie> has stored it.
-    const params = view.kind === "founding" || view.kind === "founding_claim" ? sourceParamsFrom(window.location.search) : undefined;
+    // Vendor pages send theirs too, so visits from a vendor's Share profile
+    // link or QR code (?src=share_*) are told apart.
+    const params =
+      view.kind === "founding" || view.kind === "founding_claim" || view.kind === "vendor" ? sourceParamsFrom(window.location.search) : undefined;
     sendTrack({ kind: view.kind, vendorId: view.vendorId, visitorId: id, ...(params ? { params } : {}) });
   }, [pathname]);
 

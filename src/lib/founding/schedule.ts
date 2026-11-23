@@ -77,6 +77,35 @@ export function formatSydneyDay(iso: string | null, empty = "—") {
   return `${p.d} ${MONTHS[p.m - 1]}`;
 }
 
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** "3 November 2026" in Sydney, identical on server and in every browser; "" for null/invalid. */
+export function formatSydneyLongDate(iso: string | null) {
+  const date = iso ? new Date(iso) : null;
+  if (!date || Number.isNaN(date.getTime())) return "";
+  const p = sydneyParts(date);
+  return `${p.d} ${MONTHS_LONG[p.m - 1]} ${p.y}`;
+}
+
+/** "Tue 3 Nov" for a date-only "2026-11-03" (no timezone shift), identical everywhere. */
+export function formatCalendarDay(date: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (!m) return date;
+  const [y, mo, d] = [+m[1], +m[2], +m[3]];
+  return `${WEEKDAYS[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]} ${d} ${MONTHS[mo - 1]}`;
+}
+
+/**
+ * 100000 → "100,000" whatever the visitor's locale. Bare toLocaleString()
+ * uses the device locale in the browser (en-IN prints "1,00,000", de "100.000")
+ * but the server's on the first render, so it can break hydration (#418).
+ */
+export function groupDigits(n: number) {
+  const [whole, frac] = String(Math.abs(n)).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${n < 0 ? "-" : ""}${grouped}${frac ? `.${frac}` : ""}`;
+}
+
 export type BatchPlan = { index: number; at: Date; ids: string[] }[];
 
 /** Splits contacts into batches of `size`, `intervalMinutes` apart from `start`. */

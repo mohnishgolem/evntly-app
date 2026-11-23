@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { isFoundingPath } from "@/lib/founding/sources";
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { recordShareAccount } from "@/lib/share-funnel";
 import { recordVendorRegistration } from "@/lib/meta-capi";
 import type { AuthNoticeKey } from "@/lib/auth-notices";
 
@@ -59,6 +60,17 @@ export async function GET(request: Request) {
         // Founding-vendor sign-ups go back to their claim page.
         const founding = !!next && isFoundingPath(safeNextPath(next));
         return NextResponse.redirect(`${origin}${safeNextPath(founding ? next : "/vendor-signup")}`);
+      }
+      // A brand-new customer account (Google/Apple) from a shared vendor
+      // profile. OAuth emails arrive verified. Returning customers also come
+      // through here, so only accounts made in the last few minutes count.
+      if (next && flow !== "signup") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user && user.user_metadata?.role !== "vendor" && Date.now() - new Date(user.created_at).getTime() < 10 * 60 * 1000) {
+          await recordShareAccount(user.id, next, user.app_metadata?.provider === "apple" ? "apple" : "google");
+        }
       }
       if (next) {
         // `next` comes from the URL, so only same-site paths are honoured —

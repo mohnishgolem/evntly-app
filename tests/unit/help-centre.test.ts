@@ -6,6 +6,7 @@ import { searchHelp, searchIndex } from "@/lib/help/search";
 import { tokenizeInline } from "@/lib/legal/inline";
 import {
   ONBOARDING_KEY,
+  isFinishingAction,
   isQuietPath,
   onboardingStatus,
   shouldAutoStartOnboarding,
@@ -149,6 +150,12 @@ describe("onboarding rules", () => {
     for (const p of ["/login", "/signup", "/terms", "/legal", "/vendor-signup", "/founding-vendors", "/founding-vendors/claim", "/vendor-dashboard/finish", "/admin/risk", "/bookings/abc/invoice"])
       expect(isQuietPath(p), p).toBe(true);
     for (const p of ["/", "/dashboard", "/vendor-dashboard", "/bookings/abc", "/help"]) expect(isQuietPath(p), p).toBe(false);
+    // Coming back to post a saved review: the tour waits for the next page.
+    expect(isFinishingAction("/vendor/0f0f0f0f-0000-4000-8000-00000000000a", "?review=2afbf5a1-d08b-4656-a878-e1624c185cf7&src=share_qr")).toBe(true);
+    expect(isFinishingAction("/vendor/0f0f0f0f-0000-4000-8000-00000000000a", "?src=share_qr")).toBe(false);
+    expect(isFinishingAction("/explore", "?review=x")).toBe(false);
+    // …or to send a quote request after verifying by email link.
+    expect(isFinishingAction("/vendor/0f0f0f0f-0000-4000-8000-00000000000a", "?book=1&src=share_link")).toBe(true);
   });
 });
 

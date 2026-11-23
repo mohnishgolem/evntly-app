@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LeaveReview } from "@/components/leave-review";
 import { CancelBookingButton } from "@/components/cancel-booking-button";
 import { JobCardPanel } from "@/components/job-card-panel";
 import type { getJobCardForBooking } from "@/lib/data/job-cards";
@@ -85,7 +84,12 @@ export function BookingList({
               </Link>
             )}
             {b.status === "completed" && !reviewedBookingIds.has(b.id) && (
-              <LeaveReview providerId={b.provider_id} bookingId={b.id} eventType={b.service_type} />
+              <Link
+                href={`/vendor/${b.provider_id}?review=new#reviews`}
+                className="inline-flex min-h-11 items-center rounded-md border border-border px-3.5 text-sm font-medium hover:bg-muted"
+              >
+                Leave a review
+              </Link>
             )}
             {b.status === "completed" && reviewedBookingIds.has(b.id) && (
               <span className="text-sm text-muted-foreground">You reviewed this booking</span>

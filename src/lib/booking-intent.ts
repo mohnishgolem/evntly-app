@@ -1,4 +1,4 @@
-// "Book this vendor" pressed while signed out sends the customer through
+// "Request a quote" pressed while signed out sends the customer through
 // sign-up and back to /vendor/<id>?book=1, which reopens the booking form.
 // The proxy turns that one-shot ?book=1 into a short-lived cookie and
 // redirects to the clean URL, so the address bar never keeps it: Next's

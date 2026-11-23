@@ -25,6 +25,10 @@ import { sampleListingsHidden } from "@/lib/sample-listings";
 import { cookies } from "next/headers";
 import { BOOK_INTENT_COOKIE } from "@/lib/booking-intent";
 import { priceSummary, vendorPrice } from "@/lib/pricing-model";
+import { isShareSource, SHARE_SOURCE_COOKIE } from "@/lib/share-profile";
+import { WriteReview } from "@/components/write-review";
+import { hasReviewedVendor, loadReviewDraft } from "@/lib/data/reviews";
+import { isDraftId } from "@/lib/profile-reviews";
 
 export async function generateMetadata({
   params,
@@ -50,14 +54,31 @@ export async function generateMetadata({
 
 export default async function VendorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  // The customer pressed "Book this vendor" before signing in: the proxy
+  const cookieStore = await cookies();
+  // The customer pressed "Request a quote" before signing in: the proxy
   // turned ?book=1 into this cookie, so reopen the booking form now they're
   // back (see lib/booking-intent.ts).
-  const autoOpenBooking = (await cookies()).get(BOOK_INTENT_COOKIE)?.value === "1";
+  // ?book=1 itself counts too: returning through the email link's
+  // "Continue" (/auth/confirm) arrives by a client-side redirect, which never
+  // passes through the proxy's cookie swap, so the form didn't reopen (found
+  // in PR #82 QA on real Postgres, 20 Nov).
+  const sp0 = await searchParams;
+  const autoOpenBooking = cookieStore.get(BOOK_INTENT_COOKIE)?.value === "1" || sp0.book === "1";
+  // Arrived from the vendor's Share profile link or QR code: the sign-up
+  // round trip keeps the tag, so the quote request is still credited even if
+  // sign-up finishes in another browser (see lib/share-profile.ts).
+  const sp = await searchParams;
+  const srcParam = sp.src;
+  // ?review=new opens "Write a review"; ?review=<draft id> reopens a guest's
+  // saved draft after sign-up (see lib/profile-reviews.ts).
+  const reviewParam = Array.isArray(sp.review) ? sp.review[0] : sp.review;
+  const shareSource = [Array.isArray(srcParam) ? srcParam[0] : srcParam, cookieStore.get(SHARE_SOURCE_COOKIE)?.value].find(isShareSource) ?? null;
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 
@@ -104,6 +125,13 @@ export default async function VendorDetailPage({
     if (open) openRequest = { id: open.id, status: open.status, eventDate: open.event_date };
   }
   const role = navRole(session?.profile?.role, !!session);
+  const canWriteReview = !vendor.is_demo && !isOwnListing && vendor.status === "approved";
+  const [reviewDraft, reviewed] = canWriteReview
+    ? await Promise.all([
+        loadReviewDraft(reviewParam, vendor.id),
+        session ? hasReviewedVendor(vendor.id, session.user.id) : Promise.resolve(false),
+      ])
+    : [null, false];
   const fromPackage = packages.length ? Math.min(...packages.map((p) => p.price_cents)) : null;
   const price = vendorPrice(vendor);
   // Quote-only vendors with packages show those instead of "Contact for pricing".
@@ -152,7 +180,7 @@ export default async function VendorDetailPage({
                 {!!vendor.rating && vendor.rating > 0 && (
                   <span className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-champagne text-champagne" />
-                    {vendor.rating.toFixed(1)} ({vendor.review_count ?? 0} reviews)
+                    {vendor.rating.toFixed(1)} ({vendor.review_count ?? 0} review{vendor.review_count === 1 ? "" : "s"})
                   </span>
                 )}
                 {vendor.city && (
@@ -277,19 +305,46 @@ export default async function VendorDetailPage({
             </section>
           )}
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold">Reviews</h2>
+          <section id="reviews" className="scroll-mt-24">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Reviews</h2>
+              {canWriteReview && (
+                <WriteReview
+                  vendorId={vendor.id}
+                  vendorName={vendor.name.trim()}
+                  signedIn={!!session}
+                  reviewed={reviewed}
+                  initialDraft={reviewDraft}
+                  draftId={reviewDraft && isDraftId(reviewParam) ? reviewParam : null}
+                  autoOpen={reviewParam === "new" || !!reviewDraft}
+                  shareSource={shareSource}
+                />
+              )}
+            </div>
             {reviews.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No reviews yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No reviews yet.{canWriteReview ? ` Hired ${vendor.name.trim()} before? Be the first to review them.` : ""}
+              </p>
             ) : (
               <div className="space-y-4">
                 {reviews.map((r) => (
                   <div key={r.id} className="border-b border-border/60 pb-4 last:border-0">
-                    <div className="mb-1 flex items-center gap-2">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-sm font-medium">{r.reviewer_name ?? "Anonymous"}</span>
                       <span className="flex items-center gap-0.5 text-sm">
                         <Star className="h-3.5 w-3.5 fill-champagne text-champagne" />
                         {r.rating}
+                      </span>
+                      {r.event_type && <span className="text-xs text-muted-foreground">· {r.event_type}</span>}
+                      {/* Reviews from clients who booked outside Evntly are always labelled. */}
+                      <span
+                        className={
+                          r.source === "past_client"
+                            ? "rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
+                            : "rounded-full bg-success/10 px-2 py-0.5 text-xs text-success"
+                        }
+                      >
+                        {r.source === "past_client" ? "Past client · not booked on Evntly" : "Booked on Evntly"}
                       </span>
                     </div>
                     {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
@@ -335,6 +390,7 @@ export default async function VendorDetailPage({
                 }}
                 openRequest={openRequest}
                 autoOpen={autoOpenBooking}
+                shareSource={shareSource}
                 priceLabel={priceLabel}
                 paymentsEnabled={payments.enabled}
                 hasTabBar={role === "customer" || role === "vendor"}

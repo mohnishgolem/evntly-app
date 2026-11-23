@@ -2330,6 +2330,7 @@ export type Database = {
           responded_at: string | null
           service_description: string | null
           service_type: string | null
+          share_source: string | null
           status: string
           stripe_session_id: string | null
           travel_fee_cents: number | null
@@ -2374,6 +2375,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null
@@ -2418,6 +2420,7 @@ export type Database = {
           responded_at?: string | null
           service_description?: string | null
           service_type?: string | null
+          share_source?: string | null
           status?: string
           stripe_session_id?: string | null
           travel_fee_cents?: number | null
@@ -2509,6 +2512,39 @@ export type Database = {
         }
         Relationships: []
       }
+      review_drafts: {
+        Row: {
+          comment: string | null
+          created_at: string
+          event_type: string | null
+          id: string
+          provider_id: string
+          rating: number | null
+          share_source: string | null
+          used_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          provider_id: string
+          rating?: number | null
+          share_source?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          provider_id?: string
+          rating?: number | null
+          share_source?: string | null
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string | null
@@ -2517,12 +2553,16 @@ export type Database = {
           created_by: string | null
           description: string | null
           event_type: string | null
+          hidden_at: string | null
+          hidden_reason: string | null
           id: string
           provider_id: string
           rating: number
           reviewer_email: string
           reviewer_name: string | null
           reviewer_user_id: string | null
+          share_source: string | null
+          source: string
           updated_at: string
         }
         Insert: {
@@ -2532,12 +2572,16 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_type?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           provider_id: string
           rating: number
           reviewer_email: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          share_source?: string | null
+          source?: string
           updated_at?: string
         }
         Update: {
@@ -2547,12 +2591,16 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           event_type?: string | null
+          hidden_at?: string | null
+          hidden_reason?: string | null
           id?: string
           provider_id?: string
           rating?: number
           reviewer_email?: string
           reviewer_name?: string | null
           reviewer_user_id?: string | null
+          share_source?: string | null
+          source?: string
           updated_at?: string
         }
         Relationships: [
@@ -2583,6 +2631,36 @@ export type Database = {
           reviewed_at?: string
           reviewed_by?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      share_funnel_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: number
+          source: string
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: number
+          source: string
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: number
+          source?: string
+          user_id?: string | null
+          vendor_id?: string | null
         }
         Relationships: []
       }
@@ -3242,6 +3320,34 @@ export type Database = {
       }
       admin_matching_report: { Args: { p_days?: number }; Returns: Json }
       admin_risk_overview: { Args: { p_days?: number }; Returns: Json }
+      admin_share_funnel: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          reviews: number
+          source: string
+          verified: number
+          visitors: number
+        }[]
+      }
+      admin_share_funnel_by_vendor: {
+        Args: { p_days?: number }
+        Returns: {
+          accounts: number
+          prepared: number
+          quotes: number
+          quotes_new: number
+          reviews: number
+          source: string
+          vendor_id: string
+          vendor_name: string
+          verified: number
+          visitors: number
+        }[]
+      }
       admin_service_providers: {
         Args: never
         Returns: {

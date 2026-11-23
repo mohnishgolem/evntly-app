@@ -1,6 +1,7 @@
 "use server";
 
 import { recordFunnelEvent } from "@/lib/funnel-events";
+import { recordShareAccount } from "@/lib/share-funnel";
 import { EXISTING_ACCOUNT_MESSAGE } from "@/lib/auth-notices";
 import { recordVendorRegistration } from "@/lib/meta-capi";
 
@@ -138,6 +139,8 @@ export async function signup(
   if (role === "vendor" && data.user) {
     await recordFunnelEvent("account_created", { detail: "email" });
   }
+  // A customer signing up to request a quote from a shared vendor profile.
+  if (role === "customer" && data.user) await recordShareAccount(data.user.id, next, "email");
 
   // When email confirmation is required, signUp succeeds but returns no
   // session — redirecting to a protected page would just bounce the user
@@ -410,26 +413,30 @@ export async function updatePassword(
  * verifyOtp with the token hash signs them in on this browser, whichever
  * device asked for the email.
  */
-export async function confirmEmailLink(formData: FormData): Promise<void> {
+/**
+ * Uses the one-time token from an email link and returns where the person
+ * goes next. The /auth/confirm "Continue" button posts to a route handler
+ * (app/auth/confirm/continue) that redirects with a full page load, so the
+ * destination renders signed in and the proxy's ?book=1 handling runs (an
+ * in-app redirect left the quote form closed; PR #82 QA on real Postgres).
+ */
+export async function confirmEmailLinkDestination(formData: FormData): Promise<string> {
   const link = parseConfirmLink({
     token_hash: formData.get("token_hash")?.toString(),
     type: formData.get("type")?.toString(),
     next: formData.get("next")?.toString() || undefined,
   });
-  if (!link) redirect("/login?notice=signin-failed");
+  if (!link) return "/login?notice=signin-failed";
 
-  if (!(await checkRateLimit("emailLinkIp", await clientIp()))) redirect("/login?notice=signin-failed");
+  if (!(await checkRateLimit("emailLinkIp", await clientIp()))) return "/login?notice=signin-failed";
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({ token_hash: link.tokenHash, type: link.type });
   const recovery = link.type === "recovery";
   const back = !recovery && link.next ? `&next=${encodeURIComponent(link.next)}` : "";
 
-  if (error || !data.user) {
-    redirect(`/login?notice=${recovery ? "link-expired" : "signup-link-used"}${back}`);
-  }
-
-  if (recovery) redirect("/reset-password");
+  if (error || !data.user) return `/login?notice=${recovery ? "link-expired" : "signup-link-used"}${back}`;
+  if (recovery) return "/reset-password";
 
   const role = data.user.user_metadata?.role;
   const destination = afterConfirmPath(link.next ?? undefined, role);
@@ -438,5 +445,10 @@ export async function confirmEmailLink(formData: FormData): Promise<void> {
     // Meta measurement (only with this browser's consent; see lib/meta-capi.ts).
     await recordVendorRegistration(data.user, new URL(destination, SITE_URL).toString());
   }
-  redirect(destination);
+  return destination;
+}
+
+/** The same, as a form action (kept for callers that use it directly). */
+export async function confirmEmailLink(formData: FormData): Promise<void> {
+  redirect(await confirmEmailLinkDestination(formData));
 }

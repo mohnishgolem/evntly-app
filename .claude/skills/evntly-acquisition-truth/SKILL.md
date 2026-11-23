@@ -19,10 +19,12 @@ don't report it.
 | **Completed listing** | Approved + ≥ 3 `portfolio_items` + ≥ 1 active `vendor_packages` (same as `src/lib/listing-completion.ts`) |
 
 **Excluded as test/internal:** admin role, `is_demo`, `@evntlyapp.com`,
-campaign starting `qa`, listing name containing the word QA or TEST.
+campaign starting `qa`, listing name containing the word QA or TEST,
+`+qa`/`+test` email aliases, account name containing QA or TEST, and the
+known internal test account ids ("saim").
 Duplicates: one row per lower-cased email (best stage wins).
 Same rules in three places — keep in sync, tests pin them:
-`sql/verified_vendors.sql`, `supabase/migrations/20261120090000_admin_verified_vendor_funnel.sql`,
+`sql/verified_vendors.sql`, `supabase/migrations/20261120090000_admin_verified_vendor_funnel.sql` (+ `20261121090000_verified_funnel_account_test_rules.sql`),
 `src/lib/acquisition/test-accounts.ts`.
 
 ## How to run

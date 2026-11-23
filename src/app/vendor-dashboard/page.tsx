@@ -15,6 +15,8 @@ import {
   Inbox,
   PartyPopper,
   PencilLine,
+  Share2,
+  Star,
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
@@ -207,6 +209,34 @@ export default async function VendorHomePage() {
       <p className="mb-6 text-sm text-muted-foreground">What needs your attention today.</p>
 
       <FoundingCard />
+
+      {listings.some((l) => l.status === "approved") && (
+        <Link
+          href="/vendor-dashboard/share"
+          className="mb-8 flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Share2 className="size-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+          <span className="flex-1 text-sm">
+            <span className="block font-semibold">Share profile</span>
+            <span className="block text-muted-foreground">Post your listing to Instagram Stories or share a card with a QR code.</span>
+          </span>
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
+
+      {listings.some((l) => l.status === "approved") && (
+        <Link
+          href="/vendor-dashboard/reviews"
+          className="-mt-5 mb-8 flex items-center gap-3 rounded-2xl border border-border p-4 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Star className="size-5 shrink-0 text-champagne" strokeWidth={1.75} aria-hidden />
+          <span className="flex-1 text-sm">
+            <span className="block font-semibold">Get reviews</span>
+            <span className="block text-muted-foreground">Ask clients, including ones from before Evntly, to review you on your profile.</span>
+          </span>
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+        </Link>
+      )}
 
       {checklist.length > 0 && <ProfileStrength name={listings[0].name} items={checklist} />}
 

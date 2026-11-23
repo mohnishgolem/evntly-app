@@ -3,7 +3,8 @@ import { isInAppBrowser } from "@/lib/in-app-browser";
 import type { Metadata } from "next";
 import { AuthTabs } from "@/components/auth/auth-tabs";
 import { isBookingReturn, safeNextPath } from "@/lib/safe-redirect";
-import { BookingReturnNote } from "@/components/auth/booking-return-note";
+import { BookingReturnNote, ReviewReturnNote } from "@/components/auth/booking-return-note";
+import { isReviewReturn } from "@/lib/profile-reviews";
 import { authNotice } from "@/lib/auth-notices";
 import Link from "next/link";
 
@@ -42,6 +43,7 @@ export default async function LoginPage({
         </div>
       )}
       {isBookingReturn(next) && <BookingReturnNote />}
+      {isReviewReturn(next) && <ReviewReturnNote />}
       <AuthTabs defaultTab="login" next={next} inAppBrowser={isInAppBrowser((await headers()).get("user-agent"))} />
     </div>
   );

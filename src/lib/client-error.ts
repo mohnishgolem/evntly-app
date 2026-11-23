@@ -7,15 +7,26 @@ const MAX_PER_PAGE = 5;
 
 // Noise that isn't ours: browser extensions, cross-origin script errors with
 // no detail, the harmless ResizeObserver warning, and the native bridge that
-// Instagram/Facebook's iOS in-app browser injects into pages (its
-// sendDataToNative calls window.webkit.messageHandlers, which can be gone
-// while the page hides). Evntly never uses that bridge.
+// Instagram/Facebook's in-app browsers inject into pages (its
+// sendDataToNative calls window.webkit.messageHandlers on iOS, or a Java
+// bridge on Android — "Java object is gone" — either of which can be gone
+// while the page hides; Android's scripts load from iabjs:// URLs). Evntly never uses that bridge. Also the browser's
+// bare "the network dropped" errors (Chrome "Failed to fetch", Safari "Load
+// failed", Firefox "NetworkError when attempting to fetch resource.", Chrome's
+// DOMException "A network error occurred."): the
+// visitor's connection, not a bug. Matched on the whole message, so an error
+// that only mentions a failed fetch is still reported. Code that calls a
+// server action must still catch these and tell the user (19 Nov: the
+// portfolio uploader didn't).
 const IGNORED = [
+  /^(TypeError: )?(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?|The network connection was lost\.?|(NetworkError: )?A network error occurred\.?)$/i,
   /ResizeObserver loop/i,
   /^Script error\.?$/i,
   /extension:\/\//i,
   /window\.webkit\.messageHandlers/,
-  /\bsendDataToNative@/,
+  /\bsendDataToNative(@| \()/,
+  /\biabjs:\/\//,
+  /^(Error: )?Error invoking postMessage: Java object is gone$/,
 ];
 
 /**

@@ -61,3 +61,30 @@ export function portfolioPathFromUrl(url: string) {
   const path = decodeURIComponent(url.slice(at + marker.length).split(/[?#]/)[0]);
   return path.includes("..") ? null : path;
 }
+
+const PUBLIC_OBJECT_PATH = "/storage/v1/object/public/";
+const RENDER_PATH = "/storage/v1/render/image/public/";
+
+/**
+ * A small, square-cropped copy of a Supabase Storage image for cards and map
+ * thumbnails (Supabase image transformations: a 4.6 MB portfolio photo comes
+ * back at ~130 KB). Anything that isn't a Supabase public-storage URL (demo
+ * avatars, external links) is returned unchanged.
+ */
+export function resizedImageUrl(url: string, size: number): string {
+  const i = url.indexOf(PUBLIC_OBJECT_PATH);
+  if (i === -1 || !url.startsWith("https://") || url.includes("?")) return url;
+  const base = url.slice(0, i) + RENDER_PATH + url.slice(i + PUBLIC_OBJECT_PATH.length);
+  return `${base}?width=${size}&height=${size}&resize=cover&quality=70`;
+}
+
+/**
+ * The picture a listing card shows: the first portfolio photo (vendors'
+ * work sells better than a logo, and most have no profile photo), else the
+ * profile photo, else null for the category icon. `portfolio_urls` is kept in
+ * sync by the database (migration 20261122090000_listing_portfolio_covers).
+ */
+export function listingCoverUrl(v: { portfolio_urls?: string[] | null; avatar_url?: string | null }, size: number) {
+  const url = v.portfolio_urls?.find(Boolean) ?? v.avatar_url ?? null;
+  return url ? resizedImageUrl(url, size) : null;
+}

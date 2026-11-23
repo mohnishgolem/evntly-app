@@ -12,6 +12,9 @@ with vendors as (
   where u.role = 'vendor'
     and split_part(lower(u.email), '@', 2) <> 'evntlyapp.com'
     and coalesce(sp.name, '') !~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+    and split_part(lower(u.email), '@', 1) !~ '\+(qa|test)'
+    and coalesce(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', '') !~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+    and u.id::text not in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa') -- "saim", internal test vendor
 )
 select p.id as prospect_id, p.business_name, p.stage as prospect_stage, p.contacted_at is not null as was_contacted,
   case
