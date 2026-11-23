@@ -18,6 +18,7 @@ import {
   type ServiceAreaInput,
 } from "@/lib/actions/vendor-pricing";
 import { cn } from "@/lib/utils";
+import { packageTemplatesFor, type PackageTemplate } from "@/lib/package-templates";
 
 export type VendorPackageRow = {
   id: string;
@@ -192,12 +193,16 @@ export function PackageList({
   listingId,
   listing,
   packages,
+  category,
 }: {
   listingId: string;
   listing: PricedListing;
   packages: VendorPackageRow[];
+  /** The listing's category, for starter packages while it has none. */
+  category?: string | null;
 }) {
   const price = vendorPrice(listing);
+  const templates = packages.length === 0 ? packageTemplatesFor(category) : [];
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -213,6 +218,16 @@ export function PackageList({
         </div>
         {packages.length < 12 && <PackageEditor listingId={listingId} />}
       </div>
+      {templates.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">Or start from a typical package and set your own price:</p>
+          <div className="flex flex-wrap gap-2">
+            {templates.map((t) => (
+              <PackageEditor key={t.label} listingId={listingId} template={t} />
+            ))}
+          </div>
+        </div>
+      )}
       {packages.length > 0 && (
         <ul className="divide-y divide-border">
           {packages.map((p) => (
@@ -247,17 +262,23 @@ function useSheetSide() {
   return side;
 }
 
-function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPackageRow }) {
+function PackageEditor({ listingId, pkg, template }: { listingId: string; pkg?: VendorPackageRow; template?: PackageTemplate }) {
   const side = useSheetSide();
   const [open, setOpen] = useState(false);
   const { pending, error, setError, run } = useSaver();
+  // A template fills in everything except the price, which the vendor sets.
   const [form, setForm] = useState(() => ({
-    name: pkg?.name ?? "",
-    description: pkg?.description ?? "",
+    name: pkg?.name ?? template?.name ?? "",
+    description: pkg?.description ?? template?.description ?? "",
     price: pkg ? String(pkg.price_cents / 100) : "",
-    includedHours: pkg?.included_hours != null ? String(Number(pkg.included_hours)) : "",
+    includedHours:
+      pkg?.included_hours != null
+        ? String(Number(pkg.included_hours))
+        : template?.includedHours != null
+          ? String(template.includedHours)
+          : "",
     extraHourPrice: pkg?.extra_hour_cents != null ? String(pkg.extra_hour_cents / 100) : "",
-    inclusions: (pkg?.inclusions ?? []).join("\n"),
+    inclusions: (pkg?.inclusions ?? template?.inclusions ?? []).join("\n"),
     deliveryDays: pkg?.delivery_days != null ? String(pkg.delivery_days) : "",
     depositPercent: pkg?.deposit_percent != null ? String(pkg.deposit_percent) : "",
     active: pkg?.active ?? true,
@@ -305,12 +326,14 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
         render={
           pkg ? (
             <Button variant="ghost" size="icon-lg" aria-label={`Edit ${pkg.name}`} />
+          ) : template ? (
+            <Button variant="secondary" size="lg" aria-label={`Start from a ${template.label} package`} />
           ) : (
             <Button variant="outline" size="lg" />
           )
         }
       >
-        {pkg ? <Pencil aria-hidden /> : (<><Plus aria-hidden /> Add package</>)}
+        {pkg ? <Pencil aria-hidden /> : template ? template.label : (<><Plus aria-hidden /> Add package</>)}
       </SheetTrigger>
       <SheetContent
         side={side}
@@ -318,7 +341,9 @@ function PackageEditor({ listingId, pkg }: { listingId: string; pkg?: VendorPack
       >
         <SheetHeader className="px-0">
           <SheetTitle>{pkg ? "Edit package" : "New package"}</SheetTitle>
-          <SheetDescription>Prices include GST if you charge it.</SheetDescription>
+          <SheetDescription>
+            {template ? "A starting point: change anything, and set your own price. " : ""}Prices include GST if you charge it.
+          </SheetDescription>
         </SheetHeader>
         <form onSubmit={save} className="space-y-4">
           <div className="space-y-1.5">

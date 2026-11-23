@@ -2940,6 +2940,24 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_onboarding_reminders: {
+        Row: {
+          kind: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          kind: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          kind?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendor_packages: {
         Row: {
           active: boolean

@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/data/user";
 import { getFoundingPlaces, getMyFoundingStatus } from "@/lib/data/founding";
 import { createClient } from "@/lib/supabase/server";
 import { hashInviteToken, looksLikeInviteToken } from "@/lib/founding/tokens";
-import { campaignFromParams, CLAIM_PATH, FOUNDING_PATH, referralFromParams, sourceFromParams, type FoundingSource } from "@/lib/founding/sources";
+import { campaignFromParams, CLAIM_PATH, FOUNDING_PATH, referralFromParams, sourceFromParams, wantsAutoClaim, withAutoClaim, type FoundingSource } from "@/lib/founding/sources";
 import { MIN_PHOTOS } from "@/lib/profile-completeness";
 
 export const metadata: Metadata = {
@@ -59,7 +59,7 @@ export default async function ClaimPage({
       {!session ? (
         <SignedOut inviteState={inviteState} invitee={invitee} returnPath={returnPath} full={full} />
       ) : (
-        <SignedIn invite={invite} inviteState={inviteState} invitee={invitee} source={source} referral={referral} full={full} email={session.user.email ?? null} />
+        <SignedIn invite={invite} inviteState={inviteState} invitee={invitee} source={source} referral={referral} full={full} email={session.user.email ?? null} autoClaim={wantsAutoClaim(params)} />
       )}
     </div>
   );
@@ -108,7 +108,7 @@ function SignedOut({
   returnPath: string;
   full: boolean;
 }) {
-  const next = encodeURIComponent(returnPath);
+  const next = encodeURIComponent(withAutoClaim(returnPath));
   return (
     <>
       <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Claim your free vendor account</h1>
@@ -175,6 +175,7 @@ async function SignedIn({
   referral,
   full,
   email,
+  autoClaim,
 }: {
   invite: string | null;
   inviteState: InviteState | null;
@@ -183,6 +184,7 @@ async function SignedIn({
   referral: string | null;
   full: boolean;
   email: string | null;
+  autoClaim: boolean;
 }) {
   const status = await getMyFoundingStatus();
   const application = status?.application ?? null;
@@ -199,7 +201,16 @@ async function SignedIn({
         </p>
         <InviteNotice state={inviteState} invitee={invitee} signedIn />
         {full && <FullNotice />}
-        <ClaimButton invite={invite} source={source} referral={referral} label={listing ? "Apply with my listing" : "Claim my place"} />
+        <ClaimButton
+          invite={invite}
+          source={source}
+          referral={referral}
+          label={listing ? "Apply with my listing" : "Claim my place"}
+          // Back from sign-up or log-in after tapping Claim: no second tap.
+          // Only for a fresh account (no listing to confirm) and when there's
+          // no invitation problem the vendor should read first.
+          autoSubmit={autoClaim && !listing && (inviteState === null || inviteState === "valid")}
+        />
         {email && <p className="mt-3 text-xs text-muted-foreground">Signed in as {email}.</p>}
         {!listing && <WhatYouNeed />}
       </>

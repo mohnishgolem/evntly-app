@@ -6,14 +6,15 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { ClaimLink } from "@/components/founding/claim-link";
-import { getFoundingPlaces, getLiveVendorCount, getSampleListing, type SampleListing } from "@/lib/data/founding";
+import { getFoundingPlaces, getLiveVendorCount, getProofListings, getSampleListing, type ProofListing, type SampleListing } from "@/lib/data/founding";
 import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
 import { navRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams, withAutoClaim } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
+import { FEE_CHANGE_PROMISE, FEE_SUMMARY, PHOTO_RULE, SETUP_TIME } from "@/lib/vendor-terms";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ type Point = { icon: LucideIcon; title: string; body: string };
 // Keep these in step with the Meta ads and Instagram posts: people arrive here
 // expecting exactly these four things. Every one must be real and enforced.
 const PERKS: Point[] = [
-  { icon: Store, title: "Free listing", body: "Your business profile, photos, prices and service area, with no subscription fee during the beta." },
+  { icon: Store, title: "Free listing", body: "Your business profile, photos, prices and service area. No subscription, commission or booking fees." },
   { icon: Award, title: "Founding Vendor badge", body: "Shown on your profile, your card in search results and the map." },
   { icon: Search, title: "Listed first in search", body: "Founding Vendors appear ahead of other vendors in Evntly search results." },
   { icon: Camera, title: "Featured on @evntly.au", body: "We'll introduce your business on our Instagram when your listing goes live." },
@@ -43,7 +44,7 @@ const PERKS: Point[] = [
 
 const STEPS: Point[] = [
   { icon: Users, title: "Claim your account", body: "Sign up, or log in if you already have an Evntly account. You'll confirm your email with a code." },
-  { icon: FileText, title: "Create your listing", body: "About 10 minutes: business name, category, your ABN, a starting rate and the Sydney areas you service. Photos can come after you submit." },
+  { icon: FileText, title: "Create your listing", body: `${SETUP_TIME[0].toUpperCase()}${SETUP_TIME.slice(1)}: business name, category, your ABN, a starting rate and the Sydney areas you service. ${PHOTO_RULE}` },
   { icon: CalendarCheck, title: "We review it", body: "Our team checks every listing. You'll see your status (Pending, Approved or Needs changes) and we'll email you." },
   { icon: MessageCircle, title: "Go live", body: "Once approved, your listing goes live with the Founding Vendor badge. Tell us what works and what doesn't from your dashboard." },
 ];
@@ -55,7 +56,7 @@ const FAQ = [
   },
   {
     q: "Does it cost anything?",
-    a: "No. Taking part in the beta is free and there's no subscription fee. Your listing is covered by the Vendor Service Agreement you accept when you list.",
+    a: `No. ${FEE_SUMMARY} ${FEE_CHANGE_PROMISE} Your listing is covered by the Vendor Service Agreement you accept when you list.`,
   },
   {
     q: "I already have an Evntly account.",
@@ -82,6 +83,33 @@ const WHAT_EVNTLY_IS = `A new ${LAUNCH_CITY} marketplace where people planning e
 
 // Only shown once the number says something (a count of 2 reads as empty).
 const MIN_PROOF_COUNT = 5;
+// The proof strip needs at least two real, complete listings to be worth showing.
+const MIN_PROOF_LISTINGS = 2;
+
+function ProofStrip({ listings }: { listings: ProofListing[] }) {
+  return (
+    <div className="mx-auto mt-6 max-w-md text-left">
+      <p className="mb-2 text-center text-sm font-semibold">Already on Evntly</p>
+      <ul className="grid grid-cols-3 gap-3">
+        {listings.map((l) => (
+          <li key={l.id}>
+            <Link href={`/vendor/${l.id}`} className="group block">
+              <div className="aspect-square overflow-hidden rounded-xl bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={l.avatarUrl} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-[1.03]" />
+              </div>
+              <p className="mt-1.5 truncate text-[13px] font-medium">{l.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {categoryLabel(l.category)}
+                {l.city ? ` · ${l.city}` : ""}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 // Honest about where Evntly is (17 Nov 2026: a handful of customer enquiries a
 // month). Never imply steady enquiries until the numbers say so.
@@ -89,11 +117,10 @@ const STAGE_NOTE =
   "We're listing Sydney vendors first, so customer enquiries are only just starting. Founding Vendors are shown first as more customers arrive.";
 
 // What a vendor needs before starting, said before they tap Claim.
-const SETUP_NOTE = "Takes about 10 minutes. You'll need your ABN; photos can come later.";
+const SETUP_NOTE = `Takes ${SETUP_TIME}. You'll need your ABN; you can save first and add photos after.`;
 
 // The Vendor Service Agreement, Schedule 1 (fees). Keep in step with it.
-const DEAL_TERMS =
-  "Free: no subscription, no commission and no booking fees. If we ever add a fee, you'll get 30 days' notice and it only applies if you accept it.";
+const DEAL_TERMS = `${FEE_SUMMARY} ${FEE_CHANGE_PROMISE}`;
 
 export default async function FoundingVendorsPage({
   searchParams,
@@ -105,12 +132,14 @@ export default async function FoundingVendorsPage({
   const referral = referralFromParams(params);
   const campaign = campaignFromParams(params);
   const variant = landingVariant(params);
-  const [places, session, sample, liveVendors] = await Promise.all([
+  const [places, session, sample, liveVendors, proofListings] = await Promise.all([
     getFoundingPlaces(),
     getCurrentUser(),
     getSampleListing(variant?.category ?? null),
     getLiveVendorCount(),
+    variant?.proof ? getProofListings() : Promise.resolve([] as ProofListing[]),
   ]);
+  const showProof = !!variant?.proof && proofListings.length >= MIN_PROOF_LISTINGS;
   const role = navRole(session?.profile?.role, !!session);
   const hasTabBar = role === "customer" || role === "vendor";
   const full = places ? places.remaining <= 0 : false;
@@ -122,7 +151,7 @@ export default async function FoundingVendorsPage({
   // Signed-out visitors go straight to the vendor sign-up form (it returns to
   // the claim page afterwards); the claim page in between was an extra tap
   // that most ad visitors never got past. Signed-in visitors claim directly.
-  const claimHref = session ? claimPage : `/signup?role=vendor&next=${encodeURIComponent(claimPage)}`;
+  const claimHref = session ? claimPage : `/signup?role=vendor&next=${encodeURIComponent(withAutoClaim(claimPage))}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
@@ -130,10 +159,10 @@ export default async function FoundingVendorsPage({
 
       <header className="mx-auto max-w-2xl text-center">
         <p className="text-sm font-semibold tracking-wide text-primary uppercase">
-          {variant ? variant.eyebrow : `Founding Vendors · ${LAUNCH_CITY}`}
+          {variant?.eyebrow ?? `Founding Vendors · ${LAUNCH_CITY}`}
         </p>
         <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight text-balance sm:text-[48px]">
-          {variant ? variant.headline : `Get found by people planning events in ${LAUNCH_CITY}`}
+          {variant?.headline ?? `Get found by people planning events in ${LAUNCH_CITY}`}
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">{WHAT_EVNTLY_IS}</p>
 
@@ -159,6 +188,12 @@ export default async function FoundingVendorsPage({
           )}
         </div>
         {!full && <p className="mt-3 text-sm font-medium">{SETUP_NOTE}</p>}
+        {/* Proof-first test (utm_content v6_…): the fee promise next to the
+            buttons instead of further down, and real complete listings. */}
+        {variant?.proof && (
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">{DEAL_TERMS}</p>
+        )}
+        {showProof && <ProofStrip listings={proofListings} />}
         {liveVendors !== null && liveVendors >= MIN_PROOF_COUNT && (
           <p className="mt-2 text-sm text-muted-foreground">
             <span className="font-semibold text-foreground tabular-nums">{liveVendors}</span> {LAUNCH_CITY} vendors already
@@ -167,12 +202,13 @@ export default async function FoundingVendorsPage({
         )}
 
         <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
+          <span className="font-semibold text-foreground">Founding places for the first 200 Sydney vendors.</span>
+          {variant?.proof ? null : <> {DEAL_TERMS}</>}
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{STAGE_NOTE}</p>
         <p className="mt-3 text-sm text-muted-foreground">
           Already on Evntly?{" "}
-          <Link href={`/login?next=${encodeURIComponent(claimPage)}`} className="font-medium text-foreground underline underline-offset-2">
+          <Link href={`/login?next=${encodeURIComponent(withAutoClaim(claimPage))}`} className="font-medium text-foreground underline underline-offset-2">
             Log in to claim your place
           </Link>
         </p>

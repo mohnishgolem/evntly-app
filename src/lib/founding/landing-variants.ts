@@ -7,7 +7,14 @@ export type LandingVariant = {
   /** Category used for the sample listing card. */
   category: string;
   eyebrow: string;
-  headline: string;
+  /** Null keeps the page's default headline. */
+  headline: string | null;
+  /**
+   * Proof-first layout (onboarding review item 3, utm_content v6_…): the fee
+   * promise sits right under the buttons and up to three real, complete
+   * listings are shown. Same approved headline, so no new ad copy is needed.
+   */
+  proof?: boolean;
 };
 
 const VARIANTS: Record<string, LandingVariant> = {
@@ -53,11 +60,22 @@ function first(value: string | string[] | undefined): string {
   return ((Array.isArray(value) ? value[0] : value) ?? "").trim().toLowerCase();
 }
 
+/** utm_content prefix for the proof-first test (point one ad set at it). */
+export const PROOF_VARIANT_PREFIX = "v6_";
+
 /** The variant for ?cat= (and the ad headline for utm_content), or null for the default page. */
 export function landingVariant(params: Record<string, string | string[] | undefined>): LandingVariant | null {
   const key = first(params.cat);
   const base = Object.hasOwn(VARIANTS, key) ? VARIANTS[key] : null;
   const content = first(params.utm_content) || first(params.c);
+  if (content.startsWith(PROOF_VARIANT_PREFIX)) {
+    return {
+      category: base?.category ?? "photographer",
+      eyebrow: base?.eyebrow ?? "Founding Vendors · Sydney",
+      headline: base?.headline ?? null,
+      proof: true,
+    };
+  }
   const ad = AD_HEADLINES.find((a) => content.startsWith(a.prefix));
   if (!ad) return base;
   return {

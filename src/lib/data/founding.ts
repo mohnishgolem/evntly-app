@@ -2,7 +2,7 @@ import { cache } from "react";
 import { priceSummary } from "@/lib/pricing-model";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { countGenuineLiveListings } from "@/lib/founding/live-count";
+import { countGenuineLiveListings, pickProofListings } from "@/lib/founding/live-count";
 import { getCurrentUser } from "@/lib/data/user";
 import { profileChecklist, type ChecklistItem } from "@/lib/profile-completeness";
 
@@ -50,6 +50,45 @@ export const getLiveVendorCount = cache(async function getLiveVendorCount(): Pro
   ]);
   if (ownersError || appsError || !owners) return null;
   return countGenuineLiveListings(listings, owners, applications ?? []);
+});
+
+export type ProofListing = { id: string; name: string; category: string; city: string | null; avatarUrl: string };
+
+/**
+ * Up to three real, complete listings for the "already on Evntly" strip of
+ * the proof-first landing variant (onboarding review item 3). Same genuine
+ * rules as the live count, plus complete (3 photos, an active package). Only
+ * public listing details leave the server. Empty on any error.
+ */
+export const getProofListings = cache(async function getProofListings(): Promise<ProofListing[]> {
+  const admin = createAdminClient();
+  if (!admin) return [];
+  const { data: listings, error } = await admin
+    .from("service_providers")
+    .select("id, name, service_type, city, avatar_url, owner_user_id, is_demo")
+    .eq("status", "approved")
+    .eq("is_demo", false)
+    .not("avatar_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error || !listings?.length) return [];
+  const ids = listings.map((l) => l.id);
+  const ownerIds = [...new Set(listings.map((l) => l.owner_user_id).filter((id): id is string => !!id))];
+  if (!ownerIds.length) return [];
+  const [{ data: owners }, { data: applications }, { data: photos }, { data: packages }] = await Promise.all([
+    admin.from("users").select("id, role, email").in("id", ownerIds).is("suspended_at", null),
+    admin.from("beta_applications").select("user_id, campaign").in("user_id", ownerIds),
+    admin.from("portfolio_items").select("provider_id").in("provider_id", ids),
+    admin.from("vendor_packages").select("provider_id").in("provider_id", ids).eq("active", true),
+  ]);
+  if (!owners) return [];
+  return pickProofListings(listings, owners, applications ?? [], { photos: photos ?? [], packages: packages ?? [] }).map((l) => ({
+    id: l.id,
+    name: l.name,
+    category: l.service_type,
+    city: l.city,
+    avatarUrl: l.avatar_url!,
+  }));
 });
 
 export type FoundingApplicationStatus = "started" | "submitted" | "approved" | "needs_changes" | "rejected" | "withdrawn";

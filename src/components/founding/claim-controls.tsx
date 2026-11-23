@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { claimFoundingPlace, updateMyFoundingApplication, type FoundingActionState } from "@/lib/actions/founding";
@@ -10,21 +10,36 @@ export function ClaimButton({
   source,
   referral = null,
   label,
+  autoSubmit = false,
 }: {
   invite: string | null;
   source: string | null;
   referral?: string | null;
   label: string;
+  /** Submit once on load (the vendor already tapped Claim before signing up). */
+  autoSubmit?: boolean;
 }) {
   const [state, action, pending] = useActionState<FoundingActionState, FormData>(claimFoundingPlace, null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const sent = useRef(false);
+  useEffect(() => {
+    if (!autoSubmit || sent.current) return;
+    sent.current = true;
+    formRef.current?.requestSubmit();
+  }, [autoSubmit]);
   return (
-    <form action={action} className="grid gap-2">
+    <form ref={formRef} action={action} className="grid gap-2">
       {invite && <input type="hidden" name="invite" value={invite} />}
       {source && <input type="hidden" name="source" value={source} />}
       {referral && <input type="hidden" name="ref" value={referral} />}
       <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Claiming…" : label}
+        {pending ? (autoSubmit ? "Setting up your listing form…" : "Claiming…") : label}
       </Button>
+      {autoSubmit && pending && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Saving your Founding place. Next, you&apos;ll set up your listing.
+        </p>
+      )}
       {state?.error && (
         <p role="alert" className="text-sm text-destructive">
           {state.error}

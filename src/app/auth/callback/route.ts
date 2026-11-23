@@ -50,6 +50,10 @@ export async function GET(request: Request) {
           // account is brand new (a returning vendor also comes through here).
           if (Date.now() - new Date(user.created_at).getTime() < 10 * 60 * 1000) {
             await recordFunnelEvent("account_created", { detail: "google" });
+            // Google has already verified the address, so this sign-up is
+            // also a confirmed email. Without this the funnel showed fewer
+            // confirmations than there were confirmed accounts.
+            if (user.email_confirmed_at) await recordFunnelEvent("email_confirmed", { detail: "google" });
           }
         }
         // Founding-vendor sign-ups go back to their claim page.

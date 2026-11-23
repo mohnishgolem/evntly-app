@@ -5,11 +5,12 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { VendorSignupWizard } from "@/components/vendor-signup-wizard";
 import { Button } from "@/components/ui/button";
+import { FEE_CHANGE_PROMISE, FEE_SUMMARY, SETUP_TIME } from "@/lib/vendor-terms";
 
 const WHAT_YOU_NEED = [
   "Your business name, a short description and your ABN",
   "Your pricing and the suburbs you service",
-  "At least 3 photos of your work and one package (what's included and the price)",
+  "3 photos of your work and one package (what's included and the price) before you submit for review",
   "Everything saves as you go, so you can finish later",
 ];
 
@@ -36,8 +37,8 @@ export default async function VendorSignupPage() {
       <div className="mx-auto max-w-lg px-4 py-12">
         <h1 className="mb-2 text-2xl font-bold">List your business on Evntly</h1>
         <p className="mb-6 text-muted-foreground">
-          It&apos;s free to list. Customers find you, send you their event details, and you reply with a quote.
-          Setting up takes about 5 minutes.
+          {FEE_SUMMARY} Customers find you, send you their event details, and you reply with a quote.
+          Setting up takes {SETUP_TIME}. {FEE_CHANGE_PROMISE}
         </p>
         <div className="mb-6 rounded-2xl border border-border p-5">
           <p className="mb-3 font-medium">What you&apos;ll need</p>

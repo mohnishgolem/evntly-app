@@ -57,3 +57,18 @@ describe("the six live V5 ad links", () => {
     }
   });
 });
+
+describe("proof-first test variant (utm_content v6_)", () => {
+  it("switches on proof, keeps the approved headline and the category from ?cat=", () => {
+    expect(landingVariant({ utm_content: "v6_proof_dj", cat: "dj" })).toEqual({
+      category: "dj",
+      eyebrow: "For Sydney DJs and entertainers",
+      headline: "Get found by Sydney event organisers when the referral isn't there",
+      proof: true,
+    });
+    // No category: the page keeps its default headline (null here).
+    expect(landingVariant({ utm_content: "v6_proof" })).toMatchObject({ headline: null, proof: true });
+    expect(landingVariant({ utm_content: "v5b_dj", cat: "dj" })?.proof).toBeUndefined();
+    expect(landingVariant({})).toBeNull();
+  });
+});
