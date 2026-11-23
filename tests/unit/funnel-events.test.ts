@@ -191,3 +191,25 @@ describe("funnel steps carry the page's link tags", () => {
     expect(inserts.map((r) => r.source)).toEqual(["meta_ads", "meta_ads"]);
   });
 });
+
+describe("/api/track ignores crawlers", () => {
+  const send = (ua: string, body: unknown) =>
+    POST(
+      new NextRequest("https://evntlyapp.com/api/track", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { origin: "https://evntlyapp.com", "user-agent": ua },
+      })
+    );
+
+  it("records nothing for Meta's ad-review crawler, but still records a phone", async () => {
+    for (const body of [{ event: "claim_click", visitorId: "visitor-123456" }, { kind: "founding", visitorId: "visitor-123456" }]) {
+      const res = await send("facebookexternalhit/1.1", body);
+      expect(res.status).toBe(204);
+    }
+    expect(inserts).toHaveLength(0);
+
+    await send("Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) Mobile/15E148 Instagram 357.0", { kind: "founding", visitorId: "visitor-123456" });
+    expect(inserts.filter((r) => r.table === "page_views")).toHaveLength(1);
+  });
+});

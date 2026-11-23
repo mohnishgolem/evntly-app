@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
-import { PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind } from "@/lib/page-views";
+import { isBotUserAgent, PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind } from "@/lib/page-views";
 import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/lib/founding/sources";
 import { isShareSource, SHARE_PREPARED_ACTIONS, type SharePreparedAction } from "@/lib/share-profile";
 import { recordSharePrepared } from "@/lib/share-funnel";
@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
   const done = new NextResponse(null, { status: 204 });
   const origin = request.headers.get("origin");
   if (origin && origin !== request.nextUrl.origin) return done;
+  // Crawlers (ad review, link previews, search) aren't visitors.
+  if (isBotUserAgent(request.headers.get("user-agent"))) return done;
 
   const raw = await request.text();
   if (!raw || raw.length > 512) return done;

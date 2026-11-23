@@ -6,7 +6,7 @@ import { FoundingBadge } from "@/components/founding-badge";
 import { SourceCookie } from "@/components/founding/source-cookie";
 import { WaitlistForm } from "@/components/founding/waitlist-form";
 import { ClaimLink } from "@/components/founding/claim-link";
-import { getFoundingPlaces, getSampleListing, type SampleListing } from "@/lib/data/founding";
+import { getFoundingPlaces, getLiveVendorCount, getSampleListing, type SampleListing } from "@/lib/data/founding";
 import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
@@ -75,8 +75,13 @@ const FAQ = [
   },
 ];
 
-// Said in the first screen: most ad visitors had never heard of Evntly.
-const WHAT_EVNTLY_IS = `Evntly is a new ${LAUNCH_CITY} marketplace where people planning events browse vendors by category and area, then send a quote request. You reply in Evntly, and customers pay you directly.`;
+// Said in the first screen: most ad visitors had never heard of Evntly. One
+// sentence, so the perks and the Claim button stay near the top on a phone
+// (Nov 2026: 9 in 10 ad visitors never scrolled).
+const WHAT_EVNTLY_IS = `A new ${LAUNCH_CITY} marketplace where people planning events find vendors and send quote requests. Customers pay you directly.`;
+
+// Only shown once the number says something (a count of 2 reads as empty).
+const MIN_PROOF_COUNT = 5;
 
 // Honest about where Evntly is (17 Nov 2026: a handful of customer enquiries a
 // month). Never imply steady enquiries until the numbers say so.
@@ -100,10 +105,11 @@ export default async function FoundingVendorsPage({
   const referral = referralFromParams(params);
   const campaign = campaignFromParams(params);
   const variant = landingVariant(params);
-  const [places, session, sample] = await Promise.all([
+  const [places, session, sample, liveVendors] = await Promise.all([
     getFoundingPlaces(),
     getCurrentUser(),
     getSampleListing(variant?.category ?? null),
+    getLiveVendorCount(),
   ]);
   const role = navRole(session?.profile?.role, !!session);
   const hasTabBar = role === "customer" || role === "vendor";
@@ -129,10 +135,7 @@ export default async function FoundingVendorsPage({
         <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight text-balance sm:text-[48px]">
           {variant ? variant.headline : `Get found by people planning events in ${LAUNCH_CITY}`}
         </h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">
-          {WHAT_EVNTLY_IS}
-        </p>
-        <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">{STAGE_NOTE}</p>
+        <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground sm:text-[19px]">{WHAT_EVNTLY_IS}</p>
 
         <ul className="mx-auto mt-6 grid max-w-md gap-2.5 text-left text-[16px]">
           {PERKS.map((p) => (
@@ -145,19 +148,28 @@ export default async function FoundingVendorsPage({
           ))}
         </ul>
 
-        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
-        </p>
-
         <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
           {full ? (
             <Button size="lg" nativeButton={false} render={<a href="#waitlist">Join the Waitlist</a>} />
           ) : (
-            <Button size="lg" nativeButton={false} render={<ClaimLink href={claimHref}>{CLAIM_LABEL}</ClaimLink>} />
+            <>
+              <Button size="lg" nativeButton={false} render={<ClaimLink href={claimHref}>{CLAIM_LABEL}</ClaimLink>} />
+              <Button size="lg" variant="outline" nativeButton={false} render={<a href="#help">{HELP_LABEL}</a>} />
+            </>
           )}
-          <Button size="lg" variant="outline" nativeButton={false} render={<a href="#how-it-works">How it works</a>} />
         </div>
         {!full && <p className="mt-3 text-sm font-medium">{SETUP_NOTE}</p>}
+        {liveVendors !== null && liveVendors >= MIN_PROOF_COUNT && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground tabular-nums">{liveVendors}</span> {LAUNCH_CITY} vendors already
+            listed
+          </p>
+        )}
+
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-foreground">Free for the first 200 Sydney vendors:</span> {DEAL_TERMS.replace(/^Free: /, "")}
+        </p>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">{STAGE_NOTE}</p>
         <p className="mt-3 text-sm text-muted-foreground">
           Already on Evntly?{" "}
           <Link href={`/login?next=${encodeURIComponent(claimPage)}`} className="font-medium text-foreground underline underline-offset-2">
@@ -165,6 +177,19 @@ export default async function FoundingVendorsPage({
           </Link>
         </p>
       </header>
+
+      {!full && (
+        <section id="help" aria-labelledby="help-heading" className="mt-12 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
+          <h2 id="help-heading" className="text-2xl font-bold tracking-tight">
+            Rather we set it up for you?
+          </h2>
+          <p className="mt-2 mb-6 max-w-2xl text-[15px] text-muted-foreground">
+            Leave your Instagram or website. We&apos;ll draft your listing from your work and email you to check it
+            before it goes live. It&apos;s still free.
+          </p>
+          <WaitlistForm assisted submitLabel="Ask for help" />
+        </section>
+      )}
 
       <section aria-labelledby="what-heading" className="mt-16">
         <h2 id="what-heading" className="text-2xl font-bold tracking-tight sm:text-[32px]">
@@ -213,19 +238,6 @@ export default async function FoundingVendorsPage({
         )}
       </section>
 
-      {!full && (
-        <section id="help" aria-labelledby="help-heading" className="mt-16 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
-          <h2 id="help-heading" className="text-2xl font-bold tracking-tight">
-            Prefer some help?
-          </h2>
-          <p className="mt-2 mb-6 max-w-2xl text-[15px] text-muted-foreground">
-            Leave your details and your Instagram or website. We&apos;ll look at your work and email you to set up your
-            listing together. It&apos;s still free.
-          </p>
-          <WaitlistForm assisted submitLabel="Ask for help" />
-        </section>
-      )}
-
       <section id="waitlist" aria-labelledby="waitlist-heading" className="mt-16 scroll-mt-24 rounded-3xl border border-border p-6 sm:p-8">
         <h2 id="waitlist-heading" className="text-2xl font-bold tracking-tight">
           {full ? "All Founding Vendor places are taken — join the waitlist" : "Not ready yet? Join the waitlist"}
@@ -272,6 +284,10 @@ export default async function FoundingVendorsPage({
 }
 
 const CLAIM_LABEL = "Claim my free listing";
+// The done-with-you route: vendors we'd already spoken to converted at ~15%
+// against ~1% for cold visitors, mostly by sending photos and letting us set
+// the listing up. Offered right beside Claim, not four screens down.
+const HELP_LABEL = "Set it up for me";
 
 // Phones: the hero button scrolls away fast, so keep it in reach. Sits above
 // the tab bar for signed-in customers and vendors (same offset as the
