@@ -135,6 +135,8 @@
   --sidebar-ring: rgba(232, 96, 74, 0.4);
 
   --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-hairline: rgba(0, 0, 0, 0.16);
+  --glass-hairline-1x: rgba(0, 0, 0, 0.08);
   --glass-border: rgba(0, 0, 0, 0.06);
 
   /* Feature-card gradients — applied to prominent surfaces (primary CTAs,
@@ -187,6 +189,8 @@
   --sidebar-ring: rgba(232, 96, 74, 0.5);
 
   --glass-bg: rgba(16, 16, 20, 0.72);
+  --glass-hairline: rgba(255, 255, 255, 0.14);
+  --glass-hairline-1x: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.08);
 }
 
@@ -248,6 +252,20 @@
      the last one, and Chrome ignores the -webkit- form (no blur at all). */
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   backdrop-filter: blur(20px) saturate(1.6);
+}
+
+/* A glass bar's top edge (the phone tab bar): one hairline drawn on the
+   frosted layer itself, so material and edge are a single surface. A border
+   on the element would sit outside the ::before layer, leaving a 1px strip
+   of unblurred page between line and glass (the "double line"). Physical
+   hairline on high-density screens, 1px at a lower opacity otherwise. */
+.glass-edge-top::before {
+  box-shadow: inset 0 1px 0 var(--glass-hairline-1x);
+}
+@media (min-resolution: 2dppx) {
+  .glass-edge-top::before {
+    box-shadow: inset 0 0.5px 0 var(--glass-hairline);
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -591,10 +609,11 @@
   }
 }
 
-/* Phone tab bar height (incl. its 1px top border and the home indicator).
-   The page spacer and anything floating above the bar use this one value. */
+/* Phone tab bar height (incl. the home indicator; its top hairline is drawn
+   inside the bar, see .glass-edge-top). The page spacer and anything
+   floating above the bar use this one value. */
 :root {
-  --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)) + 1px);
+  --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)));
 }
 
 /* Frosted controls over photos and the page (card save/share, the photo
