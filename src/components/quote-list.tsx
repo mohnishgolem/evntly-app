@@ -1,6 +1,7 @@
 import { cache } from "react";
 import Link from "next/link";
-import { Clock, CheckCircle2, Hourglass, XCircle } from "lucide-react";
+import { Clock, CheckCircle2, Hourglass, MessageCircle, XCircle } from "lucide-react";
+import { StatusPill } from "@/components/booking-progress";
 import { QuoteActions, WithdrawRequest } from "@/components/quote-actions";
 import { getPaymentsStatus } from "@/lib/payments/server";
 import { QuoteDetails } from "@/components/quote-details";
@@ -24,13 +25,13 @@ type Quote = Omit<
   "vendor_reminder_sent_at" | "client_reminder_sent_at" | "expiry_notice_sent_at" | "share_source"
 >;
 
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Waiting on vendor", className: "text-warning" },
-  quoted: { label: "Quoted — review & accept", className: "text-primary" },
-  accepted: { label: "Accepted", className: "text-success" },
-  declined: { label: "Declined", className: "text-destructive" },
-  cancelled: { label: "Cancelled", className: "text-muted-foreground" },
-  expired: { label: "Expired", className: "text-muted-foreground" },
+const STATUS_META: Record<string, { label: string; tone: "waiting" | "action" | "good" | "muted" | "bad" }> = {
+  pending: { label: "Waiting on vendor", tone: "waiting" },
+  quoted: { label: "Quoted — review & accept", tone: "action" },
+  accepted: { label: "Accepted", tone: "good" },
+  declined: { label: "Declined", tone: "bad" },
+  cancelled: { label: "Cancelled", tone: "muted" },
+  expired: { label: "Expired", tone: "muted" },
 };
 
 export function QuoteList({
@@ -40,6 +41,15 @@ export function QuoteList({
   quotes: Quote[];
   alternatives?: Record<string, SimilarVendor[]>;
 }) {
+  // Two or more priced quotes for the same event and service: the event
+  // board already has a side-by-side comparison, so point there.
+  const quotedPerGroup = new Map<string, number>();
+  for (const q of quotes) {
+    if (q.event_id && q.service_type && effectiveQuoteStatus(q) === "quoted") {
+      const k = `${q.event_id}:${q.service_type}`;
+      quotedPerGroup.set(k, (quotedPerGroup.get(k) ?? 0) + 1);
+    }
+  }
   return (
     <div className="space-y-4">
       {quotes.map((q) => {
@@ -47,13 +57,13 @@ export function QuoteList({
         const meta = STATUS_META[status] ?? STATUS_META.pending;
         const timeLeft = quoteTimeLeft(q);
         return (
-          <div key={q.id} className="rounded-2xl border border-border p-5">
+          <article key={q.id} className="surface-raised rounded-card p-5">
             {/* Phones: status on its own line above the details; wider: on the right. */}
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="min-w-0">
                 <Link
                   href={`/vendor/${q.vendor_id}`}
-                  className="font-semibold hover:underline"
+                  className="text-[17px] font-semibold hover:underline"
                 >
                   {q.vendor_name ?? "Vendor"}
                 </Link>
@@ -64,19 +74,19 @@ export function QuoteList({
                   {q.estimated_guests} guests · Budget {q.budget_range}
                 </p>
               </div>
-              <span
-                className={`order-first flex shrink-0 items-center gap-1.5 text-sm font-medium sm:order-none ${meta.className}`}
-              >
+              <span className="order-first flex shrink-0 items-center gap-1 sm:order-none">
+                <StatusPill tone={meta.tone}>
                 {status === "accepted" ? (
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="size-3.5" aria-hidden />
                 ) : status === "declined" ? (
-                  <XCircle className="h-4 w-4" />
+                  <XCircle className="size-3.5" aria-hidden />
                 ) : status === "expired" ? (
-                  <Hourglass className="h-4 w-4" />
+                  <Hourglass className="size-3.5" aria-hidden />
                 ) : (
-                  <Clock className="h-4 w-4" />
+                  <Clock className="size-3.5" aria-hidden />
                 )}
                 {meta.label}
+                </StatusPill>
                 <HelpTip label="What quote statuses mean" article="quote-statuses">
                   Requests expire 7 days after they&apos;re sent, or on the event date if sooner. When the vendor sends a
                   price you get a fresh 7 days to accept it. Accepting creates a booking the vendor then confirms.
@@ -116,7 +126,7 @@ export function QuoteList({
                     <Link
                       key={v.id}
                       href={`/vendor/${v.id}`}
-                      className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
+                      className="btn-raised rounded-full px-3 py-1.5 text-sm"
                     >
                       {v.name} <span className="text-muted-foreground">· {vendorPrice(v).label}</span>
                     </Link>
@@ -126,17 +136,15 @@ export function QuoteList({
             )}
 
             {status === "quoted" && (
-              <div className="mt-3 rounded-xl bg-secondary p-3">
-                <p className="text-sm">
-                  Quoted price:{" "}
-                  <span className="font-semibold">{formatAudDollars(q.quoted_amount)}</span>
-                </p>
+              <div className="mt-4 rounded-2xl bg-primary/[0.06] p-4 ring-1 ring-primary/15">
+                <p className="text-sm text-muted-foreground">Quoted price</p>
+                <p className="text-2xl font-bold tabular-nums">{formatAudDollars(q.quoted_amount)}</p>
                 {timeLeft && (
                   <p
                     className={cn(
                       "mt-0.5 text-xs",
                       quoteExpiresSoon(q)
-                        ? "font-medium text-warning"
+                        ? "font-medium text-warning-text"
                         : "text-muted-foreground",
                     )}
                   >
@@ -151,17 +159,22 @@ export function QuoteList({
                 <QuoteDetails quote={q} />
                 <AcceptPaymentNote vendorName={q.vendor_name ?? "the vendor"} />
                 <QuoteActions quoteId={q.id} />
+                {q.event_id && q.service_type && (quotedPerGroup.get(`${q.event_id}:${q.service_type}`) ?? 0) > 1 && (
+                  <Link href={`/dashboard/events/${q.event_id}`} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary-text underline underline-offset-2">
+                    Compare {quotedPerGroup.get(`${q.event_id}:${q.service_type}`)} {categoryPlural(q.service_type)} quotes on your event board
+                  </Link>
+                )}
               </div>
             )}
             {q.vendor_id && q.client_user_id && (
               <Link
                 href={`/messages/${encodeURIComponent(`${q.vendor_id}:${q.client_user_id}`)}`}
-                className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-2 sm:min-h-0"
+                className="btn-raised mt-4 inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold"
               >
-                Message {q.vendor_name ?? "vendor"}
+                <MessageCircle className="size-4" aria-hidden /> Message {q.vendor_name ?? "vendor"}
               </Link>
             )}
-          </div>
+          </article>
         );
       })}
     </div>

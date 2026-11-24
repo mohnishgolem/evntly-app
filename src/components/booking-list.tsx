@@ -5,22 +5,23 @@ import type { getJobCardForBooking } from "@/lib/data/job-cards";
 import type { ParticipantBooking } from "@/lib/public-columns";
 import type { PaymentSummary } from "@/lib/event-board";
 import { formatAudDollars } from "@/lib/payments/money";
+import { BookingProgress, StatusPill } from "@/components/booking-progress";
 
 type Booking = ParticipantBooking;
 type JobCardResult = Awaited<ReturnType<typeof getJobCardForBooking>>;
 
 const PAYMENT_TONE: Record<PaymentSummary["tone"], string> = {
   neutral: "text-muted-foreground",
-  attention: "text-warning",
+  attention: "text-warning-text",
   active: "text-primary",
   success: "text-success",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  pending: "text-warning",
-  confirmed: "text-primary",
-  completed: "text-success",
-  cancelled: "text-muted-foreground",
+const STATUS_TONE: Record<string, "waiting" | "action" | "good" | "muted"> = {
+  pending: "waiting",
+  confirmed: "action",
+  completed: "good",
+  cancelled: "muted",
 };
 
 export function BookingList({
@@ -38,30 +39,31 @@ export function BookingList({
   return (
     <div className="space-y-4">
       {bookings.map((b) => (
-        <div key={b.id} className="rounded-2xl border border-border p-5">
+        <article key={b.id} className="surface-raised rounded-card p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Link href={`/vendor/${b.provider_id}`} className="font-semibold hover:underline">
+              <Link href={`/vendor/${b.provider_id}`} className="text-[17px] font-semibold hover:underline">
                 {b.provider_name ?? "Vendor"}
               </Link>
               <p className="text-sm text-muted-foreground">
                 {b.event_date}
                 {b.event_address ? ` · ${b.event_address}` : ""}
               </p>
-              {!!b.total_price && <p className="text-sm font-semibold">{formatAudDollars(b.total_price)}</p>}
+              {!!b.total_price && <p className="mt-1 text-[15px] font-bold tabular-nums">{formatAudDollars(b.total_price)}</p>}
               {payments?.get(b.id) && b.status !== "cancelled" && (
                 <p className={`text-sm font-medium ${PAYMENT_TONE[payments.get(b.id)!.tone]}`}>
                   {payments.get(b.id)!.label}
                 </p>
               )}
             </div>
-            <span className={`text-sm font-medium capitalize ${STATUS_COLOR[b.status] ?? ""}`}>
+            <StatusPill tone={STATUS_TONE[b.status] ?? "muted"} className="capitalize">
               {b.status}
-            </span>
+            </StatusPill>
           </div>
+          <BookingProgress status={b.status} className="mt-4" />
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Link href={`/bookings/${b.id}`} className="text-sm font-medium underline underline-offset-2">
+            <Link href={`/bookings/${b.id}`} className="btn-coral inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold">
               View booking
             </Link>
             {b.status !== "cancelled" && b.status !== "completed" && (
@@ -70,7 +72,7 @@ export function BookingList({
             {b.client_user_id && b.status !== "cancelled" && (
               <Link
                 href={`/messages/${encodeURIComponent(`${b.provider_id}:${b.client_user_id}`)}`}
-                className="text-sm underline underline-offset-2"
+                className="btn-raised inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold"
               >
                 Message vendor
               </Link>
@@ -86,7 +88,7 @@ export function BookingList({
             {b.status === "completed" && !reviewedBookingIds.has(b.id) && (
               <Link
                 href={`/vendor/${b.provider_id}?review=new#reviews`}
-                className="inline-flex min-h-11 items-center rounded-md border border-border px-3.5 text-sm font-medium hover:bg-muted"
+                className="btn-raised inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold"
               >
                 Leave a review
               </Link>
@@ -102,7 +104,7 @@ export function BookingList({
               viewer="organiser"
             />
           )}
-        </div>
+        </article>
       ))}
     </div>
   );

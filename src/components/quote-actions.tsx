@@ -34,7 +34,7 @@ export function QuoteActions({ quoteId }: { quoteId: string }) {
       <Button size="lg" disabled={pending} onClick={() => run(() => acceptQuote(quoteId), () => router.push("/dashboard/bookings?accepted=1"))}>
         {pending ? "Booking…" : "Accept & book"}
       </Button>
-      <Button size="lg" variant="outline" disabled={pending} onClick={() => run(() => cancelQuote(quoteId), () => router.refresh())}>
+      <Button size="lg" variant="raised" disabled={pending} onClick={() => run(() => cancelQuote(quoteId), () => router.refresh())}>
         Decline
       </Button>
       {error && <p role="alert" className="w-full text-sm text-destructive">{error}</p>}
@@ -69,7 +69,7 @@ export function WithdrawRequest({ quoteId, vendorName }: { quoteId: string; vend
   if (!confirming) {
     return (
       <div className="mt-3">
-        <Button variant="outline" size="sm" onClick={() => setConfirming(true)}>
+        <Button variant="raised" onClick={() => setConfirming(true)}>
           Withdraw request
         </Button>
       </div>

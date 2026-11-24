@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import { QuoteList } from "@/components/quote-list";
+import { CategoryArt } from "@/components/category-art";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { findSimilarVendors, type SimilarVendor } from "@/lib/data/vendors";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
@@ -40,9 +41,10 @@ export default async function CustomerQuotesPage() {
   );
 
   return (
+    <div className="min-h-full bg-canvas">
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Bookings</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <h1 className="mb-1 text-title">Bookings</h1>
+      <p className="mb-6 text-[15px] text-muted-foreground">
         Requests &amp; quotes: what you&apos;ve asked vendors for. Nothing here is booked until you
         accept a quote and the vendor confirms.
       </p>
@@ -50,15 +52,18 @@ export default async function CustomerQuotesPage() {
       <DashboardNav tabs="customerBookingsTabs" label="Booking sections" />
 
       {!quotes || quotes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-12 text-center">
-          <p className="mb-4 text-muted-foreground">You haven&apos;t requested any quotes yet.</p>
-          <Link href="/explore" className="text-sm font-semibold underline underline-offset-2">
+        <div className="surface-raised flex flex-col items-center rounded-card px-6 py-12 text-center">
+          <CategoryArt value="event_planner" className="size-20 drop-shadow-[0_6px_6px_rgba(28,25,23,0.16)]" />
+          <p className="mt-3 font-semibold">No quote requests yet</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">Ask a vendor for a price from their profile. Requests and quotes appear here.</p>
+          <Link href="/explore" className="btn-coral mt-5 inline-flex h-11 items-center rounded-full px-5 text-sm font-semibold">
             Browse vendors
           </Link>
         </div>
       ) : (
         <QuoteList quotes={quotes} alternatives={alternatives} />
       )}
+    </div>
     </div>
   );
 }

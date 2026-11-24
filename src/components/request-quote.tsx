@@ -8,13 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useSheetSide } from "@/lib/use-sheet-side";
 import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
 import { BOOK_INTENT_COOKIE, bookIntentPath } from "@/lib/booking-intent";
 import { EVENT_TYPES } from "@/lib/config";
@@ -155,6 +150,7 @@ export function BookVendor({
             ? { kind: "open", request: openRequest }
             : { kind: "bookable" };
 
+  const side = useSheetSide();
   const [open, setOpen] = useState(() => !!autoOpen && state.kind === "bookable");
   // Back from sign-up the form reopens once (?book=1 / the book intent
   // cookie). Returning through the email link's "Continue" (/auth/confirm),
@@ -231,11 +227,11 @@ export function BookVendor({
         {primary("w-full")}
         <StateNote state={state} vendorName={vendorName} onBookAnother={() => setOpen(true)} />
         {state.kind !== "sample" && state.kind !== "own" && (
-          <details className="group rounded-xl bg-secondary/60 px-3 py-2 text-sm">
+          <details className="group surface-pressed rounded-2xl px-4 py-2.5 text-sm">
             <summary className="cursor-pointer list-none font-medium marker:hidden">
               How booking works <span className="text-muted-foreground group-open:hidden">›</span>
             </summary>
-            <ol className="mt-2 list-inside list-decimal space-y-1 text-muted-foreground">
+            <ol className="mt-2 list-inside list-decimal space-y-1 text-foreground/75">
               {BOOKING_STEPS.map((s) => (
                 <li key={s}>{s}</li>
               ))}
@@ -267,8 +263,11 @@ export function BookVendor({
       </div>
 
       {(state.kind === "bookable" || state.kind === "open" || state.kind === "guest") && (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+        <Sheet open={open} onOpenChange={setOpen}>
+          {/* Phones: a bottom sheet that rides above the keyboard; wider
+              screens: a side panel, so the profile stays in view. */}
+          <SheetContent side={side} className="gap-4 overflow-y-auto pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] sm:max-w-md sm:px-6 sm:pt-6">
+            {side === "bottom" && <div aria-hidden className="mx-auto mt-1 h-1.5 w-10 shrink-0 rounded-full bg-border" />}
             <BookingFlow
               vendorId={vendorId}
               vendorName={vendorName}
@@ -278,8 +277,8 @@ export function BookVendor({
               guestSignupHref={state.kind === "guest" ? signupHref : undefined}
               onClose={() => setOpen(false)}
             />
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       )}
     </>
   );
@@ -337,26 +336,18 @@ function StateNote({
 }
 
 const STEP_LABELS = ["Details", "Review", "Sent"] as const;
+const BUDGET_SUGGESTIONS = ["Under $500", "$500–1,000", "$1,000–2,500", "$2,500–5,000", "$5,000+"];
 
 function StepDots({ step }: { step: 0 | 1 | 2 }) {
   return (
-    <ol className="flex items-center gap-2 text-xs" aria-label="Booking steps">
+    <ol className="grid grid-cols-3 gap-2" aria-label="Booking steps">
       {STEP_LABELS.map((label, i) => (
-        <li
-          key={label}
-          aria-current={i === step ? "step" : undefined}
-          className={cn("flex items-center gap-1.5", i <= step ? "text-foreground" : "text-muted-foreground")}
-        >
-          <span
-            className={cn(
-              "flex size-5 items-center justify-center rounded-full text-[11px] font-semibold",
-              i <= step ? "bg-primary text-primary-foreground" : "bg-secondary"
-            )}
-          >
-            {i + 1}
+        <li key={label} aria-current={i === step ? "step" : undefined}>
+          <span className={cn("block h-1.5 rounded-full", i <= step ? "[background:var(--gradient-coral)]" : "surface-pressed")} />
+          <span className={cn("mt-1.5 block text-xs font-medium", i <= step ? "text-foreground" : "text-muted-foreground")}>
+            <span className="sr-only">Step {i + 1}: </span>
+            {label}
           </span>
-          {label}
-          {i < STEP_LABELS.length - 1 && <span className="mx-1 h-px w-4 bg-border" aria-hidden />}
         </li>
       ))}
     </ol>
@@ -431,11 +422,11 @@ function BookingFlow({
   }
 
   const header = (
-    <DialogHeader>
-      <DialogTitle>{step === 2 ? "Request sent" : `Request a quote from ${vendorName}`}</DialogTitle>
-      <DialogDescription className="sr-only">Send your event details to {vendorName} for a quote.</DialogDescription>
+    <SheetHeader className="gap-3 px-0">
+      <SheetTitle className="pr-10 text-headline">{step === 2 ? "Request sent" : `Request a quote from ${vendorName}`}</SheetTitle>
+      <SheetDescription className="sr-only">Send your event details to {vendorName} for a quote.</SheetDescription>
       <StepDots step={step} />
-    </DialogHeader>
+    </SheetHeader>
   );
 
   if (step === 2) {
@@ -443,15 +434,17 @@ function BookingFlow({
       <>
         {header}
         <div className="flex flex-col items-center gap-2 py-4 text-center">
-          <CheckCircle2 className="h-9 w-9 text-success" />
+          <span className="btn-raised mb-1 flex size-16 items-center justify-center rounded-full">
+            <CheckCircle2 className="size-9 text-success-text" aria-hidden />
+          </span>
           <p className="font-medium">Your request is with {vendorName}</p>
           <p className="text-sm text-muted-foreground">
             We&apos;ve let them know. You&apos;ll get an email when they reply with a quote — then accept it to book.
             You haven&apos;t been charged anything.
           </p>
           <div className="mt-3 grid w-full gap-2">
-            <Button nativeButton={false} render={<Link href="/dashboard/quotes">Track it in Bookings</Link>} />
-            <Button variant="outline" onClick={onClose}>
+            <Button size="lg" nativeButton={false} render={<Link href="/dashboard/quotes">Track it in Bookings</Link>} />
+            <Button size="lg" variant="raised" onClick={onClose}>
               Back to {vendorName}
             </Button>
           </div>
@@ -473,17 +466,17 @@ function BookingFlow({
     return (
       <>
         {header}
-        <dl className="divide-y divide-border rounded-xl border border-border text-sm">
+        <dl className="surface-raised divide-y divide-border rounded-2xl text-sm">
           {rows.map(([k, v]) => (
-            <div key={k} className="flex gap-3 px-3 py-2">
+            <div key={k} className="flex gap-3 px-4 py-2.5">
               <dt className="w-20 shrink-0 text-muted-foreground">{k}</dt>
               <dd className="min-w-0 flex-1 break-words whitespace-pre-line">{v}</dd>
             </div>
           ))}
         </dl>
-        <div className="rounded-xl bg-secondary/60 px-3 py-2.5 text-sm">
+        <div className="surface-pressed rounded-2xl px-4 py-3 text-sm">
           <p className="font-medium">What happens next</p>
-          <ul className="mt-1 list-inside list-disc space-y-0.5 text-muted-foreground">
+          <ul className="mt-1 list-inside list-disc space-y-0.5 text-foreground/75">
             <li>{vendorName} replies with a price. Nothing is booked yet.</li>
             <li>If you&apos;re happy, accept the quote to book; they then confirm.</li>
             <li>
@@ -528,6 +521,12 @@ function BookingFlow({
     !!draft.location.trim() &&
     draft.estimatedGuests > 0 &&
     !!draft.budgetRange.trim();
+  const missing = [
+    !draft.eventDate && "date",
+    !draft.location.trim() && "location",
+    !(draft.estimatedGuests > 0) && "guest count",
+    !draft.budgetRange.trim() && "budget",
+  ].filter(Boolean) as string[];
 
   return (
     <>
@@ -538,6 +537,7 @@ function BookingFlow({
             <Label htmlFor="qr-date">Event date</Label>
             <Input
               id="qr-date"
+            className="h-11 rounded-xl sm:h-10"
               type="date"
               min={today}
               value={draft.eventDate}
@@ -550,7 +550,7 @@ function BookingFlow({
             <Label htmlFor="qr-type">Event type</Label>
             <select
               id="qr-type"
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              className="h-11 w-full rounded-xl border border-input bg-transparent px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10 sm:text-sm"
               value={draft.eventType}
               onChange={(e) => setDraft((d) => ({ ...d, eventType: e.target.value }))}
             >
@@ -571,6 +571,7 @@ function BookingFlow({
           <Label htmlFor="qr-location">Location</Label>
           <Input
             id="qr-location"
+            className="h-11 rounded-xl sm:h-10"
             placeholder="e.g. Bondi, Sydney"
             value={draft.location}
             onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
@@ -581,6 +582,7 @@ function BookingFlow({
             <Label htmlFor="qr-guests">Guest count</Label>
             <Input
               id="qr-guests"
+            className="h-11 rounded-xl sm:h-10"
               type="number"
               inputMode="numeric"
               min={1}
@@ -592,6 +594,7 @@ function BookingFlow({
             <Label htmlFor="qr-hours">Hours (optional)</Label>
             <Input
               id="qr-hours"
+            className="h-11 rounded-xl sm:h-10"
               type="number"
               inputMode="decimal"
               min={1}
@@ -609,26 +612,44 @@ function BookingFlow({
           <Label htmlFor="qr-budget">Budget</Label>
           <Input
             id="qr-budget"
+            className="h-11 rounded-xl sm:h-10"
             placeholder="e.g. $500–1,000"
             value={draft.budgetRange}
             onChange={(e) => setDraft((d) => ({ ...d, budgetRange: e.target.value }))}
           />
+          {/* One tap fills the same free-text field (no new data format). */}
+          <div className="flex flex-wrap gap-1.5 pt-1" aria-label="Budget suggestions">
+            {BUDGET_SUGGESTIONS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                aria-pressed={draft.budgetRange === b}
+                onClick={() => setDraft((d) => ({ ...d, budgetRange: b }))}
+                className={cn("h-8 rounded-full px-3 text-[13px] font-medium", draft.budgetRange === b ? "surface-pressed ring-1 ring-primary/40" : "btn-raised")}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="qr-details">Anything else they should know? (optional)</Label>
           <Textarea
             id="qr-details"
+            className="rounded-xl"
             rows={3}
             value={draft.details}
             onChange={(e) => setDraft((d) => ({ ...d, details: e.target.value }))}
           />
         </div>
 
-        <Button className="w-full" disabled={!canContinue} onClick={() => setStep(1)}>
+        <Button size="lg" className="w-full" disabled={!canContinue} onClick={() => setStep(1)}>
           Review request
         </Button>
         {!canContinue && !unavailable && (
-          <p className="text-center text-xs text-muted-foreground">Add a date, location, guest count and budget to continue.</p>
+          <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+            Still needed: {missing.join(", ")}.
+          </p>
         )}
       </div>
     </>

@@ -70,9 +70,10 @@ export default async function CustomerBookingsPage({
   ].filter((g) => g.rows.length > 0);
 
   return (
+    <div className="min-h-full bg-canvas">
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Bookings</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <h1 className="mb-1 text-title">Bookings</h1>
+      <p className="mb-6 text-[15px] text-muted-foreground">
         Confirmed bookings: details, payments and progress. Cancellation and refund terms are on each
         booking.
       </p>
@@ -80,9 +81,9 @@ export default async function CustomerBookingsPage({
       <DashboardNav tabs="customerBookingsTabs" label="Booking sections" />
 
       {justAccepted && (
-        <div role="status" className="mb-6 rounded-xl border border-success/30 bg-success/5 px-4 py-3 text-sm">
-          <p className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="size-4 text-success" aria-hidden /> Quote accepted — your booking request is in
+        <div role="status" className="surface-raised mb-6 rounded-card px-5 py-4 text-sm ring-1 ring-success/25">
+          <p className="flex items-center gap-2 text-[15px] font-semibold">
+            <CheckCircle2 className="size-5 text-success-text" aria-hidden /> Quote accepted — your booking request is in
           </p>
           <p className="mt-1 text-muted-foreground">
             The vendor now confirms the booking. We&apos;ll email you as soon as they do.
@@ -92,10 +93,11 @@ export default async function CustomerBookingsPage({
       )}
 
       {all.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-12 text-center">
-          <CalendarClock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-          <p className="mb-4 text-muted-foreground">No bookings yet.</p>
-          <Link href="/dashboard/quotes" className="text-sm font-semibold underline underline-offset-2">
+        <div className="surface-raised flex flex-col items-center rounded-card px-6 py-12 text-center">
+          <CalendarClock className="size-10 text-muted-foreground" strokeWidth={1.5} aria-hidden />
+          <p className="mt-3 font-semibold">No bookings yet</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">When you accept a quote it becomes a booking here.</p>
+          <Link href="/dashboard/quotes" className="btn-raised mt-5 inline-flex h-11 items-center rounded-full px-5 text-sm font-semibold">
             View your requests &amp; quotes
           </Link>
         </div>
@@ -103,7 +105,7 @@ export default async function CustomerBookingsPage({
         <div className="space-y-8">
           {groups.map((g) => (
             <section key={g.id} aria-labelledby={`bookings-${g.id}`}>
-              <h2 id={`bookings-${g.id}`} className="mb-3 text-sm font-semibold text-muted-foreground">
+              <h2 id={`bookings-${g.id}`} className="text-eyebrow mb-3 text-muted-foreground">
                 {g.title} ({g.rows.length})
               </h2>
               <BookingList
@@ -115,6 +117,7 @@ export default async function CustomerBookingsPage({
           ))}
         </div>
       )}
+    </div>
     </div>
   );
 }
