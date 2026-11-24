@@ -25,7 +25,7 @@ export function PostEventButton({ eventId }: { eventId: string }) {
       <Button disabled={pending} onClick={post}>
         <Megaphone /> {pending ? "Posting…" : "Post to Event Feed"}
       </Button>
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
     </div>
   );
 }

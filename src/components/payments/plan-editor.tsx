@@ -124,11 +124,11 @@ export function PlanEditor({
       </fieldset>
 
       {type === "deposit_milestones" && (
-        <div className="rounded-2xl border border-border p-4">
+        <div className="surface-raised rounded-card p-4">
           <Label htmlFor="deposit">Booking deposit</Label>
           <div className="mt-1.5 flex items-center gap-3">
             <Input id="deposit" inputMode="decimal" value={deposit} onChange={(e) => setDeposit(e.target.value)} className="max-w-40" />
-            <span className={cn("text-sm", depositOk ? "text-muted-foreground" : "font-medium text-destructive")}>
+            <span className={cn("text-sm", depositOk ? "text-muted-foreground" : "font-medium text-destructive-text")}>
               {depositPct}% of the total {depositOk ? "" : "— must be 10–50%"}
             </span>
           </div>
@@ -138,7 +138,7 @@ export function PlanEditor({
 
       <div className="space-y-3">
         {rows.map((r, i) => (
-          <div key={r.key} className="rounded-2xl border border-border p-4">
+          <div key={r.key} className="surface-raised rounded-card p-4">
             <div className="grid gap-3 sm:grid-cols-[1fr_9rem_10rem]">
               <div>
                 <Label htmlFor={`name-${r.key}`}>{type === "full" ? "Payment" : `Milestone ${i + 1}`}</Label>
@@ -176,7 +176,7 @@ export function PlanEditor({
               <button
                 type="button"
                 onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}
-                className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+                className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive-text"
               >
                 <Trash2 className="size-3.5" /> Remove
               </button>
@@ -200,7 +200,7 @@ export function PlanEditor({
           <span>Booking total</span>
           <span className="font-semibold tabular-nums">{formatAud(totalCents)}</span>
         </div>
-        <div className={cn("flex justify-between", remaining !== 0 && "font-medium text-destructive")}>
+        <div className={cn("flex justify-between", remaining !== 0 && "font-medium text-destructive-text")}>
           <span>{remaining === 0 ? "Fully allocated" : remaining > 0 ? "Still to allocate" : "Over by"}</span>
           <span className="tabular-nums">{remaining === 0 ? "✓" : formatAud(Math.abs(remaining))}</span>
         </div>
@@ -211,7 +211,7 @@ export function PlanEditor({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {error}
         </p>
       )}

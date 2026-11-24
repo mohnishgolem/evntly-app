@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 
 const TONE: Record<StatusTone, string> = {
   neutral: "bg-muted text-muted-foreground",
-  waiting: "bg-warning/15 text-warning",
-  active: "bg-primary/10 text-primary",
-  success: "bg-success/15 text-success",
+  waiting: "bg-warning/15 text-warning-text",
+  active: "bg-primary/10 text-primary-text",
+  success: "bg-success/15 text-success-text",
   ended: "bg-muted text-muted-foreground",
 };
 
@@ -36,7 +36,7 @@ function Block({ block }: { block: HelpBlock }) {
           <li key={i} className="flex gap-3">
             <span
               aria-hidden
-              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary tabular-nums"
+              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary-text tabular-nums"
             >
               {i + 1}
             </span>
@@ -84,7 +84,7 @@ export function HelpArticleBody({ article }: { article: HelpArticle }) {
         <p>
           <Link
             href={article.action.href}
-            className="inline-flex min-h-11 items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center gap-1.5 font-medium text-primary-text underline-offset-4 hover:underline"
           >
             {article.action.label}
             <ArrowRight className="size-4" aria-hidden />

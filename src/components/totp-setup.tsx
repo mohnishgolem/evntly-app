@@ -49,7 +49,7 @@ export function TotpSetup(props: Props) {
         >
           Turn off
         </Button>
-        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+        {error && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
       </div>
     );
   }
@@ -71,7 +71,7 @@ export function TotpSetup(props: Props) {
         >
           {pending ? "Starting…" : "Set up authenticator app"}
         </Button>
-        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+        {error && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
       </div>
     );
   }
@@ -113,7 +113,7 @@ export function TotpSetup(props: Props) {
           required
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-text">{error}</p>}
       <Button type="submit" disabled={pending}>
         {pending ? "Verifying…" : "Turn on"}
       </Button>

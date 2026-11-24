@@ -117,14 +117,14 @@ export function PushToggle({ publicKey, compact = false }: { publicKey: string |
     <div className={compact ? "mb-4 rounded-2xl border border-border p-4" : "rounded-2xl bg-secondary p-4"}>
       <div className="flex items-start gap-3">
         {state === "on" ? (
-          <Bell className="mt-0.5 size-5 shrink-0 text-primary" strokeWidth={1.75} />
+          <Bell className="mt-0.5 size-5 shrink-0 text-primary-text" strokeWidth={1.75} />
         ) : (
           <BellOff className="mt-0.5 size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
         )}
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-semibold">Push notifications</p>
           <p className="text-sm text-muted-foreground">{hint[state]}</p>
-          {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+          {error && <p className="mt-1 text-sm text-destructive-text">{error}</p>}
         </div>
         {(state === "off" || state === "on") && (
           <Button

@@ -75,7 +75,7 @@ export function VendorCard({
         <div className="flex items-start gap-2">
           <p className="flex min-w-0 items-center gap-1 text-[15px] leading-snug font-semibold tracking-[-0.01em]">
             <span className="truncate">{vendor.name}</span>
-            {vendor.verified && <ShieldCheck className="size-3.5 shrink-0 text-primary" aria-label="Verified" />}
+            {vendor.verified && <ShieldCheck className="size-3.5 shrink-0 text-primary-text" aria-label="Verified" />}
           </p>
         </div>
         <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[13px] leading-snug text-muted-foreground">

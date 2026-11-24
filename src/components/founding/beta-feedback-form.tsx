@@ -62,12 +62,12 @@ export function BetaFeedbackForm() {
       </div>
       <input type="hidden" name="page" value="/vendor-dashboard/beta" />
       {state?.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {state.error}
         </p>
       )}
       {state?.success && (
-        <p role="status" className="text-sm text-success">
+        <p role="status" className="text-sm text-success-text">
           {state.message}
         </p>
       )}

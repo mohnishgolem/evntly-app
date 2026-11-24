@@ -56,7 +56,7 @@ function ApplyForm({ listingId, onSent }: { listingId: string; onSent: () => voi
   if (sent) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-primary" />
+        <CheckCircle2 className="h-8 w-8 text-primary-text" />
         <p className="font-medium">Application sent!</p>
         <p className="text-sm text-muted-foreground">
           The organiser will get back to you if they&apos;d like to book you.
@@ -74,7 +74,7 @@ function ApplyForm({ listingId, onSent }: { listingId: string; onSent: () => voi
     <div className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="apply-amount">
-          Your price ($) <span className="text-destructive">*</span>
+          Your price ($) <span className="text-destructive-text">*</span>
         </Label>
         <Input
           id="apply-amount"
@@ -95,7 +95,7 @@ function ApplyForm({ listingId, onSent }: { listingId: string; onSent: () => voi
         />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-text">{error}</p>}
 
       <Button className="w-full" disabled={!canSubmit || pending} onClick={submit}>
         {pending ? "Sending…" : "Send application"}

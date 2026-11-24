@@ -63,7 +63,7 @@ export function VendorBookingActions({
                 job as done instead, use the job card below the booking.
               </DialogDescription>
             </DialogHeader>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-destructive-text">{error}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="outline" disabled={pending} onClick={() => setConfirmCancel(false)}>
                 Keep booking
@@ -75,7 +75,7 @@ export function VendorBookingActions({
           </DialogContent>
         </Dialog>
       </div>
-      {error && !confirmCancel && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && !confirmCancel && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
     </div>
   );
 }

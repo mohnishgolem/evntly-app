@@ -62,7 +62,7 @@ export default async function EventDayPage({ params }: { params: Promise<{ id: s
             {bookings.map((b) => {
               const result = jobCardByBooking.get(b.id);
               return (
-                <div key={b.id} className="rounded-2xl border border-border p-5">
+                <div key={b.id} className="surface-raised rounded-card p-5">
                   <p className="font-semibold">{b.provider_name ?? "Vendor"}</p>
                   <p className="text-sm text-muted-foreground capitalize">
                     {b.service_type.replace(/_/g, " ")} · {b.status}

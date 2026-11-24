@@ -72,7 +72,7 @@ export default async function SettingsPage() {
       <form action={logout} data-clear-app-cache className="mt-6 overflow-hidden rounded-2xl bg-secondary">
         <button
           type="submit"
-          className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-destructive transition-colors hover:bg-accent"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-destructive-text transition-colors hover:bg-accent"
         >
           <LogOut className="size-5 shrink-0" strokeWidth={1.75} />
           <span className="flex-1">Log out</span>

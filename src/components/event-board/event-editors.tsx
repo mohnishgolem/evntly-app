@@ -227,7 +227,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
             />
           </div>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-text">
               {error}
             </p>
           )}
@@ -318,7 +318,7 @@ export function CategoriesSheet({ eventId, selected }: { eventId: string; select
           })}
         </ul>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive-text">
             {error}
           </p>
         )}
@@ -340,7 +340,7 @@ export function DeleteEventButton({ eventId }: { eventId: string }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="flex h-11 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground hover:text-destructive"
+        className="flex h-11 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground hover:text-destructive-text"
       >
         <Trash2 className="size-4" aria-hidden /> Delete event
       </button>
@@ -368,7 +368,7 @@ export function DeleteEventButton({ eventId }: { eventId: string }) {
         </Button>
       </div>
       {error && (
-        <p role="alert" className="max-w-xs text-right text-sm text-destructive">
+        <p role="alert" className="max-w-xs text-right text-sm text-destructive-text">
           {error}
         </p>
       )}

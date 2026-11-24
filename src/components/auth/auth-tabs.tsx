@@ -123,7 +123,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           type="button"
           onClick={() => setRole("customer")}
           className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-            role === "customer" ? "border-highlight bg-highlight-light text-highlight" : "border-border text-muted-foreground"
+            role === "customer" ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40" : "btn-raised text-foreground/80"
           }`}
         >
           I&apos;m planning an event
@@ -132,7 +132,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           type="button"
           onClick={() => setRole("vendor")}
           className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-            role === "vendor" ? "border-highlight bg-highlight-light text-highlight" : "border-border text-muted-foreground"
+            role === "vendor" ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40" : "btn-raised text-foreground/80"
           }`}
         >
           I&apos;m a vendor
@@ -165,7 +165,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           onChange={(e) => setFullName(e.target.value)}
         />
         {state?.fieldErrors?.fullName && (
-          <p className="text-sm text-destructive">{state.fieldErrors.fullName[0]}</p>
+          <p className="text-sm text-destructive-text">{state.fieldErrors.fullName[0]}</p>
         )}
       </div>
 
@@ -182,7 +182,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           onChange={(e) => setEmail(e.target.value)}
         />
         {state?.fieldErrors?.email && (
-          <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
+          <p className="text-sm text-destructive-text">{state.fieldErrors.email[0]}</p>
         )}
       </div>
 
@@ -199,7 +199,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           aria-invalid={!!state?.fieldErrors?.password || undefined}
         />
         {state?.fieldErrors?.password ? (
-          <p id="password-hint" role="alert" className="text-sm text-destructive">
+          <p id="password-hint" role="alert" className="text-sm text-destructive-text">
             {state.fieldErrors.password[0]}
           </p>
         ) : (
@@ -238,7 +238,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
           </Label>
         </div>
         {state?.fieldErrors?.agreedToTerms && (
-          <p className="text-sm text-destructive">{state.fieldErrors.agreedToTerms[0]}</p>
+          <p className="text-sm text-destructive-text">{state.fieldErrors.agreedToTerms[0]}</p>
         )}
 
         {role === "vendor" && (
@@ -267,7 +267,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
               </Label>
             </div>
             {state?.fieldErrors?.agreedToVendorAgreement && (
-              <p className="text-sm text-destructive">{state.fieldErrors.agreedToVendorAgreement[0]}</p>
+              <p className="text-sm text-destructive-text">{state.fieldErrors.agreedToVendorAgreement[0]}</p>
             )}
           </>
         )}
@@ -296,7 +296,7 @@ function SignupForm({ defaultRole, next, inAppBrowser }: { defaultRole: "custome
       </fieldset>
 
       {state?.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {state.error}
         </p>
       )}
@@ -355,7 +355,7 @@ function ConfirmByCode({ email, next }: { email: string; next?: string }) {
             className="text-center text-lg tracking-[0.3em] tabular-nums"
           />
           {codeError ? (
-            <p id="signup-code-hint" role="alert" className="text-sm text-destructive">
+            <p id="signup-code-hint" role="alert" className="text-sm text-destructive-text">
               {codeError}
             </p>
           ) : (
@@ -365,7 +365,7 @@ function ConfirmByCode({ email, next }: { email: string; next?: string }) {
           )}
         </div>
         {state?.error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive-text">
             {state.error}
           </p>
         )}
@@ -388,7 +388,7 @@ function ConfirmByCode({ email, next }: { email: string; next?: string }) {
           </>
         )}
         {resendState?.error && (
-          <p role="alert" className="mt-1 text-destructive">
+          <p role="alert" className="mt-1 text-destructive-text">
             {resendState.error}
           </p>
         )}
@@ -407,7 +407,7 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
         <p className="text-sm text-muted-foreground">
           Your email isn&apos;t confirmed yet{state.resent ? ", so we've sent you a new code" : ""}.
         </p>
-        {state.error && <p className="text-sm text-destructive">{state.error}</p>}
+        {state.error && <p className="text-sm text-destructive-text">{state.error}</p>}
         <ConfirmByCode email={state.email} next={state.next ?? next} />
       </div>
     );
@@ -422,7 +422,7 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
           <Label id="login-email-label" htmlFor="login-email">Email</Label>
           <Input id="login-email" name="email" type="email" placeholder="you@example.com" required />
           {state?.fieldErrors?.email && (
-            <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
+            <p className="text-sm text-destructive-text">{state.fieldErrors.email[0]}</p>
           )}
         </div>
         <div className="space-y-1.5">
@@ -430,7 +430,7 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
             <Label id="login-password-label" htmlFor="login-password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              className="inline-flex min-h-6 items-center text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               Forgot password?
             </Link>
@@ -438,7 +438,7 @@ function LoginForm({ next, inAppBrowser }: { next?: string; inAppBrowser?: boole
           <Input id="login-password" name="password" type="password" required />
         </div>
 
-        {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+        {state?.error && <p className="text-sm text-destructive-text">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Logging in…" : "Log in"}

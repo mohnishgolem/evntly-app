@@ -429,6 +429,8 @@
      4.5:1 on the canvas (coral #e8604a is ~3.2:1). */
   --primary-text: #c2412c;
   --success-text: #0d7148;
+  --warning-text: #7f5000;
+  --destructive-text: #b3142a;
 
   /* Surfaces */
   --canvas: #f7f6f4;
@@ -463,6 +465,8 @@
 .dark {
   --primary-text: #f2836d;
   --success-text: #4ade9a;
+  --warning-text: #f7c56b;
+  --destructive-text: #ff8b8b;
   --canvas: #0b0b0e;
   --surface: #17171c;
   --surface-sunken: #0f0f13;
@@ -479,6 +483,8 @@
 @theme inline {
   --color-primary-text: var(--primary-text);
   --color-success-text: var(--success-text);
+  --color-warning-text: var(--warning-text);
+  --color-destructive-text: var(--destructive-text);
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
@@ -617,4 +623,13 @@
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+}
+
+/* Phase 6: coral text a touch darker so it stays above 4.5:1 on pale
+   coral tints and the grey active-item tint, not just on white. */
+:root {
+  --primary-text: #b53c27;
+}
+.dark {
+  --primary-text: #f2836d;
 }

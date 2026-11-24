@@ -19,9 +19,9 @@ export const metadata: Metadata = {
 
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Waiting for your response", className: "text-warning" },
-  accepted: { label: "Accepted", className: "text-success" },
-  declined: { label: "Declined", className: "text-destructive" },
+  pending: { label: "Waiting for your response", className: "text-warning-text" },
+  accepted: { label: "Accepted", className: "text-success-text" },
+  declined: { label: "Declined", className: "text-destructive-text" },
 };
 
 type EventListing = Database["public"]["Tables"]["event_listings"]["Row"];
@@ -79,7 +79,7 @@ export default async function EventFeedPage() {
         </div>
       ) : (
         !latestEventHasListing && (
-          <div className="mb-8 rounded-2xl border border-border p-5">
+          <div className="mb-8 surface-raised rounded-card p-5">
             <p className="mb-1 font-semibold">
               {latestEvent.event_type} in {latestEvent.suburb} on {latestEvent.event_date}
             </p>
@@ -100,7 +100,7 @@ export default async function EventFeedPage() {
           {listings.map((listing) => {
             const listingApplications = applications.filter((a) => a.listing_id === listing.id);
             return (
-              <div key={listing.id} className="rounded-2xl border border-border p-5">
+              <div key={listing.id} className="surface-raised rounded-card p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">

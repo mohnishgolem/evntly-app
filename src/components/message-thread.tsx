@@ -160,7 +160,7 @@ export function MessageThread({
   return (
     // On phones the thread fills the space between the page header and the
     // bottom tab bar, so the message box isn't hidden behind the tab bar.
-    <div className="flex h-[calc(100dvh-21rem)] min-h-80 flex-col rounded-2xl border border-border md:h-[70vh]">
+    <div className="flex h-[calc(100dvh-21rem)] min-h-80 flex-col surface-raised rounded-card md:h-[70vh]">
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
@@ -270,7 +270,7 @@ export function MessageThread({
           </div>
         </form>
       )}
-      {error && <p className="px-3 pb-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="px-3 pb-2 text-sm text-destructive-text">{error}</p>}
     </div>
   );
 }
@@ -332,7 +332,7 @@ function MessageAttachment({
           src={url}
           alt="Photo attachment"
           loading="lazy"
-          className="max-h-72 rounded-2xl border border-border object-cover"
+          className="max-h-72 surface-raised rounded-card object-cover"
         />
       </a>
     );

@@ -46,7 +46,7 @@ export function CopyLinkField({ id, label, value }: { id: string; label: string;
           readOnly
           value={value}
           onFocus={(e) => e.currentTarget.select()}
-          className="min-h-11 flex-1 rounded-xl border border-border bg-muted/40 px-3 text-sm"
+          className="min-h-11 flex-1 surface-raised rounded-card bg-muted/40 px-3 text-sm"
         />
         <Button type="button" onClick={copy} className="min-h-11">
           {state === "copied" ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
@@ -54,7 +54,7 @@ export function CopyLinkField({ id, label, value }: { id: string; label: string;
         </Button>
       </div>
       {state === "error" && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
+        <p role="alert" className="mt-2 text-sm text-destructive-text">
           Couldn&apos;t copy. Press and hold the link to copy it.
         </p>
       )}

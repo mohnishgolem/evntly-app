@@ -14,20 +14,24 @@ export async function AccountFrame({ children }: { children: React.ReactNode }) 
 
   if (role === "customer") {
     return (
-      <SidebarFrame rail sidebar={<AppSidebar title="Your planning" nav="customer" rail />}>
-        {children}
-      </SidebarFrame>
+      <div className="min-h-full bg-canvas">
+        <SidebarFrame rail sidebar={<AppSidebar title="Your planning" nav="customer" rail />}>
+          {children}
+        </SidebarFrame>
+      </div>
     );
   }
   if (role === "vendor") {
     const [attention, unread] = await Promise.all([getVendorAttention(), getUnreadMessageCount()]);
     return (
-      <SidebarFrame
-        rail
-        sidebar={<AppSidebar title="Your business" nav="vendor" rail leads={attention?.leadCount ?? 0} unread={unread} />}
-      >
-        {children}
-      </SidebarFrame>
+      <div className="min-h-full bg-canvas">
+        <SidebarFrame
+          rail
+          sidebar={<AppSidebar title="Your business" nav="vendor" rail leads={attention?.leadCount ?? 0} unread={unread} />}
+        >
+          {children}
+        </SidebarFrame>
+      </div>
     );
   }
   return <>{children}</>;

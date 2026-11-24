@@ -24,7 +24,7 @@ export function CloseListingButton({ listingId }: { listingId: string }) {
       <Button size="sm" variant="outline" disabled={pending} onClick={close}>
         Close to new applications
       </Button>
-      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-1 text-sm text-destructive-text">{error}</p>}
     </div>
   );
 }

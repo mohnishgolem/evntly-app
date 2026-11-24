@@ -73,7 +73,7 @@ export function PaySheet({
         Pay {amount}
       </Button>
       {error && (
-        <p role="alert" className="w-full text-sm text-destructive">
+        <p role="alert" className="w-full text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -153,7 +153,7 @@ function PaymentForm({ amount, onPaid }: { amount: string; onPaid: () => void })
 
   if (result.type === "error") {
     return (
-      <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+      <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive-text">
         The payment form didn&apos;t load. Close this and try again — you haven&apos;t been charged.
       </p>
     );
@@ -184,7 +184,7 @@ function PaymentForm({ amount, onPaid }: { amount: string; onPaid: () => void })
         <PaymentElement options={{ layout: "tabs" }} onReady={() => setReady(true)} />
       </div>
       {error && (
-        <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -200,7 +200,7 @@ function PaymentForm({ amount, onPaid }: { amount: string; onPaid: () => void })
         )}
       </Button>
       <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-        <ShieldCheck className="size-3.5 text-success" aria-hidden />
+        <ShieldCheck className="size-3.5 text-success-text" aria-hidden />
         Payments are secured by Stripe. Evntly never sees your card details.
       </p>
     </form>
@@ -224,7 +224,7 @@ function PaidView({ amount, name, vendorName, onDone }: { amount: string; name: 
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <span className="flex size-14 items-center justify-center rounded-full bg-success/15 animate-in zoom-in-50 duration-300">
-        <CircleCheck className="size-8 text-success" aria-hidden />
+        <CircleCheck className="size-8 text-success-text" aria-hidden />
       </span>
       <DialogTitle className="text-lg">Payment received</DialogTitle>
       <DialogDescription className="max-w-xs">

@@ -120,7 +120,7 @@ export function LegalPrompt({
         )}
 
         {error && (
-          <p role="alert" className="mb-3 text-sm text-destructive">
+          <p role="alert" className="mb-3 text-sm text-destructive-text">
             {error}
           </p>
         )}

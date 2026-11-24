@@ -23,11 +23,11 @@ export default function ResetPasswordPage() {
           <Label htmlFor="password">New password</Label>
           <Input id="password" name="password" type="password" required />
           {state?.fieldErrors?.password && (
-            <p className="text-sm text-destructive">{state.fieldErrors.password[0]}</p>
+            <p className="text-sm text-destructive-text">{state.fieldErrors.password[0]}</p>
           )}
         </div>
 
-        {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+        {state?.error && <p className="text-sm text-destructive-text">{state.error}</p>}
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Saving…" : "Save new password"}

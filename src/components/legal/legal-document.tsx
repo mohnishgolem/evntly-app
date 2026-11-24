@@ -66,7 +66,7 @@ export function LegalDocumentView({ doc }: { doc: LegalDocument }) {
   const related = LEGAL_DOCUMENTS.filter((d) => d.key !== doc.key);
   return (
     <article className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
-      <Link href="/legal" className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/legal" className="mb-4 inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground">
         Legal
       </Link>
       <h1 className="text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">{doc.title}</h1>
@@ -102,7 +102,7 @@ export function LegalDocumentView({ doc }: { doc: LegalDocument }) {
         </section>
       )}
 
-      <details className="group mt-6 rounded-2xl border border-border print:hidden">
+      <details className="group mt-6 surface-raised rounded-card print:hidden">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
           Contents
           <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-90">

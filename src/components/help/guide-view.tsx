@@ -41,13 +41,13 @@ export function GuideView({
             <ol className="space-y-3">
               {resolved.map((s, i) => (
                 <li key={s.title}>
-                  <a href={`#section-${i + 1}`} className="text-[15px] font-semibold hover:text-primary">
+                  <a href={`#section-${i + 1}`} className="inline-flex min-h-6 items-center text-[15px] font-semibold hover:text-primary-text">
                     {i + 1}. {s.title}
                   </a>
                   <ul className="mt-1 space-y-0.5 border-l border-border pl-3">
                     {s.items.map((a) => (
                       <li key={a.slug}>
-                        <a href={`#${a.slug}`} className="block py-0.5 text-sm text-muted-foreground hover:text-foreground">
+                        <a href={`#${a.slug}`} className="flex min-h-6 items-center py-0.5 text-sm text-muted-foreground hover:text-foreground">
                           {a.title}
                         </a>
                       </li>
@@ -62,7 +62,7 @@ export function GuideView({
         <div className="min-w-0 max-w-2xl">
           {resolved.map((s, i) => (
             <section key={s.title} id={`section-${i + 1}`} aria-labelledby={`section-${i + 1}-title`} className="scroll-mt-24 not-first:mt-14">
-              <p className="text-sm font-semibold text-primary tabular-nums">Part {i + 1}</p>
+              <p className="text-sm font-semibold text-primary-text tabular-nums">Part {i + 1}</p>
               <h2 id={`section-${i + 1}-title`} className="text-2xl font-bold tracking-tight">
                 {s.title}
               </h2>
@@ -84,7 +84,7 @@ export function GuideView({
                 hello@evntlyapp.com
               </a>
             </p>
-            <Link href={otherGuide.href} className="text-[15px] font-medium text-primary hover:underline">
+            <Link href={otherGuide.href} className="text-[15px] font-medium text-primary-text hover:underline">
               {otherGuide.label}
             </Link>
           </div>

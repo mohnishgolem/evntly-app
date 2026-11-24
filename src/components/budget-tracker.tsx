@@ -45,11 +45,11 @@ export function BudgetTracker({
   }
 
   return (
-    <section className="mb-8 rounded-2xl border border-border p-5">
+    <section className="mb-8 surface-raised rounded-card p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Wallet className="size-5 text-primary" strokeWidth={1.75} /> Budget
+            <Wallet className="size-5 text-primary-text" strokeWidth={1.75} /> Budget
           </h2>
           {editingBudget ? (
             <form
@@ -82,7 +82,7 @@ export function BudgetTracker({
           )}
         </div>
         <div className="text-right">
-          <p className={cn("text-xl font-bold", summary.overBudget && "text-destructive")}>
+          <p className={cn("text-xl font-bold", summary.overBudget && "text-destructive-text")}>
             {summary.overBudget ? `${aud(-summary.remaining)} over` : `${aud(summary.remaining)} left`}
           </p>
           {summary.quoted > 0 && (
@@ -146,7 +146,7 @@ export function BudgetTracker({
                   disabled={pending}
                   onClick={() => run(() => removeBudgetItem(eventId, l.id))}
                   aria-label={`Remove ${l.label}`}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  className="shrink-0 text-muted-foreground hover:text-destructive-text"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -186,7 +186,7 @@ export function BudgetTracker({
           <Plus /> Add
         </Button>
       </form>
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
     </section>
   );
 }

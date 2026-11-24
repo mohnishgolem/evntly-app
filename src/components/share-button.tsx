@@ -75,9 +75,9 @@ export function ShareButton({
       )}
     >
       {status === "copied" ? (
-        <Check className={cn(size === "sm" ? "size-3.5" : "size-5", "text-success")} />
+        <Check className={cn(size === "sm" ? "size-3.5" : "size-5", "text-success-text")} />
       ) : status === "error" ? (
-        <X className={cn(size === "sm" ? "size-3.5" : "size-5", "text-destructive")} />
+        <X className={cn(size === "sm" ? "size-3.5" : "size-5", "text-destructive-text")} />
       ) : (
         <Share className={cn(size === "sm" ? "size-3.5" : "size-5", "text-muted-foreground")} />
       )}

@@ -91,7 +91,7 @@ export function BookBundleForm({
             <Label htmlFor="bb-notes">Notes (optional)</Label>
             <Textarea id="bb-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive-text">{error}</p>}
           <Button
             className="w-full"
             disabled={pending || !eventDate || !eventAddress}

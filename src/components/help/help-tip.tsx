@@ -37,7 +37,7 @@ export function HelpTip({
       <PopoverContent side="bottom" className="w-72 max-w-[calc(100vw-2rem)] rounded-2xl p-3.5 text-[13px] leading-relaxed">
         <div className="text-popover-foreground">{children}</div>
         {article && (
-          <Link href={`/help/articles/${article}`} className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link href={`/help/articles/${article}`} className="font-medium text-primary-text underline-offset-2 hover:underline">
             Learn more
           </Link>
         )}

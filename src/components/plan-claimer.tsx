@@ -46,7 +46,7 @@ export function PlanClaimer() {
   if (!claiming) return null;
 
   return (
-    <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary">
+    <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary-text">
       Saving your event plan…
     </div>
   );

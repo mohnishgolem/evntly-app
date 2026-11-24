@@ -215,7 +215,7 @@ export default async function EventBoardPage({
             Event Feed
           </h2>
           <p className="mb-3 text-sm text-muted-foreground">Let vendors come to you with their own quotes.</p>
-          <div className="rounded-2xl border border-border p-5">
+          <div className="surface-raised rounded-card p-5">
             {listing ? (
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm">
@@ -244,7 +244,7 @@ export default async function EventBoardPage({
           <h2 id="message-heading" className="mb-4 text-xl font-bold tracking-tight">
             Message your vendors
           </h2>
-          <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+          <div className="divide-y divide-border overflow-hidden surface-raised rounded-card">
             {activeBookings.map((b) => (
               <Link
                 key={b.id}
@@ -262,14 +262,14 @@ export default async function EventBoardPage({
       {activeBookings.length > 0 && (
         <Link
           href={`/dashboard/events/${event.id}/day`}
-          className="mb-10 flex min-h-14 items-center justify-between rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 font-semibold text-primary"
+          className="mb-10 flex min-h-14 items-center justify-between rounded-2xl border border-primary/30 bg-primary/5 px-5 py-4 font-semibold text-primary-text"
         >
           Open Event Day view <ChevronRight className="h-4 w-4" />
         </Link>
       )}
 
       {eventDone && (
-        <div className="mb-10 flex items-center justify-center gap-2 rounded-2xl border border-success/30 bg-success/5 p-5 text-center font-semibold text-success">
+        <div className="mb-10 flex items-center justify-center gap-2 rounded-2xl border border-success/30 bg-success/5 p-5 text-center font-semibold text-success-text">
           <PartyPopper className="size-5" /> Event complete
         </div>
       )}

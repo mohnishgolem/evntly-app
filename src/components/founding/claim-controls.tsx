@@ -41,7 +41,7 @@ export function ClaimButton({
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {state.error}
         </p>
       )}
@@ -82,7 +82,7 @@ export function ApplicationAction({
         {pending ? "Saving…" : label}
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {error}
         </p>
       )}

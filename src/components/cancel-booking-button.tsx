@@ -46,7 +46,7 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
             undone. Check the cancellation terms on your quote for any deposit you&apos;ve paid.
           </DialogDescription>
         </DialogHeader>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive-text">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>
             Keep booking

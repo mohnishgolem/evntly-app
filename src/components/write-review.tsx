@@ -118,7 +118,7 @@ export function WriteReview({
 
           {done ? (
             <div role="status" className="flex flex-col items-center gap-3 py-2 text-center">
-              <CheckCircle2 className="size-10 text-success" aria-hidden />
+              <CheckCircle2 className="size-10 text-success-text" aria-hidden />
               <p className="text-sm text-muted-foreground">It helps other people find {vendorName}.</p>
               <div className="grid w-full gap-2">
                 <Button size="lg" onClick={() => setOpen(false)}>
@@ -213,7 +213,7 @@ export function WriteReview({
               </label>
 
               {error && (
-                <p role="alert" className="text-sm text-destructive">
+                <p role="alert" className="text-sm text-destructive-text">
                   {error}
                 </p>
               )}

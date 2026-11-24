@@ -33,7 +33,7 @@ function StepList({ steps }: { steps: Step[] }) {
       {steps.map((s, i) => (
         <li key={s.title} className="flex flex-col rounded-2xl bg-secondary p-5">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary shadow-sm">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary-text shadow-sm">
               <s.icon className="size-[22px]" strokeWidth={1.75} aria-hidden />
             </span>
             <span className="text-sm font-semibold text-muted-foreground tabular-nums">Step {i + 1}</span>
@@ -112,8 +112,8 @@ export default async function HowItWorksPage() {
         <h2 id="trust-heading" className="sr-only">
           Payments and protection
         </h2>
-        <div className="rounded-2xl border border-border p-6">
-          <Wallet className="size-6 text-primary" strokeWidth={1.75} aria-hidden />
+        <div className="surface-raised rounded-card p-6">
+          <Wallet className="size-6 text-primary-text" strokeWidth={1.75} aria-hidden />
           <h3 className="mt-3 text-[17px] font-semibold">Payments</h3>
           <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">
             {paymentsEnabled
@@ -124,8 +124,8 @@ export default async function HowItWorksPage() {
             </Link>
           </p>
         </div>
-        <div className="rounded-2xl border border-border p-6">
-          <ShieldCheck className="size-6 text-primary" strokeWidth={1.75} aria-hidden />
+        <div className="surface-raised rounded-card p-6">
+          <ShieldCheck className="size-6 text-primary-text" strokeWidth={1.75} aria-hidden />
           <h3 className="mt-3 text-[17px] font-semibold">If something goes wrong</h3>
           <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">
             Cancel from the booking, or report a problem up to 90 days after the event and Evntly will help both sides reach an outcome.{" "}

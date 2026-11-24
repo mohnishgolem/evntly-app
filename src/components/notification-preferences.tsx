@@ -61,7 +61,7 @@ export function NotificationPreferences({ initial, audience }: { initial: Notifi
           </div>
         ))}
       </div>
-      <p aria-live="polite" className={`flex min-h-5 items-center gap-1.5 text-sm ${status && !status.ok ? "text-destructive" : "text-muted-foreground"}`}>
+      <p aria-live="polite" className={`flex min-h-5 items-center gap-1.5 text-sm ${status && !status.ok ? "text-destructive-text" : "text-muted-foreground"}`}>
         {pending ? (
           <>
             <Loader2 className="size-3.5 animate-spin" aria-hidden /> Saving…

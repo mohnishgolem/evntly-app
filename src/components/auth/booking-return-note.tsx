@@ -5,7 +5,7 @@ import { CalendarCheck } from "lucide-react";
 export function BookingReturnNote() {
   return (
     <div role="status" className="mb-6 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-      <CalendarCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+      <CalendarCheck className="mt-0.5 size-4 shrink-0 text-primary-text" aria-hidden />
       <p>Once your email is verified, you&apos;ll go straight back to the vendor to send your quote request.</p>
     </div>
   );
@@ -15,7 +15,7 @@ export function BookingReturnNote() {
 export function ReviewReturnNote() {
   return (
     <div role="status" className="mb-6 flex gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-      <CalendarCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+      <CalendarCheck className="mt-0.5 size-4 shrink-0 text-primary-text" aria-hidden />
       <p>We saved your review. Once your email is verified, you&apos;ll go straight back to post it.</p>
     </div>
   );

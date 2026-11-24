@@ -43,7 +43,7 @@ export function ReviewRequestShare({ url, message: initial }: { url: string; mes
         </Button>
       </div>
       {state && (
-        <p role="status" className={state.ok ? "flex items-center gap-2 text-sm text-success" : "text-sm text-destructive"}>
+        <p role="status" className={state.ok ? "flex items-center gap-2 text-sm text-success-text" : "text-sm text-destructive-text"}>
           {state.ok ? <Check className="size-4" aria-hidden /> : null}
           {state.ok
             ? state.what === "shared"

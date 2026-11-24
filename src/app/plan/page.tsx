@@ -85,8 +85,8 @@ export default function PlanPage() {
                 className={cn(
                   "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                   draft.eventType === t
-                    ? "border-highlight bg-highlight-light text-highlight"
-                    : "border-border text-muted-foreground hover:border-foreground/30"
+                    ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40"
+                    : "btn-raised text-foreground/80"
                 )}
               >
                 {t}
@@ -98,6 +98,7 @@ export default function PlanPage() {
         <Field title="Event date">
           <Input className="h-11 md:h-9"
             type="date"
+            aria-label="Event date"
             min={earliestEventDate()}
             value={draft.eventDate}
             onChange={(e) => setDraft((d) => ({ ...d, eventDate: e.target.value }))}
@@ -152,8 +153,8 @@ export default function PlanPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                     selected
-                      ? "border-highlight bg-highlight-light text-highlight"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                      ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40"
+                      : "btn-raised text-foreground/80"
                   )}
                 >
                   <c.icon className="size-4" /> {c.label}
@@ -173,8 +174,8 @@ export default function PlanPage() {
                 className={cn(
                   "rounded-xl border px-3 py-3 text-sm font-medium transition-colors",
                   draft.guestCount === bucket
-                    ? "border-highlight bg-highlight-light text-highlight"
-                    : "border-border text-muted-foreground hover:border-foreground/30"
+                    ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40"
+                    : "btn-raised text-foreground/80"
                 )}
               >
                 {bucket}
@@ -187,7 +188,7 @@ export default function PlanPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">${groupDigits(BUDGET_MIN)}</span>
-              <span className="font-semibold text-highlight">
+              <span className="font-semibold text-primary-text">
                 ${groupDigits(draft.budgetTotal)}
               </span>
               <span className="text-muted-foreground">${groupDigits(BUDGET_MAX)}</span>
@@ -201,7 +202,8 @@ export default function PlanPage() {
               onChange={(e) =>
                 setDraft((d) => ({ ...d, budgetTotal: Number(e.target.value) }))
               }
-              className="w-full accent-highlight"
+              aria-label="Total budget"
+              className="h-6 w-full accent-[var(--primary)]"
             />
           </div>
         </Field>
@@ -216,18 +218,18 @@ export default function PlanPage() {
           />
         </Field>
 
-        <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+        <div className="surface-raised flex items-start justify-between gap-4 rounded-card p-4">
           <div>
-            <p className="text-sm font-semibold">Let vendors come to you</p>
+            <p id="post-to-feed-label" className="text-sm font-semibold">Let vendors come to you</p>
             <p className="text-sm text-muted-foreground">
               Post this event to the vendor feed so approved vendors can send you quotes.
             </p>
           </div>
-          <Switch checked={postToFeed} onCheckedChange={setPostToFeed} />
+          <Switch checked={postToFeed} onCheckedChange={setPostToFeed} aria-labelledby="post-to-feed-label" />
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive-text">
             {error}
           </p>
         )}

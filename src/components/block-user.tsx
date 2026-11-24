@@ -55,7 +55,7 @@ export function BlockUserButton({
         render={
           <button
             type="button"
-            className="-mr-2 inline-flex min-h-11 items-center gap-1 px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+            className="-mr-2 inline-flex min-h-11 items-center gap-1 px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive-text"
           >
             <Ban className="size-3.5" /> Block
           </button>
@@ -71,7 +71,7 @@ export function BlockUserButton({
             Blocked people.
           </DialogDescription>
         </DialogHeader>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive-text">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button
             variant="outline"
@@ -116,7 +116,7 @@ export function UnblockButton({
       >
         Unblock
       </Button>
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && <span className="text-xs text-destructive-text">{error}</span>}
     </span>
   );
 }

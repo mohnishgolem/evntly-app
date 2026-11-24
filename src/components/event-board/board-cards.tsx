@@ -159,9 +159,9 @@ export function NextStepCard({
       className="group mb-8 flex items-center gap-4 rounded-3xl border border-champagne/40 bg-champagne/10 p-5 outline-none transition-colors hover:bg-champagne/15 focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-warning">Your next step</p>
+        <p className="text-sm font-semibold text-warning-text">Your next step</p>
         <p className="mt-0.5 text-lg font-semibold">{copy.title}</p>
-        <p className="text-sm text-muted-foreground">{copy.detail}</p>
+        <p className="text-sm text-foreground/75">{copy.detail}</p>
       </div>
       <span
         aria-hidden

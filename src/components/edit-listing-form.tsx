@@ -115,8 +115,8 @@ export function EditListingForm({
               className={cn(
                 "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
                 draft.serviceType === c.value
-                  ? "border-highlight bg-highlight-light text-highlight"
-                  : "border-border text-muted-foreground hover:border-foreground/30"
+                  ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40"
+                  : "btn-raised text-foreground/80"
               )}
             >
               <c.icon className="size-4" /> {c.label}
@@ -145,8 +145,8 @@ export function EditListingForm({
                 className={cn(
                   "rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
                   selected
-                    ? "border-highlight bg-highlight-light text-highlight"
-                    : "border-border text-muted-foreground hover:border-foreground/30"
+                    ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40"
+                    : "btn-raised text-foreground/80"
                 )}
               >
                 {t}
@@ -212,7 +212,7 @@ export function EditListingForm({
         )}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-text">{error}</p>}
 
       <Button className="w-full" disabled={!canSubmit || pending} onClick={submit}>
         {pending ? "Saving…" : "Save changes"}
