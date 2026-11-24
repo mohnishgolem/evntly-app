@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { BookVendor, type OpenRequest } from "@/components/request-quote";
 import { getPaymentsStatus } from "@/lib/payments/server";
-import { navRole } from "@/lib/nav";
+import { hasPhoneTabBar, navRole } from "@/lib/nav";
 import { SaveVendorButton } from "@/components/save-vendor-button";
 import { ShareButton } from "@/components/share-button";
 import { ReportVendor } from "@/components/report-vendor";
@@ -393,7 +393,7 @@ export default async function VendorDetailPage({
                 shareSource={shareSource}
                 priceLabel={priceLabel}
                 paymentsEnabled={payments.enabled}
-                hasTabBar={role === "customer" || role === "vendor"}
+                hasTabBar={hasPhoneTabBar(role)}
               />
               {!vendor.is_demo && !isOwnListing && (
                 <ContactVendor

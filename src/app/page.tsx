@@ -52,7 +52,7 @@ export default function HomePage() {
 
       {/* Hero: full-bleed photography, one message, search front and centre. */}
       {/* Phones: a short hero so vendors are a thumb-flick away. Wider: full-bleed. */}
-      <section className="relative isolate flex min-h-[340px] items-end overflow-hidden px-4 pt-20 pb-6 md:min-h-[680px] md:items-center md:pt-24 md:pb-24">
+      <section className="relative isolate flex min-h-[15.5rem] items-end overflow-hidden px-4 pt-14 pb-5 md:min-h-[680px] md:items-center md:pt-24 md:pb-24">
         {/* Poster stays underneath: it's the LCP image, the loading fallback, and what
             reduced-motion users see instead of the video. */}
         <Image
@@ -75,13 +75,13 @@ export default function HomePage() {
 
         <div className="mx-auto w-full max-w-5xl text-center">
           <p className="text-eyebrow hidden text-white/80 md:block">Event vendors in {launchCity}</p>
-          <h1 className="mx-auto max-w-4xl text-[2rem] leading-[1.05] font-bold tracking-[-0.03em] text-balance text-white md:mt-4 md:text-display">
+          <h1 className="mx-auto max-w-4xl text-[1.75rem] leading-[1.08] font-bold tracking-[-0.03em] text-balance text-white md:mt-4 md:text-display">
             Find the right vendors for your next event
           </h1>
           <p className="mx-auto mt-5 hidden max-w-xl text-lg leading-relaxed text-balance text-white/85 md:block">
             Find photographers, DJs, decorators, celebrants and more. Request quotes and book directly.
           </p>
-          <HeroSearch className="mx-auto mt-5 max-w-4xl md:mt-10" />
+          <HeroSearch className="mx-auto mt-4 max-w-4xl md:mt-10" />
           <div className="mt-5 hidden flex-wrap items-center justify-center gap-x-1 gap-y-2 text-sm text-white/85 md:flex">
             <span className="mr-1">Popular:</span>
             {popular.map((c) => (
@@ -101,7 +101,7 @@ export default function HomePage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <section aria-labelledby="categories-heading" className="mt-6 md:mt-20">
+        <section aria-labelledby="categories-heading" className="mt-5 md:mt-20">
           <SectionHeader id="categories-heading" eyebrow="Browse" title="What do you need?" href="/explore" linkLabel="All vendors" />
           <CategoryRail />
         </section>
@@ -119,7 +119,7 @@ export default function HomePage() {
         <section aria-labelledby="how-heading" className="mt-20 md:mt-28">
           <SectionHeader id="how-heading" eyebrow="How it works" title="From idea to booked, in four steps" href="/how-it-works" linkLabel="Learn more" />
           {/* Phones: swipe through the steps; wider: a grid. */}
-          <ol className="rail -mx-4 auto-cols-[82%] gap-3 px-4 sm:mx-0 sm:grid sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+          <ol tabIndex={0} aria-label="Four steps to book" className="rail -mx-4 auto-cols-[82%] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none gap-3 px-4 sm:mx-0 sm:grid sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
             {STEPS.map((s, i) => (
               <li key={s.title} className="surface-raised rounded-card p-6">
                 <div className="flex items-center justify-between">
@@ -175,7 +175,7 @@ function SectionHeader({ id, eyebrow, title, href, linkLabel }: { id: string; ey
   return (
     <div className="mb-6 flex items-end justify-between gap-4">
       <div>
-        <p className="text-eyebrow text-primary">{eyebrow}</p>
+        <p className="text-eyebrow text-primary-text">{eyebrow}</p>
         <h2 id={id} className="mt-2 text-title">
           {title}
         </h2>
@@ -231,7 +231,7 @@ async function ForYou() {
                         </span>
                       </span>
                     ) : (
-                      <span className="mt-1 block text-xs font-medium text-primary">Add the services you need</span>
+                      <span className="mt-1 block text-xs font-medium text-primary-text">Add the services you need</span>
                     )}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />

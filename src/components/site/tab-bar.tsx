@@ -24,7 +24,7 @@ export function TabBar({
 
   return (
     <>
-      <div aria-hidden className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))] md:hidden print:hidden" />
+      <div aria-hidden className="h-[var(--tabbar-height)] md:hidden print:hidden" />
       <nav
         aria-label="Main"
         className="glass-material fixed inset-x-0 bottom-0 z-40 border-t border-border/60 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-1px_0_rgba(255,255,255,0.6),0_-8px_24px_-12px_rgba(28,25,23,0.14)] md:hidden print:hidden"
@@ -41,7 +41,7 @@ export function TabBar({
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "group relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium outline-none transition-colors focus-visible:bg-foreground/5",
-                    active ? "text-primary" : "text-muted-foreground"
+                    active ? "text-primary-text" : "text-muted-foreground"
                   )}
                 >
                   <span className={cn("relative flex h-8 w-12 items-center justify-center rounded-full transition-[background-color,box-shadow] duration-200 ease-standard", active && "surface-pressed")}>

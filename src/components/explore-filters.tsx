@@ -8,6 +8,7 @@ import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES, EVENT_TYPES, PRICE_BUCKETS } from
 import { useSheetSide } from "@/lib/use-sheet-side";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { CategoryArt } from "@/components/category-art";
+import { categoryShortLabel } from "@/lib/category-art";
 
 const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
 
@@ -76,7 +77,7 @@ export function ExploreFilters() {
             enterKeyHint="search"
             aria-label="Search vendors by name or suburb"
             placeholder="Search by name or suburb"
-            className="h-9 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
+            className="h-9 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-[15px]"
           />
           <button
             type="submit"
@@ -116,7 +117,7 @@ export function ExploreFilters() {
           </SheetTrigger>
           <SheetContent
             side={side}
-            className="max-h-[88dvh] gap-0 overflow-y-auto rounded-t-[1.75rem] px-6 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-md sm:rounded-none"
+            className="max-h-[88dvh] gap-0 overflow-y-auto px-6 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] sm:max-h-dvh sm:max-w-md sm:rounded-none"
           >
             {side === "bottom" && <div aria-hidden className="mx-auto mt-1 mb-2 h-1.5 w-10 rounded-full bg-border" />}
             <SheetHeader className="px-0">
@@ -146,7 +147,7 @@ export function ExploreFilters() {
               ))}
             </FilterGroup>
 
-            <SheetFooter className="mt-6 flex-row items-center justify-between gap-3 border-t border-border px-0 pt-4">
+            <SheetFooter className="sticky bottom-0 mt-6 flex-row items-center justify-between gap-3 border-t border-border bg-popover px-0 pt-4 pb-1">
               <button
                 type="button"
                 onClick={() => setDraft({ event: "", price: "" })}
@@ -170,7 +171,7 @@ export function ExploreFilters() {
       </div>
 
       {/* Category tabs: icon over label, underline on the selected one. */}
-      <nav aria-label="Categories" className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pt-0.5 pb-3 sm:mx-0 sm:px-0">
+      <nav aria-label="Categories" className="scrollbar-hide -mx-4 mt-2.5 flex gap-1.5 overflow-x-auto sm:mt-3 sm:gap-2 overflow-y-hidden overscroll-x-contain px-4 pt-0.5 pb-3 sm:mx-0 sm:px-0">
         <CategoryTab selected={!category} onClick={() => setParams({ category: "" })} label="All" />
         {categories.map((c) => (
           <CategoryTab key={c.value} selected={category === c.value} onClick={() => setParams({ category: c.value })} value={c.value} label={c.label} />
@@ -197,16 +198,17 @@ function CategoryTab({ selected, onClick, value, label }: { selected: boolean; o
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "flex h-[5.25rem] w-[6.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-tile px-1.5 text-center",
-        selected ? "surface-pressed text-foreground" : "btn-raised text-muted-foreground hover:text-foreground"
+        "flex h-[3.875rem] w-[4.5rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-center sm:h-[5.25rem] sm:w-[6.25rem] sm:gap-1 sm:rounded-tile sm:px-1.5",
+        selected ? "surface-pressed text-foreground ring-1 ring-primary/40" : "btn-raised text-muted-foreground hover:text-foreground"
       )}
     >
       {value ? (
-        <CategoryArt value={value} eager className={cn("size-9 transition-transform duration-200 ease-standard", selected ? "scale-95" : "drop-shadow-[0_3px_3px_rgba(28,25,23,0.16)]")} />
+        <CategoryArt value={value} eager className={cn("size-7 transition-transform duration-200 ease-standard sm:size-9", selected ? "scale-95" : "drop-shadow-[0_3px_3px_rgba(28,25,23,0.16)]")} />
       ) : (
-        <LayoutGrid className="size-9 p-1.5" strokeWidth={1.6} aria-hidden />
+        <LayoutGrid className="size-7 p-1 sm:size-9 sm:p-1.5" strokeWidth={1.6} aria-hidden />
       )}
-      <span className="line-clamp-2 text-[11.5px] leading-tight font-semibold">{label}</span>
+      <span className="text-[11px] leading-tight font-semibold whitespace-nowrap sm:hidden">{value ? categoryShortLabel(value, label) : label}</span>
+      <span className="hidden line-clamp-2 text-[11.5px] leading-tight font-semibold sm:block">{label}</span>
     </button>
   );
 }

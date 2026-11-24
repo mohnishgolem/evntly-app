@@ -409,6 +409,11 @@
    choices look pressed in. Use sparingly — most content stays flat on a
    surface; only controls and cards carry depth. */
 :root {
+  /* Small coloured text needs darker shades than the brand fills to reach
+     4.5:1 on the canvas (coral #e8604a is ~3.2:1). */
+  --primary-text: #c2412c;
+  --success-text: #0d7148;
+
   /* Surfaces */
   --canvas: #f7f6f4;
   --surface: #ffffff;
@@ -440,6 +445,8 @@
   --hover-lift: -2px;
 }
 .dark {
+  --primary-text: #f2836d;
+  --success-text: #4ade9a;
   --canvas: #0b0b0e;
   --surface: #17171c;
   --surface-sunken: #0f0f13;
@@ -454,6 +461,8 @@
   --shadow-pressed: inset 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 @theme inline {
+  --color-primary-text: var(--primary-text);
+  --color-success-text: var(--success-text);
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
@@ -542,18 +551,26 @@
 }
 
 /* Page transition (see app/template.tsx). */
+/* Opacity only, and no fill after it ends: an animated or held transform
+   would make this wrapper the containing block for position: fixed
+   children (the floating Map button, sticky bars). */
 @keyframes page-enter {
   from {
     /* Not 0: a fully transparent first paint would delay LCP. */
     opacity: 0.4;
-    transform: translateY(6px);
   }
 }
 .page-enter {
-  animation: page-enter var(--duration-base) var(--ease-standard) both;
+  animation: page-enter var(--duration-base) var(--ease-standard) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .page-enter {
     animation: none;
   }
+}
+
+/* Phone tab bar height (incl. its 1px top border and the home indicator).
+   The page spacer and anything floating above the bar use this one value. */
+:root {
+  --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)) + 1px);
 }

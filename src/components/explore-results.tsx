@@ -106,7 +106,7 @@ export function ExploreResults({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="cursor-pointer appearance-none bg-transparent pr-1 font-semibold outline-none"
+              className="h-full cursor-pointer appearance-none bg-transparent pr-1 font-semibold outline-none"
               aria-label="Sort vendors"
             >
               {SORTS.map((s) => (
@@ -140,7 +140,7 @@ export function ExploreResults({
       <button
         type="button"
         onClick={() => setView(view === "list" ? "map" : "list")}
-        className="press fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
+        className="press fixed bottom-[calc(var(--tabbar-height)+0.75rem)] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
       >
         {view === "list" ? <MapIcon className="size-4" aria-hidden /> : <List className="size-4" aria-hidden />}
         {view === "list" ? "Map" : "List"}
@@ -157,7 +157,7 @@ function ViewButton({ active, onClick, icon: Icon, label }: { active: boolean; o
       aria-pressed={active}
       className={cn(
         "flex h-8 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition-colors",
-        active ? "btn-raised text-foreground" : "text-muted-foreground hover:text-foreground"
+        active ? "btn-raised text-foreground" : "text-foreground/75 hover:text-foreground"
       )}
     >
       <Icon className="size-3.5" aria-hidden /> {label}

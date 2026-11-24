@@ -10,7 +10,7 @@ import { getFoundingPlaces, getLiveVendorCount, getProofListings, getSampleListi
 import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
-import { navRole } from "@/lib/nav";
+import { hasPhoneTabBar, navRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams, withAutoClaim } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
@@ -141,7 +141,7 @@ export default async function FoundingVendorsPage({
   ]);
   const showProof = !!variant?.proof && proofListings.length >= MIN_PROOF_LISTINGS;
   const role = navRole(session?.profile?.role, !!session);
-  const hasTabBar = role === "customer" || role === "vendor";
+  const hasTabBar = hasPhoneTabBar(role);
   const full = places ? places.remaining <= 0 : false;
   const claimQuery = new URLSearchParams();
   if (source) claimQuery.set("src", source);
@@ -336,7 +336,7 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
         className={cn(
           "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden print:hidden",
           hasTabBar
-            ? "bottom-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))]"
+            ? "bottom-[var(--tabbar-height)]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >

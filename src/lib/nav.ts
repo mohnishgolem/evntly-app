@@ -54,6 +54,11 @@ export type NavSection = { title?: string; items: NavItem[] };
 
 export type NavRole = "guest" | "customer" | "vendor" | "admin";
 
+/** Whether phones show the bottom tab bar (see MobileTabBar): everyone but admins. */
+export function hasPhoneTabBar(role: NavRole) {
+  return role !== "admin";
+}
+
 export function navRole(role: string | null | undefined, signedIn: boolean): NavRole {
   if (!signedIn) return "guest";
   if (role === "admin" || role === "vendor") return role;

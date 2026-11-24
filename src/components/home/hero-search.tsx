@@ -112,7 +112,7 @@ function MobileSearch({ onSubmit }: { onSubmit: (e: React.FormEvent<HTMLFormElem
         >
           <SlidersHorizontal className="size-5" aria-hidden />
         </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[88dvh] gap-0 overflow-y-auto px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <SheetContent side="bottom" className="max-h-[88dvh] gap-0 overflow-y-auto pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div aria-hidden className="mx-auto mt-1 mb-2 h-1.5 w-10 rounded-full bg-border" />
           <SheetHeader className="px-0">
             <SheetTitle className="text-headline">Find vendors</SheetTitle>
@@ -151,10 +151,13 @@ function MobileSearch({ onSubmit }: { onSubmit: (e: React.FormEvent<HTMLFormElem
               <span className="text-[15px] font-semibold">Name or suburb</span>
               <input name="q" type="search" placeholder="Anywhere in Sydney" autoComplete="off" className="surface-pressed mt-2 h-12 w-full rounded-2xl px-4 text-base outline-none placeholder:text-muted-foreground" />
             </label>
-            <button type="submit" className="btn-coral mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-full py-3.5 text-base font-semibold">
-              <Search className="size-5" strokeWidth={2.25} aria-hidden />
-              Show vendors
-            </button>
+            {/* Stays reachable above the keyboard while typing. */}
+            <div className="sticky bottom-0 -mx-1 mt-6 bg-popover px-1 pt-2 pb-1">
+              <button type="submit" className="btn-coral flex h-13 w-full items-center justify-center gap-2 rounded-full py-3.5 text-base font-semibold">
+                <Search className="size-5" strokeWidth={2.25} aria-hidden />
+                Show vendors
+              </button>
+            </div>
           </form>
         </SheetContent>
       </Sheet>

@@ -8,6 +8,7 @@ import {
   CUSTOMER_NAV,
   CUSTOMER_TAB_NAV,
   GUEST_TAB_NAV,
+  hasPhoneTabBar,
   VENDOR_BOOKINGS_TABS,
   VENDOR_LEADS_TABS,
   VENDOR_LISTINGS_TABS,
@@ -241,5 +242,11 @@ describe("phone tab bars", () => {
     ["/signup", "/login"],
   ])("guest: %s lights %s", (path, tab) => {
     expect(activeHref(path, GUEST_TAB_NAV)).toBe(tab);
+  });
+});
+
+describe("hasPhoneTabBar", () => {
+  it("is true for guests, customers and vendors, false for admins", () => {
+    expect((["guest", "customer", "vendor", "admin"] as const).map(hasPhoneTabBar)).toEqual([true, true, true, false]);
   });
 });

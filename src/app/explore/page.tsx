@@ -68,8 +68,8 @@ export default async function ExplorePage({
   const heading = `${subject.charAt(0).toUpperCase()}${subject.slice(1)} in ${LAUNCH_CITY}`;
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <div className="mx-auto max-w-7xl px-4 pb-28 sm:px-6 md:pb-16 lg:px-8">
+    <div className="bg-canvas">
+      <div className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 md:pb-16 lg:px-8">
         <div className="pt-5 pb-3 md:pt-8 md:pb-4">
           <h1 className="text-title">{heading}</h1>
           <p className="mt-1.5 hidden text-[15px] text-muted-foreground sm:block">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, ShieldCheck } from "lucide-react";
+import { MapPin, Star, ShieldCheck } from "lucide-react";
 import { categoryLabel, SITE_URL } from "@/lib/config";
 import { CategoryArt } from "@/components/category-art";
 import { FoundingBadge } from "@/components/founding-badge";
@@ -71,33 +71,36 @@ export function VendorCard({
           </div>
         </div>
       </div>
-      <div className="px-0.5 pt-3">
-        <div className="flex items-start justify-between gap-2">
-          <p className="flex min-w-0 items-center gap-1 text-[15px] leading-snug font-semibold">
+      <div className="px-1 pt-3">
+        <div className="flex items-start gap-2">
+          <p className="flex min-w-0 items-center gap-1 text-[15px] leading-snug font-semibold tracking-[-0.01em]">
             <span className="truncate">{vendor.name}</span>
             {vendor.verified && <ShieldCheck className="size-3.5 shrink-0 text-primary" aria-label="Verified" />}
           </p>
-          {!!vendor.rating && vendor.rating > 0 && (
-            <p className="flex shrink-0 items-center gap-1 text-sm">
-              <Star className="size-3.5 fill-foreground text-foreground" aria-hidden />
-              <span>
-                {vendor.rating.toFixed(1)}
-                {!!vendor.review_count && <span className="text-muted-foreground"> ({vendor.review_count})</span>}
-              </span>
-            </p>
-          )}
         </div>
-        <p className="mt-0.5 truncate text-sm text-muted-foreground">
-          {categoryLabel(vendor.service_type)}
-          {vendor.city ? ` · ${vendor.city}` : ""}
+        <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[13px] leading-snug text-muted-foreground">
+          <span className="shrink-0">{categoryLabel(vendor.service_type)}</span>
+          {vendor.city && (
+            <>
+              <span aria-hidden>·</span>
+              <MapPin className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{vendor.city}</span>
+            </>
+          )}
         </p>
-        <div className="mt-1.5 flex items-center justify-between gap-2">
-          <p className="truncate text-sm">
-            <span className="font-semibold">{price.figure}</span>
-            {price.suffix && <span className="text-muted-foreground"> {price.suffix}</span>}
+        {/* Own line, so long names keep their width on narrow phone cards. */}
+        {!!vendor.rating && vendor.rating > 0 && (
+          <p className="mt-1 flex items-center gap-1 text-[13px] leading-snug tabular-nums">
+            <Star className="size-3.5 fill-foreground text-foreground" aria-hidden />
+            <span className="font-semibold">{vendor.rating.toFixed(1)}</span>
+            {!!vendor.review_count && <span className="text-muted-foreground">({vendor.review_count})</span>}
+            <span className="sr-only"> out of 5{vendor.review_count ? `, ${vendor.review_count} reviews` : ""}</span>
           </p>
+        )}
+        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <PriceLine price={price} />
           {vendor.available && (
-            <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-success">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11.5px] font-semibold text-success-text">
               <span className="size-1.5 rounded-full bg-success" aria-hidden />
               Available
             </span>
@@ -105,5 +108,20 @@ export function VendorCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+// The amount carries the weight; the unit ("/ hr", "per event") and "From"
+// are quieter. Quote-only listings say so plainly.
+function PriceLine({ price }: { price: ReturnType<typeof vendorPrice> }) {
+  if (price.amount == null) return <p className="truncate text-[13px] text-muted-foreground">{price.label}</p>;
+  const from = price.model === "from";
+  const amount = from ? price.figure.replace(/^From\s*/, "") : price.figure;
+  return (
+    <p className="text-[15px] leading-snug whitespace-nowrap tabular-nums">
+      {from && <span className="text-[13px] text-muted-foreground">From </span>}
+      <span className="font-semibold">{amount}</span>
+      {price.suffix && <span className="text-[13px] text-muted-foreground"> {price.suffix}</span>}
+    </p>
   );
 }
