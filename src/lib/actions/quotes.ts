@@ -13,6 +13,8 @@ import type { Database } from "@/lib/supabase/database.types";
 import { friendlyLegalError } from "@/lib/legal/status";
 import { cookies } from "next/headers";
 import { isShareSource, SHARE_SOURCE_COOKIE } from "@/lib/share-profile";
+import { recordPlannerEvent } from "@/lib/planner/analytics";
+import { PLAN_CONTEXT_COOKIE } from "@/lib/planner/context";
 
 export type ActionState = { error?: string; success?: boolean; quoteId?: string } | null;
 
@@ -167,6 +169,12 @@ export async function requestQuote(
   });
 
   revalidatePath("/dashboard/quotes");
+  // Sent while browsing for an event from the planner (see planner/context).
+  // Board invites record their own (requestQuotesForEvent); this is only the
+  // vendor-profile path.
+  if (eventId && origin === "vendor_profile" && (await planContextEvent()) === eventId) {
+    await recordPlannerEvent("vendor_enquiry", { userId: user.id, eventId, detail: "profile" });
+  }
   return { success: true, quoteId: quote.id };
 }
 
@@ -344,4 +352,12 @@ export async function cancelQuote(quoteId: string): Promise<ActionState> {
   revalidatePath("/dashboard/quotes");
   revalidatePath("/vendor-dashboard", "layout");
   return { success: true };
+}
+
+async function planContextEvent() {
+  try {
+    return (await cookies()).get(PLAN_CONTEXT_COOKIE)?.value ?? null;
+  } catch {
+    return null;
+  }
 }

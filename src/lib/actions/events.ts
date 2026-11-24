@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb } from "@/lib/geocode";
 import { EVENT_TYPES, GUEST_BUCKETS, isLaunchCategory } from "@/lib/config";
 import { eventTimesSchema, NOT_LOGGED_IN } from "@/lib/event-times";
+import { recordPlannerEvent } from "@/lib/planner/analytics";
 
 export type PlanDraft = {
   eventType: string;
@@ -78,5 +79,6 @@ export async function claimEventPlan(draft: PlanDraft) {
   if (error || !event) return { error: "Could not save your event." };
 
   revalidatePath("/dashboard");
+  await recordPlannerEvent("event_created", { userId: user.id, eventId: event.id });
   return { success: true, eventId: event.id };
 }

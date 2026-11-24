@@ -339,7 +339,7 @@ function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: 
   return (
     <li className="surface-raised rounded-card p-3 transition-shadow hover:shadow-sm sm:p-4">
       <div className="flex gap-3">
-        <Link href={`/vendor/${v.id}`} className="relative shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link href={`/vendor/${v.id}`} aria-label={`${v.name}: view profile`} className="relative shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {v.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={v.avatarUrl} alt="" className="size-14 rounded-xl object-cover sm:size-[4.5rem]" loading="lazy" />

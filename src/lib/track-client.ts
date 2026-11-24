@@ -60,3 +60,10 @@ export function trackFunnelEvent(event: "claim_click" | "signup_view" | "signup_
   const params = funnelParamsFrom(window.location.search);
   sendTrack({ event, visitorId, ...(params ? { params } : {}) });
 }
+
+/** Planner events from the browser (opened, suggestion tapped). Same opt-outs as page views. */
+export function trackPlanner(event: "planner_opened" | "recommendation_clicked", eventId: string, detail?: string) {
+  const visitorId = analyticsVisitorId();
+  if (!visitorId) return;
+  sendTrack({ visitorId, planner: { event, eventId, ...(detail ? { detail } : {}) } });
+}

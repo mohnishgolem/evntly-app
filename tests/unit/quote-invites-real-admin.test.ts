@@ -63,10 +63,18 @@ describe("inviting a matched vendor", () => {
     expect(insert.payload).toMatchObject({ vendor_id: "v1", event_id: "e1", origin: "smart_match", estimated_hours: 4 });
     expect(insert.payload).not.toHaveProperty("match_score"); // never from the customer's client
 
-    expect(adminCalls).toHaveLength(1);
-    expect(adminCalls[0].method).toBe("PATCH");
-    expect(adminCalls[0].url).toBe("https://example.supabase.co/rest/v1/quote_requests?id=eq.q1");
-    const body = adminCalls[0].body as { match_score: number; match_reason: string };
+    // The service role writes the score, plus one anonymous planner analytics
+    // row (no email, no names) — nothing else.
+    const analytics = adminCalls.filter((c) => c.url.startsWith("https://example.supabase.co/rest/v1/planner_events"));
+    expect(analytics).toHaveLength(1);
+    expect(analytics[0].method).toBe("POST");
+    expect(analytics[0].body).toMatchObject({ event: "vendor_enquiry", event_id: "e1", detail: "board_1" });
+    expect(JSON.stringify(analytics[0].body)).not.toMatch(/@/);
+    const scoring = adminCalls.filter((c) => !analytics.includes(c));
+    expect(scoring).toHaveLength(1);
+    expect(scoring[0].method).toBe("PATCH");
+    expect(scoring[0].url).toBe("https://example.supabase.co/rest/v1/quote_requests?id=eq.q1");
+    const body = scoring[0].body as { match_score: number; match_reason: string };
     expect(body.match_score).toBeGreaterThan(50);
     expect(body.match_reason).toMatch(/^Recommended because this photographer specialises in birthday events, covers Parramatta/);
   });

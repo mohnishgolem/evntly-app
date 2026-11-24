@@ -45,7 +45,7 @@ export function BudgetTracker({
   }
 
   return (
-    <section className="mb-8 surface-raised rounded-card p-5">
+    <section className="@container mb-8 surface-raised rounded-card p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -159,7 +159,7 @@ export function BudgetTracker({
       )}
 
       <form
-        className="flex flex-col gap-2 sm:flex-row"
+        className="flex flex-col gap-2 @lg:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
           run(() => addBudgetItem(eventId, label, amount), () => {
@@ -180,7 +180,7 @@ export function BudgetTracker({
           inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="sm:w-32"
+          className="@lg:w-32"
         />
         <Button type="submit" variant="outline" disabled={pending || !label.trim() || !amount.trim()}>
           <Plus /> Add
