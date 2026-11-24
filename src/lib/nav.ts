@@ -54,6 +54,11 @@ export type NavSection = { title?: string; items: NavItem[] };
 
 export type NavRole = "guest" | "customer" | "vendor" | "admin";
 
+/** Whether phones show the bottom tab bar (see MobileTabBar): everyone but admins. */
+export function hasPhoneTabBar(role: NavRole) {
+  return role !== "admin";
+}
+
 export function navRole(role: string | null | undefined, signedIn: boolean): NavRole {
   if (!signedIn) return "guest";
   if (role === "admin" || role === "vendor") return role;
@@ -116,6 +121,31 @@ export const CUSTOMER_NAV: NavItem[] = [
     match: ["/dashboard/bookings", "/dashboard/bundles", "/bookings"],
   },
   { href: "/profile", label: "Profile", icon: UserRound, match: ["/dashboard/settings"] },
+];
+
+// Phones: the bottom tab bar, as in native marketplace apps. Explore is the
+// home screen; Bookings and quotes live under Events (and in the drawer).
+// Wider screens keep CUSTOMER_NAV in the sidebar.
+export const CUSTOMER_TAB_NAV: NavItem[] = [
+  { href: "/", label: "Explore", icon: Compass, match: ["/explore", "/vendor", "/bundles", "/sydney"] },
+  { href: "/saved", label: "Saved", icon: Heart },
+  {
+    href: "/dashboard",
+    label: "Events",
+    icon: CalendarHeart,
+    match: ["/plan", "/bookings"],
+  },
+  { href: "/messages", label: "Messages", icon: MessageCircle, badge: "unread" },
+  { href: "/profile", label: "Profile", icon: UserRound, match: ["/dashboard/settings"] },
+];
+
+// Guests get the same bar; account tabs lead to sign-in and come back.
+export const GUEST_TAB_NAV: NavItem[] = [
+  { href: "/", label: "Explore", icon: Compass, match: ["/explore", "/vendor", "/bundles", "/sydney"] },
+  { href: "/login?next=/saved", label: "Saved", icon: Heart, match: ["/saved"] },
+  { href: "/plan", label: "Events", icon: CalendarHeart },
+  { href: "/login?next=/messages", label: "Messages", icon: MessageCircle, match: ["/messages"] },
+  { href: "/login", label: "Log in", icon: UserRound, match: ["/signup"] },
 ];
 
 // My Events: the planning hub, every event (each opens its board), and
@@ -230,6 +260,8 @@ export const ADMIN_NAV: NavItem[] = [
 // functions and can't cross the server/client boundary.
 export const NAV_SETS = {
   customer: CUSTOMER_NAV,
+  customerTabs: CUSTOMER_TAB_NAV,
+  guestTabs: GUEST_TAB_NAV,
   customerEventsTabs: CUSTOMER_EVENTS_TABS,
   customerBookingsTabs: CUSTOMER_BOOKINGS_TABS,
   vendor: VENDOR_NAV,

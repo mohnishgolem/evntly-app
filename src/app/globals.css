@@ -316,3 +316,261 @@
     text-align: left;
   }
 }
+
+/* ── Marketplace design system (2026 redesign) ──────────────────────────
+   Builds on the brand tokens above (white/black, one coral accent, SF type,
+   ~22px radius). Adds an Apple-style type scale, three elevation levels and
+   one motion curve, so consumer pages read as a marketplace, not a dashboard.
+   Use these utilities instead of ad-hoc sizes and shadows on new UI. */
+:root {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
+  --shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.06), 0 14px 36px rgba(0, 0, 0, 0.12);
+  --shadow-search: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 28px rgba(0, 0, 0, 0.1);
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-quick: 160ms;
+  --duration-base: 280ms;
+}
+.dark {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 36px rgba(0, 0, 0, 0.5);
+  --shadow-search: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Type scale — large, tight display type; calm body. */
+@utility text-display {
+  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+@utility text-title {
+  font-size: clamp(1.625rem, 1.3rem + 1.2vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: 700;
+}
+@utility text-headline {
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+@utility text-eyebrow {
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Elevation */
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility shadow-raised {
+  box-shadow: var(--shadow-raised);
+}
+@utility shadow-search {
+  box-shadow: var(--shadow-search);
+}
+
+/* Motion: one curve everywhere, quick for taps, base for movement. */
+@utility ease-standard {
+  transition-timing-function: var(--ease-standard);
+}
+@utility press {
+  transition: transform var(--duration-quick) var(--ease-standard);
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Horizontal rails that snap card by card on phones. */
+@utility rail {
+  display: grid;
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* ── Depth (2026 redesign, phase 1b) ─────────────────────────────────────
+   One light source, top-left: highlights sit on top edges, shadows fall
+   down and slightly right. Three layers: an off-white canvas, white raised
+   surfaces on it, and a few floating elements (search). Primary actions get
+   a soft coral gradient; neutral controls a white-to-grey one; selected
+   choices look pressed in. Use sparingly — most content stays flat on a
+   surface; only controls and cards carry depth. */
+:root {
+  /* Small coloured text needs darker shades than the brand fills to reach
+     4.5:1 on the canvas (coral #e8604a is ~3.2:1). */
+  --primary-text: #c2412c;
+  --success-text: #0d7148;
+
+  /* Surfaces */
+  --canvas: #f7f6f4;
+  --surface: #ffffff;
+  --surface-sunken: #efeeeb;
+
+  /* Radii */
+  --radius-control: 9999px;
+  --radius-tile: 1.25rem;
+  --radius-card: 1.5rem;
+  --radius-sheet: 1.75rem;
+
+  /* Gradients */
+  --gradient-coral: linear-gradient(180deg, #f07a63 0%, #e8604a 52%, #dc5540 100%);
+  --gradient-coral-hover: linear-gradient(180deg, #f3846e 0%, #ec6a54 52%, #e05a45 100%);
+  --gradient-raised: linear-gradient(180deg, #ffffff 0%, #f6f5f3 100%);
+  --gradient-tile: radial-gradient(120% 90% at 30% 15%, #ffffff 0%, #f6f4f1 60%, #eeebe6 100%);
+
+  /* Elevation (light from the top-left) */
+  --edge-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-raised-sm: 0 1px 1px rgba(28, 25, 23, 0.05), 0 2px 5px rgba(28, 25, 23, 0.07), 0 6px 14px -6px rgba(28, 25, 23, 0.12);
+  --shadow-surface: 0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 12px -2px rgba(28, 25, 23, 0.06), 0 16px 32px -12px rgba(28, 25, 23, 0.1);
+  --shadow-surface-hover: 0 2px 4px rgba(28, 25, 23, 0.05), 0 10px 24px -4px rgba(28, 25, 23, 0.1), 0 28px 48px -16px rgba(28, 25, 23, 0.16);
+  --shadow-float: 0 1px 2px rgba(28, 25, 23, 0.05), 0 8px 24px -4px rgba(28, 25, 23, 0.12), 0 24px 48px -20px rgba(28, 25, 23, 0.18);
+  --shadow-coral: 0 1px 1px rgba(150, 45, 28, 0.25), 0 4px 10px -2px rgba(232, 96, 74, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(120, 30, 15, 0.18);
+  --shadow-pressed: inset 0 2px 4px rgba(28, 25, 23, 0.1), inset 0 1px 1px rgba(28, 25, 23, 0.08), 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  /* Interaction states */
+  --press-scale: 0.97;
+  --hover-lift: -2px;
+}
+.dark {
+  --primary-text: #f2836d;
+  --success-text: #4ade9a;
+  --canvas: #0b0b0e;
+  --surface: #17171c;
+  --surface-sunken: #0f0f13;
+  --gradient-raised: linear-gradient(180deg, #24242b 0%, #1b1b21 100%);
+  --gradient-tile: radial-gradient(120% 90% at 30% 15%, #2a2a31 0%, #1e1e24 60%, #18181d 100%);
+  --edge-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow-raised-sm: 0 1px 1px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-surface: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+  --shadow-surface-hover: 0 2px 4px rgba(0, 0, 0, 0.45), 0 16px 36px -8px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px -6px rgba(0, 0, 0, 0.6);
+  --shadow-coral: 0 1px 1px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(232, 96, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --shadow-pressed: inset 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+@theme inline {
+  --color-primary-text: var(--primary-text);
+  --color-success-text: var(--success-text);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --radius-tile: var(--radius-tile);
+  --radius-card: var(--radius-card);
+  --radius-sheet: var(--radius-sheet);
+}
+
+/* Coral primary action: gradient, top highlight, coloured shadow. */
+@utility btn-coral {
+  background-image: var(--gradient-coral);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-coral);
+  transition:
+    transform var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard),
+    filter var(--duration-quick) var(--ease-standard);
+  &:hover {
+    background-image: var(--gradient-coral-hover);
+  }
+  &:active {
+    transform: scale(var(--press-scale)) translateY(1px);
+    filter: brightness(0.96);
+    box-shadow: 0 1px 2px rgba(150, 45, 28, 0.3), inset 0 1px 3px rgba(120, 30, 15, 0.25);
+  }
+}
+
+/* Neutral raised control (secondary buttons, filter triggers, icon buttons). */
+@utility btn-raised {
+  background-image: var(--gradient-raised);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-raised-sm), var(--edge-highlight);
+  border: 1px solid color-mix(in oklab, var(--foreground) 7%, transparent);
+  transition:
+    transform var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard);
+  &:hover {
+    box-shadow: var(--shadow-surface), var(--edge-highlight);
+  }
+  &:active {
+    transform: scale(var(--press-scale));
+    box-shadow: var(--shadow-pressed);
+  }
+}
+
+/* Selected/active choice: pressed into the surface. */
+@utility surface-pressed {
+  background-color: var(--surface-sunken);
+  background-image: none;
+  box-shadow: var(--shadow-pressed);
+  border-color: transparent;
+}
+
+/* White card raised off the canvas; lifts a little on hover (pointer only). */
+@utility surface-raised {
+  background-color: var(--surface);
+  box-shadow: var(--shadow-surface), var(--edge-highlight);
+}
+@utility lift {
+  transition:
+    transform var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(var(--hover-lift));
+      box-shadow: var(--shadow-surface-hover), var(--edge-highlight);
+    }
+  }
+}
+
+/* Floating layer: search bars, the map button, sheets. */
+@utility surface-float {
+  background-color: var(--surface);
+  box-shadow: var(--shadow-float), var(--edge-highlight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-coral,
+  .btn-raised,
+  .lift,
+  .press {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+/* Page transition (see app/template.tsx). */
+/* Opacity only, and no fill after it ends: an animated or held transform
+   would make this wrapper the containing block for position: fixed
+   children (the floating Map button, sticky bars). */
+@keyframes page-enter {
+  from {
+    /* Not 0: a fully transparent first paint would delay LCP. */
+    opacity: 0.4;
+  }
+}
+.page-enter {
+  animation: page-enter var(--duration-base) var(--ease-standard) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+/* Phone tab bar height (incl. its 1px top border and the home indicator).
+   The page spacer and anything floating above the bar use this one value. */
+:root {
+  --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)) + 1px);
+}

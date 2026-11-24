@@ -14,7 +14,7 @@ export function TabBar({
   unread = 0,
   leads = 0,
 }: {
-  nav?: Extract<NavSetName, "customer" | "vendor">;
+  nav?: Extract<NavSetName, "customer" | "customerTabs" | "guestTabs" | "vendor">;
   unread?: number;
   leads?: number;
 }) {
@@ -24,10 +24,10 @@ export function TabBar({
 
   return (
     <>
-      <div aria-hidden className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))] md:hidden print:hidden" />
+      <div aria-hidden className="h-[var(--tabbar-height)] md:hidden print:hidden" />
       <nav
         aria-label="Main"
-        className="glass-material fixed inset-x-0 bottom-0 z-40 border-t border-border/60 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden print:hidden"
+        className="glass-material fixed inset-x-0 bottom-0 z-40 border-t border-border/60 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-1px_0_rgba(255,255,255,0.6),0_-8px_24px_-12px_rgba(28,25,23,0.14)] md:hidden print:hidden"
       >
         <ul className={cn("mx-auto grid h-14 max-w-md", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
           {items.map((item) => {
@@ -40,14 +40,14 @@ export function TabBar({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium outline-none transition-colors focus-visible:bg-foreground/5",
-                    active ? "text-primary" : "text-muted-foreground"
+                    "group relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium outline-none transition-colors focus-visible:bg-foreground/5",
+                    active ? "text-primary-text" : "text-muted-foreground"
                   )}
                 >
-                  <span className="relative">
-                    <Icon className="size-6" strokeWidth={active ? 2.2 : 1.75} aria-hidden />
+                  <span className={cn("relative flex h-8 w-12 items-center justify-center rounded-full transition-[background-color,box-shadow] duration-200 ease-standard", active && "surface-pressed")}>
+                    <Icon className="size-[22px] transition-transform duration-200 ease-standard group-active:scale-90" strokeWidth={active ? 2.2 : 1.75} aria-hidden />
                     {badge > 0 && (
-                      <span className="absolute -top-1 -right-2.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[10px] leading-[18px] font-semibold text-primary-foreground">
+                      <span className="absolute -top-0.5 right-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[10px] leading-[18px] font-semibold text-primary-foreground">
                         {badge > 99 ? "99+" : badge}
                         <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                       </span>

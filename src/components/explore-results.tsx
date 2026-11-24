@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { List, MapIcon } from "lucide-react";
 import { VendorCard } from "@/components/vendor-card";
 import { VendorMapLoader } from "@/components/vendor-map-loader";
@@ -10,6 +10,27 @@ import { cn } from "@/lib/utils";
 import type { PublicVendor } from "@/lib/vendor-columns";
 
 type Vendor = PublicVendor;
+
+// No price sort on purpose: listings mix hourly, per-event and "from" prices,
+// so "cheapest first" would compare different things.
+export const SORTS = [
+  { value: "", label: "Recommended" },
+  { value: "rating", label: "Top rated" },
+  { value: "reviews", label: "Most reviewed" },
+] as const;
+export type SortValue = (typeof SORTS)[number]["value"];
+
+/** Orders vendors for display. "" keeps the server's recommended order. */
+export function sortVendors<T extends Pick<Vendor, "rating" | "review_count">>(vendors: T[], sort: string): T[] {
+  if (sort !== "rating" && sort !== "reviews") return vendors;
+  const rating = (v: T) => (v.rating && v.rating > 0 ? v.rating : -1);
+  const reviews = (v: T) => v.review_count ?? 0;
+  return [...vendors].sort((a, b) =>
+    sort === "rating" ? rating(b) - rating(a) || reviews(b) - reviews(a) : reviews(b) - reviews(a) || rating(b) - rating(a)
+  );
+}
+
+const grid = "grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
 
 export function ExploreResults({
   vendors,
@@ -22,15 +43,24 @@ export function ExploreResults({
   savedVendorIds?: string[];
   isAuthenticated?: boolean;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<"list" | "map">(
-    searchParams.get("view") === "map" ? "map" : "list"
-  );
+  const [view, setView] = useState<"list" | "map">(searchParams.get("view") === "map" ? "map" : "list");
+  const sort = searchParams.get("sort") ?? "";
+  const sorted = useMemo(() => sortVendors(vendors, sort), [vendors, sort]);
+
+  function setSort(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("sort", value);
+    else params.delete("sort");
+    router.replace(params.size ? `${pathname}?${params}` : pathname, { scroll: false });
+  }
 
   if (vendors.length === 0 && fallback.length > 0) {
     return (
       <div className="mt-6">
-        <div className="mb-5 rounded-2xl border border-border bg-muted/40 p-4">
+        <div className="surface-raised mb-6 rounded-card p-5">
           <p className="font-semibold">No vendors list “{searchParams.get("q")}” yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Most vendors travel across Sydney — check their service area, or{" "}
@@ -40,14 +70,9 @@ export function ExploreResults({
             and let vendors come to you.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className={grid}>
           {fallback.map((v) => (
-            <VendorCard
-              key={v.id}
-              vendor={v}
-              saved={savedVendorIds.includes(v.id)}
-              isAuthenticated={isAuthenticated}
-            />
+            <VendorCard key={v.id} vendor={v} saved={savedVendorIds.includes(v.id)} isAuthenticated={isAuthenticated} />
           ))}
         </div>
       </div>
@@ -56,8 +81,8 @@ export function ExploreResults({
 
   if (vendors.length === 0) {
     return (
-      <div className="mt-12 rounded-2xl border border-dashed border-border py-16 text-center">
-        <p className="text-lg font-semibold">No vendors match those filters</p>
+      <div className="mt-10 rounded-3xl border border-dashed border-border px-6 py-16 text-center">
+        <p className="text-headline">No vendors match those filters</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           Try a different category or clear your search, or{" "}
           <Link href="/plan" className="font-medium text-foreground underline underline-offset-2">
@@ -70,49 +95,72 @@ export function ExploreResults({
   }
 
   return (
-    <div className="mt-6">
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {vendors.length} vendor{vendors.length === 1 ? "" : "s"}
+    <div className="mt-5">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
+          <span className="text-foreground tabular-nums">{vendors.length}</span> vendor{vendors.length === 1 ? "" : "s"}
         </p>
-        <div className="flex items-center gap-1 rounded-full border border-border p-1">
-          <button
-            onClick={() => setView("list")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-              view === "list" ? "bg-foreground text-background" : "text-muted-foreground"
-            )}
-          >
-            <List className="h-3.5 w-3.5" /> List
-          </button>
-          <button
-            onClick={() => setView("map")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-              view === "map" ? "bg-foreground text-background" : "text-muted-foreground"
-            )}
-          >
-            <MapIcon className="h-3.5 w-3.5" /> Map
-          </button>
+        <div className="flex items-center gap-2">
+          <label className="btn-raised flex h-10 items-center gap-1.5 rounded-full pr-2 pl-4 text-sm">
+            <span className="text-muted-foreground">Sort</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="h-full cursor-pointer appearance-none bg-transparent pr-1 font-semibold outline-none"
+              aria-label="Sort vendors"
+            >
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {/* Desktop toggle; phones get the floating button below. */}
+          <div className="surface-pressed hidden items-center rounded-full p-1 md:flex" role="group" aria-label="View">
+            <ViewButton active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
+            <ViewButton active={view === "map"} onClick={() => setView("map")} icon={MapIcon} label="Map" />
+          </div>
         </div>
       </div>
 
       {view === "list" ? (
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {vendors.map((v) => (
-            <VendorCard
-              key={v.id}
-              vendor={v}
-              saved={savedVendorIds.includes(v.id)}
-              isAuthenticated={isAuthenticated}
-            />
+        <div className={grid}>
+          {sorted.map((v, i) => (
+            <VendorCard key={v.id} vendor={v} saved={savedVendorIds.includes(v.id)} isAuthenticated={isAuthenticated} priority={i < 4} />
           ))}
         </div>
       ) : (
-        <div className="h-[72vh] min-h-[480px] overflow-hidden rounded-3xl border border-border shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-          <VendorMapLoader vendors={vendors} />
+        <div className="surface-raised h-[calc(100dvh-15rem)] min-h-[440px] overflow-hidden rounded-[1.75rem]">
+          <VendorMapLoader vendors={sorted} />
         </div>
       )}
+
+      {/* Phones: a floating Map / List switch above the tab bar, as in native apps. */}
+      <button
+        type="button"
+        onClick={() => setView(view === "list" ? "map" : "list")}
+        className="press fixed bottom-[calc(var(--tabbar-height)+0.75rem)] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
+      >
+        {view === "list" ? <MapIcon className="size-4" aria-hidden /> : <List className="size-4" aria-hidden />}
+        {view === "list" ? "Map" : "List"}
+      </button>
     </div>
+  );
+}
+
+function ViewButton({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: React.ComponentType<{ className?: string }>; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex h-8 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition-colors",
+        active ? "btn-raised text-foreground" : "text-foreground/75 hover:text-foreground"
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden /> {label}
+    </button>
   );
 }

@@ -463,7 +463,7 @@ export function ShareProfile({ vendorId, name, category, events, founding, photo
         data-testid="share-action-bar"
         className={cn(
           "glass-material fixed inset-x-0 z-30 m-0 space-y-2 border-t border-border/60 px-4 pt-3 md:hidden",
-          hasTabBar ? "bottom-[calc(3.5rem+max(0.5rem,env(safe-area-inset-bottom)))] pb-3" : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          hasTabBar ? "bottom-[var(--tabbar-height)] pb-3" : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
         <div className="mx-auto max-w-md space-y-2">

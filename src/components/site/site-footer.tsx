@@ -6,7 +6,8 @@ import { categoryPages } from "@/lib/seo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
 
-const linkClass = "hover:text-foreground";
+// At least 24px tall (WCAG 2.5.8 target size) without changing the layout much.
+const linkClass = "inline-flex min-h-6 items-center hover:text-foreground";
 const headingClass = "mb-3 text-xs font-semibold tracking-wide text-foreground uppercase";
 
 // Links grouped into three short columns (19 Nov: one wrapped row of 11 links
@@ -98,7 +99,7 @@ export function SiteFooter() {
         {/* Every category landing page, linked from every page. */}
         <nav aria-label={`Event vendors in ${LAUNCH_CITY}`} className="mt-10 border-t border-border/60 pt-6">
           <p className={headingClass}>Event vendors in {LAUNCH_CITY}</p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <ul className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
             {categoryPages().map((p) => (
               <li key={p.slug}>
                 <Link href={p.path} className={linkClass}>

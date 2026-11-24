@@ -7,7 +7,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        // Coral with depth: a light-to-dark sheen over whatever background is set
+        // (so colour overrides still work) and a soft coral shadow.
+        default:
+          "bg-primary bg-[image:linear-gradient(180deg,rgba(255,255,255,0.16),rgba(0,0,0,0.06))] text-primary-foreground shadow-[var(--shadow-coral)] hover:bg-primary-hover active:shadow-none",
+        // Neutral control raised off the surface (secondary actions on consumer pages).
+        raised: "btn-raised text-foreground",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
