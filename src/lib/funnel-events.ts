@@ -16,11 +16,36 @@ export const FUNNEL_EVENTS = [
   "email_confirmed",
   "listing_started",
   "listing_submitted",
+  // Vendor journey (/become-a-vendor). Needs migration 20261130090000.
+  "vendor_cta",
+  "calculator_used",
+  "builder_started",
+  "builder_step",
+  "builder_preview",
+  "suggestion_used",
+  "draft_saved",
+  "draft_link_sent",
+  "draft_resumed",
+  "save_clicked",
+  "claim_link_opened",
+  "listing_created",
+  "assisted_requested",
 ] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
 
 /** Events the browser may send to /api/track. The rest are server-only. */
-export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = ["claim_click", "signup_view", "signup_attempt", "listing_started"];
+export const CLIENT_FUNNEL_EVENTS: readonly FunnelEvent[] = [
+  "claim_click",
+  "signup_view",
+  "signup_attempt",
+  "listing_started",
+  "vendor_cta",
+  "calculator_used",
+  "builder_started",
+  "builder_step",
+  "builder_preview",
+  "save_clicked",
+];
 
 export function isFunnelEvent(value: unknown): value is FunnelEvent {
   return FUNNEL_EVENTS.includes(value as FunnelEvent);

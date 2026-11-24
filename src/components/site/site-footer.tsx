@@ -55,7 +55,7 @@ export function SiteFooter() {
               <p className={headingClass}>For vendors</p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/vendor-signup" className={linkClass}>
+                  <Link href="/become-a-vendor" className={linkClass}>
                     List your business
                   </Link>
                 </li>

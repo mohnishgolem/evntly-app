@@ -15,6 +15,7 @@
     "test:security": "vitest run tests/unit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0",
     "@base-ui/react": "^1.8.0",
     "@hookform/resolvers": "^5.9.1",
     "@stripe/react-stripe-js": "7.0.0",

@@ -6,7 +6,8 @@ import http from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
-const PORT = 54399;
+// MOCK_PORT lets two QA stacks run side by side.
+const PORT = Number(process.env.MOCK_PORT ?? 54399);
 const DIR = process.env.FIXTURE_DIR ?? path.dirname(new URL(import.meta.url).pathname);
 const BASE = `http://127.0.0.1:${PORT}/fixtures`;
 const now = new Date().toISOString();
@@ -91,6 +92,7 @@ const TEST_USER = {
   user_metadata: { full_name: "Test Customer" },
   app_metadata: { provider: "email" },
   created_at: now,
+  email_confirmed_at: now,
 };
 const inDays = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const EVENT_ID = "22222222-2222-4222-8222-222222222222";

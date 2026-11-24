@@ -19,3 +19,9 @@ request that isn't to localhost or the mock is aborted.
 
 Restart the mock between runs to reset its state. Browsers use a normal
 iPhone Safari user agent because `/api/track` ignores headless browsers.
+5. `node tests/e2e/vendor-journey.mjs [screenshot dir]` — vendor acquisition
+   journey: landing, scenario calculator, one-question builder, private draft
+   save + recovery on another device, email-a-link token rotation, assisted
+   claim link, ABN + agreement save, funnel events, existing pages. Set
+   `QA_BASE` / `QA_MOCK` (and `MOCK_PORT` for the mock) to run a second
+   stack beside another one.

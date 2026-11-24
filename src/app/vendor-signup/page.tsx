@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { VendorSignupWizard } from "@/components/vendor-signup-wizard";
+import { pendingDraftFor } from "@/lib/vendor-journey/server";
 import { Button } from "@/components/ui/button";
 import { FEE_CHANGE_PROMISE, FEE_SUMMARY, SETUP_TIME } from "@/lib/vendor-terms";
 
@@ -30,6 +31,14 @@ export default async function VendorSignupPage() {
     // A saved draft is finished on its own page (photos, packages, submit).
     if (existing?.status === "draft") redirect("/vendor-dashboard/finish");
     if (existing) redirect("/vendor-dashboard/business");
+    // Started a listing before signing up (/become-a-vendor): continue it
+    // rather than starting this form from scratch. Sign-up and email
+    // confirmation always land vendors here.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const draft = await pendingDraftFor({ email: user?.email, emailVerified: !!user?.email_confirmed_at });
+    if (draft) redirect("/become-a-vendor/save");
   }
 
   if (!session) {

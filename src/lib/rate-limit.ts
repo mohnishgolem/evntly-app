@@ -55,6 +55,14 @@ export const RATE_LIMITS = {
   waitlistIp: { max: 5, windowSeconds: 60 * 60 },
   betaFeedbackUser: { max: 20, windowSeconds: 60 * 60 },
   unsubscribeIp: { max: 30, windowSeconds: 60 * 60 },
+  // Vendor journey: private listing drafts saved before an account exists
+  // (saved when a step is finished, not per keystroke), suggested wording,
+  // and "email me a link" (per IP and per address, so it can't be used to
+  // flood someone's inbox).
+  listingDraftIp: { max: 60, windowSeconds: 60 * 60 },
+  listingAssistIp: { max: 15, windowSeconds: 60 * 60 },
+  listingDraftEmailIp: { max: 5, windowSeconds: 60 * 60 },
+  listingDraftEmail: { max: 3, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 export const RATE_LIMIT_ERROR = "Too many attempts. Please wait a few minutes and try again.";
