@@ -93,7 +93,7 @@ export default function HomePage() {
                 {title(categoryPlural(c.value))}
               </Link>
             ))}
-            <Link href="/plan" className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/25">
+            <Link href="/plan" className="frost relative ml-1 inline-flex items-center gap-1 rounded-full px-3 py-1 font-semibold text-white [--frost-bg:rgb(255_255_255/0.15)] hover:[--frost-bg:rgb(255_255_255/0.25)]">
               Plan my event <ArrowRight className="size-3.5" aria-hidden />
             </Link>
           </div>

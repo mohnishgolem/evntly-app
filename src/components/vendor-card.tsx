@@ -32,7 +32,7 @@ export function VendorCard({
 }) {
   const price = vendorPrice(vendor);
   const cover = listingCoverUrl(vendor, 600);
-  const frosted = "bg-background/85 shadow-[var(--shadow-raised-sm)] backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10";
+  const frosted = "frost relative bg-transparent shadow-[var(--shadow-raised-sm)] ring-1 ring-black/5 dark:ring-white/10";
 
   return (
     <Link href={`/vendor/${vendor.id}`} className={cn("group block rounded-card outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-canvas", className)}>

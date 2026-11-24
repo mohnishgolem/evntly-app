@@ -60,7 +60,7 @@ export function ExploreFilters() {
   const priceLabel = PRICE_BUCKETS.find((b) => b.value === price)?.label;
 
   return (
-    <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 border-b border-border/60 bg-canvas/85 px-4 pt-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 frost border-b border-border/60 px-4 pt-3 [--frost-bg:color-mix(in_oklab,var(--canvas)_85%,transparent)] [--frost-blur:24px] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="flex items-center gap-2">
         <form
           role="search"
