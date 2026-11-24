@@ -11,6 +11,16 @@ type PortfolioItem = PublicPortfolioItem;
 // Horizontal drag past this many px (and more horizontal than vertical)
 // counts as a swipe rather than a scroll/tap.
 const SWIPE_THRESHOLD = 50;
+// Dragging down this far (mostly vertically) closes the viewer, as in the
+// iOS Photos app.
+const DISMISS_THRESHOLD = 80;
+
+/** What a finished touch drag does in the viewer. */
+export function swipeAction(dx: number, dy: number): "next" | "previous" | "close" | null {
+  if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) return dx < 0 ? "next" : "previous";
+  if (dy > DISMISS_THRESHOLD && dy > Math.abs(dx)) return "close";
+  return null;
+}
 
 export function PortfolioGallery({
   items,
@@ -50,11 +60,10 @@ export function PortfolioGallery({
     touchStart.current = null;
     if (!start) return;
     const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
-      show((openIndex ?? 0) + (dx < 0 ? 1 : -1));
-    }
+    const action = swipeAction(t.clientX - start.x, t.clientY - start.y);
+    if (action === "next") show((openIndex ?? 0) + 1);
+    if (action === "previous") show((openIndex ?? 0) - 1);
+    if (action === "close") setOpenIndex(null);
   }
 
   return (
@@ -99,14 +108,21 @@ export function PortfolioGallery({
       <Dialog open={open} onOpenChange={(v) => !v && setOpenIndex(null)}>
         <DialogContent
           showCloseButton={false}
-          className="top-0 left-0 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center gap-0 rounded-none bg-black/95 p-4 ring-0 sm:max-w-none"
+          className="top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center gap-0 rounded-none bg-black/95 px-4 pt-[max(4rem,calc(env(safe-area-inset-top)+3.5rem))] pb-[max(3.5rem,calc(env(safe-area-inset-bottom)+3rem))] ring-0 sm:max-w-none"
+          // Tapping the dark area around the photo closes the viewer.
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOpenIndex(null);
+          }}
         >
           <DialogClose
             render={
+              // Clear of the notch / Dynamic Island and the status bar (the app
+              // draws edge to edge), 44px, and on a frosted disc so it shows
+              // over bright photos too.
               <Button
                 variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 z-10 text-white hover:bg-white/10 hover:text-white"
+                size="icon-lg"
+                className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-20 bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-md hover:bg-white/25 hover:text-white"
               />
             }
           >
@@ -119,7 +135,7 @@ export function PortfolioGallery({
               type="button"
               onClick={() => show((openIndex ?? 0) - 1)}
               aria-label="Previous"
-              className="absolute left-2 z-10 flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 sm:left-4"
+              className="absolute left-[max(0.5rem,env(safe-area-inset-left))] z-10 flex size-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-white/15 sm:left-4"
             >
               <ChevronLeft className="size-7" />
             </button>
@@ -127,7 +143,10 @@ export function PortfolioGallery({
 
           {current && (
             <div
-              className="flex max-h-full max-w-full items-center justify-center"
+              className="flex h-full max-h-full max-w-full items-center justify-center"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setOpenIndex(null);
+              }}
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
@@ -138,7 +157,7 @@ export function PortfolioGallery({
                   controls
                   autoPlay
                   playsInline
-                  className="max-h-[85vh] max-w-full rounded-lg"
+                  className="max-h-full max-w-full rounded-lg"
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -146,7 +165,7 @@ export function PortfolioGallery({
                   key={current.id}
                   src={current.media_url}
                   alt={current.caption ?? vendorName}
-                  className="max-h-[85vh] max-w-full rounded-lg object-contain select-none"
+                  className="max-h-full max-w-full rounded-lg object-contain select-none"
                   draggable={false}
                 />
               )}
@@ -158,14 +177,14 @@ export function PortfolioGallery({
               type="button"
               onClick={() => show((openIndex ?? 0) + 1)}
               aria-label="Next"
-              className="absolute right-2 z-10 flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 sm:right-4"
+              className="absolute right-[max(0.5rem,env(safe-area-inset-right))] z-10 flex size-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-white/15 sm:right-4"
             >
               <ChevronRight className="size-7" />
             </button>
           )}
 
           {items.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm font-medium text-white/80">
+            <div className="pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 text-sm font-medium text-white/80">
               {(openIndex ?? 0) + 1} / {items.length}
             </div>
           )}
