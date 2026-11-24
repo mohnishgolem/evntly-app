@@ -233,7 +233,7 @@ async function ForYou() {
                         </span>
                       </span>
                     ) : (
-                      <span className="mt-1 block text-xs font-medium text-primary-text">Add the services you need</span>
+                      <span className="mt-1 block text-xs font-medium text-primary-text">Open your plan</span>
                     )}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />

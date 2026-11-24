@@ -75,15 +75,20 @@ export function EventOverview({
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           <dt className="sr-only">Location and guests</dt>
-          <dd className="truncate">
-            {event.suburb}
-            <span className="text-muted-foreground">
-              {" "}
-              · <Users className="inline size-3.5 -translate-y-px" aria-hidden /> {event.guest_count}
-            </span>
+          <dd className={cn("truncate", !event.suburb?.trim() && "text-muted-foreground")}>
+            {event.suburb?.trim() || "Location not set"}
+            {event.guest_count && (
+              <span className="text-muted-foreground">
+                {" "}
+                · <Users className="inline size-3.5 -translate-y-px" aria-hidden /> {event.guest_count}
+              </span>
+            )}
           </dd>
         </div>
       </dl>
+      {(!event.suburb?.trim() || !event.guest_count) && (
+        <p className="-mt-1 px-4 pb-3 text-[13px] text-foreground/70 sm:px-5">Add a location and guest numbers (Edit) so vendors can quote.</p>
+      )}
 
       <div className="border-t border-border/70 px-4 pt-3 pb-4 sm:px-5">
         <div className="flex items-baseline justify-between gap-3 text-sm">

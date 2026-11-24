@@ -36,11 +36,14 @@ export function PlannerTimeline({
   groups,
   recommendations,
   ready,
+  preview = false,
 }: {
   eventId: string;
   groups: TimelineGroup[];
   recommendations: Recommendation[];
   ready: boolean;
+  /** Guest preview: nothing saved yet, so suggestions can't be dismissed. */
+  preview?: boolean;
 }) {
   const [recs, removeRec] = useOptimistic(recommendations, (list, key: string) => list.filter((r) => r.key !== key));
   const [, start] = useTransition();
@@ -57,7 +60,7 @@ export function PlannerTimeline({
   const shown = recs.slice(0, 2);
   const suggestions = shown.map((r) => (
     <li key={r.key}>
-      <SuggestionRow eventId={eventId} rec={r} onDismiss={() => dismiss(r.key)} />
+      <SuggestionRow eventId={eventId} rec={r} onDismiss={preview ? undefined : () => dismiss(r.key)} />
     </li>
   ));
   const hasNow = groups[0]?.date === null;
@@ -93,7 +96,7 @@ function Marker({ group }: { group: TimelineGroup }) {
         className={cn(
           "mt-1 flex size-9 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums",
           group.isEventDay ? "bg-[image:var(--gradient-coral)] text-white shadow-[var(--shadow-coral)]" : "surface-pressed",
-          group.isPast && !group.isEventDay && "text-muted-foreground"
+          group.isPast && !group.isEventDay && "text-muted-foreground",
         )}
       >
         {m.day}
@@ -144,7 +147,7 @@ function TimelineCard({ eventId, item }: { eventId: string; item: TimelineItem }
         aria-hidden
         className={cn(
           "flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[0.875rem] bg-[image:var(--gradient-tile)]",
-          item.tone === "done" && "opacity-60"
+          item.tone === "done" && "opacity-60",
         )}
       >
         {item.service ? (
@@ -154,7 +157,12 @@ function TimelineCard({ eventId, item }: { eventId: string; item: TimelineItem }
         ) : null}
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cn("line-clamp-2 block font-semibold", item.tone === "done" && item.stored && "text-muted-foreground line-through decoration-foreground/30")}>
+        <span
+          className={cn(
+            "line-clamp-2 block font-semibold",
+            item.tone === "done" && item.stored && "text-muted-foreground line-through decoration-foreground/30",
+          )}
+        >
           {item.title}
         </span>
         {item.subtitle && <span className="line-clamp-2 block text-[13px] text-muted-foreground">{item.subtitle}</span>}
@@ -169,7 +177,7 @@ function TimelineCard({ eventId, item }: { eventId: string; item: TimelineItem }
     "flex min-h-[4.25rem] w-full items-center gap-3 rounded-tile px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
     item.tone === "pending" ? "border border-dashed border-foreground/20 bg-surface" : "surface-raised",
     item.tone === "action" && "ring-1 ring-primary/25",
-    (item.href || item.stored) && "lift"
+    (item.href || item.stored) && "lift",
   );
 
   if (item.stored) {
@@ -200,8 +208,9 @@ function TimelineCard({ eventId, item }: { eventId: string; item: TimelineItem }
   return <div className={shell}>{body}</div>;
 }
 
-function SuggestionRow({ eventId, rec, onDismiss }: { eventId: string; rec: Recommendation; onDismiss: () => void }) {
-  const href = rec.onPlan ? `/dashboard/events/${eventId}?open=${rec.service}#category-${rec.service}` : `/explore?category=${rec.service}`;
+function SuggestionRow({ eventId, rec, onDismiss }: { eventId: string; rec: Recommendation; onDismiss?: () => void }) {
+  const href =
+    rec.onPlan && onDismiss ? `/dashboard/events/${eventId}?open=${rec.service}#category-${rec.service}` : `/explore?category=${rec.service}`;
   return (
     <section aria-label={`Suggestion: ${rec.title}`} className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3">
       <div className="relative flex justify-center pt-6">
@@ -212,6 +221,7 @@ function SuggestionRow({ eventId, rec, onDismiss }: { eventId: string; rec: Reco
         <Link
           href={href}
           onClick={() => {
+            if (!onDismiss) return; // guest preview: no saved event yet
             rememberPlanEvent(eventId);
             trackPlanner("recommendation_clicked", eventId, rec.key);
           }}
@@ -224,14 +234,16 @@ function SuggestionRow({ eventId, rec, onDismiss }: { eventId: string; rec: Reco
             <span className="mt-0.5 block text-xs font-semibold text-foreground/75">{countLabel(rec)}</span>
           </span>
         </Link>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label={`Hide "${rec.title}"`}
-          className="absolute top-0 right-0 flex size-11 items-center justify-center rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <X className="size-4" aria-hidden />
-        </button>
+        {onDismiss && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label={`Hide "${rec.title}"`}
+            className="absolute top-0 right-0 flex size-11 items-center justify-center rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        )}
       </div>
     </section>
   );

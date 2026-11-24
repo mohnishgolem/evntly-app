@@ -79,7 +79,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
     startTransition(async () => {
       const res = await updateEventDetails(event.id, {
         ...form,
-        guestCount: form.guestCount as (typeof GUEST_BUCKETS)[number],
+        guestCount: form.guestCount as (typeof GUEST_BUCKETS)[number] | "",
         budgetTotal: budget,
         categoryBudgets,
       });
@@ -129,7 +129,7 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
               <Label htmlFor="ev-suburb">Suburb</Label>
               <Input className="h-11 md:h-9"
                 id="ev-suburb"
-                required
+                placeholder="e.g. Bondi"
                 disabled={event.locked}
                 maxLength={120}
                 value={form.suburb}
@@ -172,10 +172,10 @@ export function EditEventSheet({ event }: { event: EditableEvent }) {
                   key={b}
                   type="button"
                   aria-pressed={form.guestCount === b}
-                  onClick={() => setForm((f) => ({ ...f, guestCount: b }))}
+                  onClick={() => setForm((f) => ({ ...f, guestCount: f.guestCount === b ? "" : b }))}
                   className={cn(
-                    "h-11 rounded-xl border text-sm font-medium transition-colors",
-                    form.guestCount === b ? "border-foreground bg-foreground text-background" : "border-border hover:bg-muted"
+                    "h-11 rounded-tile border text-sm font-medium transition-colors",
+                    form.guestCount === b ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40" : "btn-raised text-foreground/80"
                   )}
                 >
                   {b}

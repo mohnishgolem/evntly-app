@@ -81,7 +81,7 @@ export default async function EventFeedPage() {
         !latestEventHasListing && (
           <div className="mb-8 surface-raised rounded-card p-5">
             <p className="mb-1 font-semibold">
-              {latestEvent.event_type} in {latestEvent.suburb} on {latestEvent.event_date}
+              {latestEvent.event_type}{latestEvent.suburb ? ` in ${latestEvent.suburb}` : ""} on {latestEvent.event_date}
             </p>
             <p className="mb-4 text-sm text-muted-foreground">
               Not posted yet — post it so vendors can apply directly.

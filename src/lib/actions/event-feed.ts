@@ -62,6 +62,9 @@ export async function publishEventToFeed(eventId: string): Promise<ActionState> 
     .maybeSingle();
 
   if (!event) return { error: "Event not found." };
+  if (!event.suburb?.trim() || !event.guest_count || event.required_services.length === 0) {
+    return { error: "Add your suburb, guest numbers and the vendors you need (Edit, at the top of your plan) before posting." };
+  }
 
   const { data: existing } = await supabase
     .from("event_listings")

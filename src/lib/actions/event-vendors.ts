@@ -25,6 +25,8 @@ const MAX_OPEN_REQUESTS = 5;
 // Stage A failures that mean the vendor can't do the job at all. Softer ones
 // (over the estimate, outside their usual area) don't stop a customer asking —
 // the vendor decides — but the request isn't marked as a smart match.
+const MISSING_DETAILS_ERROR = "Add your suburb and guest numbers first (Edit, at the top of your plan) so vendors can quote accurately.";
+
 const HARD_EXCLUSIONS: ExclusionCode[] = ["not_approved", "sample_listing", "paused", "date_blocked", "day_off", "booked"];
 
 // events.guest_count is a free-text bucket label ("Under 80"), but
@@ -65,6 +67,9 @@ export async function requestQuotesForEvent(eventId: string, vendorIds: string[]
     .eq("organiser_user_id", user.id)
     .maybeSingle();
   if (!event) return { error: "Not your event." };
+  // Plans can be started with just a type and date; vendors need to know
+  // where and roughly how many before they can quote. Never guess these.
+  if (!event.suburb?.trim() || !event.guest_count) return { error: MISSING_DETAILS_ERROR };
 
   const { data: picked } = await supabase
     .from("service_providers")

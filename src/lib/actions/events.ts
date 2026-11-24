@@ -2,41 +2,21 @@
 
 import { EVENT_DATE_ERROR, isBookableEventDate } from "@/lib/event-dates";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb } from "@/lib/geocode";
-import { EVENT_TYPES, GUEST_BUCKETS, isLaunchCategory } from "@/lib/config";
-import { eventTimesSchema, NOT_LOGGED_IN } from "@/lib/event-times";
+import { isLaunchCategory } from "@/lib/config";
+import { NOT_LOGGED_IN } from "@/lib/event-times";
+import { planDraftSchema, type PlanDraft } from "@/lib/planner/draft";
 import { recordPlannerEvent } from "@/lib/planner/analytics";
 
-export type PlanDraft = {
-  eventType: string;
-  eventDate: string;
-  suburb: string;
-  guestCount: string;
-  budgetTotal: number;
-  requiredServices: string[];
-  notes?: string;
-  /** "HH:MM", Sydney. Optional so drafts saved before times existed still claim. */
-  startTime?: string;
-  endTime?: string;
-};
+export type { PlanDraft } from "@/lib/planner/draft";
 
-// Server actions are public endpoints: validate everything, whatever /plan
-// enforced in the browser.
-const planSchema = z
-  .object({
-    eventType: z.enum(EVENT_TYPES),
-    eventDate: z.iso.date(),
-    suburb: z.string().trim().min(1).max(120),
-    guestCount: z.enum(GUEST_BUCKETS),
-    budgetTotal: z.number().min(0).max(10_000_000),
-    requiredServices: z.array(z.string()).min(1).max(20),
-    notes: z.string().trim().max(2000).optional(),
-  })
-  .and(eventTimesSchema);
-
-export async function claimEventPlan(draft: PlanDraft) {
+/**
+ * Saves a plan as the signed-in customer's event. `from` says where the
+ * draft came from, for planner analytics: "form" (signed in on /plan) or
+ * "guest" (a guest preview saved after creating an account).
+ */
+export async function claimEventPlan(draft: PlanDraft, from: "form" | "guest" = "form") {
   const supabase = await createClient();
   const {
     data: { user },
@@ -45,7 +25,7 @@ export async function claimEventPlan(draft: PlanDraft) {
   if (!user?.email) {
     return { error: NOT_LOGGED_IN };
   }
-  const parsed = planSchema.safeParse(draft);
+  const parsed = planDraftSchema.safeParse(draft);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check your event details." };
   const d = parsed.data;
   if (!isBookableEventDate(d.eventDate)) return { error: EVENT_DATE_ERROR };
@@ -54,13 +34,14 @@ export async function claimEventPlan(draft: PlanDraft) {
 
   // Suburb-level coordinates let the Event Board match vendors by service
   // area. Best-effort: the event saves without them if the lookup fails.
-  const place = await geocodeSuburb(d.suburb).catch(() => null);
+  const place = d.suburb ? await geocodeSuburb(d.suburb).catch(() => null) : null;
 
   const { data: event, error } = await supabase
     .from("events")
     .insert({
       organiser_email: user.email,
       event_type: d.eventType,
+      name: d.name || null,
       event_date: d.eventDate,
       suburb: d.suburb,
       guest_count: d.guestCount,
@@ -79,6 +60,6 @@ export async function claimEventPlan(draft: PlanDraft) {
   if (error || !event) return { error: "Could not save your event." };
 
   revalidatePath("/dashboard");
-  await recordPlannerEvent("event_created", { userId: user.id, eventId: event.id });
+  await recordPlannerEvent("event_created", { userId: user.id, eventId: event.id, detail: from === "guest" ? "guest_preview" : "form" });
   return { success: true, eventId: event.id };
 }

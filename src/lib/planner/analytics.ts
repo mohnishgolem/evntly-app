@@ -14,11 +14,18 @@ export const PLANNER_EVENTS = [
   "recommendation_clicked",
   "vendor_saved",
   "vendor_enquiry",
+  // Before an account exists (needs 20261129090000_planner_guest_events).
+  "plan_started",
+  "plan_previewed",
+  "plan_save_clicked",
 ] as const;
 export type PlannerEvent = (typeof PLANNER_EVENTS)[number];
 
 /** Events the browser may send to /api/track; the rest are recorded by server actions. */
 export const CLIENT_PLANNER_EVENTS: readonly PlannerEvent[] = ["planner_opened", "recommendation_clicked"];
+
+/** Browser events that need no account or event (the guest steps on /plan). */
+export const GUEST_PLANNER_EVENTS: readonly PlannerEvent[] = ["plan_started", "plan_previewed", "plan_save_clicked"];
 
 export function isPlannerEvent(value: unknown): value is PlannerEvent {
   return PLANNER_EVENTS.includes(value as PlannerEvent);

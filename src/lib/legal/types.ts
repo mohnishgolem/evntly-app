@@ -28,6 +28,12 @@ export type LegalDocument = {
   title: string;
   path: string;
   version: string;
+  /**
+   * Date of the latest wording change that didn't need everyone to accept it
+   * again (a clarification). Shown as "Last updated"; `version` stays the
+   * accepted version. Omit when the two are the same.
+   */
+  lastUpdated?: string;
   /** One-line plain-English summary shown under the title and on /legal. */
   summary: string;
   /** Short "key points" shown before the full text. */

@@ -16,7 +16,20 @@ const OPEN_LIMIT = 6;
 // "Before your event": the preparation checklist. Suggestions come from
 // templates; ticking, renaming or hiding one stores it. Tasks done by a real
 // booking tick themselves and can't be unticked here.
-export function PrepChecklist({ eventId, items, today, ready }: { eventId: string; items: ChecklistItem[]; today: string; ready: boolean }) {
+export function PrepChecklist({
+  eventId,
+  items,
+  today,
+  ready,
+  onLocked,
+}: {
+  eventId: string;
+  items: ChecklistItem[];
+  today: string;
+  ready: boolean;
+  /** Guest preview: any change asks them to save their plan first. */
+  onLocked?: () => void;
+}) {
   const router = useRouter();
   const { openAdd, openEdit } = usePlannerSheet();
   const [, start] = useTransition();
@@ -37,6 +50,7 @@ export function PrepChecklist({ eventId, items, today, ready }: { eventId: strin
     });
 
   const toggle = (item: ChecklistItem) => {
+    if (onLocked) return onLocked();
     const done = !item.done;
     if (item.source === "template") return run({ key: item.key, done }, () => updateChecklistSuggestion(eventId, item.key, { done }));
     run({ key: item.key, done }, () => (ready ? setPlannerItemDone(eventId, item.id!, done) : toggleEventTask(item.id!, done)));
@@ -54,7 +68,7 @@ export function PrepChecklist({ eventId, items, today, ready }: { eventId: strin
         <ul className="divide-y divide-border/70 overflow-hidden rounded-card surface-raised">
           {visible.map((item) => (
             <Row key={item.key} item={item} today={today} ready={ready} onToggle={() => toggle(item)}
-              onHide={() => run({ key: item.key, hidden: true }, () => updateChecklistSuggestion(eventId, item.key, { dismissed: true }))}
+              onHide={onLocked ?? (() => run({ key: item.key, hidden: true }, () => updateChecklistSuggestion(eventId, item.key, { dismissed: true })))}
               onEdit={() => openEdit({ id: item.id!, kind: "task", title: item.title, date: item.dueDate, time: null, details: item.detail, done: item.done, canMove: false })}
             />
           ))}

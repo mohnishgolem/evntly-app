@@ -5,6 +5,7 @@ import { formatEventTimes, shortTime } from "@/lib/event-times";
 import type { NextStep } from "@/lib/event-board";
 import type { Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
+import { defaultEventName } from "@/lib/planner/draft";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 
@@ -19,7 +20,8 @@ export function formatEventDay(iso: string, short = false) {
 }
 
 export function eventTitle(event: Pick<Event, "name" | "event_type" | "suburb">) {
-  return event.name || `${event.event_type} in ${event.suburb}`;
+  if (event.name) return event.name;
+  return event.suburb?.trim() ? `${event.event_type} in ${event.suburb}` : defaultEventName(event.event_type);
 }
 
 export function ProgressBar({ percent, label }: { percent: number; label: string }) {
@@ -199,10 +201,12 @@ export function EventSummaryCard({
           <CalendarDays className="size-3.5" aria-hidden />
           {formatEventDay(event.event_date, true)}
         </span>
-        <span className="flex items-center gap-1">
-          <MapPin className="size-3.5" aria-hidden />
-          {event.suburb}
-        </span>
+        {event.suburb?.trim() && (
+          <span className="flex items-center gap-1">
+            <MapPin className="size-3.5" aria-hidden />
+            {event.suburb}
+          </span>
+        )}
         {Number(event.budget_total) > 0 && (
           <span className="flex items-center gap-1">
             <Wallet className="size-3.5" aria-hidden />
