@@ -122,7 +122,7 @@ export function PortfolioGallery({
               <Button
                 variant="ghost"
                 size="icon-lg"
-                className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-20 bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-md hover:bg-white/25 hover:text-white"
+                className="frost absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-20 text-white ring-1 ring-white/20 [--frost-bg:rgb(255_255_255/0.15)] hover:bg-transparent hover:text-white hover:[--frost-bg:rgb(255_255_255/0.25)]"
               />
             }
           >
@@ -135,7 +135,7 @@ export function PortfolioGallery({
               type="button"
               onClick={() => show((openIndex ?? 0) - 1)}
               aria-label="Previous"
-              className="absolute left-[max(0.5rem,env(safe-area-inset-left))] z-10 flex size-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-white/15 sm:left-4"
+              className="frost absolute left-[max(0.5rem,env(safe-area-inset-left))] z-10 flex size-11 items-center justify-center rounded-full text-white [--frost-bg:rgb(0_0_0/0.3)] [--frost-blur:6px] hover:[--frost-bg:rgb(255_255_255/0.15)] sm:left-4"
             >
               <ChevronLeft className="size-7" />
             </button>
@@ -177,7 +177,7 @@ export function PortfolioGallery({
               type="button"
               onClick={() => show((openIndex ?? 0) + 1)}
               aria-label="Next"
-              className="absolute right-[max(0.5rem,env(safe-area-inset-right))] z-10 flex size-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-white/15 sm:right-4"
+              className="frost absolute right-[max(0.5rem,env(safe-area-inset-right))] z-10 flex size-11 items-center justify-center rounded-full text-white [--frost-bg:rgb(0_0_0/0.3)] [--frost-blur:6px] hover:[--frost-bg:rgb(255_255_255/0.15)] sm:right-4"
             >
               <ChevronRight className="size-7" />
             </button>

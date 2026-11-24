@@ -97,7 +97,7 @@ export function NavDrawer({
         <Dialog.Popup
           onKeyDown={trapTab}
           className={cn(
-            "fixed inset-y-0 right-0 z-[60] flex w-[85vw] max-w-[22.5rem] flex-col",
+            "fixed inset-y-0 right-0 z-[61] flex w-[85vw] max-w-[22.5rem] flex-col",
             "bg-drawer text-drawer-foreground shadow-2xl shadow-black/40 outline-none",
             "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
             "data-ending-style:translate-x-full data-starting-style:translate-x-full",

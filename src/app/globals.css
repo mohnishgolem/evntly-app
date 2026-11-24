@@ -226,7 +226,23 @@
 
 /* Glass material — for the header, floating controls, and modals only.
    Never used as a blanket background (per HIG: glass reads as chrome, not content). */
+/* Glass: the blur lives on a ::before layer BEHIND the content, never on the
+   element that holds the logo, icons and text. WebKit composites a
+   backdrop-filter element and its children as one layer; when that layer is
+   resized or animated (Safari's toolbar collapsing, transitions, the
+   installed app) the children are re-rasterised soft. With the blur on its
+   own layer, foreground content is painted normally and stays sharp.
+   The element must be positioned (sticky/fixed/absolute/relative). */
 .glass-material {
+  isolation: isolate;
+}
+.glass-material::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
   background: var(--glass-bg);
   /* Prefixed first, standard last: the CSS build merges the pair and keeps
      the last one, and Chrome ignores the -webkit- form (no blur at all). */
@@ -235,7 +251,7 @@
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glass-material {
+  .glass-material::before {
     background: var(--background);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -573,4 +589,32 @@
    The page spacer and anything floating above the bar use this one value. */
 :root {
   --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)) + 1px);
+}
+
+/* Frosted controls over photos and the page (card save/share, the photo
+   viewer's buttons, sticky bars). Same rule as .glass-material: the blur is a
+   background layer, so icons and labels stay sharp. Tint with --frost-bg,
+   strength with --frost-blur. The element must be positioned
+   (relative/absolute/sticky/fixed) so the layer sits inside it. */
+@utility frost {
+  isolation: isolate;
+  background-color: transparent;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: var(--frost-bg, color-mix(in oklab, var(--background) 85%, transparent));
+    -webkit-backdrop-filter: blur(var(--frost-blur, 12px)) saturate(1.4);
+    backdrop-filter: blur(var(--frost-blur, 12px)) saturate(1.4);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .frost::before {
+    background: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }

@@ -220,7 +220,7 @@ function VendorCard({
   return (
     <div
       className={cn(
-        "glass-material w-[min(82vw,340px)] shrink-0 snap-center rounded-3xl border border-border p-3 shadow-[0_12px_40px_rgba(0,0,0,0.28)] transition-[opacity,transform] duration-300 ease-out",
+        "glass-material relative w-[min(82vw,340px)] shrink-0 snap-center rounded-3xl border border-border p-3 shadow-[0_12px_40px_rgba(0,0,0,0.28)] transition-[opacity,transform] duration-300 ease-out",
         active ? "opacity-100" : "scale-[0.96] opacity-70",
       )}
     >
@@ -852,7 +852,7 @@ export function VendorMap({
         >
           <div className="mb-2 flex items-center justify-center gap-2">
             {deck.length > 1 && (
-              <span className="glass-material rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-muted-foreground tabular-nums shadow-sm">
+              <span className="glass-material relative rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-muted-foreground tabular-nums shadow-sm">
                 {selectedIndex + 1} of {deck.length}
               </span>
             )}
@@ -860,7 +860,7 @@ export function VendorMap({
               type="button"
               onClick={closeDeck}
               aria-label="Close"
-              className="glass-material flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+              className="glass-material relative flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground shadow-sm transition-colors hover:text-foreground"
             >
               <X className="size-3.5" />
             </button>

@@ -18,7 +18,7 @@ export function AdConsentBanner() {
       aria-label="Ad measurement choice"
       // Phones: at the top, so the sticky "Claim my free listing" bar and the
       // tab bar at the bottom stay visible and tappable. Desktop: bottom.
-      className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+10px)] shadow-lg backdrop-blur sm:top-auto sm:bottom-0 sm:border-b-0 sm:border-t sm:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:pt-3"
+      className="frost fixed inset-x-0 top-0 z-50 border-b border-border px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+10px)] shadow-lg [--frost-bg:color-mix(in_oklab,var(--background)_95%,transparent)] [--frost-blur:8px] sm:top-auto sm:bottom-0 sm:border-b-0 sm:border-t sm:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:pt-3"
     >
       <div className="mx-auto flex max-w-3xl items-center gap-3">
         <p className="min-w-0 flex-1 text-xs leading-snug text-muted-foreground sm:text-sm sm:leading-relaxed">

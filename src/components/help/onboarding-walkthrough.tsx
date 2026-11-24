@@ -225,7 +225,7 @@ export function OnboardingWalkthrough({
         <Dialog.Popup
           aria-describedby="onboarding-body"
           className={cn(
-            "fixed z-[70] flex flex-col bg-popover text-popover-foreground shadow-2xl shadow-black/30 outline-none",
+            "fixed z-[71] flex flex-col bg-popover text-popover-foreground shadow-2xl shadow-black/30 outline-none",
             // Phones: a bottom sheet clear of the home indicator. Larger
             // screens: a centred card.
             "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[28px] px-6 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
