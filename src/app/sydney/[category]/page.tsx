@@ -15,6 +15,8 @@ import {
   categoryIntro,
   categoryPages,
   categoryPath,
+  categoryTips,
+  listingLocalities,
   pageMetadata,
   realListings,
   vendorItemListJsonLd,
@@ -36,11 +38,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/sydney/[category]">): Promise<Metadata> {
   const category = categoryFromSlug((await params).category);
   if (!category) return {};
-  const heading = categoryHeading(category);
+  const title = categoryPages().find((p) => p.category === category)?.title ?? categoryHeading(category);
   const real = realListings(await vendorsIn(category));
   return {
     ...pageMetadata({
-      title: `${heading} in ${LAUNCH_CITY}`,
+      title: `${title} in ${LAUNCH_CITY}`,
       description: categoryDescription(category),
       path: categoryPath(category),
     }),
@@ -57,14 +59,21 @@ export default async function CategoryLandingPage({ params }: PageProps<"/sydney
   const page = categoryPages().find((p) => p.slug === slug);
   if (!page) notFound();
 
-  const { category, heading, path } = page;
+  const { category, heading, title, path } = page;
   const [vendors, session] = await Promise.all([vendorsIn(category), getCurrentUser()]);
   const others = categoryPages().filter((p) => p.category !== category);
   const breadcrumbs = breadcrumbJsonLd([
     { name: "Evntly", path: "/" },
     { name: `${heading} in ${LAUNCH_CITY}`, path },
   ]);
-  const itemList = vendorItemListJsonLd(`${heading} in ${LAUNCH_CITY}`, realListings(vendors));
+  const itemList = vendorItemListJsonLd(`${title} in ${LAUNCH_CITY}`, realListings(vendors));
+  const areas = listingLocalities(vendors);
+  const tips = categoryTips(category);
+  // "event decorators", but "DJs" and "MCs" keep their capitals.
+  const lower = heading
+    .split(" ")
+    .map((w) => (/^(DJs|MCs)$/.test(w) ? w : w.toLowerCase()))
+    .join(" ");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -81,9 +90,14 @@ export default async function CategoryLandingPage({ params }: PageProps<"/sydney
         <span className="text-foreground">{heading}</span>
       </nav>
       <h1 className="mb-2 text-2xl font-bold md:text-3xl">
-        {heading} in {LAUNCH_CITY}
+        {title} in {LAUNCH_CITY}
       </h1>
       <p className="mb-6 max-w-2xl text-muted-foreground">{categoryIntro(category)}</p>
+      {areas.length > 0 && (
+        <p className="-mt-3 mb-6 max-w-2xl text-sm text-muted-foreground">
+          Listed {lower} are based in {areas.join(", ")}. Open a profile to see the areas they cover.
+        </p>
+      )}
 
       {vendors.length > 0 ? (
         <ExploreResults
@@ -106,6 +120,46 @@ export default async function CategoryLandingPage({ params }: PageProps<"/sydney
           </p>
         </div>
       )}
+
+      <div className="mt-12 grid gap-8 md:grid-cols-2">
+        {tips.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-lg font-semibold">Before you book {lower}</h2>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {tips.map((tip) => (
+                <li key={tip} className="flex gap-2">
+                  <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">How quotes work on Evntly</h2>
+          <ol className="space-y-2 text-sm text-muted-foreground">
+            <li>
+              <span className="font-medium text-foreground">1. Compare profiles.</span> Each listing shows photos,
+              packages, prices (hourly, fixed, from or on request) and the areas the vendor covers.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">2. Request a quote.</span> Tap &ldquo;Book this vendor&rdquo;
+              and add your date and details. You&apos;ll need a free account to send it.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">3. Reply and confirm.</span> The vendor answers in Evntly.
+              You pay them directly on the terms in their quote, and Evntly doesn&apos;t charge customers a fee.
+            </li>
+          </ol>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Not sure who to pick?{" "}
+            <Link href="/plan" className="text-primary hover:underline">
+              Describe your event
+            </Link>{" "}
+            and let vendors come to you.
+          </p>
+        </section>
+      </div>
 
       <section className="mt-12">
         <h2 className="mb-3 text-lg font-semibold">More event vendors in {LAUNCH_CITY}</h2>
