@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, LAUNCH_CATEGORIES, VENDOR_CATEGORIES } from "@/lib/config";
 import { submitVendorListing, type VendorSignupDraft } from "@/lib/actions/vendor-signup";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2, Clock, X } from "lucide-react";
+import { CategoryArt } from "@/components/category-art";
 import { isValidAbn } from "@/lib/abn";
 import { PricingFields } from "@/components/pricing-fields";
 import { trackFunnelEvent } from "@/lib/track-client";
@@ -136,9 +137,11 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <Clock className="mx-auto mb-4 h-12 w-12 text-warning" />
-        <h1 className="mb-2 text-2xl font-bold">Profile submitted for review</h1>
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <span className="btn-raised mx-auto mb-5 flex size-20 items-center justify-center rounded-full">
+          <Clock className="size-10 text-warning-text" strokeWidth={1.75} aria-hidden />
+        </span>
+        <h1 className="mb-2 text-title">Profile submitted for review</h1>
         <p className="text-muted-foreground">
           Thanks for signing up! We review new listings within 24–48 hours — you&apos;ll appear in
           search once approved.
@@ -147,36 +150,40 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
           While you wait, add photos of your work and your packages — they&apos;re the first thing customers look at.
         </p>
         <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          <Button nativeButton={false} render={<Link href="/vendor-dashboard/portfolio">Add photos</Link>} />
-          <Button variant="outline" nativeButton={false} render={<Link href="/vendor-dashboard">Go to your dashboard</Link>} />
+          <Button size="lg" nativeButton={false} render={<Link href="/vendor-dashboard/portfolio">Add photos</Link>} />
+          <Button size="lg" variant="raised" nativeButton={false} render={<Link href="/vendor-dashboard">Go to your dashboard</Link>} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
-      <div className="mb-8 flex items-center gap-2">
+    <div className="min-h-full bg-canvas">
+    <div className="mx-auto max-w-lg px-4 pt-8 pb-10">
+      <p className="text-eyebrow text-primary-text">
+        Step {step + 1} of {STEPS.length} · {STEPS[step]}
+      </p>
+      <ol className="mt-3 mb-6 grid grid-cols-5 gap-1.5" aria-label="Listing setup steps">
         {STEPS.map((label, i) => (
-          <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
-            <div
-              className={cn(
-                "h-1.5 w-full rounded-full transition-colors",
-                i <= step ? "bg-primary" : "bg-muted"
-              )}
-            />
-            <span className="text-[11px] text-muted-foreground">{label}</span>
-          </div>
+          <li key={label} aria-current={i === step ? "step" : undefined} className="min-w-0">
+            <span className={cn("block h-1.5 rounded-full transition-colors", i <= step ? "[background:var(--gradient-coral)]" : "surface-pressed")} />
+            <span className={cn("mt-1.5 block truncate text-[11px]", i === step ? "font-semibold text-foreground" : "text-muted-foreground")}>
+              <span className="sr-only">{i < step ? "Done: " : i === step ? "Current: " : ""}</span>
+              {label}
+            </span>
+          </li>
         ))}
-      </div>
+      </ol>
+      <div className="surface-raised rounded-card p-5 sm:p-6">
 
       {step === 0 && (
         <div className="space-y-3">
-          <h1 className="mb-4 text-xl font-bold">Tell us about your business</h1>
+          <h1 className="mb-4 text-headline">Tell us about your business</h1>
           <div className="space-y-1.5">
             <Label htmlFor="businessName">Business name</Label>
             <Input
               id="businessName"
+              className="h-11 rounded-xl sm:h-10"
               value={draft.businessName}
               onChange={(e) => setDraft((d) => ({ ...d, businessName: e.target.value }))}
             />
@@ -185,6 +192,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
             <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
+              className="rounded-xl"
               rows={4}
               value={draft.bio}
               onChange={(e) => setDraft((d) => ({ ...d, bio: e.target.value }))}
@@ -194,6 +202,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
             <Label htmlFor="phone">Phone (optional)</Label>
             <Input
               id="phone"
+              className="h-11 rounded-xl sm:h-10"
               value={draft.phone}
               onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
             />
@@ -203,21 +212,22 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
 
       {step === 1 && (
         <div>
-          <h1 className="mb-4 text-xl font-bold">What do you offer?</h1>
+          <h1 className="mb-4 text-headline">What do you offer?</h1>
           <p className="mb-2 text-sm font-medium">Category</p>
-          <div className="mb-5 grid grid-cols-2 gap-2">
+          <div className="mb-5 grid grid-cols-3 gap-2">
             {categories.map((c) => (
               <button
                 key={c.value}
+                type="button"
+                aria-pressed={draft.serviceType === c.value}
                 onClick={() => setDraft((d) => ({ ...d, serviceType: c.value }))}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
-                  draft.serviceType === c.value
-                    ? "border-highlight bg-highlight-light text-highlight"
-                    : "border-border text-muted-foreground hover:border-foreground/30"
+                  "flex flex-col items-center gap-1 rounded-2xl px-1.5 pt-2 pb-2.5 text-center text-xs leading-tight font-semibold",
+                  draft.serviceType === c.value ? "surface-pressed text-foreground ring-1 ring-primary/40" : "btn-raised"
                 )}
               >
-                <c.icon className="size-4" /> {c.label}
+                <CategoryArt value={c.value} className="size-10" />
+                {c.label}
               </button>
             ))}
           </div>
@@ -228,6 +238,8 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
               return (
                 <button
                   key={t}
+                  type="button"
+                  aria-pressed={selected}
                   onClick={() =>
                     setDraft((d) => ({
                       ...d,
@@ -237,10 +249,8 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
                     }))
                   }
                   className={cn(
-                    "rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
-                    selected
-                      ? "border-highlight bg-highlight-light text-highlight"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
+                    "min-h-11 rounded-full px-4 py-2 text-sm font-medium",
+                    selected ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40" : "btn-raised"
                   )}
                 >
                   {t}
@@ -253,7 +263,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
 
       {step === 2 && (
         <div className="space-y-3">
-          <h1 className="mb-1 text-xl font-bold">Set your pricing</h1>
+          <h1 className="mb-1 text-headline">Set your pricing</h1>
           <p className="mb-4 text-sm text-muted-foreground">
             Pick what suits your business. You can change it any time. Packages and photos come after you save,
             and we can add them for you if you&apos;d rather.
@@ -268,7 +278,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
 
       {step === 3 && (
         <div className="space-y-3">
-          <h1 className="mb-1 text-xl font-bold">Where do you service?</h1>
+          <h1 className="mb-1 text-headline">Where do you service?</h1>
           <p className="mb-4 text-sm text-muted-foreground">
             This helps us match you with nearby events.
           </p>
@@ -285,6 +295,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
             <div className="flex gap-2">
               <Input
                 id="location"
+                className="h-11 rounded-xl sm:h-10"
                 placeholder="e.g. Bondi"
                 value={locationInput}
                 onChange={(e) => setLocationInput(e.target.value)}
@@ -295,7 +306,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
                   }
                 }}
               />
-              <Button type="button" variant="outline" onClick={addLocation}>
+              <Button type="button" variant="raised" size="lg" onClick={addLocation}>
                 Add
               </Button>
             </div>
@@ -304,7 +315,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
                 {draft.locationsServiced.map((loc) => (
                   <span
                     key={loc}
-                    className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"
+                    className="btn-raised flex items-center gap-1 rounded-full py-1 pr-1 pl-3 text-sm"
                   >
                     {loc}
                     <button
@@ -314,9 +325,11 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
                           locationsServiced: d.locationsServiced.filter((l) => l !== loc),
                         }))
                       }
-                      className="text-muted-foreground hover:text-foreground"
+                      type="button"
+                      aria-label={`Remove ${loc}`}
+                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
                     >
-                      ×
+                      <X className="size-3.5" aria-hidden />
                     </button>
                   </span>
                 ))}
@@ -328,11 +341,12 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
 
       {step === 4 && (
         <div className="space-y-4">
-          <h1 className="mb-1 text-xl font-bold">Your business and our agreement</h1>
+          <h1 className="mb-1 text-headline">Your business and our agreement</h1>
           <div className="space-y-1.5">
             <Label htmlFor="abn">ABN</Label>
             <Input
               id="abn"
+              className="h-11 rounded-xl sm:h-10"
               inputMode="numeric"
               autoComplete="off"
               placeholder="11 digits"
@@ -359,16 +373,16 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
             </Label>
           </div>
 
-          <div className="rounded-2xl bg-secondary p-4 text-sm">
+          <div className="surface-pressed rounded-2xl p-4 text-sm">
             <p className="mb-2 font-medium">As an Evntly vendor, you agree to:</p>
-            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <ul className="list-disc space-y-1 pl-5 text-foreground/75">
               <li>keep your listing, photos and prices accurate, and show whether prices include GST;</li>
               <li>hold the licences and permits your services need (public liability insurance is strongly recommended);</li>
               <li>give clear quotes, including your deposit and cancellation terms, and honour accepted bookings;</li>
               <li>take payment directly from customers — Evntly doesn&apos;t hold booking payments;</li>
               <li>use customers&apos; details only for their enquiry or booking.</li>
             </ul>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-foreground/75">
               Listing is currently free: no subscription, commission or booking fees.
             </p>
           </div>
@@ -391,20 +405,22 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
         </div>
       )}
 
-      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-sm text-destructive-text">{error}</p>}
+      </div>
 
-      <div className="mt-6 flex gap-3">
+      {/* Phones: Back / Continue stay in reach above the tab bar. */}
+      <div className="frost sticky bottom-[calc(var(--tabbar-height)+0.5rem)] z-20 mt-4 flex gap-3 rounded-full p-1.5 shadow-[var(--shadow-float)] [--frost-bg:color-mix(in_oklab,var(--background)_88%,transparent)] md:static md:bottom-auto md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:[--frost-bg:transparent]">
         {step > 0 && (
-          <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
+          <Button variant="raised" size="lg" onClick={() => setStep((s) => s - 1)}>
             Back
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="flex-1" disabled={!canAdvance} onClick={next}>
+          <Button size="lg" className="flex-1" disabled={!canAdvance} onClick={next}>
             Continue
           </Button>
         ) : (
-          <Button className="flex-1" disabled={!canAdvance || pending} onClick={submit}>
+          <Button size="lg" className="flex-1" disabled={!canAdvance || pending} onClick={submit}>
             {pending ? "Saving…" : (
               <>
                 <CheckCircle2 /> Save and add photos
@@ -413,6 +429,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
           </Button>
         )}
       </div>
+    </div>
     </div>
   );
 }

@@ -71,8 +71,8 @@ export function SuburbPicker({
         <Input
           id={id}
           role="combobox"
-          aria-expanded={showList}
-          aria-controls={listId}
+          aria-expanded={showList && suggestions.length > 0}
+          aria-controls={showList && suggestions.length > 0 ? listId : undefined}
           aria-autocomplete="list"
           aria-activedescendant={
             active >= 0 ? `${listId}-${active}` : undefined
@@ -113,17 +113,21 @@ export function SuburbPicker({
           <Loader2 className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
         )}
 
-        {showList && (
+        {/* While searching there are no options yet: say so as a status, not
+            as a non-option row inside the listbox (screen readers expect
+            only options there). */}
+        {showList && suggestions.length === 0 && (
+          <p role="status" className="absolute inset-x-0 top-full z-40 mt-1.5 rounded-2xl border border-border bg-popover px-4 py-2.5 text-sm text-muted-foreground shadow-[0_12px_32px_rgba(0,0,0,0.16)]">
+            Searching…
+          </p>
+        )}
+        {showList && suggestions.length > 0 && (
           <ul
             id={listId}
             role="listbox"
             className="absolute inset-x-0 top-full z-40 mt-1.5 overflow-hidden rounded-2xl border border-border bg-popover p-1 shadow-[0_12px_32px_rgba(0,0,0,0.16)]"
           >
-            {suggestions.length === 0 ? (
-              <li className="px-3 py-2.5 text-sm text-muted-foreground">
-                Searching…
-              </li>
-            ) : (
+            {(
               suggestions.map((place, i) => (
                 <li
                   key={place.label}
