@@ -1363,35 +1363,59 @@ export type Database = {
       }
       event_tasks: {
         Row: {
+          completed_at: string | null
           created_at: string
           created_by: string | null
+          details: string | null
+          dismissed: boolean
           done: boolean | null
+          due_date: string | null
+          due_time: string | null
           event_id: string
           id: string
+          kind: string
           owner_email: string
           owner_user_id: string | null
+          position: number
+          template_key: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          details?: string | null
+          dismissed?: boolean
           done?: boolean | null
+          due_date?: string | null
+          due_time?: string | null
           event_id: string
           id?: string
+          kind?: string
           owner_email: string
           owner_user_id?: string | null
+          position?: number
+          template_key?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          details?: string | null
+          dismissed?: boolean
           done?: boolean | null
+          due_date?: string | null
+          due_time?: string | null
           event_id?: string
           id?: string
+          kind?: string
           owner_email?: string
           owner_user_id?: string | null
+          position?: number
+          template_key?: string | null
           title?: string
           updated_at?: string
         }
@@ -1456,6 +1480,7 @@ export type Database = {
           notes: string | null
           organiser_email: string
           organiser_user_id: string | null
+          planner_dismissed: string[]
           required_services: string[]
           start_time: string | null
           status: string
@@ -1478,6 +1503,7 @@ export type Database = {
           notes?: string | null
           organiser_email: string
           organiser_user_id?: string | null
+          planner_dismissed?: string[]
           required_services: string[]
           start_time?: string | null
           status: string
@@ -1500,6 +1526,7 @@ export type Database = {
           notes?: string | null
           organiser_email?: string
           organiser_user_id?: string | null
+          planner_dismissed?: string[]
           required_services?: string[]
           start_time?: string | null
           status?: string
@@ -2209,6 +2236,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planner_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          event_id: string | null
+          id: number
+          user_id: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          event_id?: string | null
+          id?: number
+          user_id?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          event_id?: string | null
+          id?: number
+          user_id?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
       }
       portfolio_items: {
         Row: {

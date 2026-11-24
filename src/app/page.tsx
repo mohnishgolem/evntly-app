@@ -18,6 +18,8 @@ import { FEATURED_CATEGORIES, LAUNCH_CITY, VENDOR_CATEGORIES, categoryPlural, is
 import { serializeJsonLd } from "@/lib/json-ld";
 import { categoryPath, organizationJsonLd, pageMetadata, websiteJsonLd } from "@/lib/seo";
 import { FEE_SUMMARY } from "@/lib/vendor-terms";
+import { countdown } from "@/lib/planner/timeline";
+import { sydneyDate } from "@/lib/event-dates";
 
 const HOME_TITLE = `Evntly | Find & Book Event Vendors in ${LAUNCH_CITY}`;
 // Brand first so searches for "Evntly" match the title; the categories
@@ -215,7 +217,7 @@ async function ForYou() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block truncate text-sm text-muted-foreground">
-                      {formatEventDate(p.date)}
+                      {countdown(p.date, sydneyDate()).label} · {formatEventDate(p.date)}
                       {p.suburb ? ` · ${p.suburb}` : ""}
                     </span>
                     {p.total > 0 ? (

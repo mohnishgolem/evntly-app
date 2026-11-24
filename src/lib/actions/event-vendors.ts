@@ -9,6 +9,7 @@ import { loadMatchingSettings, matchEventCategories } from "@/lib/data/matching"
 import { eventHours, type ExclusionCode, type MatchVendor } from "@/lib/matching/engine";
 import { effectiveQuoteStatus } from "@/lib/quote-expiry";
 import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
+import { recordPlannerEvent } from "@/lib/planner/analytics";
 
 export type InviteResult = {
   error?: string;
@@ -153,6 +154,7 @@ export async function requestQuotesForEvent(eventId: string, vendorIds: string[]
 
   revalidatePath(`/dashboard/events/${eventId}`);
   if (sent === 0) return { error: skipped[0]?.reason ?? "Couldn't send any quote requests.", skipped };
+  await recordPlannerEvent("vendor_enquiry", { userId: user.id, eventId, detail: `board_${Math.min(sent, 9)}` });
   return { success: true, sent, skipped };
 }
 

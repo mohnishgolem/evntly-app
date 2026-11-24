@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PLAN_CONTEXT_COOKIE } from "@/lib/planner/context";
 import { Star, MapPin, ShieldCheck, Clock, Building2, Car, Check, ChevronDown, ChevronRight, MessageCircle } from "lucide-react";
 import { getVendorById, getVendorPackages, getVendorPortfolio, getVendorReviews, searchVendors } from "@/lib/data/vendors";
 import { formatAud } from "@/lib/payments/money";
@@ -121,13 +122,14 @@ export default async function VendorDetailPage({
   if (session?.user.email) {
     const supabase = await createClient();
     const [{ data: latestEvent }, { data: own }, { data: open }] = await Promise.all([
+      // The event they came from the planner for, if it's theirs; otherwise
+      // their most recently created one.
       supabase
         .from("events")
         .select("id")
         .eq("organiser_user_id", session.user.id)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(20),
       supabase.rpc("my_service_providers").select("id").eq("id", id).maybeSingle(),
       supabase
         .rpc("my_quote_requests", { as_role: "client" })
@@ -139,7 +141,8 @@ export default async function VendorDetailPage({
         .limit(1)
         .maybeSingle(),
     ]);
-    latestEventId = latestEvent?.id;
+    const planEvent = cookieStore.get(PLAN_CONTEXT_COOKIE)?.value;
+    latestEventId = (latestEvent ?? []).find((e) => e.id === planEvent)?.id ?? latestEvent?.[0]?.id;
     isOwnListing = !!own;
     if (open) openRequest = { id: open.id, status: open.status, eventDate: open.event_date };
   }

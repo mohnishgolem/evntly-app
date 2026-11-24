@@ -9,6 +9,7 @@ import { GUEST_BUCKETS, isLaunchCategory } from "@/lib/config";
 import { geocodeSuburb } from "@/lib/geocode";
 import { eventTimesSchema, shortTime } from "@/lib/event-times";
 import type { Database } from "@/lib/supabase/database.types";
+import { recordPlannerEvent } from "@/lib/planner/analytics";
 
 export type BoardActionState = { error?: string; success?: boolean } | null;
 
@@ -51,6 +52,8 @@ export async function setShortlisted(eventId: string, providerId: string, shortl
       .from("event_vendors")
       .upsert({ event_id: eventId, provider_id: providerId }, { onConflict: "event_id,provider_id", ignoreDuplicates: true });
     if (error) return { error: /not available/i.test(error.message) ? "That vendor isn't available." : "Couldn't shortlist this vendor." };
+    const { data: auth } = await supabase.auth.getUser();
+    await recordPlannerEvent("vendor_saved", { userId: auth.user?.id, eventId, detail: "shortlist" });
   } else {
     const { error } = await supabase.from("event_vendors").delete().eq("event_id", eventId).eq("provider_id", providerId);
     if (error) return { error: "Couldn't update your shortlist." };
