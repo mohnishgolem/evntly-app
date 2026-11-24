@@ -71,7 +71,7 @@ export function LegalDocumentView({ doc }: { doc: LegalDocument }) {
       </Link>
       <h1 className="text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">{doc.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Version {doc.version} · Last updated {formatVersion(doc.version)}
+        Version {doc.version} · Last updated {formatVersion(doc.lastUpdated ?? doc.version)}
       </p>
 
       {LEGAL_DRAFT && (

@@ -6,6 +6,9 @@ export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
   path: "/privacy-policy",
   version: LEGAL_VERSIONS.privacy_policy,
+  // 24 Nov 2026: event planner (planner activity, the plan cookie, guest
+  // drafts). Same purposes, no new third party: notice only, no re-acceptance.
+  lastUpdated: "2026-11-24",
   summary: "What personal information Evntly collects, why, who we share it with, and your choices and rights.",
   keyPoints: [
     "We collect what we need to run the marketplace: your account, events, listings, messages, quotes and bookings.",
@@ -45,6 +48,7 @@ export const privacyPolicy: LegalDocument = {
         {
           list: [
             "**Page views:** visits to a few key pages (home, Explore, vendor profiles, planning, vendor signup and bundles), linked to a random ID stored in your browser and, if you're signed in, to your account. On the Founding Vendor pages we also note which of our links brought you there (for example an Instagram post or one of our ads). We use the signed-in link to show your \"recently viewed\" vendors and to exclude our own staff's visits from our statistics. We don't record these visits if your browser sends a Do Not Track or Global Privacy Control signal.",
+            "**Planner activity:** when you use the event planner we record what happened (for example: you started a plan, saw your plan before creating an account, opened your plan, ticked a task, tapped a vendor suggestion, shortlisted a vendor or sent a quote request from your plan), when, which of your events it relates to, the same random browser ID used for page views and, if you're signed in, your account. We use this to understand which planning features help people and to improve them. It doesn't include what you wrote in your plan, and we don't share it with vendors or advertisers. We don't record it if your browser sends a Do Not Track or Global Privacy Control signal, and we delete it after 13 months.",
             "**Website analytics** from Vercel Analytics, which counts visits without cross-site tracking cookies.",
             "**Error reports:** when something breaks, the page, your browser and device type, technical details of the error and, if you're signed in, your account ID.",
             "**Network information:** your IP address (and, for sign-in attempts, the email address entered) is used to limit abuse, for example too many sign-in attempts. These counters are kept for 2 days and aren't stored with your account.",
@@ -141,7 +145,7 @@ export const privacyPolicy: LegalDocument = {
       id: "cookies",
       title: "8. Cookies and browser storage",
       blocks: [
-        "We use cookies that are strictly needed to keep you signed in and secure. In your browser's local storage we keep your light/dark theme choice and the random ID used for page-view counts. If you block cookies, you won't be able to sign in.",
+        "We use cookies that are needed to keep you signed in and secure, and one that helps the event planner work: when you leave your plan to look at vendors, `evntly_plan_event` remembers which of your events you're browsing for (for up to 7 days, or until you log out), so a quote request lands on the right event. It holds only the event's ID. In your browser's local storage we keep your light/dark theme choice, the random ID used for page-view counts and, if you start planning before creating an account, your plan draft until you save it. If you block cookies, you won't be able to sign in.",
         "**Ad measurement (Meta), only if you allow it.** We advertise to event businesses on Facebook and Instagram. When ad measurement is switched on, a banner asks whether you allow it, and nothing Meta-related loads until you press Allow. If you allow it, Meta's Pixel sets its own cookies (`_fbp`, and `_fbc` if you came from one of our ads) and tells Meta about page visits and, if you sign up as a Vendor and confirm your email, that a vendor registration happened. Our server sends the same registration to Meta (Conversions API) with your IP address, browser type and those Meta cookies, so Meta can match it to the ad. We never send your name, email address, phone number or account details. Meta uses this under its own privacy policy, including to measure and improve ads. If you press No thanks, or your browser sends Do Not Track or Global Privacy Control, none of this happens; choosing No thanks later also deletes Meta's cookies from our site. To change your mind at any time, use **Ad choices** at the bottom of any page: it stops Meta measurement straight away, deletes Meta's cookies from our site and asks again. We only report a vendor registration once, for a newly created account, when its email is first confirmed.",
       ],
     },
@@ -176,6 +180,7 @@ export const privacyPolicy: LegalDocument = {
           list: [
             "**Error reports:** deleted after 30 days.",
             "**Page-view records:** deleted after about 13 months.",
+            "**Planner activity records:** deleted after 13 months.",
             "**Vendor waitlist, help-request and ad sign-up form details:** kept for up to 12 months from when you gave them, unless you create an account (then the account rules apply). You can unsubscribe or ask us to delete them at any time.",
             "**Abuse-prevention counters** (including IP-based rate limits): deleted after 2 days.",
             "**Portfolio photos and videos:** deleted from storage when you delete them.",
