@@ -22,7 +22,7 @@ export function WaitlistForm({
   if (state?.success) {
     return (
       <p role="status" className="flex items-start gap-2.5 rounded-2xl bg-secondary p-5 text-[15px]">
-        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success-text" aria-hidden />
         {state.message}
       </p>
     );
@@ -81,7 +81,7 @@ export function WaitlistForm({
         </span>
       </label>
       {state?.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {state.error}
         </p>
       )}

@@ -76,7 +76,7 @@ function MessageForm({
   if (state?.success) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-primary" />
+        <CheckCircle2 className="h-8 w-8 text-primary-text" />
         <p className="font-medium">Message sent!</p>
         <p className="text-sm text-muted-foreground">They&apos;ll get back to you soon.</p>
         <Button variant="outline" onClick={onSent} className="mt-2">
@@ -94,7 +94,7 @@ function MessageForm({
         rows={5}
         required
       />
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      {state?.error && <p className="text-sm text-destructive-text">{state.error}</p>}
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Sending…" : "Send message"}
       </Button>

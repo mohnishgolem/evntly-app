@@ -56,13 +56,13 @@ function NavRail({ title, nav, unread, leads }: { title: string; nav: NavSetName
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                    active ? "bg-foreground/[0.07] text-primary" : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                    active ? "bg-foreground/[0.07] text-primary-text" : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                   )}
                 >
                   <span className="relative">
                     <Icon className="size-6" strokeWidth={active ? 2.2 : 1.75} aria-hidden />
                     {count > 0 && (
-                      <span className="absolute -top-1 -right-2.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[10px] leading-[18px] font-semibold text-primary-foreground">
+                      <span className="absolute -top-1 -right-2.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground">
                         {count > 99 ? "99+" : count}
                         <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                       </span>

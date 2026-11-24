@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     <div className="mx-auto flex max-w-sm flex-col justify-center px-4 py-16">
       <Link
         href="/login"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Back to login
       </Link>
@@ -39,11 +39,11 @@ export default function ForgotPasswordPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" placeholder="you@example.com" required />
             {state?.fieldErrors?.email && (
-              <p className="text-sm text-destructive">{state.fieldErrors.email[0]}</p>
+              <p className="text-sm text-destructive-text">{state.fieldErrors.email[0]}</p>
             )}
           </div>
 
-          {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+          {state?.error && <p className="text-sm text-destructive-text">{state.error}</p>}
 
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Sending…" : "Send reset link"}

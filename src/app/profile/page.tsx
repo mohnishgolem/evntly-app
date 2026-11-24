@@ -88,12 +88,12 @@ export default async function ProfilePage() {
           href="/dashboard/bookings"
           className="rounded-2xl bg-secondary p-4 transition-colors hover:bg-accent"
         >
-          <CalendarClock className="mb-2 size-5 text-primary" strokeWidth={1.75} />
+          <CalendarClock className="mb-2 size-5 text-primary-text" strokeWidth={1.75} />
           <p className="text-sm font-semibold">My Bookings</p>
           <p className="text-sm text-muted-foreground">{bookingsCount ?? 0} total</p>
         </Link>
         <Link href="/saved" className="rounded-2xl bg-secondary p-4 transition-colors hover:bg-accent">
-          <Heart className="mb-2 size-5 text-primary" strokeWidth={1.75} />
+          <Heart className="mb-2 size-5 text-primary-text" strokeWidth={1.75} />
           <p className="text-sm font-semibold">Saved Vendors</p>
           <p className="text-sm text-muted-foreground">{savedCount} saved</p>
         </Link>
@@ -141,7 +141,7 @@ export default async function ProfilePage() {
       <form action={logout} data-clear-app-cache className="overflow-hidden rounded-2xl bg-secondary">
         <button
           type="submit"
-          className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-destructive transition-colors hover:bg-accent"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-destructive-text transition-colors hover:bg-accent"
         >
           <LogOut className="size-5 shrink-0" strokeWidth={1.75} />
           <span className="flex-1">Log out</span>

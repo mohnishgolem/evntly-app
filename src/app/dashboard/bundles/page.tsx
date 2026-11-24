@@ -51,7 +51,7 @@ export default async function CustomerBundlesPage() {
           {bookings.map((b) => {
             const threadId = threadByBooking.get(b.id);
             return (
-              <div key={b.id} className="rounded-2xl border border-border p-5">
+              <div key={b.id} className="surface-raised rounded-card p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">{b.combined_package_name}</p>

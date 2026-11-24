@@ -109,7 +109,7 @@ export default async function MessageThreadPage({
         )}
       </div>
       {blockState === "i_blocked" && (
-        <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-border bg-secondary px-4 py-3 text-sm">
+        <div className="mb-4 flex items-center justify-between gap-4 surface-raised rounded-card bg-secondary px-4 py-3 text-sm">
           <p>
             You blocked {counterpartName}. Neither of you can send messages here, and they
             can&apos;t request quotes from you.

@@ -41,7 +41,7 @@ export default async function SecurityPage() {
       <div className="rounded-2xl bg-secondary p-5">
         {factor ? (
           <div className="flex items-start gap-3">
-            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" strokeWidth={1.75} />
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary-text" strokeWidth={1.75} />
             <div className="flex-1">
               <p className="font-semibold">Two-factor authentication is on</p>
               <p className="text-sm text-muted-foreground">

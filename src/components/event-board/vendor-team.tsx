@@ -93,20 +93,20 @@ export type TeamCategory = {
 };
 
 const STATUS_STYLE: Record<TeamStatus, string> = {
-  confirmed: "bg-success/10 text-success",
-  booked: "bg-champagne/15 text-warning",
-  quoted: "bg-primary/10 text-primary",
+  confirmed: "bg-success/10 text-success-text",
+  booked: "bg-champagne/15 text-warning-text",
+  quoted: "bg-primary/10 text-primary-text",
   requested: "bg-muted text-muted-foreground",
-  declined: "bg-destructive/10 text-destructive",
+  declined: "bg-destructive/10 text-destructive-text",
   shortlisted: "bg-foreground/[0.06] text-foreground",
   suggested: "",
 };
 
 const PAYMENT_TONE: Record<PaymentSummary["tone"], string> = {
   neutral: "text-muted-foreground",
-  attention: "text-warning",
-  active: "text-primary",
-  success: "text-success",
+  attention: "text-warning-text",
+  active: "text-primary-text",
+  success: "text-success-text",
 };
 
 const SUGGESTIONS_SHOWN = 3;
@@ -187,7 +187,7 @@ export function VendorTeam({
               <span
                 className={cn(
                   "flex size-12 shrink-0 items-center justify-center rounded-xl",
-                  done ? "bg-success/10 text-success" : "bg-muted text-foreground"
+                  done ? "bg-success/10 text-success-text" : "bg-muted text-foreground"
                 )}
               >
                 <Icon className="size-[22px]" aria-hidden />
@@ -337,7 +337,7 @@ function CategoryPanel({ eventId, category, readOnly }: { eventId: string; categ
 
 function VendorRow({ eventId, vendor: v, readOnly }: { eventId: string; vendor: TeamVendor; readOnly: boolean }) {
   return (
-    <li className="rounded-2xl border border-border bg-background p-3 transition-shadow hover:shadow-sm sm:p-4">
+    <li className="surface-raised rounded-card p-3 transition-shadow hover:shadow-sm sm:p-4">
       <div className="flex gap-3">
         <Link href={`/vendor/${v.id}`} className="relative shrink-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {v.avatarUrl ? (
@@ -421,14 +421,14 @@ function MatchSummary({ match: m }: { match: TeamMatch }) {
   return (
     <div className="mt-1.5 space-y-1 text-xs">
       <p className="flex flex-wrap items-center gap-1.5">
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">{m.score}% match</span>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary-text">{m.score}% match</span>
         {m.confirmed ? (
-          <span className="rounded-full bg-success/10 px-2 py-0.5 font-medium text-success">Calendar up to date</span>
+          <span className="rounded-full bg-success/10 px-2 py-0.5 font-medium text-success-text">Calendar up to date</span>
         ) : (
           <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground">Availability pending</span>
         )}
         {m.outsideUsualArea && (
-          <span className="rounded-full bg-champagne/15 px-2 py-0.5 font-medium text-warning">Outside usual area</span>
+          <span className="rounded-full bg-champagne/15 px-2 py-0.5 font-medium text-warning-text">Outside usual area</span>
         )}
       </p>
       {/* Two lines on phones; the full reason is in the details panel. */}
@@ -627,7 +627,7 @@ function RowActions({ eventId, vendor: v }: { eventId: string; vendor: TeamVendo
     <div className="mt-3 border-t border-border pt-3">
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
+        <p role="alert" className="mt-2 text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -706,7 +706,7 @@ function RequestQuotesSheet({
 
         {result?.success ? (
           <div className="space-y-3">
-            <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success">
+            <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success-text">
               Sent to {result.sent} {result.sent === 1 ? categoryLabel(category.service).toLowerCase() : plural}. Quotes will
               appear on your board.
             </p>
@@ -750,7 +750,7 @@ function RequestQuotesSheet({
             </ul>
             {result?.error && (
               <div className="space-y-2">
-                <p role="alert" className="text-sm text-destructive">
+                <p role="alert" className="text-sm text-destructive-text">
                   {result.error}
                 </p>
                 <SkippedList skipped={result.skipped} />
@@ -797,13 +797,13 @@ function CompareQuotesSheet({ category }: { category: TeamCategory }) {
         </SheetHeader>
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {category.quoted.map((q, i) => (
-            <li key={q.id} className="flex min-w-0 flex-col rounded-2xl border border-border p-4">
+            <li key={q.id} className="flex min-w-0 flex-col surface-raised rounded-card p-4">
               <div className="flex items-start justify-between gap-2">
-                <Link href={`/vendor/${q.vendor_id}`} className="font-semibold hover:underline">
+                <Link href={`/vendor/${q.vendor_id}`} className="inline-flex min-h-6 items-center font-semibold hover:underline">
                   {q.vendor_name}
                 </Link>
                 {i === 0 && n > 1 && (
-                  <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">Lowest</span>
+                  <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success-text">Lowest</span>
                 )}
               </div>
               <p className="mt-1 text-2xl font-semibold">{q.quoted_amount != null ? `$${Number(q.quoted_amount).toLocaleString("en-AU")}` : "—"}</p>
@@ -860,7 +860,7 @@ function BookQuoteButton({ quoteId, vendorName, amount }: { quoteId: string; ven
         </Button>
       )}
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -892,7 +892,7 @@ function InviteAnother({
         {next.match ? ` (${next.match.score}% match)` : ""} instead?
       </p>
       {error && (
-        <p role="alert" className="mt-1 text-destructive">
+        <p role="alert" className="mt-1 text-destructive-text">
           {error}
         </p>
       )}

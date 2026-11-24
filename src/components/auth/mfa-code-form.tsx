@@ -28,7 +28,7 @@ export function MfaCodeForm({ next }: { next: string }) {
           autoFocus
         />
       </div>
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      {state?.error && <p className="text-sm text-destructive-text">{state.error}</p>}
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Verifying…" : "Verify"}
       </Button>

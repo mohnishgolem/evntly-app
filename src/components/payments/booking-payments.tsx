@@ -48,10 +48,10 @@ export type PaymentEventView = { id: number; event: string; actor_role: string; 
 
 const TONE: Record<StageTone, string> = {
   neutral: "bg-muted text-muted-foreground",
-  active: "bg-primary/10 text-primary",
-  attention: "bg-warning/15 text-warning",
-  success: "bg-success/15 text-success",
-  danger: "bg-destructive/10 text-destructive",
+  active: "bg-primary/10 text-primary-text",
+  attention: "bg-warning/15 text-warning-text",
+  success: "bg-success/15 text-success-text",
+  danger: "bg-destructive/10 text-destructive-text",
 };
 
 const PLAN_TITLE: Record<string, string> = {
@@ -101,7 +101,7 @@ export function BookingPayments({
       </div>
 
       <p className="flex items-start gap-2 rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success-text" aria-hidden />
         {/* A plan from before online payments were switched off (e.g. a test
             booking) stays visible as a record, but nothing here can be paid. */}
         {paymentsEnabled ? (
@@ -119,7 +119,7 @@ export function BookingPayments({
 
       {!plan || editing || (role === "vendor" && plan.status === "changes_requested") ? (
         role === "vendor" && !closed ? (
-          <div className="rounded-2xl border border-border p-4 sm:p-5">
+          <div className="surface-raised rounded-card p-4 sm:p-5">
             {plan?.status === "changes_requested" && plan.change_note && (
               <p className="mb-4 rounded-xl bg-warning/10 px-3 py-2 text-sm">
                 <span className="font-medium">Customer asked:</span> {plan.change_note}
@@ -146,7 +146,7 @@ export function BookingPayments({
         <>
           {plan.status === "proposed" && role === "customer" && <PlanReview plan={plan} />}
           {plan.status === "proposed" && role === "vendor" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 surface-raised rounded-card px-4 py-3 text-sm">
               <span>Waiting for the customer to agree to this plan.</span>
               <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
                 Edit plan
@@ -154,7 +154,7 @@ export function BookingPayments({
             </div>
           )}
           {plan.status === "changes_requested" && role === "customer" && (
-            <p className="rounded-2xl border border-border px-4 py-3 text-sm text-muted-foreground">
+            <p className="surface-raised rounded-card px-4 py-3 text-sm text-muted-foreground">
               You asked for changes. The vendor will send an updated plan.
             </p>
           )}
@@ -228,7 +228,7 @@ function PlanReview({ plan }: { plan: PaymentPlanView }) {
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
+        <p role="alert" className="mt-2 text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -300,7 +300,7 @@ function MilestoneCard({
   }
 
   return (
-    <li className="rounded-2xl border border-border p-4 sm:p-5">
+    <li className="surface-raised rounded-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-semibold">{m.name}</p>
@@ -430,14 +430,14 @@ function MilestoneCard({
             </Button>
           )}
           {canDispute && (
-            <Button size="sm" variant="ghost" className="text-destructive" disabled={pending} onClick={() => setMode("dispute")}>
+            <Button size="sm" variant="ghost" className="text-destructive-text" disabled={pending} onClick={() => setMode("dispute")}>
               Report a problem
             </Button>
           )}
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
+        <p role="alert" className="mt-2 text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -447,7 +447,7 @@ function MilestoneCard({
 
 function Activity({ events }: { events: PaymentEventView[] }) {
   return (
-    <details className="rounded-2xl border border-border px-4 py-3">
+    <details className="surface-raised rounded-card px-4 py-3">
       <summary className="cursor-pointer text-sm font-medium">Payment history</summary>
       <ol className="mt-3 space-y-2">
         {events.map((e) => (

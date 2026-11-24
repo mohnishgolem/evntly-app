@@ -48,7 +48,7 @@ export function CreateBundleForm() {
   const canSubmit = name && Number(myPrice) > 0;
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border p-5">
+    <div className="space-y-4 surface-raised rounded-card p-5">
       <div className="space-y-1.5">
         <Label htmlFor="bundle-name">Bundle name</Label>
         <Input
@@ -79,7 +79,7 @@ export function CreateBundleForm() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="bundle-my-price">
-            Your price ($) <span className="text-destructive">*</span>
+            Your price ($) <span className="text-destructive-text">*</span>
           </Label>
           <Input
             id="bundle-my-price"
@@ -157,7 +157,7 @@ export function CreateBundleForm() {
         )}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-text">{error}</p>}
 
       <Button className="w-full" disabled={!canSubmit || pending} onClick={submit}>
         {pending ? "Creating…" : "Create bundle"}

@@ -59,7 +59,7 @@ export function DisputePanel({
       {past.length > 0 && (
         <ul className="space-y-2">
           {past.map((d) => (
-            <li key={d.id} className="rounded-2xl border border-border p-4 text-sm">
+            <li key={d.id} className="surface-raised rounded-card p-4 text-sm">
               <p className="font-medium">
                 {reasonLabel(d.reason)} · {DISPUTE_STATUS_LABEL[d.status]}
                 {d.outcome ? ` · ${outcomeLabel(d.outcome)}` : ""}
@@ -84,7 +84,7 @@ function OpenForm({ bookingId, role }: { bookingId: string; role: "customer" | "
 
   if (!open) {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-border p-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 surface-raised rounded-card p-4 sm:flex-row sm:items-center">
         <p className="flex-1 text-sm text-muted-foreground">
           Something gone wrong? Try messaging first — if you can&apos;t sort it out, Evntly can step in.
         </p>
@@ -106,7 +106,7 @@ function OpenForm({ bookingId, role }: { bookingId: string; role: "customer" | "
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border p-4 sm:p-5">
+    <form onSubmit={submit} className="space-y-4 surface-raised rounded-card p-4 sm:p-5">
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">What&apos;s the problem?</legend>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -153,7 +153,7 @@ function OpenForm({ bookingId, role }: { bookingId: string; role: "customer" | "
         <Textarea id="dispute-want" rows={2} maxLength={1000} value={desired} onChange={(e) => setDesired(e.target.value)} />
       </div>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {error}
         </p>
       )}
@@ -191,7 +191,7 @@ function LiveDispute({ dispute: d, readOnly }: { dispute: DisputeView; readOnly:
   return (
     <div className="space-y-4 rounded-2xl border border-champagne/50 bg-champagne/5 p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="rounded-full bg-champagne/15 px-2.5 py-0.5 font-medium text-warning">{DISPUTE_STATUS_LABEL[d.status]}</span>
+        <span className="rounded-full bg-champagne/15 px-2.5 py-0.5 font-medium text-warning-text">{DISPUTE_STATUS_LABEL[d.status]}</span>
         <span className="text-muted-foreground">
           {reasonLabel(d.reason)} · raised by {d.openedByMe ? "you" : `the ${d.opened_by_role}`} · {when(d.created_at)}
         </span>
@@ -238,7 +238,7 @@ function LiveDispute({ dispute: d, readOnly }: { dispute: DisputeView; readOnly:
             onChange={(e) => setBody(e.target.value)}
           />
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-text">
               {error}
             </p>
           )}

@@ -151,7 +151,7 @@ export function VendorQuoteResponse({ quoteId, estimatedHours }: { quoteId: stri
 
       <Textarea rows={2} placeholder="Message to the customer (optional)" value={form.note} onChange={set("note")} />
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive-text">
           {error}
         </p>
       )}

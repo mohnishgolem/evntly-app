@@ -94,7 +94,7 @@ export default async function DashboardPage() {
       </form>
 
       {eventsError ? (
-        <p className="mb-8 rounded-2xl border border-border px-4 py-4 text-sm text-muted-foreground">
+        <p className="mb-8 surface-raised rounded-card px-4 py-4 text-sm text-muted-foreground">
           We couldn&apos;t load your events just now. Refresh to try again.
         </p>
       ) : next && nextProgress ? (
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
           </h2>
           <Link
             href={`/dashboard/events/${next.id}`}
-            className="block rounded-2xl border border-border p-5 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+            className="block surface-raised rounded-card p-5 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -205,9 +205,9 @@ export default async function DashboardPage() {
 
       <Link
         href="/saved"
-        className="flex min-h-14 items-center gap-3 rounded-2xl border border-border px-4 py-3 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-h-14 items-center gap-3 surface-raised rounded-card px-4 py-3 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <Heart className="size-5 text-primary" strokeWidth={1.75} aria-hidden />
+        <Heart className="size-5 text-primary-text" strokeWidth={1.75} aria-hidden />
         <span className="flex-1">Saved vendors ({savedIds.size})</span>
         <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
       </Link>

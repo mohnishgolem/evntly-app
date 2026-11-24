@@ -57,7 +57,7 @@ export function SaveVendorButton({
       )}
     >
       <Heart
-        className={cn(size === "sm" ? "size-3.5" : "size-5", saved ? "fill-primary text-primary" : "text-muted-foreground")}
+        className={cn(size === "sm" ? "size-3.5" : "size-5", saved ? "fill-primary text-primary-text" : "text-muted-foreground")}
       />
     </button>
   );

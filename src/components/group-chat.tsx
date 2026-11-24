@@ -41,7 +41,7 @@ export function GroupChat({
   }
 
   return (
-    <div className="flex h-[70vh] flex-col rounded-2xl border border-border">
+    <div className="flex h-[70vh] flex-col surface-raised rounded-card">
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
@@ -90,7 +90,7 @@ export function GroupChat({
           <Send className="size-4" />
         </Button>
       </form>
-      {error && <p className="px-3 pb-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="px-3 pb-2 text-sm text-destructive-text">{error}</p>}
     </div>
   );
 }

@@ -59,7 +59,7 @@ export default async function LegalSettingsPage() {
 
       <Link
         href="/dashboard/settings/delete-account"
-        className="flex min-h-12 items-center rounded-2xl bg-secondary px-4 py-3 text-[15px] font-medium text-destructive hover:bg-accent"
+        className="flex min-h-12 items-center rounded-2xl bg-secondary px-4 py-3 text-[15px] font-medium text-destructive-text hover:bg-accent"
       >
         Delete account
       </Link>

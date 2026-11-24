@@ -38,7 +38,7 @@ export function ReportVendor({
         render={
           <button
             type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive-text"
           >
             <Flag className="size-3" /> Report this vendor
           </button>
@@ -79,7 +79,7 @@ function ReportForm({
   if (sent) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-primary" />
+        <CheckCircle2 className="h-8 w-8 text-primary-text" />
         <p className="font-medium">Report sent</p>
         <p className="text-sm text-muted-foreground">
           Thanks — our team will review this.
@@ -101,7 +101,7 @@ function ReportForm({
             onClick={() => setReason(r)}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               reason === r
-                ? "border-destructive bg-destructive/10 text-destructive"
+                ? "border-destructive bg-destructive/10 text-destructive-text"
                 : "border-border text-muted-foreground hover:border-foreground/30"
             }`}
           >
@@ -115,7 +115,7 @@ function ReportForm({
         value={details}
         onChange={(e) => setDetails(e.target.value)}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-text">{error}</p>}
       <Button
         variant="destructive"
         className="w-full"

@@ -30,7 +30,7 @@ export function ListingPauseToggle({ listingId, accepting }: { listingId: string
         {pending ? "Saving…" : accepting ? "Pause new requests" : "Resume requests"}
       </Button>
       {error && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-xs text-destructive-text">
           {error}
         </p>
       )}

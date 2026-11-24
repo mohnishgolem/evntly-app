@@ -49,7 +49,7 @@ export default async function MessagesPage() {
         {!threads || threads.length === 0 ? (
           <p className="text-sm text-muted-foreground">No conversations yet.</p>
         ) : (
-          <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+          <div className="divide-y divide-border overflow-hidden surface-raised rounded-card">
             {threads.map((t) => {
               // Same masking rule as the thread page: contact info in the
               // preview stays hidden until this vendor/customer pair has a

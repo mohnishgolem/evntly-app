@@ -33,7 +33,7 @@ export function DeleteAccountForm({ pendingSince }: { pendingSince: string | nul
           {formatSydneyLongDate(pendingSince)}. We&apos;ll
           email you when your account has been deleted.
         </p>
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive-text">{error}</p>}
         <Button variant="outline" size="lg" disabled={pending} onClick={() => run(cancelAccountDeletion)}>
           Cancel my request
         </Button>
@@ -53,7 +53,7 @@ export function DeleteAccountForm({ pendingSince }: { pendingSince: string | nul
           I understand my profile, events and any listing will be removed, and this can&apos;t be undone once completed.
         </Label>
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive-text">{error}</p>}
       <Button variant="destructive" size="lg" disabled={pending || !confirmed} onClick={() => run(() => requestAccountDeletion({ reason }))}>
         {pending ? "Sending…" : "Request account deletion"}
       </Button>

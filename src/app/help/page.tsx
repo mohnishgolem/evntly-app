@@ -62,7 +62,7 @@ export default async function HelpCentrePage() {
                 href={g.href}
                 className="group flex h-full items-start gap-4 rounded-2xl bg-secondary p-5 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary shadow-sm">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background text-primary-text shadow-sm">
                   <g.icon className="size-[22px]" strokeWidth={1.75} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export default async function HelpCentrePage() {
           ))}
         </ul>
 
-        <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-border p-5 sm:flex-row sm:items-center">
+        <div className="mt-3 flex flex-col gap-3 surface-raised rounded-card p-5 sm:flex-row sm:items-center">
           <Route className="size-6 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="font-semibold">New to Evntly?</p>

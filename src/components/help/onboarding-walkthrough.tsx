@@ -269,7 +269,7 @@ export function OnboardingWalkthrough({
           </div>
 
           <div className="mt-7 flex flex-col items-center text-center sm:mt-8">
-            <span className="flex size-16 items-center justify-center rounded-[20px] bg-highlight-light text-primary">
+            <span className="flex size-16 items-center justify-center rounded-[20px] bg-highlight-light text-primary-text">
               <step.icon className="size-8" strokeWidth={1.75} aria-hidden />
             </span>
             <Dialog.Title className="mt-5 text-[22px] leading-tight font-bold tracking-tight">{step.title}</Dialog.Title>
@@ -280,7 +280,7 @@ export function OnboardingWalkthrough({
               <Link
                 href={step.link.href}
                 onClick={() => finish(last ? "completed" : "skipped")}
-                className="mt-3 inline-flex min-h-11 items-center text-[15px] font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+                className="mt-3 inline-flex min-h-11 items-center text-[15px] font-medium text-primary-text underline-offset-4 outline-none hover:underline focus-visible:underline"
               >
                 {step.link.label}
               </Link>

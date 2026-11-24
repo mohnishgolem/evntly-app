@@ -58,7 +58,7 @@ export default async function BundleDetailPage({
         <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
           <Users className="h-5 w-5" /> Vendors in this bundle
         </h2>
-        <div className="divide-y divide-border rounded-2xl border border-border">
+        <div className="divide-y divide-border surface-raised rounded-card">
           {participants.map((p) => (
             <div key={p.id} className="flex items-center justify-between px-4 py-3">
               <span className="text-sm font-medium">{p.vendor_name ?? "Vendor"}</span>
@@ -68,7 +68,7 @@ export default async function BundleDetailPage({
         </div>
       </section>
 
-      <div className="mt-8 rounded-2xl border border-border p-5">
+      <div className="mt-8 surface-raised rounded-card p-5">
         <p className="mb-1 text-2xl font-bold">
           {formatAudDollars(price)}
           {!!pkg.bundle_discount_amount && (

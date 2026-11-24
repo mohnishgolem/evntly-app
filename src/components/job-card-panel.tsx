@@ -157,13 +157,13 @@ export function JobCardPanel({
           </p>
         )}
         {jobCard.status === "confirmed" && (
-          <span className="flex items-center gap-1 text-sm text-success">
+          <span className="flex items-center gap-1 text-sm text-success-text">
             <Check className="size-4" /> Confirmed
           </span>
         )}
       </div>
 
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive-text">{error}</p>}
 
       {checklist.length > 0 && (
         <ul className="mt-3 space-y-1.5">

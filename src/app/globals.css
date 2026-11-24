@@ -624,3 +624,12 @@
     backdrop-filter: none;
   }
 }
+
+/* Phase 6: coral text a touch darker so it stays above 4.5:1 on pale
+   coral tints and the grey active-item tint, not just on white. */
+:root {
+  --primary-text: #b53c27;
+}
+.dark {
+  --primary-text: #f2836d;
+}
