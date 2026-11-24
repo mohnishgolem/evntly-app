@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { searchVendors } from "@/lib/data/vendors";
 import { getCurrentUser } from "@/lib/data/user";
-import { PRICE_BUCKETS } from "@/lib/config";
+import { LAUNCH_CITY, PRICE_BUCKETS, categoryPlural, isLaunchCategory } from "@/lib/config";
 import { exploreMetadata } from "@/lib/seo";
 import { ExploreFilters } from "@/components/explore-filters";
 import { ExploreResults } from "@/components/explore-results";
@@ -42,12 +42,15 @@ export default async function ExplorePage({
       ? (await searchVendors({ category, eventType: event, minPrice, maxPrice })).slice(0, 10)
       : [];
 
+  const subject = category && isLaunchCategory(category) ? categoryPlural(category) : "event vendors";
+  const heading = `${subject.charAt(0).toUpperCase()}${subject.slice(1)} in ${LAUNCH_CITY}`;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-1 text-2xl font-bold">Explore vendors</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Browse every approved vendor on Evntly — no account needed.
-      </p>
+    <div className="mx-auto max-w-7xl px-4 pb-28 sm:px-6 md:pb-16 lg:px-8">
+      <div className="pt-6 pb-4 md:pt-8">
+        <h1 className="text-title">{heading}</h1>
+        <p className="mt-1.5 text-[15px] text-muted-foreground">Browse every approved vendor on Evntly — no account needed.</p>
+      </div>
 
       <ExploreFilters />
 
