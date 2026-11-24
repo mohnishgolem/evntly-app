@@ -10,6 +10,7 @@ describe("funnel page views", () => {
     expect(pageViewFor("/bundles/abc")).toEqual({ kind: "bundles" });
     expect(pageViewFor("/founding-vendors")).toEqual({ kind: "founding" });
     expect(pageViewFor("/founding-vendors/claim")).toEqual({ kind: "founding_claim" });
+    expect(pageViewFor("/vendor-dashboard/finish")).toEqual({ kind: "vendor_finish" });
     expect(pageViewFor("/vendor/4e3d8cbe-f7f1-4053-aa6f-bc838c990cd8")).toEqual({
       kind: "vendor",
       vendorId: "4e3d8cbe-f7f1-4053-aa6f-bc838c990cd8",

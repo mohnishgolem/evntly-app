@@ -122,6 +122,26 @@ export function foundingShareLink(source: FoundingSource, base = SITE_URL) {
 }
 
 /** True for paths under /founding-vendors — vendors signing up from there return to it. */
+/**
+ * Claim-page return links carry ?go=1: someone who tapped "Claim" and then
+ * signed up or logged in has already said yes, so the claim page claims for
+ * them and moves on to the listing form, instead of asking them to tap Claim
+ * a second time.
+ */
+export const AUTO_CLAIM_PARAM = "go";
+
+export function withAutoClaim(claimPath: string): string {
+  const [pathname, query = ""] = claimPath.split("?");
+  const params = new URLSearchParams(query);
+  params.set(AUTO_CLAIM_PARAM, "1");
+  return `${pathname}?${params}`;
+}
+
+export function wantsAutoClaim(params: Record<string, string | string[] | undefined>): boolean {
+  const value = params[AUTO_CLAIM_PARAM];
+  return (Array.isArray(value) ? value[0] : value) === "1";
+}
+
 export function isFoundingPath(path: string | null | undefined) {
   return !!path && (path === FOUNDING_PATH || path.startsWith(`${FOUNDING_PATH}/`) || path.startsWith(`${FOUNDING_PATH}?`));
 }

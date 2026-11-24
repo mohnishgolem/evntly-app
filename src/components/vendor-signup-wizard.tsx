@@ -255,7 +255,8 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
         <div className="space-y-3">
           <h1 className="mb-1 text-xl font-bold">Set your pricing</h1>
           <p className="mb-4 text-sm text-muted-foreground">
-            Pick what suits your business. You can change it any time.
+            Pick what suits your business. You can change it any time. Packages and photos come after you save,
+            and we can add them for you if you&apos;d rather.
           </p>
           <PricingFields
             idPrefix="signup"

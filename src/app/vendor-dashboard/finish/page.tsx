@@ -25,7 +25,7 @@ export default async function FinishListingPage() {
 
   const { data: listing, error: listingError } = await supabase
     .rpc("my_service_providers")
-    .select("id, name, status, hourly_rate, pricing_model, base_price, created_at")
+    .select("id, name, status, service_type, hourly_rate, pricing_model, base_price, created_at")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -91,6 +91,17 @@ export default async function FinishListingPage() {
         </p>
       )}
 
+      {/* Done-with-you, offered before the uploader rather than only below the
+          Submit button, where few vendors saw it. */}
+      {!complete && setupRequest?.status !== "open" && setupRequest?.status !== "ready" && (
+        <p className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl bg-secondary p-4 text-sm">
+          <span>Short on time? Send us your photos and your usual package, and we&apos;ll add them for you.</span>
+          <a href="#done-for-you" className="font-medium text-foreground underline underline-offset-2">
+            Show me how
+          </a>
+        </p>
+      )}
+
       <div className="space-y-6">
         <CompletionChecklist steps={isDraft ? steps : steps.filter((s) => s.key !== "submit")} />
 
@@ -105,7 +116,12 @@ export default async function FinishListingPage() {
           <h2 id="packages-heading" className="text-lg font-semibold">
             Packages
           </h2>
-          <PackageList listingId={listing.id} listing={listing} packages={(packages ?? []) as VendorPackageRow[]} />
+          <PackageList
+            listingId={listing.id}
+            listing={listing}
+            packages={(packages ?? []) as VendorPackageRow[]}
+            category={listing.service_type as string | null}
+          />
         </section>
 
         {isDraft && (
@@ -117,7 +133,12 @@ export default async function FinishListingPage() {
                 check.
               </p>
             ) : (
-              !complete && setupRequest?.status !== "ready" && <SetupRequestForm providerId={listing.id} />
+              !complete &&
+              setupRequest?.status !== "ready" && (
+                <div id="done-for-you" className="scroll-mt-24">
+                  <SetupRequestForm providerId={listing.id} />
+                </div>
+              )
             )}
           </>
         )}
@@ -142,7 +163,7 @@ function SendUsYourPhotos({ listingName }: { listingName: string }) {
     "Hi Evntly team,\n\nPlease add these to my listing. I'm happy for you to use the attached photos on my Evntly listing.\n\nMy usual package and price:\n\n"
   );
   return (
-    <section aria-labelledby="send-photos-heading" className="rounded-2xl border border-border p-5">
+    <section id="done-for-you" aria-labelledby="send-photos-heading" className="scroll-mt-24 rounded-2xl border border-border p-5">
       <h2 id="send-photos-heading" className="text-[17px] font-semibold">
         Rather we add them for you?
       </h2>

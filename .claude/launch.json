@@ -6,6 +6,21 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "evntly-isolated",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=isolated-no-database",
+        "SUPABASE_SERVICE_ROLE_KEY=",
+        "STRIPE_SECRET_KEY=sk_test_isolated",
+        "STRIPE_WEBHOOK_SECRET=whsec_isolated",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_isolated",
+        "VERCEL_OIDC_TOKEN=",
+        "npm", "run", "dev", "--", "-p", "3100"
+      ],
+      "port": 3100
     }
   ]
 }

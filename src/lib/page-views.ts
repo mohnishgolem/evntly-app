@@ -1,5 +1,16 @@
 // Pages counted for the admin funnel. Keep in sync with the page_views.kind check.
-export const PAGE_VIEW_KINDS = ["home", "explore", "vendor", "plan", "vendor_signup", "bundles", "founding", "founding_claim"] as const;
+export const PAGE_VIEW_KINDS = [
+  "home",
+  "explore",
+  "vendor",
+  "plan",
+  "vendor_signup",
+  "bundles",
+  "founding",
+  "founding_claim",
+  // Needs migration 20261127090000_vendor_onboarding_reminders.
+  "vendor_finish",
+] as const;
 export type PageViewKind = (typeof PAGE_VIEW_KINDS)[number];
 
 export function pageViewFor(pathname: string): { kind: PageViewKind; vendorId?: string } | null {
@@ -9,6 +20,7 @@ export function pageViewFor(pathname: string): { kind: PageViewKind; vendorId?: 
   if (pathname === "/vendor-signup") return { kind: "vendor_signup" };
   if (pathname === "/founding-vendors") return { kind: "founding" };
   if (pathname === "/founding-vendors/claim") return { kind: "founding_claim" };
+  if (pathname === "/vendor-dashboard/finish") return { kind: "vendor_finish" };
   if (pathname === "/bundles" || pathname.startsWith("/bundles/")) return { kind: "bundles" };
   const vendor = pathname.match(/^\/vendor\/([0-9a-f-]{36})$/);
   if (vendor) return { kind: "vendor", vendorId: vendor[1] };
