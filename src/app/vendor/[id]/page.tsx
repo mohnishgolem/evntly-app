@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Star, MapPin, ShieldCheck, Clock, Building2 } from "lucide-react";
-import { getVendorById, getVendorPackages, getVendorPortfolio, getVendorReviews } from "@/lib/data/vendors";
+import { getVendorById, getVendorPackages, getVendorPortfolio, getVendorReviews, searchVendors } from "@/lib/data/vendors";
 import { formatAud } from "@/lib/payments/money";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { categoryLabel, isLaunchCategory, LAUNCH_CITY } from "@/lib/config";
-import { absoluteUrl, breadcrumbJsonLd, categoryHeading, categoryPath, pageMetadata, vendorJsonLd } from "@/lib/seo";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  categoryHeading,
+  categoryPath,
+  metaDescription,
+  pageMetadata,
+  parseLocality,
+  serviceAreas,
+  vendorJsonLd,
+} from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { ContactVendor } from "@/components/contact-vendor";
 import { BookVendor, type OpenRequest } from "@/components/request-quote";
@@ -40,11 +50,15 @@ export async function generateMetadata({
   // Hidden sample listings 404 for the public; don't leak their name in the title.
   if (!vendor || (vendor.is_demo && sampleListingsHidden())) return {};
 
-  const city = vendor.city || LAUNCH_CITY;
-  const title = `${vendor.name} — ${categoryLabel(vendor.service_type)} in ${city}`;
-  const description =
+  // "Penrith", not "Penrith, NSW 2750" or a bare postcode.
+  const city = parseLocality(vendor.city).locality || LAUNCH_CITY;
+  const name = vendor.name.trim();
+  const title = `${name} — ${categoryLabel(vendor.service_type)} in ${city}`;
+  // Bios run to several paragraphs; Google shows about 155 characters.
+  const description = metaDescription(
     vendor.bio ||
-    `Book ${vendor.name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}${priceSummary(vendor) ? `, ${priceSummary(vendor)}` : ""} on Evntly.`;
+      `Book ${name}, a ${categoryLabel(vendor.service_type).toLowerCase()} in ${city}${priceSummary(vendor) ? `, ${priceSummary(vendor)}` : ""} on Evntly.`
+  );
   return {
     ...pageMetadata({ title, description, path: `/vendor/${id}`, socialTitle: title, type: "profile" }),
     // Sample listings aren't real businesses: keep them out of search.
@@ -82,13 +96,18 @@ export default async function VendorDetailPage({
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
 
-  const [portfolio, packages, reviews, session, payments] = await Promise.all([
+  const sameCategory = isLaunchCategory(vendor.service_type) ? vendor.service_type : null;
+  const [portfolio, packages, reviews, session, payments, peers] = await Promise.all([
     getVendorPortfolio(id),
     getVendorPackages(id),
     getVendorReviews(id),
     getCurrentUser(),
     getPaymentsStatus(),
+    sameCategory && !vendor.is_demo ? searchVendors({ category: sameCategory }) : Promise.resolve([]),
   ]);
+  // Other real listings in the same category, for "More DJs in Sydney".
+  const related = peers.filter((v) => v.id !== vendor.id && !v.is_demo).slice(0, 4);
+  const areas = serviceAreas(vendor.locations_serviced);
   // Hidden sample listings stay viewable by admins for internal testing.
   if (vendor.is_demo && sampleListingsHidden() && session?.profile?.role !== "admin") notFound();
 
@@ -237,6 +256,13 @@ export default async function VendorDetailPage({
             </div>
           )}
 
+          {areas.length > 0 && (
+            <section className="mb-6">
+              <h2 className="mb-2 text-sm font-semibold">Areas covered</h2>
+              <p className="text-sm text-muted-foreground">{areas.join(" · ")}</p>
+            </section>
+          )}
+
           {vendor.is_demo && (
             <p className="mb-6 rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-muted-foreground">
               This is a sample listing that shows how vendor profiles work on Evntly. It isn&apos;t a
@@ -353,6 +379,32 @@ export default async function VendorDetailPage({
               </div>
             )}
           </section>
+
+          {category && related.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-3 text-lg font-semibold">
+                More {categoryHeading(category)} in {LAUNCH_CITY}
+              </h2>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {related.map((v) => (
+                  <li key={v.id}>
+                    <Link
+                      href={`/vendor/${v.id}`}
+                      className="block rounded-xl border border-border/60 px-4 py-3 text-sm hover:border-primary/40"
+                    >
+                      <span className="font-medium text-foreground">{v.name.trim()}</span>
+                      {parseLocality(v.city).locality && (
+                        <span className="text-muted-foreground"> · {parseLocality(v.city).locality}</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link href={categoryPath(category)} className="mt-3 inline-block text-sm text-primary hover:underline">
+                See all {categoryHeading(category)} in {LAUNCH_CITY}
+              </Link>
+            </section>
+          )}
         </div>
 
         <div>
