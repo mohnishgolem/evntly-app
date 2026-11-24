@@ -148,10 +148,13 @@ export default async function FoundingVendorsPage({
   if (referral) claimQuery.set("ref", referral);
   if (campaign) claimQuery.set("utm_content", campaign);
   const claimPage = claimQuery.size ? `${CLAIM_PATH}?${claimQuery}` : CLAIM_PATH;
-  // Signed-out visitors go straight to the vendor sign-up form (it returns to
-  // the claim page afterwards); the claim page in between was an extra tap
-  // that most ad visitors never got past. Signed-in visitors claim directly.
-  const claimHref = session ? claimPage : `/signup?role=vendor&next=${encodeURIComponent(withAutoClaim(claimPage))}`;
+  // Signed-out visitors start building their listing straight away, with no
+  // account (/become-a-vendor/start). The link keeps this visit's source,
+  // referral and campaign tags (and <SourceCookie> below saves them too), so
+  // ads and DMs stay attributed; their founding place is claimed when they
+  // save the listing. Signed-in visitors claim directly, as before.
+  const builderQuery = claimQuery.size ? `?${claimQuery}` : "";
+  const claimHref = session ? claimPage : `/become-a-vendor/start${builderQuery}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
