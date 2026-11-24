@@ -94,21 +94,51 @@ const TEST_USER = {
 };
 const inDays = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const EVENT_ID = "22222222-2222-4222-8222-222222222222";
+const WEDDING_ID = "22222222-2222-4222-8222-222222222223";
+const CORPORATE_ID = "22222222-2222-4222-8222-222222222224";
+const PARTY_ID = "22222222-2222-4222-8222-222222222225";
+const EVENT_DEFAULTS = { organiser_user_id: TEST_USER.id, organiser_email: TEST_USER.email, status: "planning", created_at: now, notes: null, start_time: null, end_time: null, latitude: -33.87, longitude: 151.2, category_budgets: {}, planner_dismissed: [] };
+const BOOKING_DEFAULTS = { client_user_id: TEST_USER.id, created_at: now, updated_at: now, start_time: null, end_time: null, event_time: null, duration_hours: null, notes: null };
+const QUOTE_DEFAULTS = { client_user_id: TEST_USER.id, created_at: now, expires_at: new Date(Date.now() + 5 * 864e5).toISOString(), event_date: inDays(200), event_type: "Wedding", location: "Mosman", estimated_guests: "120", budget_range: null, vendor_note: null, booking_id: null, match_score: null };
 const store = {
   users: [{ id: TEST_USER.id, email: TEST_USER.email, full_name: "Test Customer", role: "customer", saved_providers: [], created_at: "2026-09-01T00:00:00.000Z", terms_accepted_at: now, privacy_accepted_at: now, terms_version: "2026-10-25", onboarding_completed_at: now }],
-  events: [{ id: EVENT_ID, organiser_user_id: TEST_USER.id, name: "Mia's 30th", event_type: "Birthday", event_date: inDays(40), suburb: "Bondi", guest_count: 60, budget: 6000, required_services: ["photographer", "dj", "florist"], status: "planning", created_at: now, notes: null, is_public: false }],
-  bookings: [{ id: "33333333-3333-4333-8333-333333333333", event_id: EVENT_ID, client_user_id: TEST_USER.id, provider_id: vendors[0].id, provider_name: vendors[0].name, service_type: "photographer", status: "confirmed", event_date: inDays(40), total_price: 1440, created_at: now }],
+  events: [
+    { ...EVENT_DEFAULTS, id: EVENT_ID, name: "Mia's 30th", event_type: "Birthday", event_date: inDays(40), suburb: "Bondi", guest_count: "60", budget_total: 6000, required_services: ["photographer", "dj", "florist"] },
+    // Planner scenarios (synthetic): a wedding mid-planning, a corporate
+    // event with every vendor confirmed, a party with nothing booked yet.
+    { ...EVENT_DEFAULTS, id: WEDDING_ID, name: "Sam & Priya's wedding", event_type: "Wedding", event_date: inDays(200), suburb: "Mosman", guest_count: "120", budget_total: 42000, required_services: ["photographer", "dj", "florist", "celebrant"], start_time: "15:00:00", end_time: "23:00:00", planner_dismissed: [] },
+    { ...EVENT_DEFAULTS, id: CORPORATE_ID, name: "Harbour team offsite", event_type: "Corporate", event_date: inDays(30), suburb: "Barangaroo", guest_count: "80", budget_total: 15000, required_services: ["caterer", "photographer", "mc"], start_time: "09:00:00", end_time: "17:00:00" },
+    { ...EVENT_DEFAULTS, id: PARTY_ID, name: null, event_type: "Party", event_date: inDays(15), suburb: "Newtown", guest_count: "40", budget_total: 2000, required_services: [] },
+  ],
+  bookings: [
+    { ...BOOKING_DEFAULTS, id: "33333333-3333-4333-8333-333333333333", event_id: EVENT_ID, provider_id: vendors[0].id, provider_name: vendors[0].name, service_type: "photographer", status: "confirmed", event_date: inDays(40), total_price: 1440 },
+    { ...BOOKING_DEFAULTS, id: "33333333-3333-4333-8333-333333333334", event_id: WEDDING_ID, provider_id: vendors[0].id, provider_name: vendors[0].name, service_type: "photographer", status: "confirmed", event_date: inDays(200), total_price: 4200, start_time: "14:00:00", end_time: "22:00:00" },
+    { ...BOOKING_DEFAULTS, id: "33333333-3333-4333-8333-333333333335", event_id: CORPORATE_ID, provider_id: vendors[4].id, provider_name: vendors[4].name, service_type: "caterer", status: "confirmed", event_date: inDays(30), total_price: 3800, start_time: "11:30:00" },
+    { ...BOOKING_DEFAULTS, id: "33333333-3333-4333-8333-333333333336", event_id: CORPORATE_ID, provider_id: vendors[0].id, provider_name: vendors[0].name, service_type: "photographer", status: "confirmed", event_date: inDays(30), total_price: 1200, start_time: "09:00:00" },
+    { ...BOOKING_DEFAULTS, id: "33333333-3333-4333-8333-333333333337", event_id: CORPORATE_ID, provider_id: vendors[9].id, provider_name: vendors[9].name, service_type: "mc", status: "confirmed", event_date: inDays(30), total_price: 900 },
+  ],
+  job_cards: [{ id: "jc-1", booking_id: "33333333-3333-4333-8333-333333333334", arrival_time: "13:30:00", status: "confirmed", event_date: inDays(200), service_type: "photographer", vendor_email: "x@example.test", created_at: now, updated_at: now }],
+  event_tasks: [
+    { id: "task-1", event_id: WEDDING_ID, owner_user_id: TEST_USER.id, owner_email: TEST_USER.email, title: "Guests arrive", kind: "schedule", due_date: inDays(200), due_time: "14:30:00", details: null, done: false, dismissed: false, position: 1, template_key: null, created_at: now },
+    { id: "task-2", event_id: WEDDING_ID, owner_user_id: TEST_USER.id, owner_email: TEST_USER.email, title: "Speeches", kind: "schedule", due_date: inDays(200), due_time: "19:30:00", details: "Best man, then parents", done: false, dismissed: false, position: 2, template_key: null, created_at: now },
+    { id: "task-3", event_id: WEDDING_ID, owner_user_id: TEST_USER.id, owner_email: TEST_USER.email, title: "Pay the photographer's deposit", kind: "reminder", due_date: inDays(21), due_time: null, details: null, done: false, dismissed: false, position: 3, template_key: null, created_at: now },
+    { id: "task-4", event_id: WEDDING_ID, owner_user_id: TEST_USER.id, owner_email: TEST_USER.email, title: "Song ideas for the entrance", kind: "note", due_date: null, due_time: null, details: "Something acoustic, not too slow", done: false, dismissed: false, position: 4, template_key: null, created_at: now },
+    { id: "task-5", event_id: WEDDING_ID, owner_user_id: TEST_USER.id, owner_email: TEST_USER.email, title: "Confirm your venue", kind: "task", due_date: null, due_time: null, details: null, done: true, dismissed: false, position: 5, template_key: "confirm_venue", created_at: now },
+  ],
+  quote_requests: [
+    { ...QUOTE_DEFAULTS, id: "q-1", event_id: WEDDING_ID, vendor_id: vendors[1].id, vendor_name: vendors[1].name, service_type: "dj", status: "pending", quoted_amount: null },
+    { ...QUOTE_DEFAULTS, id: "q-2", event_id: WEDDING_ID, vendor_id: vendors[7].id, vendor_name: vendors[7].name, service_type: "florist", status: "quoted", quoted_amount: 1850 },
+  ],
   page_views: [],
   event_vendors: [],
   messages: [],
   reviews: [],
   event_budget_items: [],
-  quote_requests: [],
 };
 const RPC = {
   my_unread_message_count: () => 2,
   my_conversations: () => [],
-  my_quote_requests: () => [],
+  my_quote_requests: () => store.quote_requests,
   booked_vendor_ids_on: () => [],
   my_service_providers: () => [],
   my_notification_preferences: () => [],
@@ -180,7 +210,7 @@ http
     if (url.pathname === "/auth/v1/.well-known/jwks.json") return send(200, { keys: [] });
     if (url.pathname.startsWith("/auth/")) return send(401, { message: "isolated: no auth" });
     if (url.pathname === "/__qa/token") return send(200, { access_token: testToken(), user: TEST_USER });
-    if (url.pathname === "/__qa/state") return send(200, { saved: store.users[0].saved_providers, page_views: store.page_views.length });
+    if (url.pathname === "/__qa/state") return send(200, { saved: store.users[0].saved_providers, page_views: store.page_views.length, event_tasks: store.event_tasks, planner_events: store.planner_events ?? [], events: store.events.map((e) => ({ id: e.id, planner_dismissed: e.planner_dismissed })) });
     if (url.pathname === "/rest/v1/service_providers") {
       const data = filterVendors(url.searchParams);
       const single = (req.headers.accept ?? "").includes("vnd.pgrst.object");
