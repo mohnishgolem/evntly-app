@@ -31,7 +31,7 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
         const status = effectiveQuoteStatus(q);
         const timeLeft = quoteTimeLeft(q);
         return (
-          <div key={q.id} className="rounded-2xl border border-border p-5">
+          <div key={q.id} className="surface-raised rounded-card p-5">
             {/* Phones: status on its own line above the details; wider: on the right. */}
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="min-w-0">
@@ -50,7 +50,7 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
                 {q.details && <p className="mt-1 text-sm">{q.details}</p>}
                 {q.match_score != null && (
                   <p className="mt-2 text-xs">
-                    <span className="mr-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                    <span className="mr-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary-text">
                       {q.match_score}% match
                     </span>
                     <span className="text-muted-foreground">{reasonForVendor(q.match_reason)}</span>
@@ -67,7 +67,7 @@ export function VendorQuoteCards({ quotes }: { quotes: VendorQuote[] }) {
                 className={cn(
                   "mt-2 text-xs",
                   quoteExpiresSoon(q)
-                    ? "font-medium text-warning"
+                    ? "font-medium text-warning-text"
                     : "text-muted-foreground",
                 )}
               >

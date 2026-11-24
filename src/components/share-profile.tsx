@@ -580,7 +580,7 @@ function OutcomeNote({
     <div role="status" className="space-y-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm">
       {done.length > 0 && (
         <p className="flex items-center gap-2 text-muted-foreground">
-          <Check className="size-4 shrink-0 text-success" aria-hidden />
+          <Check className="size-4 shrink-0 text-success-text" aria-hidden />
           {done.join(" · ")}
         </p>
       )}

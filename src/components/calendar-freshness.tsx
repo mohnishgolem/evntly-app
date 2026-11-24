@@ -53,13 +53,13 @@ export function CalendarFreshness({
         {stale.length ? (
           <>
             <p className="font-medium">Is your calendar up to date?</p>
-            <p className="text-muted-foreground">
+            <p className="text-foreground/75">
               Customers see you as &ldquo;availability pending&rdquo; until you confirm. Block any days you&apos;re busy, then
               confirm.
             </p>
           </>
         ) : (
-          <p className="text-muted-foreground">
+          <p className="text-foreground/75">
             Calendar confirmed {last ? formatSydneyDay(new Date(last).toISOString(), "") : ""}.
             Customers see you as available on free days.
           </p>

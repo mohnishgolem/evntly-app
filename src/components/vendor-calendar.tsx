@@ -180,7 +180,7 @@ export function VendorCalendar({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-border px-4 py-3">
+      <div className="flex items-center justify-between gap-4 surface-raised rounded-card px-4 py-3">
         <div>
           <p className="text-sm font-semibold">Taking new bookings</p>
           <p className="text-xs text-muted-foreground">
@@ -189,10 +189,10 @@ export function VendorCalendar({
               : "Paused — customers can't request new quotes until you turn this back on."}
           </p>
         </div>
-        <Switch checked={accepting} onCheckedChange={toggleAccepting} disabled={pending} />
+        <Switch checked={accepting} onCheckedChange={toggleAccepting} disabled={pending} aria-label="Taking new bookings" />
       </div>
 
-      <div className="rounded-2xl border border-border p-3 sm:p-4">
+      <div className="surface-raised rounded-card p-3 sm:p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{format(month, "MMMM yyyy")}</h2>
           <div className="flex items-center gap-1">
@@ -260,8 +260,10 @@ export function VendorCalendar({
                 aria-pressed={isSelected}
                 className={cn(
                   "relative flex aspect-square min-h-11 flex-col items-stretch rounded-xl p-1 text-left transition-colors sm:aspect-[4/3] sm:p-1.5",
-                  inMonth ? "text-foreground" : "text-muted-foreground/50",
-                  isPast && "opacity-50",
+                  // Past and other-month days stay readable (they're still
+                  // tappable to see past bookings): muted, not faded.
+                  inMonth && !isPast ? "text-foreground" : "text-muted-foreground",
+                  !inMonth && "font-normal",
                   isBlocked
                     ? "bg-[repeating-linear-gradient(135deg,var(--muted)_0_6px,transparent_6px_12px)]"
                     : isWeeklyOff
@@ -273,7 +275,7 @@ export function VendorCalendar({
                 <span
                   className={cn(
                     "flex size-6 items-center justify-center rounded-full text-xs font-semibold",
-                    isToday && "bg-primary text-primary-foreground"
+                    isToday && "bg-[#c2412c] text-white"
                   )}
                 >
                   {format(d, "d")}
@@ -322,7 +324,7 @@ export function VendorCalendar({
       </div>
 
       {selected && selectedDate && (
-        <div className="rounded-2xl border border-border p-4">
+        <div className="surface-raised rounded-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-semibold">{format(selectedDate, "EEEE d MMMM yyyy")}</p>
@@ -373,7 +375,7 @@ export function VendorCalendar({
         </div>
       )}
 
-      <div className="rounded-2xl border border-border p-4">
+      <div className="surface-raised rounded-card p-4">
         <p className="text-sm font-semibold">Days you never work</p>
         <p className="mb-3 text-xs text-muted-foreground">
           Customers can&apos;t request quotes for these days of the week.
@@ -411,7 +413,7 @@ export function VendorCalendar({
         {upcoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">No upcoming bookings for {listing.name}.</p>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+          <ul className="divide-y divide-border overflow-hidden surface-raised rounded-card">
             {upcoming.map((b) => (
               <li key={b.id}>
                 <button

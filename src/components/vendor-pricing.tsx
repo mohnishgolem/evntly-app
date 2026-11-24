@@ -112,7 +112,7 @@ export function ServiceAreaForm({
   const example = fee > 0 ? Math.max(0, 30 - free) * 2 * fee : 0;
 
   return (
-    <form onSubmit={save} className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <form onSubmit={save} className="space-y-4 surface-raised rounded-card p-4 sm:p-5">
       <div>
         <h3 className="font-semibold">Service area & travel</h3>
         <p className="text-sm text-muted-foreground">
@@ -163,7 +163,7 @@ export function ServiceAreaForm({
         Travel is charged each way.{" "}
         {fee > 0 ? `An event 30 km away adds ${dollars(Math.round(example * 100))} to the estimate.` : "No travel fee is set."}
       </p>
-      <label className="flex items-start justify-between gap-4 rounded-xl border border-border p-3">
+      <label className="flex items-start justify-between gap-4 surface-raised rounded-card p-3">
         <span>
           <span className="block text-sm font-medium">I travel to regional NSW</span>
           <span className="block text-xs text-muted-foreground">Match me with events up to 350 km away.</span>
@@ -182,7 +182,7 @@ export function ServiceAreaForm({
         <Button type="submit" size="lg" disabled={pending}>
           {pending && <Loader2 className="animate-spin" aria-hidden />} Save
         </Button>
-        {saved && !pending && <span className="text-sm text-success">Saved</span>}
+        {saved && !pending && <span className="text-sm text-success-text">Saved</span>}
       </div>
     </form>
   );
@@ -205,7 +205,7 @@ export function PackageList({
   const price = vendorPrice(listing);
   const templates = packages.length === 0 ? packageTemplatesFor(category) : [];
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <div className="space-y-3 surface-raised rounded-card p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="font-semibold">Packages</h3>
@@ -373,7 +373,7 @@ function PackageEditor({ listingId, pkg, template }: { listingId: string; pkg?: 
             <Label htmlFor={id("desc")}>Description (optional)</Label>
             <Textarea id={id("desc")} rows={3} maxLength={1000} {...field("description")} />
           </div>
-          <label className="flex items-center justify-between gap-4 rounded-xl border border-border p-3 text-sm font-medium">
+          <label className="flex items-center justify-between gap-4 surface-raised rounded-card p-3 text-sm font-medium">
             Show to customers
             <Switch checked={form.active} onCheckedChange={(v) => setForm((f) => ({ ...f, active: v }))} />
           </label>

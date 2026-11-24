@@ -15,9 +15,9 @@ const aud = (n: number) =>
   n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  completed: { label: "Earned", className: "text-success" },
-  confirmed: { label: "Confirmed", className: "text-primary" },
-  pending: { label: "Awaiting confirmation", className: "text-warning" },
+  completed: { label: "Earned", className: "text-success-text" },
+  confirmed: { label: "Confirmed", className: "text-primary-text" },
+  pending: { label: "Awaiting confirmation", className: "text-warning-text" },
 };
 
 // Months shown: the last 9, this one, and the next 2.
@@ -116,7 +116,7 @@ export default async function VendorEarningsPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold">Bookings</h2>
-            <div className="overflow-hidden rounded-2xl border border-border">
+            <div className="overflow-hidden surface-raised rounded-card">
               <table className="w-full text-left text-sm">
                 <thead className="bg-muted/50 text-xs text-muted-foreground">
                   <tr>
@@ -166,7 +166,7 @@ export default async function VendorEarningsPage() {
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border p-4">
+    <div className="surface-raised rounded-card p-4">
       <p className="text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}

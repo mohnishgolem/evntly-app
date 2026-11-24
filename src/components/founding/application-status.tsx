@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const STATUS: Record<FoundingApplicationStatus, { label: string; tone: string }> = {
   started: { label: "Not submitted yet", tone: "bg-muted text-muted-foreground" },
-  submitted: { label: "Pending", tone: "bg-warning/15 text-warning" },
-  approved: { label: "Approved", tone: "bg-success/15 text-success" },
-  needs_changes: { label: "Needs changes", tone: "bg-primary/10 text-primary" },
+  submitted: { label: "Pending", tone: "bg-warning/15 text-warning-text" },
+  approved: { label: "Approved", tone: "bg-success/15 text-success-text" },
+  needs_changes: { label: "Needs changes", tone: "bg-primary/10 text-primary-text" },
   rejected: { label: "Not approved", tone: "bg-muted text-muted-foreground" },
   withdrawn: { label: "Withdrawn", tone: "bg-muted text-muted-foreground" },
 };
@@ -96,7 +96,7 @@ export function ApplicationStatusView({
       {application.status === "approved" && (
         <div className="mb-6 rounded-2xl border border-success/40 bg-success/5 p-5">
           <p className="flex items-center gap-2 font-semibold">
-            <PartyPopper className="size-5 text-success" aria-hidden /> Welcome to the founding vendor beta!
+            <PartyPopper className="size-5 text-success-text" aria-hidden /> Welcome to the founding vendor beta!
           </p>
           <p className="mt-1 text-sm text-muted-foreground">Your listing is live. Your beta checklist and feedback form are on your dashboard.</p>
           <Button className="mt-4" size="lg" nativeButton={false} render={<Link href="/vendor-dashboard/beta">Open my beta checklist</Link>} />
@@ -105,7 +105,7 @@ export function ApplicationStatusView({
       {application.status === "needs_changes" && (
         <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/5 p-5">
           <p className="flex items-center gap-2 font-semibold">
-            <PencilLine className="size-5 text-primary" aria-hidden /> A few changes needed
+            <PencilLine className="size-5 text-primary-text" aria-hidden /> A few changes needed
           </p>
           {application.admin_note && <p className="mt-2 text-sm whitespace-pre-wrap">{application.admin_note}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
@@ -122,7 +122,7 @@ export function ApplicationStatusView({
         </p>
       )}
       {application.status === "rejected" && (
-        <p className="mb-6 flex gap-2.5 rounded-2xl border border-border p-4 text-sm">
+        <p className="mb-6 flex gap-2.5 surface-raised rounded-card p-4 text-sm">
           <XCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <span>
             We couldn&apos;t offer you a founding place this time.
@@ -131,25 +131,25 @@ export function ApplicationStatusView({
         </p>
       )}
       {application.status === "withdrawn" && (
-        <div className="mb-6 rounded-2xl border border-border p-4 text-sm">
+        <div className="mb-6 surface-raised rounded-card p-4 text-sm">
           <p className="mb-3">You withdrew your application.</p>
           <ApplicationAction action="rejoin" label="Rejoin the beta" variant="outline" />
         </div>
       )}
 
-      <ol className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+      <ol className="divide-y divide-border overflow-hidden surface-raised rounded-card">
         {steps.map((step) => (
           <li key={step.label}>
             {step.href ? (
               <Link href={step.href} className="flex min-h-12 items-center gap-3 px-4 py-3 text-sm font-medium outline-none hover:bg-muted/60 focus-visible:bg-muted/60">
-                <Circle className="size-5 shrink-0 text-primary" aria-hidden />
+                <Circle className="size-5 shrink-0 text-primary-text" aria-hidden />
                 <span className="flex-1">{step.label}</span>
                 <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
               </Link>
             ) : (
               <span className={cn("flex min-h-12 items-center gap-3 px-4 py-3 text-sm", !step.done && "text-muted-foreground")}>
                 {step.done ? (
-                  <CheckCircle2 className="size-5 shrink-0 text-success" aria-hidden />
+                  <CheckCircle2 className="size-5 shrink-0 text-success-text" aria-hidden />
                 ) : (
                   <Circle className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                 )}

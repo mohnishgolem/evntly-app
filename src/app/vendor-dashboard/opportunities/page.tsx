@@ -40,7 +40,7 @@ export default async function SmartOpportunitiesPage() {
           ["Quotes booked", pct(stats.conversionRate)],
           ["Booked value", `$${stats.bookedValue.toLocaleString("en-AU", { maximumFractionDigits: 0 })}`],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-border p-4">
+          <div key={label} className="surface-raised rounded-card p-4">
             <dt className="text-xs text-muted-foreground">{label}</dt>
             <dd className="mt-1 text-xl font-semibold">{value}</dd>
           </div>

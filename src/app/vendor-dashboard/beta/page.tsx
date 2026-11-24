@@ -62,7 +62,7 @@ export default async function VendorBetaPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6 rounded-2xl border border-success/40 bg-success/5 p-5">
         <p className="flex items-center gap-2 text-lg font-semibold">
-          <PartyPopper className="size-5 text-success" aria-hidden /> Welcome, founding vendor!
+          <PartyPopper className="size-5 text-success-text" aria-hidden /> Welcome, founding vendor!
         </p>
         <p className="mt-1 text-[15px] text-muted-foreground">
           Thanks for helping us build Evntly. Your listing is live. Use the checklist below to try the main tools, and tell us
@@ -75,12 +75,12 @@ export default async function VendorBetaPage() {
         <h2 id="checklist" className="mb-3 text-lg font-semibold">
           Your beta checklist
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+        <ul className="divide-y divide-border overflow-hidden surface-raised rounded-card">
           {checklist.map((item) => (
             <li key={item.label}>
               <Link href={item.href} className="flex min-h-12 items-center gap-3 px-4 py-3 text-sm outline-none hover:bg-muted/60 focus-visible:bg-muted/60">
                 {item.done ? (
-                  <CheckCircle2 className="size-5 shrink-0 text-success" aria-hidden />
+                  <CheckCircle2 className="size-5 shrink-0 text-success-text" aria-hidden />
                 ) : (
                   <Circle className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                 )}
@@ -118,7 +118,7 @@ export default async function VendorBetaPage() {
           <h2 id="sent-heading" className="mb-3 text-lg font-semibold">
             What you&apos;ve sent
           </h2>
-          <ul className="divide-y divide-border rounded-2xl border border-border">
+          <ul className="divide-y divide-border surface-raised rounded-card">
             {myFeedback.map((f) => (
               <li key={f.id} className="px-4 py-3 text-sm">
                 <span className="mb-1 block text-xs text-muted-foreground">
