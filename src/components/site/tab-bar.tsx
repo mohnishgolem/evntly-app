@@ -47,7 +47,7 @@ export function TabBar({
                   <span className={cn("relative flex h-8 w-12 items-center justify-center rounded-full transition-[background-color,box-shadow] duration-200 ease-standard", active && "surface-pressed")}>
                     <Icon className="size-[22px] transition-transform duration-200 ease-standard group-active:scale-90" strokeWidth={active ? 2.2 : 1.75} aria-hidden />
                     {badge > 0 && (
-                      <span className="absolute -top-0.5 right-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[10px] leading-[18px] font-semibold text-primary-foreground">
+                      <span className="absolute -top-0.5 right-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground">
                         {badge > 99 ? "99+" : badge}
                         <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                       </span>

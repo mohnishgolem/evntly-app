@@ -158,7 +158,7 @@ export default async function FoundingVendorsPage({
       <SourceCookie source={source} referral={referral} campaign={campaign} />
 
       <header className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-semibold tracking-wide text-primary uppercase">
+        <p className="text-sm font-semibold tracking-wide text-primary-text uppercase">
           {variant?.eyebrow ?? `Founding Vendors · ${LAUNCH_CITY}`}
         </p>
         <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight text-balance sm:text-[48px]">
