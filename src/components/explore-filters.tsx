@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { PartyPopper, Search, SlidersHorizontal, X } from "lucide-react";
+import { LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LAUNCH_CATEGORIES, VENDOR_CATEGORIES, EVENT_TYPES, PRICE_BUCKETS } from "@/lib/config";
 import { useSheetSide } from "@/lib/use-sheet-side";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { CategoryArt } from "@/components/category-art";
 
 const categories = VENDOR_CATEGORIES.filter((c) => LAUNCH_CATEGORIES.includes(c.value));
 
@@ -58,7 +59,7 @@ export function ExploreFilters() {
   const priceLabel = PRICE_BUCKETS.find((b) => b.value === price)?.label;
 
   return (
-    <div className="glass-material sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 border-b border-border/60 px-4 pt-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-30 -mx-4 border-b border-border/60 bg-canvas/85 px-4 pt-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="flex items-center gap-2">
         <form
           role="search"
@@ -66,7 +67,7 @@ export function ExploreFilters() {
             e.preventDefault();
             setParams({ q: draftQ.trim() });
           }}
-          className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-background py-1.5 pr-1.5 pl-5 shadow-card transition-shadow focus-within:shadow-search md:max-w-lg"
+          className="surface-float flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full py-1.5 pr-1.5 pl-5 md:max-w-lg"
         >
           <input
             value={draftQ}
@@ -80,7 +81,7 @@ export function ExploreFilters() {
           <button
             type="submit"
             aria-label="Search"
-            className="press flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover"
+            className="btn-coral flex size-9 shrink-0 items-center justify-center rounded-full"
           >
             <Search className="size-4" strokeWidth={2.25} />
           </button>
@@ -98,8 +99,8 @@ export function ExploreFilters() {
               <button
                 type="button"
                 className={cn(
-                  "press relative flex h-12 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors",
-                  activeCount ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:bg-muted"
+                  "relative flex h-12 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold",
+                  activeCount ? "surface-pressed text-foreground ring-1 ring-primary/40" : "btn-raised"
                 )}
               />
             }
@@ -159,7 +160,7 @@ export function ExploreFilters() {
                   setParams({ event: draftRef.current.event, price: draftRef.current.price });
                   setOpen(false);
                 }}
-                className="press h-12 rounded-full bg-foreground px-7 text-[15px] font-semibold text-background"
+                className="btn-coral h-12 rounded-full px-7 text-[15px] font-semibold"
               >
                 Show vendors
               </button>
@@ -169,10 +170,10 @@ export function ExploreFilters() {
       </div>
 
       {/* Category tabs: icon over label, underline on the selected one. */}
-      <nav aria-label="Categories" className="scrollbar-hide -mx-4 mt-3 flex gap-7 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 sm:mx-0 sm:px-0">
-        <CategoryTab selected={!category} onClick={() => setParams({ category: "" })} icon={PartyPopper} label="All" />
+      <nav aria-label="Categories" className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pt-0.5 pb-3 sm:mx-0 sm:px-0">
+        <CategoryTab selected={!category} onClick={() => setParams({ category: "" })} label="All" />
         {categories.map((c) => (
-          <CategoryTab key={c.value} selected={category === c.value} onClick={() => setParams({ category: c.value })} icon={c.icon} label={c.label} />
+          <CategoryTab key={c.value} selected={category === c.value} onClick={() => setParams({ category: c.value })} value={c.value} label={c.label} />
         ))}
       </nav>
 
@@ -187,19 +188,25 @@ export function ExploreFilters() {
   );
 }
 
-function CategoryTab({ selected, onClick, icon: Icon, label }: { selected: boolean; onClick: () => void; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; label: string }) {
+// A raised button with the category's 3D illustration; the selected one is
+// pressed into the bar.
+function CategoryTab({ selected, onClick, value, label }: { selected: boolean; onClick: () => void; value?: string; label: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "flex shrink-0 flex-col items-center gap-1.5 border-b-2 pt-1 pb-2.5 transition-colors duration-200 ease-standard",
-        selected ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+        "flex h-[5.25rem] w-[6.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-tile px-1.5 text-center",
+        selected ? "surface-pressed text-foreground" : "btn-raised text-muted-foreground hover:text-foreground"
       )}
     >
-      <Icon className="size-6" strokeWidth={selected ? 2 : 1.6} />
-      <span className="text-xs font-semibold whitespace-nowrap">{label}</span>
+      {value ? (
+        <CategoryArt value={value} eager className={cn("size-9 transition-transform duration-200 ease-standard", selected ? "scale-95" : "drop-shadow-[0_3px_3px_rgba(28,25,23,0.16)]")} />
+      ) : (
+        <LayoutGrid className="size-9 p-1.5" strokeWidth={1.6} aria-hidden />
+      )}
+      <span className="line-clamp-2 text-[11.5px] leading-tight font-semibold">{label}</span>
     </button>
   );
 }
@@ -221,8 +228,8 @@ function Choice({ selected, onClick, children }: { selected: boolean; onClick: (
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "press h-10 rounded-full border px-4 text-sm font-medium transition-colors",
-        selected ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground/50"
+        "h-10 rounded-full px-4 text-sm font-medium",
+        selected ? "surface-pressed font-semibold text-foreground ring-1 ring-primary/40" : "btn-raised"
       )}
     >
       {children}
@@ -236,7 +243,7 @@ function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }
       type="button"
       onClick={onRemove}
       aria-label={`Remove filter ${label}`}
-      className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-secondary pr-2.5 pl-3.5 text-[13px] font-medium"
+      className="btn-raised flex h-8 shrink-0 items-center gap-1.5 rounded-full pr-2.5 pl-3.5 text-[13px] font-medium"
     >
       {label}
       <X className="size-3.5 text-muted-foreground" aria-hidden />

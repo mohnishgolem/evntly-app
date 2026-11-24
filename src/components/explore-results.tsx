@@ -60,7 +60,7 @@ export function ExploreResults({
   if (vendors.length === 0 && fallback.length > 0) {
     return (
       <div className="mt-6">
-        <div className="mb-6 rounded-3xl bg-secondary p-5">
+        <div className="surface-raised mb-6 rounded-card p-5">
           <p className="font-semibold">No vendors list “{searchParams.get("q")}” yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Most vendors travel across Sydney — check their service area, or{" "}
@@ -101,7 +101,7 @@ export function ExploreResults({
           <span className="text-foreground tabular-nums">{vendors.length}</span> vendor{vendors.length === 1 ? "" : "s"}
         </p>
         <div className="flex items-center gap-2">
-          <label className="flex h-10 items-center gap-1.5 rounded-full border border-border bg-background pr-2 pl-4 text-sm">
+          <label className="btn-raised flex h-10 items-center gap-1.5 rounded-full pr-2 pl-4 text-sm">
             <span className="text-muted-foreground">Sort</span>
             <select
               value={sort}
@@ -117,7 +117,7 @@ export function ExploreResults({
             </select>
           </label>
           {/* Desktop toggle; phones get the floating button below. */}
-          <div className="hidden items-center rounded-full border border-border p-1 md:flex" role="group" aria-label="View">
+          <div className="surface-pressed hidden items-center rounded-full p-1 md:flex" role="group" aria-label="View">
             <ViewButton active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
             <ViewButton active={view === "map"} onClick={() => setView("map")} icon={MapIcon} label="Map" />
           </div>
@@ -131,7 +131,7 @@ export function ExploreResults({
           ))}
         </div>
       ) : (
-        <div className="h-[calc(100dvh-15rem)] min-h-[440px] overflow-hidden rounded-[1.75rem] border border-border shadow-card">
+        <div className="surface-raised h-[calc(100dvh-15rem)] min-h-[440px] overflow-hidden rounded-[1.75rem]">
           <VendorMapLoader vendors={sorted} />
         </div>
       )}
@@ -140,7 +140,7 @@ export function ExploreResults({
       <button
         type="button"
         onClick={() => setView(view === "list" ? "map" : "list")}
-        className="press fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-raised md:hidden print:hidden"
+        className="press fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
       >
         {view === "list" ? <MapIcon className="size-4" aria-hidden /> : <List className="size-4" aria-hidden />}
         {view === "list" ? "Map" : "List"}
@@ -157,7 +157,7 @@ function ViewButton({ active, onClick, icon: Icon, label }: { active: boolean; o
       aria-pressed={active}
       className={cn(
         "flex h-8 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition-colors",
-        active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+        active ? "btn-raised text-foreground" : "text-muted-foreground hover:text-foreground"
       )}
     >
       <Icon className="size-3.5" aria-hidden /> {label}

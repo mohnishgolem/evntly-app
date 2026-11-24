@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Star, ShieldCheck } from "lucide-react";
-import { categoryLabel, categoryIcon, SITE_URL } from "@/lib/config";
+import { categoryLabel, SITE_URL } from "@/lib/config";
+import { CategoryArt } from "@/components/category-art";
 import { FoundingBadge } from "@/components/founding-badge";
 import { SampleBadge } from "@/components/sample-badge";
 import { SaveVendorButton } from "@/components/save-vendor-button";
@@ -29,14 +30,14 @@ export function VendorCard({
   /** Eager-load the photo (first cards above the fold). */
   priority?: boolean;
 }) {
-  const CategoryIcon = categoryIcon(vendor.service_type);
   const price = vendorPrice(vendor);
   const cover = listingCoverUrl(vendor, 600);
-  const frosted = "bg-background/85 shadow-none backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10";
+  const frosted = "bg-background/85 shadow-[var(--shadow-raised-sm)] backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10";
 
   return (
-    <Link href={`/vendor/${vendor.id}`} className={cn("group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring", className)}>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted sm:aspect-square">
+    <Link href={`/vendor/${vendor.id}`} className={cn("group block rounded-card outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-canvas", className)}>
+      {/* The photo is the card: a raised, rounded surface that lifts on hover. */}
+      <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-muted shadow-[var(--shadow-surface)] ring-1 ring-black/[0.04] transition-[transform,box-shadow] duration-300 ease-standard sm:aspect-square dark:ring-white/[0.06] [@media(hover:hover)]:group-hover:-translate-y-0.5 [@media(hover:hover)]:group-hover:shadow-[var(--shadow-surface-hover)]">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -44,14 +45,11 @@ export function VendorCard({
             alt={vendor.name}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 ease-standard group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition-transform duration-500 ease-standard group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-b from-secondary to-muted">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-background shadow-card">
-              {/* eslint-disable-next-line react-hooks/static-components -- categoryIcon returns a stateless lucide icon, not a dynamically-defined component */}
-              <CategoryIcon className="size-7 text-foreground/70" strokeWidth={1.75} />
-            </span>
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 [background:var(--gradient-tile)]">
+            <CategoryArt value={vendor.service_type} className="size-24 drop-shadow-[0_8px_8px_rgba(28,25,23,0.18)]" />
             <span className="text-xs font-medium text-muted-foreground">{categoryLabel(vendor.service_type)}</span>
           </div>
         )}

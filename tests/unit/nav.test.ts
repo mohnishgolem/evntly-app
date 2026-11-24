@@ -6,6 +6,8 @@ import {
   CUSTOMER_BOOKINGS_TABS,
   CUSTOMER_EVENTS_TABS,
   CUSTOMER_NAV,
+  CUSTOMER_TAB_NAV,
+  GUEST_TAB_NAV,
   VENDOR_BOOKINGS_TABS,
   VENDOR_LEADS_TABS,
   VENDOR_LISTINGS_TABS,
@@ -190,5 +192,54 @@ describe("vendor navigation", () => {
     expect(CUSTOMER_NAV.map((i) => i.label)).toEqual(["Home", "Explore", "My Events", "Bookings", "Profile"]);
     expect(drawerSections("admin")[0].items).toBe(ADMIN_NAV);
     expect(hrefs("customer").some((h) => h.startsWith("/vendor-dashboard"))).toBe(false);
+  });
+});
+
+describe("phone tab bars", () => {
+  it("customers get Explore, Saved, Events, Messages, Profile", () => {
+    expect(CUSTOMER_TAB_NAV.map((i) => i.label)).toEqual(["Explore", "Saved", "Events", "Messages", "Profile"]);
+    expect(CUSTOMER_TAB_NAV.find((i) => i.label === "Messages")?.badge).toBe("unread");
+  });
+
+  it("guests get the same five places, with account tabs going through sign-in", () => {
+    expect(GUEST_TAB_NAV.map((i) => i.label)).toEqual(["Explore", "Saved", "Events", "Messages", "Log in"]);
+    expect(GUEST_TAB_NAV.find((i) => i.label === "Saved")?.href).toBe("/login?next=/saved");
+    expect(GUEST_TAB_NAV.find((i) => i.label === "Messages")?.href).toBe("/login?next=/messages");
+  });
+
+  it.each([...new Set([...CUSTOMER_TAB_NAV, ...GUEST_TAB_NAV].map((i) => i.href.split("?")[0]))])("%s has a page", (href) => {
+    const page = (dir: string) => existsSync(join(process.cwd(), dir, href, "page.tsx"));
+    expect(page("src/app") || page("src/app/(auth)")).toBe(true);
+  });
+
+  it.each([
+    ["/", "/"],
+    ["/explore", "/"],
+    ["/vendor/v1", "/"],
+    ["/sydney/photographers", "/"],
+    ["/saved", "/saved"],
+    ["/dashboard", "/dashboard"],
+    ["/dashboard/events/e1", "/dashboard"],
+    ["/dashboard/quotes", "/dashboard"],
+    ["/dashboard/bookings", "/dashboard"],
+    ["/bookings/b1", "/dashboard"],
+    ["/plan", "/dashboard"],
+    ["/messages", "/messages"],
+    ["/messages/c1", "/messages"],
+    ["/profile", "/profile"],
+    ["/dashboard/settings", "/profile"],
+  ])("customer: %s lights %s", (path, tab) => {
+    expect(activeHref(path, CUSTOMER_TAB_NAV)).toBe(tab);
+  });
+
+  it.each([
+    ["/", "/"],
+    ["/explore", "/"],
+    ["/saved", "/login?next=/saved"],
+    ["/plan", "/plan"],
+    ["/login", "/login"],
+    ["/signup", "/login"],
+  ])("guest: %s lights %s", (path, tab) => {
+    expect(activeHref(path, GUEST_TAB_NAV)).toBe(tab);
   });
 });

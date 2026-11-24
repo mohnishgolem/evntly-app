@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { getCurrentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { PlanClaimer } from "@/components/plan-claimer";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { EventSummaryCard } from "@/components/event-board/board-cards";
@@ -14,40 +13,12 @@ import { planningProgress } from "@/lib/event-board";
 import { sydneyDate } from "@/lib/event-dates";
 import { categoryPlural } from "@/lib/config";
 import { getFeaturedVendors, searchVendors } from "@/lib/data/vendors";
-import { PUBLIC_VENDOR_COLUMNS } from "@/lib/vendor-columns";
-import { sampleListingsHidden } from "@/lib/sample-listings";
-import type { PublicVendor } from "@/lib/vendor-columns";
+import { recentlyViewedVendors } from "@/lib/data/customer-home";
 
 export const metadata: Metadata = {
   title: "My events",
   robots: { index: false, follow: false },
 };
-
-const RECENT_LIMIT = 4;
-
-// Vendor profiles this customer opened recently, newest first. Page views
-// are service-role only, so this reads them server-side for this user only.
-async function recentlyViewedVendors(userId: string): Promise<PublicVendor[]> {
-  const admin = createAdminClient();
-  if (!admin) return [];
-  const { data: views } = await admin
-    .from("page_views")
-    .select("vendor_id, created_at")
-    .eq("user_id", userId)
-    .eq("kind", "vendor")
-    .not("vendor_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(40);
-  const ids = [...new Set((views ?? []).map((v) => v.vendor_id as string))].slice(0, RECENT_LIMIT);
-  if (ids.length === 0) return [];
-
-  const supabase = await createClient();
-  let query = supabase.from("service_providers").select(PUBLIC_VENDOR_COLUMNS).eq("status", "approved").in("id", ids);
-  if (sampleListingsHidden()) query = query.eq("is_demo", false);
-  const { data } = await query;
-  const byId = new Map((data ?? []).map((v) => [v.id, v as PublicVendor]));
-  return ids.map((id) => byId.get(id)).filter((v): v is PublicVendor => !!v);
-}
 
 // My Events hub: pick up where you left off, see what's coming, and find
 // vendors for what's still missing. Everything comes from the customer's
@@ -71,7 +42,7 @@ export default async function DashboardPage() {
       .select("event_id, service_type, status")
       .eq("client_user_id", session.user.id)
       .not("event_id", "is", null),
-    recentlyViewedVendors(session.user.id),
+    recentlyViewedVendors(session.user.id, 4),
   ]);
 
   const progressFor = (e: NonNullable<typeof events>[number]) =>
