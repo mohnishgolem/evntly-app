@@ -61,6 +61,14 @@ export function NavDrawer({
     setOpen(false);
   }, [pathname]);
 
+  // …and when the account changes. Logging out redirects to "/", so on the
+  // home page the path doesn't change and the menu would stay open showing
+  // the signed-out menu.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(false);
+  }, [role]);
+
   const sections = drawerSections(role);
   const signedIn = role !== "guest";
   const label = name || email;

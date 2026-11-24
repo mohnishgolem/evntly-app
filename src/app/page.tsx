@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-20">
           <HeroVideo
             src="/videos/hero-celebrations.mp4"
-            mobileSrc="/videos/hero-celebrations-mobile.mp4"
+            mobileSrc="/videos/hero-celebrations-phone.mp4"
             poster="/images/hero-celebrations-poster.jpg"
           />
         </div>

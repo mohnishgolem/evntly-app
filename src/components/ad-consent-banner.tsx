@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { AD_CONSENT_EVENT, adConsentChoice, metaPixelConfigured, setAdConsent } from "@/lib/meta-pixel";
 
@@ -11,14 +11,39 @@ import { AD_CONSENT_EVENT, adConsentChoice, metaPixelConfigured, setAdConsent } 
 // pixel is switched on for this deploy; never shown to DNT/GPC browsers.
 export function AdConsentBanner() {
   const choice = useSyncExternalStore(subscribe, () => adConsentChoice() ?? "ask", () => "server");
-  if (!metaPixelConfigured() || choice !== "ask") return null;
+  const show = metaPixelConfigured() && choice === "ask";
+  const ref = useRef<HTMLDivElement>(null);
+
+  // While the card is up, everything that floats above the phone tab bar
+  // (Request quote / Claim bars, the Map button, the page-end spacer) moves up
+  // by its height via --consent-h, so the card never hides an action.
+  useEffect(() => {
+    const el = ref.current;
+    if (!show || !el) return;
+    const root = document.documentElement;
+    const phone = window.matchMedia("(max-width: 767px)");
+    const update = () => root.style.setProperty("--consent-h", phone.matches ? `${el.offsetHeight + 8}px` : "0px");
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    phone.addEventListener("change", update);
+    return () => {
+      ro.disconnect();
+      phone.removeEventListener("change", update);
+      root.style.removeProperty("--consent-h");
+    };
+  }, [show]);
+
+  if (!show) return null;
   return (
     <div
+      ref={ref}
       role="region"
       aria-label="Ad measurement choice"
-      // Phones: at the top, so the sticky "Claim my free listing" bar and the
-      // tab bar at the bottom stay visible and tappable. Desktop: bottom.
-      className="frost fixed inset-x-0 top-0 z-50 border-b border-border px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+10px)] shadow-lg [--frost-bg:color-mix(in_oklab,var(--background)_95%,transparent)] [--frost-blur:8px] sm:top-auto sm:bottom-0 sm:border-b-0 sm:border-t sm:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:pt-3"
+      // Phones: a floating card just above the tab bar, never over the header
+      // or navigation; bars above the tab bar make room for it (--consent-h).
+      // Desktop: a bar along the bottom.
+      className="frost fixed inset-x-3 bottom-[calc(var(--tabbar-height)+0.5rem)] z-50 rounded-2xl border border-border px-4 py-3 shadow-[var(--shadow-float)] [--frost-bg:color-mix(in_oklab,var(--background)_95%,transparent)] [--frost-blur:8px] md:inset-x-0 md:bottom-0 md:rounded-none md:border-x-0 md:border-b-0 md:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] md:shadow-lg"
     >
       <div className="mx-auto flex max-w-3xl items-center gap-3">
         <p className="min-w-0 flex-1 text-xs leading-snug text-muted-foreground sm:text-sm sm:leading-relaxed">

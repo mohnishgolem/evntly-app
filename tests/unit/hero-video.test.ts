@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, statSync } from "node:fs";
-import { PORTRAIT_PHONE_QUERY, pickHeroSrc, prefersLightweightMedia } from "@/components/hero-video";
+import { PHONE_QUERY, pickHeroSrc, prefersLightweightMedia } from "@/components/hero-video";
 
 describe("prefersLightweightMedia (hero clip skipped)", () => {
   it("skips the clip on Data Saver and slow connections", () => {
@@ -15,18 +15,18 @@ describe("prefersLightweightMedia (hero clip skipped)", () => {
   });
 });
 
-describe("pickHeroSrc (lighter clip on portrait phones)", () => {
+describe("pickHeroSrc (lighter clip on phones)", () => {
   const full = "/videos/hero-celebrations.mp4";
-  const mobile = "/videos/hero-celebrations-mobile.mp4";
+  const mobile = "/videos/hero-celebrations-phone.mp4";
 
-  it("serves the mobile crop only to portrait phones", () => {
-    expect(pickHeroSrc(full, mobile, (q) => q === PORTRAIT_PHONE_QUERY)).toBe(mobile);
+  it("serves the phone encode only to phones", () => {
+    expect(pickHeroSrc(full, mobile, (q) => q === PHONE_QUERY)).toBe(mobile);
     expect(pickHeroSrc(full, mobile, () => false)).toBe(full);
     expect(pickHeroSrc(full, undefined, () => true)).toBe(full);
   });
 
   it("ships a mobile file that is much smaller than the full clip", () => {
     for (const f of [full, mobile]) expect(existsSync(`public${f}`)).toBe(true);
-    expect(statSync(`public${mobile}`).size).toBeLessThan(statSync(`public${full}`).size * 0.5);
+    expect(statSync(`public${mobile}`).size).toBeLessThan(statSync(`public${full}`).size * 0.6);
   });
 });

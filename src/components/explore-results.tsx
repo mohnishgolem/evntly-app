@@ -140,7 +140,7 @@ export function ExploreResults({
       <button
         type="button"
         onClick={() => setView(view === "list" ? "map" : "list")}
-        className="press fixed bottom-[calc(var(--tabbar-height)+0.75rem)] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
+        className="press fixed bottom-[calc(var(--tabbar-height)+var(--consent-h,0px)+0.75rem)] left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background shadow-[var(--shadow-float)] md:hidden print:hidden"
       >
         {view === "list" ? <MapIcon className="size-4" aria-hidden /> : <List className="size-4" aria-hidden />}
         {view === "list" ? "Map" : "List"}

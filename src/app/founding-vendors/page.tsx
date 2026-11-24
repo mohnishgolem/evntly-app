@@ -336,7 +336,7 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
         className={cn(
           "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden print:hidden",
           hasTabBar
-            ? "bottom-[var(--tabbar-height)]"
+            ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
