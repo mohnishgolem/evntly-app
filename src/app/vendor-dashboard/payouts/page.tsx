@@ -66,12 +66,12 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
         <ChevronLeft className="size-4" aria-hidden /> Profile
       </Link>
 
-      <section className="mb-6 rounded-2xl border border-border p-5">
+      <section className="mb-6 surface-raised rounded-card p-5">
         <div className="mb-3 flex items-center gap-2">
           {ready ? (
-            <CheckCircle2 className="size-5 text-success" aria-hidden />
+            <CheckCircle2 className="size-5 text-success-text" aria-hidden />
           ) : (
-            <Clock className="size-5 text-warning" aria-hidden />
+            <Clock className="size-5 text-warning-text" aria-hidden />
           )}
           <h2 className="font-semibold">{ready ? "Payouts are set up" : account ? "Payout setup isn't finished" : "Set up payouts"}</h2>
         </div>
@@ -95,11 +95,11 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
       </section>
 
       <div className="mb-6 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-border p-4">
+        <div className="surface-raised rounded-card p-4">
           <p className="text-2xl font-bold tabular-nums">{formatAud(heldTotal)}</p>
           <p className="text-sm text-muted-foreground">Paid by customers, awaiting release</p>
         </div>
-        <div className="rounded-2xl border border-border p-4">
+        <div className="surface-raised rounded-card p-4">
           <p className="text-2xl font-bold tabular-nums">{formatAud(paidTotal)}</p>
           <p className="text-sm text-muted-foreground">Released to you</p>
         </div>
@@ -109,7 +109,7 @@ export default async function VendorPayoutsPage({ searchParams }: { searchParams
       {!milestones?.length ? (
         <p className="text-sm text-muted-foreground">No payments yet. Propose a payment plan from a booking to get started.</p>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+        <ul className="divide-y divide-border overflow-hidden surface-raised rounded-card">
           {milestones.map((m) => {
             const stage = milestoneStage(m, "vendor");
             return (

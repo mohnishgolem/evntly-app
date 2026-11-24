@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const STEPS = [
   <>
     Open your profile at{" "}
-    <a href="https://business.google.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+    <a href="https://business.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-text underline">
       business.google.com
     </a>
     , or search your business name on Google while signed in.
@@ -48,14 +48,14 @@ export default async function GoogleBookingPage() {
       </p>
 
       {approved.length === 0 ? (
-        <div className="rounded-2xl border border-border p-5">
+        <div className="surface-raised rounded-card p-5">
           <p className="font-semibold">Available once your listing is approved</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Your booking link only works when customers can see your listing. We&apos;ll email you when it&apos;s approved.
           </p>
         </div>
       ) : (
-        <section aria-labelledby="your-link" className="mb-8 rounded-2xl border border-border p-5">
+        <section aria-labelledby="your-link" className="mb-8 surface-raised rounded-card p-5">
           <h2 id="your-link" className="mb-3 font-semibold">
             Your booking link
           </h2>
@@ -92,7 +92,7 @@ export default async function GoogleBookingPage() {
         <p className="text-sm text-muted-foreground">
           Your Instagram bio, Facebook page or website &ldquo;Book now&rdquo; button work too. Customers send you a quote
           request through Evntly and you reply from{" "}
-          <Link href="/vendor-dashboard/enquiries" className="text-primary underline">
+          <Link href="/vendor-dashboard/enquiries" className="text-primary-text underline">
             Enquiries
           </Link>
           .

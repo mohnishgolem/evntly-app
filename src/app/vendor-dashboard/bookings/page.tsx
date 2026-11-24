@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: "text-warning",
-  confirmed: "text-primary",
-  completed: "text-success",
+  pending: "text-warning-text",
+  confirmed: "text-primary-text",
+  completed: "text-success-text",
   cancelled: "text-muted-foreground",
 };
 
@@ -99,7 +99,7 @@ export default async function VendorBookingsPage() {
                     const thread = b.client_user_id ? `${b.provider_id}:${b.client_user_id}` : null;
                     const card = jobCardByBooking.get(b.id);
                     return (
-                      <div key={b.id} className="rounded-2xl border border-border p-5">
+                      <div key={b.id} className="surface-raised rounded-card p-5">
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <p className="font-semibold">{b.client_label ?? "Customer"}</p>

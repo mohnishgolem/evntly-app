@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 
 const STATUS_META: Record<string, { icon: typeof Clock; label: string; color: string }> = {
   draft: { icon: PencilLine, label: "Not submitted yet", color: "text-muted-foreground" },
-  pending_review: { icon: Clock, label: "Under review", color: "text-warning" },
-  approved: { icon: ShieldCheck, label: "Live", color: "text-success" },
+  pending_review: { icon: Clock, label: "Under review", color: "text-warning-text" },
+  approved: { icon: ShieldCheck, label: "Live", color: "text-success-text" },
   rejected: { icon: XCircle, label: "Not approved", color: "text-destructive" },
   suspended: { icon: PauseCircle, label: "Suspended", color: "text-muted-foreground" },
 };
@@ -63,7 +63,7 @@ export default async function VendorBusinessPage() {
           const meta = STATUS_META[listing.status ?? "pending_review"] ?? STATUS_META.pending_review;
           const Icon = meta.icon;
           return (
-            <div key={listing.id} className="rounded-2xl border border-border p-5">
+            <div key={listing.id} className="surface-raised rounded-card p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold">{listing.name}</h2>
@@ -76,7 +76,7 @@ export default async function VendorBusinessPage() {
                 </span>
               </div>
               {listing.available === false && listing.status === "approved" && (
-                <p className="mt-2 text-sm text-warning">Paused: customers can see it but can&apos;t request quotes.</p>
+                <p className="mt-2 text-sm text-warning-text">Paused: customers can see it but can&apos;t request quotes.</p>
               )}
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
@@ -88,7 +88,7 @@ export default async function VendorBusinessPage() {
                   <Link
                     key={a.label}
                     href={a.href}
-                    className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex min-h-11 items-center gap-2 surface-raised rounded-card px-3 py-2 text-sm font-medium outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <a.icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
                     {a.label}
@@ -121,7 +121,7 @@ export default async function VendorBusinessPage() {
                   href="/vendor-dashboard/portfolio"
                   className="mt-4 flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm"
                 >
-                  <ImagePlus className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <ImagePlus className="mt-0.5 h-4 w-4 shrink-0 text-primary-text" />
                   <span>
                     <span className="font-medium">Add photos of your work.</span> Organisers compare
                     portfolios before asking for a quote, and listings without photos are easy to skip.

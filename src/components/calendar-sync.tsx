@@ -48,7 +48,7 @@ export function CalendarSync({ feedUrl }: { feedUrl: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-border p-4">
+    <section className="surface-raised rounded-card p-4">
       <p className="text-sm font-semibold">Sync to your calendar</p>
       <p className="mb-3 text-xs text-muted-foreground">
         See your Evntly bookings in Apple, Google or Outlook Calendar. Bookings awaiting your

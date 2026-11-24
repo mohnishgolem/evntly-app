@@ -37,7 +37,7 @@ export function EarningsChart({ months }: { months: EarningsMonth[] }) {
   const tooltipLeft = activeIndex >= 0 ? ((activeIndex + 0.5) / months.length) * 100 : 50;
 
   return (
-    <figure className="rounded-2xl border border-border p-4">
+    <figure className="surface-raised rounded-card p-4">
       <figcaption className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-semibold">Booking value by month</span>
         <span className="flex items-center gap-4 text-xs text-muted-foreground">

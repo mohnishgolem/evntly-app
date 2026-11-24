@@ -42,7 +42,7 @@ export function ReferralCard({ link, stats }: { link: string; stats: Stats }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border p-5">
+    <div className="surface-raised rounded-card p-5">
       <p className="text-[15px] text-muted-foreground">
         Know a Sydney photographer, stylist, DJ, celebrant or florist who&apos;d like more bookings? Share your link. When a vendor you
         invite is approved, we&apos;ll feature your business in a spotlight post on Evntly&apos;s Instagram.
@@ -57,7 +57,7 @@ export function ReferralCard({ link, stats }: { link: string; stats: Stats }) {
           readOnly
           value={link}
           onFocus={(e) => e.currentTarget.select()}
-          className="min-h-11 flex-1 rounded-xl border border-border bg-muted/40 px-3 text-sm"
+          className="min-h-11 flex-1 surface-raised rounded-card bg-muted/40 px-3 text-sm"
         />
         <Button type="button" onClick={() => copy("link")} className="min-h-11">
           {copied === "link" ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
@@ -96,7 +96,7 @@ export function ReferralCard({ link, stats }: { link: string; stats: Stats }) {
         ))}
       </dl>
       {stats.approved > 0 && (
-        <p className="mt-3 text-sm font-medium text-success">
+        <p className="mt-3 text-sm font-medium text-success-text">
           {stats.approved === 1 ? "A vendor you invited was approved." : `${stats.approved} vendors you invited were approved.`} Your
           Instagram spotlight is on its way.
         </p>

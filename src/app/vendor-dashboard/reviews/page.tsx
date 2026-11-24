@@ -71,7 +71,7 @@ export default async function VendorReviewsPage() {
             <p className="mb-3 text-sm text-muted-foreground">
               {pastClient} from past clients · {reviews.length - pastClient} from Evntly bookings
             </p>
-            <ul className="divide-y divide-border rounded-2xl border border-border">
+            <ul className="divide-y divide-border surface-raised rounded-card">
               {reviews.map((r) => (
                 <li key={r.id} className="px-4 py-3">
                   <p className="flex items-center gap-2 text-sm font-medium">

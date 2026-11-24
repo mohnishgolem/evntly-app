@@ -39,7 +39,7 @@ export default async function VendorBundlesPage() {
           <h2 className="mb-3 text-lg font-semibold">Invitations to join a bundle</h2>
           <div className="space-y-3">
             {invites.map((inv) => (
-              <div key={inv.id} className="rounded-2xl border border-border p-4">
+              <div key={inv.id} className="surface-raised rounded-card p-4">
                 <p className="font-medium">{inv.combined_package_name}</p>
                 <p className="text-sm text-muted-foreground">
                   Proposed by {inv.proposed_by} · Your share: {formatAudDollars(inv.component_price)}
@@ -63,7 +63,7 @@ export default async function VendorBundlesPage() {
         ) : (
           <div className="space-y-3">
             {myPackages.map((p) => (
-              <div key={p.id} className="rounded-2xl border border-border p-4">
+              <div key={p.id} className="surface-raised rounded-card p-4">
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{p.name}</p>
                   <span className="text-sm text-muted-foreground">

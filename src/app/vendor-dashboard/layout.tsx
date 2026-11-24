@@ -12,6 +12,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
   const attention = isVendor ? await getVendorAttention() : null;
 
   return (
+    <div className="min-h-full bg-canvas">
     <SidebarFrame
       rail={isVendor}
       sidebar={
@@ -22,5 +23,6 @@ export default async function VendorDashboardLayout({ children }: { children: Re
     >
       {children}
     </SidebarFrame>
+    </div>
   );
 }

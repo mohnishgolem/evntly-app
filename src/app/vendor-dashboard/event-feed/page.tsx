@@ -76,7 +76,7 @@ export default async function VendorEventFeedPage() {
           {listings.map((listing) => {
             const applied = appliedListingIds.has(listing.id);
             return (
-              <div key={listing.id} className="rounded-2xl border border-border p-5">
+              <div key={listing.id} className="surface-raised rounded-card p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">

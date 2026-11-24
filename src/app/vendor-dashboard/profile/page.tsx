@@ -37,7 +37,7 @@ function Group({ title, rows }: { title: string; rows: Row[] }) {
       <h2 id={`group-${title}`} className="mb-2 px-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {title}
       </h2>
-      <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+      <ul className="divide-y divide-border overflow-hidden surface-raised rounded-card">
         {rows.map((r) => {
           const Icon = r.icon;
           const inner = (
@@ -89,7 +89,7 @@ export default async function VendorProfilePage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Profile</h1>
 
-      <div className="mb-8 flex items-center gap-4 rounded-2xl border border-border p-5">
+      <div className="mb-8 flex items-center gap-4 surface-raised rounded-card p-5">
         <span
           aria-hidden
           className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold"
@@ -102,7 +102,7 @@ export default async function VendorProfilePage() {
           <p className="mt-1 flex items-center gap-1.5 text-sm">
             {primary?.verified ? (
               <>
-                <BadgeCheck className="size-4 text-success" aria-hidden /> Verified business
+                <BadgeCheck className="size-4 text-success-text" aria-hidden /> Verified business
               </>
             ) : primary?.status === "approved" ? (
               <>
@@ -111,7 +111,7 @@ export default async function VendorProfilePage() {
               </>
             ) : (
               <>
-                <Clock className="size-4 text-warning" aria-hidden />
+                <Clock className="size-4 text-warning-text" aria-hidden />
                 <span className="text-muted-foreground">Under review</span>
               </>
             )}
@@ -162,7 +162,7 @@ export default async function VendorProfilePage() {
       <form action={logout} data-clear-app-cache>
         <button
           type="submit"
-          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold text-destructive outline-none transition-colors hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold text-destructive-text outline-none transition-colors hover:bg-destructive/5 focus-visible:ring-2 focus-visible:ring-ring"
         >
           <LogOut className="size-4" aria-hidden /> Log out
         </button>
