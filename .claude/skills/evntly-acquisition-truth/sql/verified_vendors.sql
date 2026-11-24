@@ -15,8 +15,10 @@
 --   * email alias with +qa or +test (e.g. name+qa-vendor@gmail.com)
 --   * account name contains the word QA or TEST
 --   * a known internal test account id ("saim", the QA vendor login)
--- If a new test account slips through, add a rule here AND in the migration
--- 20261120090000_admin_verified_vendor_funnel.sql, then rerun the tests.
+-- If a new test account slips through, add a rule here, in the other queries
+-- in this folder, in a new migration replacing
+-- 20261121090000_verified_funnel_account_test_rules.sql and in
+-- src/lib/acquisition/test-accounts.ts, then rerun the tests.
 --
 -- Stages (each implies the previous):
 --   account            vendor account exists

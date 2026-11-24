@@ -253,7 +253,7 @@ export function BookVendor({
           // lifted the fixed bar off the tab bar and left a see-through gap.
           "glass-material fixed inset-x-0 z-30 m-0 border-t border-border/60 px-4 py-3 md:hidden print:hidden",
           hasTabBar
-            ? "bottom-[var(--tabbar-height)]"
+            ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >

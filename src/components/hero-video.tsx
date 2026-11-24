@@ -17,17 +17,19 @@ export function prefersLightweightMedia(
   return connection.saveData === true || ["slow-2g", "2g", "3g"].includes(connection.effectiveType ?? "");
 }
 
-// Phones in portrait only ever see the centre of the 16:9 clip (the hero
-// crops it to fill), so they get a 480x720 centre crop of the same footage:
-// ~1.1 MB instead of ~3.3 MB. Tablets and landscape keep the full frame.
-export const PORTRAIT_PHONE_QUERY = "(max-width: 767px) and (orientation: portrait)";
+// On phones the hero is a short landscape band (~402x248 pt, ~1206x744 px
+// on a 3x iPhone), so phones get the same 16:9 footage at 960x540, H.264
+// ~0.9 Mbps (~1.7 MB): close to the band's real pixel size, so it stays
+// sharp. The old 480x720 portrait crop had to be stretched ~2.5x and looked
+// soft once the hero became landscape. Tablets and desktops get 1280x720.
+export const PHONE_QUERY = "(max-width: 767px)";
 
 export function pickHeroSrc(
   src: string,
   mobileSrc: string | undefined,
   matches: (query: string) => boolean = (q) => globalThis.matchMedia?.(q).matches ?? false
 ) {
-  return mobileSrc && matches(PORTRAIT_PHONE_QUERY) ? mobileSrc : src;
+  return mobileSrc && matches(PHONE_QUERY) ? mobileSrc : src;
 }
 
 export function HeroVideo({ src, mobileSrc, poster }: { src: string; mobileSrc?: string; poster: string }) {

@@ -158,7 +158,7 @@ export default async function FoundingVendorsPage({
       <SourceCookie source={source} referral={referral} campaign={campaign} />
 
       <header className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-semibold tracking-wide text-primary uppercase">
+        <p className="text-sm font-semibold tracking-wide text-primary-text uppercase">
           {variant?.eyebrow ?? `Founding Vendors · ${LAUNCH_CITY}`}
         </p>
         <h1 className="mt-3 text-[32px] leading-tight font-bold tracking-tight text-balance sm:text-[48px]">
@@ -336,7 +336,7 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
         className={cn(
           "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden print:hidden",
           hasTabBar
-            ? "bottom-[var(--tabbar-height)]"
+            ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]"
             : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
