@@ -40,14 +40,12 @@ export function PricingFields({
                 aria-checked={selected}
                 onClick={() => onChange({ ...value, pricingModel: o.value })}
                 className={cn(
-                  "rounded-xl border px-4 py-2.5 text-left transition-colors",
-                  selected
-                    ? "border-highlight bg-highlight-light text-highlight"
-                    : "border-border text-muted-foreground hover:border-foreground/30"
+                  "min-h-14 rounded-2xl px-4 py-2.5 text-left",
+                  selected ? "surface-pressed ring-1 ring-primary/40" : "btn-raised"
                 )}
               >
-                <span className="block text-sm font-medium">{o.label}</span>
-                <span className="block text-xs opacity-80">{o.hint}</span>
+                <span className="block text-sm font-semibold text-foreground">{o.label}</span>
+                <span className="block text-xs text-foreground/70">{o.hint}</span>
               </button>
             );
           })}

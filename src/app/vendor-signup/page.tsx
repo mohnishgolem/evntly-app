@@ -34,18 +34,20 @@ export default async function VendorSignupPage() {
 
   if (!session) {
     return (
+      <div className="min-h-full bg-canvas">
       <div className="mx-auto max-w-lg px-4 py-12">
-        <h1 className="mb-2 text-2xl font-bold">List your business on Evntly</h1>
-        <p className="mb-6 text-muted-foreground">
+        <p className="text-eyebrow text-primary-text">For event businesses</p>
+        <h1 className="mt-2 mb-3 text-title">List your business on Evntly</h1>
+        <p className="mb-6 text-[15px] leading-relaxed text-muted-foreground">
           {FEE_SUMMARY} Customers find you, send you their event details, and you reply with a quote.
           Setting up takes {SETUP_TIME}. {FEE_CHANGE_PROMISE}
         </p>
-        <div className="mb-6 rounded-2xl border border-border p-5">
+        <div className="surface-raised mb-6 rounded-card p-5">
           <p className="mb-3 font-medium">What you&apos;ll need</p>
           <ul className="space-y-2 text-sm">
             {WHAT_YOU_NEED.map((item) => (
               <li key={item} className="flex gap-2.5">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-text" aria-hidden />
                 {item}
               </li>
             ))}
@@ -55,7 +57,7 @@ export default async function VendorSignupPage() {
           <Button size="lg" nativeButton={false} render={<Link href="/signup?role=vendor">Create your free vendor account</Link>} />
           <Button
             size="lg"
-            variant="outline"
+            variant="raised"
             nativeButton={false}
             render={<Link href={`/login?next=${encodeURIComponent("/vendor-signup")}`}>I already have an account</Link>}
           />
@@ -66,6 +68,7 @@ export default async function VendorSignupPage() {
             Vendor guide
           </Link>
         </p>
+      </div>
       </div>
     );
   }

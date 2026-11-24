@@ -54,6 +54,7 @@ export default async function ClaimPage({
   const full = places ? places.remaining <= 0 : false;
 
   return (
+    <div className="min-h-full bg-canvas">
     <div className="mx-auto max-w-xl px-4 py-10 sm:py-14">
       <SourceCookie source={source} referral={referral} campaign={campaign} />
       {!session ? (
@@ -62,6 +63,7 @@ export default async function ClaimPage({
         <SignedIn invite={invite} inviteState={inviteState} invitee={invitee} source={source} referral={referral} full={full} email={session.user.email ?? null} autoClaim={wantsAutoClaim(params)} />
       )}
     </div>
+    </div>
   );
 }
 
@@ -69,7 +71,7 @@ function InviteNotice({ state, invitee, signedIn }: { state: InviteState | null;
   if (!state) return null;
   if (state === "valid") {
     return (
-      <p className="mb-6 rounded-2xl bg-secondary p-4 text-[15px]">
+      <p className="surface-pressed mb-6 rounded-2xl p-4 text-[15px]">
         {invitee?.firstName ? `Hi ${invitee.firstName}, your` : "Your"} invitation is ready
         {invitee?.maskedEmail ? (
           <>
@@ -90,8 +92,8 @@ function InviteNotice({ state, invitee, signedIn }: { state: InviteState | null;
     preview: "This is a preview link from a test email — it isn't linked to a real invitation.",
   };
   return (
-    <p className="mb-6 flex gap-2.5 rounded-2xl border border-border p-4 text-sm">
-      <MailWarning className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+    <p className="surface-raised mb-6 flex gap-2.5 rounded-card p-4 text-sm">
+      <MailWarning className="mt-0.5 size-4 shrink-0 text-warning-text" aria-hidden />
       {text[state]}
     </p>
   );
@@ -111,7 +113,7 @@ function SignedOut({
   const next = encodeURIComponent(withAutoClaim(returnPath));
   return (
     <>
-      <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Claim your free vendor account</h1>
+      <h1 className="mb-2 text-title">Claim your free vendor account</h1>
       <p className="mb-6 text-muted-foreground">
         Create your account, set up your business listing and submit it for review. It takes about 10 minutes.
       </p>
@@ -131,7 +133,7 @@ function SignedOut({
 
 function FullNotice() {
   return (
-    <p className="mb-6 rounded-2xl border border-border p-4 text-sm">
+    <p className="surface-raised mb-6 rounded-card p-4 text-sm">
       All founding places are filled right now. You can still apply. We&apos;ll review your listing as usual and let you know
       if a place opens up.{" "}
       <Link href={`${FOUNDING_PATH}#waitlist`} className="font-medium underline underline-offset-2">
@@ -150,12 +152,12 @@ function WhatYouNeed() {
     `At least ${MIN_PHOTOS} photos of your work. You add these after you submit, before we approve your listing`,
   ];
   return (
-    <div className="mt-8 rounded-2xl border border-border p-5">
+    <div className="surface-raised mt-8 rounded-card p-5">
       <p className="mb-3 font-medium">What you&apos;ll need</p>
       <ul className="space-y-2 text-sm">
         {items.map((i) => (
           <li key={i} className="flex gap-2.5">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-text" aria-hidden />
             {i}
           </li>
         ))}
@@ -193,7 +195,7 @@ async function SignedIn({
   if (!application) {
     return (
       <>
-        <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Claim your founding vendor place</h1>
+        <h1 className="mb-2 text-title">Claim your founding vendor place</h1>
         <p className="mb-6 text-muted-foreground">
           {listing
             ? `We'll use your existing listing, ${listing.name}, for your application. No need to sign up again.`
