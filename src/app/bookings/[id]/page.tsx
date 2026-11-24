@@ -18,6 +18,7 @@ import { getJobCardForBooking } from "@/lib/data/job-cards";
 import { loadBookingDisputes } from "@/lib/data/disputes";
 import { sydneyDate } from "@/lib/event-dates";
 import { conversationIdFor } from "@/lib/messages";
+import { BookingProgress } from "@/components/booking-progress";
 import { HelpTip } from "@/components/help/help-tip";
 
 export const metadata: Metadata = {
@@ -123,6 +124,7 @@ export default async function BookingPage({
   const backHref = role === "vendor" ? "/vendor-dashboard/bookings" : role === "admin" ? "/admin/payments" : "/dashboard/bookings";
 
   return (
+    <div className="min-h-full bg-canvas">
     <div className="mx-auto max-w-2xl px-4 py-8">
       <Link href={backHref} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="size-4" aria-hidden /> {role === "admin" ? "Payments" : "Bookings"}
@@ -134,9 +136,9 @@ export default async function BookingPage({
         </p>
       )}
 
-      <header className="mb-6">
-        <p className="text-sm text-muted-foreground">{categoryLabel(booking.service_type)}</p>
-        <h1 className="text-2xl font-bold">
+      <header className="surface-raised mb-6 rounded-card p-5 sm:p-6">
+        <p className="text-eyebrow text-primary-text">{categoryLabel(booking.service_type)}</p>
+        <h1 className="mt-1 text-title">
           {role === "vendor" ? booking.client_label ?? booking.client_name ?? "Customer" : booking.provider_name}
         </h1>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -157,18 +159,28 @@ export default async function BookingPage({
             </HelpTip>
           </span>
         </div>
+        <BookingProgress status={booking.status} className="mt-5" />
+        {(booking.status === "cancelled" || booking.status === "declined") && (
+          <p className="surface-pressed mt-4 rounded-2xl px-4 py-3 text-sm text-foreground/75">
+            This booking was {booking.status}. Cancellation and refund terms are in the quote and Evntly&apos;s{" "}
+            <Link href="/cancellation-refund-dispute-policy" className="font-medium text-foreground underline underline-offset-2">
+              Cancellation, Refund &amp; Dispute Policy
+            </Link>
+            .
+          </p>
+        )}
         {role !== "admin" && (
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
             <Link
               href={`/messages/${encodeURIComponent(conversationIdFor(booking.provider_id, booking.client_user_id ?? session.user.id))}`}
-              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 hover:bg-muted"
+              className="btn-raised inline-flex h-10 items-center gap-1.5 rounded-full px-4 font-semibold"
             >
               <MessageCircle className="size-4" aria-hidden /> Messages
             </Link>
             {(booking.status === "confirmed" || booking.status === "completed") && (
               <Link
                 href={`/bookings/${booking.id}/invoice`}
-                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 hover:bg-muted"
+                className="btn-raised inline-flex h-10 items-center gap-1.5 rounded-full px-4 font-semibold"
               >
                 <Receipt className="size-4" aria-hidden /> Invoice
               </Link>
@@ -228,6 +240,7 @@ export default async function BookingPage({
       ) : (
         <DirectPaymentNotice role={role} />
       )}
+    </div>
     </div>
   );
 }
