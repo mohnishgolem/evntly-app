@@ -135,6 +135,12 @@ const store = {
   reviews: [],
   event_budget_items: [],
 };
+// Production fills owner ids from emails (sync_user_ids trigger) and gives
+// new events their column defaults.
+const OWNER_DEFAULTS = {
+  events: { organiser_user_id: TEST_USER.id, planner_dismissed: [], category_budgets: {}, latitude: null, longitude: null },
+  event_tasks: { owner_user_id: TEST_USER.id, dismissed: false, position: 0, kind: "task" },
+};
 const RPC = {
   my_unread_message_count: () => 2,
   my_conversations: () => [],
@@ -235,7 +241,7 @@ http
       const wantRows = (req.headers.prefer ?? "").includes("return=representation");
       if (req.method === "POST") {
         const body = await readBody(req);
-        const added = (Array.isArray(body) ? body : [body]).filter(Boolean).map((r) => ({ id: r.id ?? `${table}-${rows.length + 1}`, created_at: new Date().toISOString(), ...r }));
+        const added = (Array.isArray(body) ? body : [body]).filter(Boolean).map((r) => ({ id: r.id ?? (table === "events" ? `22222222-2222-4222-8222-${String(900000000000 + rows.length).padStart(12, "0")}` : `${table}-${rows.length + 1}`), created_at: new Date().toISOString(), ...OWNER_DEFAULTS[table], ...r }));
         rows.push(...added);
         return wantRows ? send(201, single ? added[0] : added) : send(201);
       }

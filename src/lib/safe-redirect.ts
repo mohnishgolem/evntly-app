@@ -25,3 +25,9 @@ export function isBookingReturn(next: string | null | undefined): boolean {
   const path = safeNextPath(next, "");
   return /^\/vendor\/[^/?#]+\?(.*&)?book=1(&|#|$)/.test(path);
 }
+
+/** True when `next` returns to the dashboard to save a guest's plan (see /plan/preview). */
+export function isPlanReturn(next: string | null | undefined): boolean {
+  if (!next) return false;
+  return /^\/dashboard\?(.*&)?from=plan(&|#|$)/.test(safeNextPath(next, ""));
+}

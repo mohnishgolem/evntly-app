@@ -6,7 +6,7 @@ import { EXISTING_ACCOUNT_MESSAGE } from "@/lib/auth-notices";
 import { recordVendorRegistration } from "@/lib/meta-capi";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { LEGACY_SITE_URL, SITE_URL } from "@/lib/config";
@@ -15,6 +15,7 @@ import { parseConfirmLink } from "@/lib/auth-links";
 import { checkRateLimit, clientIp, RATE_LIMIT_ERROR } from "@/lib/rate-limit";
 import { isFoundingPath } from "@/lib/founding/sources";
 import { recordSignupConsents } from "@/lib/actions/legal";
+import { PLAN_CONTEXT_COOKIE } from "@/lib/planner/context";
 
 // Origin for links Supabase emails or redirects to (OAuth callback, password
 // reset). Taken from the request only when it's one of ours — never echo an
@@ -338,6 +339,9 @@ export async function signInWithOAuth(
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // The planner's "browsing for this event" marker belongs to the account
+  // that set it; the next person on this device starts clean.
+  (await cookies()).delete(PLAN_CONTEXT_COOKIE);
   redirect("/");
 }
 

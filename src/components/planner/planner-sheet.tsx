@@ -25,7 +25,7 @@ export type EditableItem = { id: string; kind: ItemKind; title: string; date: st
 type Mode = { view: "menu" } | { view: "form"; kind: ItemKind; item?: EditableItem } | { view: "expense" };
 
 type Ctx = { openMenu: () => void; openAdd: (kind: ItemKind) => void; openEdit: (item: EditableItem) => void };
-const PlannerSheetContext = createContext<Ctx | null>(null);
+export const PlannerSheetContext = createContext<Ctx | null>(null);
 
 export function usePlannerSheet() {
   const ctx = useContext(PlannerSheetContext);

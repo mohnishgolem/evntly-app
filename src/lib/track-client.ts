@@ -67,3 +67,11 @@ export function trackPlanner(event: "planner_opened" | "recommendation_clicked",
   if (!visitorId) return;
   sendTrack({ visitorId, planner: { event, eventId, ...(detail ? { detail } : {}) } });
 }
+
+/** Planner steps before an account exists (started the form, saw the preview, chose to save). */
+export function trackPlannerGuest(event: "plan_started" | "plan_previewed" | "plan_save_clicked") {
+  const visitorId = analyticsVisitorId();
+  if (!visitorId) return;
+  if (!firstInSession(`planner_${event}`)) return;
+  sendTrack({ visitorId, planner: { event } });
+}

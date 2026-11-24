@@ -232,11 +232,14 @@ export default async function EventBoardPage({
               }
             />
 
-            <div className="mt-4">
-              <NextStepCard eventId={event.id} step={step} availableByService={availableByService} />
-            </div>
+            {/* Only for steps the timeline doesn't already show at the top. */}
+            {(step.kind === "pay" || step.kind === "event-day" || step.kind === "review-vendors") && (
+              <div className="mt-4">
+                <NextStepCard eventId={event.id} step={step} availableByService={availableByService} />
+              </div>
+            )}
 
-            <section aria-labelledby="plan-heading" className="mb-10">
+            <section aria-labelledby="plan-heading" className="mt-8 mb-10">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 id="plan-heading" className="text-xl font-bold tracking-tight">
                   Your plan
@@ -263,7 +266,7 @@ export default async function EventBoardPage({
               <PrepChecklist eventId={event.id} items={checklist} today={today} ready={planner.ready} />
             </section>
 
-            {planner.ready && (
+            {planner.ready && notes.length > 0 && (
               <section aria-labelledby="notes-heading" className="mb-10">
                 <h2 id="notes-heading" className="mb-4 text-xl font-bold tracking-tight">
                   Notes
@@ -293,11 +296,21 @@ export default async function EventBoardPage({
             </section>
 
             {allQuotes.length > 0 && (
-              <section aria-labelledby="quotes-heading" className="mb-10">
-                <h2 id="quotes-heading" className="mb-4 text-xl font-bold tracking-tight">
-                  Quotes
-                </h2>
-                <div className="space-y-6">
+              // Quotes to act on are already at the top of the plan; the full
+              // list (incl. declined and expired) folds away here.
+              <details className="group mb-10 rounded-card surface-raised">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-card px-5 py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                  <span>
+                    <span id="quotes-heading" className="block font-semibold">
+                      All quotes ({allQuotes.length})
+                    </span>
+                    <span className="block text-[13px] text-muted-foreground">
+                      {openQuotes.length > 0 ? `${openQuotes.length} waiting on you` : "Requests, replies and past quotes"}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" aria-hidden />
+                </summary>
+                <div className="space-y-6 border-t border-border/70 px-4 pt-4 pb-5 sm:px-5">
                   {QUOTE_GROUPS.map((g) => {
                     const group = allQuotes.filter((q) => quoteGroup(effectiveQuoteStatus(q)) === g.key);
                     if (group.length === 0) return null;
@@ -311,7 +324,7 @@ export default async function EventBoardPage({
                     );
                   })}
                 </div>
-              </section>
+              </details>
             )}
 
             {bookings.length > 0 && (

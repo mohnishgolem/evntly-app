@@ -85,8 +85,8 @@ const eventSchema = z
   .object({
     name: z.string().trim().max(80),
     eventDate: z.iso.date(),
-    suburb: z.string().trim().min(1, "Add a suburb.").max(120),
-    guestCount: z.enum(GUEST_BUCKETS),
+    suburb: z.string().trim().max(120),
+    guestCount: z.union([z.enum(GUEST_BUCKETS), z.literal("")]),
     budgetTotal: z.number().min(0).max(10_000_000),
     notes: z.string().trim().max(2000),
     /** Whole dollars per category. */
@@ -148,7 +148,7 @@ export async function updateEventDetails(eventId: string, input: EventDetailsInp
     category_budgets: categoryBudgets,
   };
   if (placeChanged) {
-    const place = await geocodeSuburb(d.suburb).catch(() => null);
+    const place = d.suburb ? await geocodeSuburb(d.suburb).catch(() => null) : null;
     update.latitude = place?.latitude ?? null;
     update.longitude = place?.longitude ?? null;
   }

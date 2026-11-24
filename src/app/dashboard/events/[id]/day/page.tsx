@@ -50,7 +50,7 @@ export default async function EventDayPage({ params }: { params: Promise<{ id: s
       </Link>
       <h1 className="mb-1 text-2xl font-bold">Event day</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        {event.event_type} in {event.suburb} · {event.event_date}
+        {event.event_type}{event.suburb ? ` in ${event.suburb}` : ""} · {event.event_date}
       </p>
 
       <section className="mb-8">

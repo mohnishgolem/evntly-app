@@ -7,7 +7,7 @@ import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/li
 import { isShareSource, SHARE_PREPARED_ACTIONS, type SharePreparedAction } from "@/lib/share-profile";
 import { recordSharePrepared } from "@/lib/share-funnel";
 import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
-import { CLIENT_PLANNER_EVENTS, isPlannerEvent, plannerDetail, recordPlannerEvent } from "@/lib/planner/analytics";
+import { CLIENT_PLANNER_EVENTS, GUEST_PLANNER_EVENTS, isPlannerEvent, plannerDetail, recordPlannerEvent } from "@/lib/planner/analytics";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
 // Same-origin, tiny allow-listed payload, rate-limited per IP; always 204.
@@ -52,7 +52,18 @@ export async function POST(request: NextRequest) {
     const p = body.planner as { event?: unknown; eventId?: unknown; detail?: unknown } | null;
     const visitorId = typeof body.visitorId === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.visitorId) ? body.visitorId : null;
     const eventId = typeof p?.eventId === "string" && /^[0-9a-f-]{36}$/.test(p.eventId) ? p.eventId : null;
-    if (!visitorId || !eventId || !isPlannerEvent(p?.event) || !CLIENT_PLANNER_EVENTS.includes(p.event)) return done;
+    if (!visitorId || !isPlannerEvent(p?.event)) return done;
+    // Guest steps on /plan: counted per browser, no account or event yet.
+    if (GUEST_PLANNER_EVENTS.includes(p.event)) {
+      if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      await recordPlannerEvent(p.event, { userId: user?.id ?? null, visitorId });
+      return done;
+    }
+    if (!eventId || !CLIENT_PLANNER_EVENTS.includes(p.event)) return done;
     if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
     const supabase = await createClient();
     const {
