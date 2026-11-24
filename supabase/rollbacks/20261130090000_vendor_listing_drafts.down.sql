@@ -4,6 +4,7 @@
 select cron.unschedule('purge-expired-vendor-listing-drafts');
 drop function if exists public.purge_expired_vendor_listing_drafts();
 drop function if exists public.admin_vendor_journey_funnel(integer);
+drop function if exists public.internal_test_user_ids();
 drop table if exists public.vendor_listing_drafts;
 
 delete from public.funnel_events where event in (

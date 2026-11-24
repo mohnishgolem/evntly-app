@@ -22,7 +22,7 @@ export function PageViewTracker() {
     // Vendor pages send theirs too, so visits from a vendor's Share profile
     // link or QR code (?src=share_*) are told apart.
     const params =
-      view.kind === "founding" || view.kind === "founding_claim" || view.kind === "vendor_landing" || view.kind === "vendor" ? sourceParamsFrom(window.location.search) : undefined;
+      view.kind === "founding" || view.kind === "founding_claim" || view.kind === "vendor_landing" || view.kind === "vendor_builder" || view.kind === "vendor" ? sourceParamsFrom(window.location.search) : undefined;
     sendTrack({ kind: view.kind, vendorId: view.vendorId, visitorId: id, ...(params ? { params } : {}) });
   }, [pathname]);
 

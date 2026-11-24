@@ -100,6 +100,33 @@ alter table public.page_views add constraint page_views_kind_check
                   'vendor_landing', 'vendor_builder'));
 
 -- 4 ---------------------------------------------------------------------------
+-- Test / internal accounts (vendors AND customers), one definition for the
+-- journey funnel and the growth dashboard. Same rules as
+-- admin_verified_vendor_funnel (20261121090000) and
+-- src/lib/acquisition/test-accounts.ts: keep all three in step.
+create or replace function public.internal_test_user_ids()
+returns setof text
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select distinct u.id::text
+  from public.users u
+  join auth.users au on au.id::text = u.id::text
+  left join public.service_providers sp on sp.owner_user_id::text = u.id::text
+  left join public.beta_applications ba on ba.user_id::text = u.id::text
+  where u.role = 'admin'
+     or coalesce(sp.is_demo, false)
+     or split_part(lower(u.email), '@', 2) = 'evntlyapp.com'
+     or coalesce(ba.campaign, '') ilike 'qa%'
+     or coalesce(sp.name, '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+     or split_part(lower(u.email), '@', 1) ~ '\+(qa|test)'
+     or coalesce(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
+     or u.id::text in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa');
+$$;
+revoke all on function public.internal_test_user_ids() from public, anon, authenticated;
+
 create or replace function public.admin_vendor_journey_funnel(p_days integer default 30)
 returns table (step integer, stage text, people bigint)
 language sql
@@ -114,21 +141,7 @@ as $$
     where v.visitor_id is not null and v.user_id::text in (select id from admins)
   ),
   -- Test / internal accounts: same rules as admin_verified_vendor_funnel.
-  test_users as (
-    select u.id::text as id
-    from public.users u
-    join auth.users au on au.id::text = u.id::text
-    left join public.service_providers sp on sp.owner_user_id::text = u.id::text
-    left join public.beta_applications ba on ba.user_id::text = u.id::text
-    where u.role = 'admin'
-       or coalesce(sp.is_demo, false)
-       or split_part(lower(u.email), '@', 2) = 'evntlyapp.com'
-       or coalesce(ba.campaign, '') ilike 'qa%'
-       or coalesce(sp.name, '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
-       or split_part(lower(u.email), '@', 1) ~ '\+(qa|test)'
-       or coalesce(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', '') ~* '(^|[^a-z])(qa|test)([^a-z]|$)'
-       or u.id::text in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa')
-  ),
+  test_users as (select id from public.internal_test_user_ids() as t(id)),
   views as (
     select distinct v.visitor_id from public.page_views v, since
     where v.kind in ('vendor_landing', 'founding') and v.created_at >= since.t and v.visitor_id is not null
