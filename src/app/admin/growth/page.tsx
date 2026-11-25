@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireAdminPage } from "@/lib/data/user";
 import { AdminHeading, AdminMfaRequired } from "@/components/admin-mfa-required";
 import { AdminSpendForm, DeleteSpendButton } from "@/components/admin-growth-spend";
@@ -17,13 +18,15 @@ async function load() {
     from: (t: string) => { select: (c: string) => { order: (c: string, o: { ascending: boolean }) => { limit: (n: number) => Promise<{ data: Spend[] | null }> } } };
   };
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" });
-  const [daily, journey, verified, spend] = await Promise.all([
+  const [daily, journey, verified, spend, phone] = await Promise.all([
     rpc("admin_growth_daily", { p_days: 365 }),
     rpc("admin_vendor_journey_funnel", { p_days: 30 }),
     rpc("admin_verified_vendor_funnel"),
     spendTable.from("acquisition_spend").select("id, day, channel, audience, amount_cents, note").order("day", { ascending: false }).limit(20),
+    rpc("admin_phone_agent_summary"),
   ]);
-  return { daily, journey, verified, spend: spend.data ?? [], today };
+  const phoneAgent = phone.error ? null : Object.fromEntries(((phone.data ?? []) as { measure: string; value: number }[]).map((r) => [r.measure, Number(r.value)]));
+  return { daily, journey, verified, spend: spend.data ?? [], today, phoneAgent };
 }
 
 const n = (v: unknown) => Number(v ?? 0);
@@ -34,7 +37,7 @@ const n = (v: unknown) => Number(v ?? 0);
 export default async function AdminGrowthPage() {
   const { needsEnrol } = await requireAdminPage("/admin/growth");
   if (needsEnrol) return <AdminMfaRequired />;
-  const { daily, journey, verified, spend, today } = await load();
+  const { daily, journey, verified, spend, today, phoneAgent } = await load();
   const rows = (daily.data ?? []) as GrowthDay[];
   const notMigrated = !!daily.error;
 
@@ -144,6 +147,17 @@ export default async function AdminGrowthPage() {
           <p className="mt-2 text-xs text-muted-foreground">Only spend logged below. Founder time isn&apos;t counted; note it if you want it tracked.</p>
         </div>
       </section>
+
+      {phoneAgent && phoneAgent.calls > 0 && (
+        <section className="mt-8" aria-label="AI phone agent">
+          <h2 className="mb-3 text-lg font-semibold">AI phone agent</h2>
+          <p className="text-sm">
+            {phoneAgent.calls} calls · {phoneAgent.connected} answered · {phoneAgent.interested} interested · {phoneAgent.links_sent} links sent ·{" "}
+            {phoneAgent.registrations} registrations · {phoneAgent.listings_completed} completed listings · spend ${(phoneAgent.cost_aud_cents / 100).toFixed(2)} ·{" "}
+            <Link href="/admin/phone-agent" className="underline">details</Link>
+          </p>
+        </section>
+      )}
 
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Last 14 days</h2>

@@ -53,8 +53,11 @@ function truncate(value: string, max = 280) {
   return value.length > max ? `${value.slice(0, max - 1).trimEnd()}…` : value;
 }
 
+// A CTA path is on our site; a full https:// URL (e.g. the evntly.au vendor link) is used as is.
+const ctaUrl = (path: string) => (path.startsWith("https://") ? path : `${SITE_URL}${path}`);
+
 function renderHtml({ heading, lines, quote, cta, footer }: Omit<Notification, "category">) {
-  const url = `${SITE_URL}${cta.path}`;
+  const url = ctaUrl(cta.path);
   const paragraphs = lines
     .map((line) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#3a3a3c;">${escapeHtml(line)}</p>`)
     .join("");
@@ -92,7 +95,7 @@ function renderText({ heading, lines, quote, cta, footer }: Omit<Notification, "
     ...lines,
     ...(quote ? ["", `"${truncate(quote)}"`] : []),
     "",
-    `${cta.label}: ${SITE_URL}${cta.path}`,
+    `${cta.label}: ${ctaUrl(cta.path)}`,
     "",
     footer ?? `Choose which emails you get: ${SITE_URL}${PREFS_PATH}`,
   ].join("\n");

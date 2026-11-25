@@ -17,6 +17,7 @@ const LABELS: Record<(typeof SPEND_CHANNELS)[number], string> = {
   referral_rewards: "Referral rewards",
   tools: "Tools",
   other: "Other",
+  ai_phone: "AI phone calls",
 };
 
 export function AdminSpendForm({ today }: { today: string }) {

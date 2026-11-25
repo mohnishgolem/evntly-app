@@ -1,6 +1,6 @@
 // Shared by Admin → Growth and its server actions.
 
-export const SPEND_CHANNELS = ["meta_ads", "google_ads", "instagram", "events", "print", "partnerships", "referral_rewards", "tools", "other"] as const;
+export const SPEND_CHANNELS = ["meta_ads", "google_ads", "instagram", "events", "print", "partnerships", "referral_rewards", "tools", "other", "ai_phone"] as const;
 export type SpendChannel = (typeof SPEND_CHANNELS)[number];
 
 export type GrowthDay = {
