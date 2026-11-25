@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
   if (!cfg.enabled) return NextResponse.json({ error: "disabled" }, { status: 503 });
 
   const raw = await request.text();
-  if (raw.length > 32_000) return NextResponse.json({ error: "too large" }, { status: 413 });
+  // Retell includes the call so far (with its transcript) in every request.
+  if (raw.length > 1_000_000) return NextResponse.json({ error: "too large" }, { status: 413 });
   if (!verifyRetellSignature(cfg.retellApiKey ?? undefined, raw, request.headers.get("x-retell-signature"))) {
     console.warn("[phone-agent] tool: invalid signature");
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });

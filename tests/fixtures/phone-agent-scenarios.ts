@@ -160,7 +160,7 @@ export const SCENARIOS: Scenario[] = [
     mode: "prototype",
     vendorName: "Bloom Balloon Co",
     category: "decorator",
-    persona: "A decorator who already signed up to Evntly last week but hasn't finished adding photos.",
+    persona: "A balloon and backdrop decorator. In your FIRST reply, say you already signed up to Evntly last week. If asked, you haven't finished adding photos yet and plan to do it on the weekend.",
     script: [
       { vendor: "Oh, I already signed up last week actually." },
       { agent: "Ah, great, thanks for joining. Is your listing all finished, or is there anything I can help with, like the photos or a package?" },
@@ -203,7 +203,7 @@ export const SCENARIOS: Scenario[] = [
     vendorName: "Cinematic Moments",
     category: "videographer",
     settings: { owner_transfer_number: "+61400000002" },
-    persona: "A videographer who doesn't like talking to AI and asks to speak to a real person.",
+    persona: "A videographer who doesn't like talking to AI. In your FIRST reply, ask whether this is a real person and say you'd rather talk to a human about it. If offered a person or a callback, accept.",
     script: [
       { vendor: "Is this a real person? I'd rather talk to a human." },
       { agent: "No, I'm Evntly's AI assistant. Let me check if Sai can take the call now.", tools: [{ name: "check_transfer", args: {} }] },
@@ -335,7 +335,7 @@ export const SCENARIOS: Scenario[] = [
     vendorName: "Plan It Perfect Events",
     category: "event_planner",
     settings: { owner_transfer_number: "+61400000002", transfer_start: "09:00", transfer_end: "10:30" },
-    persona: "An event planner who wants to talk to the owner; first suggests Sunday for a callback.",
+    persona: "An event planner who wants to talk to the owner, not an assistant. Ask to speak to the owner. If offered a callback, first suggest Sunday morning at 10; if that doesn't work, accept Saturday at 10am.",
     script: [
       { vendor: "Can I speak to the owner?" },
       { agent: "Sure, let me check if Sai's free.", tools: [{ name: "check_transfer", args: {} }] },

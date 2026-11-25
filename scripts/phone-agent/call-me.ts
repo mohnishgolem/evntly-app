@@ -39,6 +39,7 @@ async function main() {
     ownerName: settings.owner_name ?? "Sai",
     callbackNumber: cfg.fromNumber,
     recordingOn: !!settings.recording_enabled,
+    smsAvailable: !!cfg.twilio,
   });
   const res = await createRetellCall({ apiKey: cfg.retellApiKey, agentId: cfg.retellAgentId, from: cfg.fromNumber, to: phone, vars });
   await db.rpc("phone_call_dialed" as never, { p_call_id: row.call_id, p_provider_call_id: "callId" in res ? res.callId : null, p_error: "error" in res ? res.error : null, p_actor: null } as never);

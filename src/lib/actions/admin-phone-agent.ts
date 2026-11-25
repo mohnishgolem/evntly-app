@@ -81,6 +81,7 @@ export async function startPhoneAgentCall(form: FormData) {
     ownerName: s.owner_name ?? "Sai",
     callbackNumber: cfg.fromNumber!,
     recordingOn: !!s.recording_enabled,
+    smsAvailable: !!cfg.twilio,
   });
   const res = await createRetellCall({ apiKey: cfg.retellApiKey!, agentId: cfg.retellAgentId!, from: cfg.fromNumber!, to: phone!, vars });
   if ("error" in res) {

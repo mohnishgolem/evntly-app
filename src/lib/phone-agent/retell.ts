@@ -39,11 +39,13 @@ export async function createRetellCall(
  * The Retell LLM + agent definition. Uploaded once (and on changes) by
  * scripts/phone-agent/provision-retell.ts.
  */
-// Model: "claude-4.5-haiku" is in Retell's model list (checked 25 Nov 2026);
-// "gpt-4.1-mini" is the cheaper fallback if latency or cost needs it.
+// Model: chosen from live Retell simulations (25 Nov 2026). "claude-5.5-haiku"
+// followed the rules most reliably (honest demand answers, email read-back,
+// no guessing); "gpt-4.1-mini" was the most concise and cheapest, but skipped
+// the email read-back; "claude-4.5-haiku" ran long on pricing questions.
 export function retellLlmConfig(opts: { toolUrl: string; ownerTransferNumber: string | null; model?: string }) {
   return {
-    model: opts.model ?? "claude-4.5-haiku",
+    model: opts.model ?? "claude-5.5-haiku",
     model_temperature: 0.3,
     start_speaker: "agent",
     general_prompt: SYSTEM_PROMPT,
@@ -52,7 +54,7 @@ export function retellLlmConfig(opts: { toolUrl: string; ownerTransferNumber: st
     // prototype call about a made-up photography business.
     default_dynamic_variables: retellDynamicVariables(callVariables({
       ref: "browsertest", mode: "prototype", vendorName: "Harbour Lens Photography", category: "photographer",
-      ownerName: "Sai", callbackNumber: "this number", recordingOn: false,
+      ownerName: "Sai", callbackNumber: "this number", recordingOn: false, smsAvailable: !!process.env.TWILIO_ACCOUNT_SID,
     })),
     general_tools: [
       ...TOOL_DEFS.map((t) => ({

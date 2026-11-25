@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Rpc } from "@/lib/phone-agent/tools";
 
@@ -35,13 +36,25 @@ export function callIds(body: unknown): { ref: string; providerCallId: string } 
 export async function resolveCall(rpc: Rpc, body: unknown): Promise<{ ref: string; providerCallId: string } | null> {
   const direct = callIds(body);
   if (direct) return direct;
-  const call = (body as { call?: { call_id?: unknown; call_type?: unknown; retell_llm_dynamic_variables?: Record<string, unknown> } })?.call;
+  const call = (body as { call?: { call_id?: unknown; call_type?: unknown; retell_llm_dynamic_variables?: Record<string, unknown>; transcript_object?: { content?: unknown }[] } })?.call;
   if (call?.call_type !== "web_call" || typeof call.call_id !== "string" || call.call_id.length < 4 || call.call_id.length > 120) return null;
   const vars = call.retell_llm_dynamic_variables ?? {};
+  const providerCallId = call.call_id === "playground" ? playgroundId(vars.call_ref, call.transcript_object) : call.call_id;
   const { data, error } = await rpc("phone_agent_web_test_call", {
-    p_provider_call_id: call.call_id,
+    p_provider_call_id: providerCallId,
     p_vendor_name: typeof vars.vendor_name === "string" ? vars.vendor_name : null,
     p_category: typeof vars.category === "string" ? vars.category : null,
   });
-  return error || typeof data !== "string" ? null : { ref: data, providerCallId: call.call_id };
+  return error || typeof data !== "string" ? null : { ref: data, providerCallId };
+}
+
+/**
+ * Retell's dashboard playground and simulation tests send every conversation
+ * as call_id "playground". Tell them apart by the test's call_ref variable plus
+ * how the conversation opened (the first two turns never change within one).
+ */
+export function playgroundId(callRef: unknown, transcript: { content?: unknown }[] | undefined): string {
+  const opening = (transcript ?? []).slice(0, 2).map((t) => String(t.content ?? "")).join("|");
+  const digest = createHash("sha256").update(`${String(callRef ?? "")}|${opening}`).digest("hex").slice(0, 20);
+  return `playground-${digest}`;
 }

@@ -211,6 +211,13 @@ it("callbacks respect calling hours; transfer only in Sai's hours", { timeout: 6
   expect(f).toEqual([{ kind: "callback", status: "open" }]);
   expect((await db.query("select outcome from public.phone_calls")).rows[0].outcome).toBe("callback_booked");
 
+  // A link that couldn't be delivered is un-recorded, so the email retry is a real send.
+  await tool("send_registration_link", { channel: "sms", consent_confirmed: true, consent_quote: "text it" });
+  await tool("link_send_failed", {});
+  const retry = await tool("send_registration_link", { channel: "email", email: "jo@example.com", consent_confirmed: true, consent_quote: "email then" });
+  expect(retry.send).toMatchObject({ channel: "email", to: "jo@example.com" });
+  expect((await db.query("select count(*)::int n from public.phone_consents where kind = 'sms_link' and withdrawn_at is not null")).rows[0].n).toBe(1);
+
   const avail = async () => (await tool("check_transfer", {})).available;
   expect(await avail()).toBe(true);
   await db.exec(setClock("2026-12-02T17:30:00+11:00"));

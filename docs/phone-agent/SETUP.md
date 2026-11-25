@@ -16,7 +16,13 @@ Budget: A$50 total including setup. The database refuses any call that could pus
 5. **Compliance:** sign Retell's free DPA at click-agreements.retellai.com, under your business name.
 6. Tell me it's done. I'll then list the Australian voices, create the agent and connect it to your local test database.
 
-## 2. Tunnel to your Mac (needs your OK)
+## Status (25 Nov 2026)
+
+Done: Retell account and key; agent "Evntly vendor recruitment (AI)" (Claude 5.5 Haiku, ElevenLabs Jenny, en-AU, no audio or transcripts kept); monthly budget US$10, auto-recharge off, concurrency burst off (Retell won't go below 20 concurrent calls, but our database allows one at a time); tunnel installed (`~/.local/cloudflared`); 12 live simulations passing. Next: your own browser tests (step 3), then the Twilio number (step 5).
+
+To reconnect after the tunnel stops (new address each time): start the local app, then `sh scripts/phone-agent/connect-local.sh`. To see recent Retell calls: `npx vite-node --config vitest.config.mts scripts/phone-agent/recent-calls.ts`.
+
+## 2. Tunnel to your Mac (done)
 
 Retell can only reach a public URL, so browser tests that use tools (sending links, booking callbacks, opt-outs) need a temporary tunnel to the local app. The plan is Cloudflare's free quick tunnel: no account, and the URL changes every run. It means downloading the `cloudflared` binary (about 40 MB, from github.com/cloudflare/cloudflared releases). It only exposes the local test app on port 3106, which talks to the local Docker database, never production.
 

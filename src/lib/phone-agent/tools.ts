@@ -158,9 +158,14 @@ export async function runTool(
     const sent = await deps.sendLink(result.send);
     const { send: _send, ...rest } = result;
     void _send;
-    return sent.ok
-      ? { ok: true, status: 200, result: rest }
-      : { ok: false, status: 200, result: { error: "The link couldn't be sent just now. Offer to have the owner send it, or a callback." } };
+    if (sent.ok) return { ok: true, status: 200, result: rest };
+    // Not delivered: undo the record so a retry (e.g. by email) really sends.
+    await deps.rpc("phone_agent_tool", { p_ref: call.ref, p_provider_call_id: call.providerCallId, p_tool: "link_send_failed", p_args: {} });
+    return {
+      ok: false,
+      status: 200,
+      result: { error: `The ${result.send.channel === "sms" ? "text" : "email"} couldn't be sent just now. Offer the other way (email or text), or a callback.` },
+    };
   }
   return { ok: true, status: 200, result };
 }

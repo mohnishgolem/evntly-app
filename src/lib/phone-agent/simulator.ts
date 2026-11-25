@@ -25,7 +25,7 @@ export interface AgentEngine {
 // ---------------------------------------------------------------------------
 // Policy checks (apply to every agent line, whatever produced it)
 
-const NEGATION = /\b(can'?t|cannot|won'?t|no|not|never|don'?t|unable to)\b[^.!?]{0,40}$/i;
+const NEGATION = /\b(can['’]?t|cannot|won['’]?t|no|not|never|don['’]?t|unable to)\b[^.!?]{0,40}$/i;
 const BANNED: { re: RegExp; why: string; negatable?: boolean }[] = [
   { re: /\bguarantee(d|s)?\b/i, why: "promises a guarantee", negatable: true },
   { re: /\bpromise (you )?(bookings|enquiries|work|clients|customers)/i, why: "promises bookings", negatable: true },
@@ -52,7 +52,8 @@ export function checkPolicy(transcript: TranscriptEntry[], opts: { recordingOn?:
   const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
   if (words(first) > 45) failures.push(`Opening is ${words(first)} words (max 45).`);
   for (const line of agentLines.slice(1)) {
-    if (words(line.text) > 60) failures.push(`Turn too long (${words(line.text)} words): "${line.text.slice(0, 50)}…"`);
+    if (words(line.text) > 45) failures.push(`Turn too long (${words(line.text)} words): "${line.text.slice(0, 50)}…"`);
+    if (/\n\s*\n/.test(line.text)) failures.push(`Turn has several paragraphs: "${line.text.slice(0, 50)}…"`);
   }
   // 1c. No repeated pitch: no 8-word run said twice.
   const seen = new Set<string>();
@@ -100,10 +101,10 @@ export function checkPolicy(transcript: TranscriptEntry[], opts: { recordingOn?:
   });
 
   // 5b. "Not interested" → accepted: no more selling afterwards.
-  const noIdx = transcript.findIndex((t) => t.who === "vendor" && /\bnot (really )?interested\b|\bnot for me\b|\bno thanks\b/i.test(t.text));
+  const noIdx = transcript.findIndex((t) => t.who === "vendor" && /\bnot (really )?(interested|looking|keen)\b|\bnot for me\b|\bno thanks\b|\bfully booked\b/i.test(t.text));
   if (noIdx >= 0) {
     const later = transcript.slice(noIdx + 1).filter((t) => t.who === "agent") as { text: string }[];
-    if (later.some((a) => /\b(free|founding|no fees|first in search|shown first|just imagine|but (it'?s|you)|are you sure)\b/i.test(a.text))) {
+    if (later.some((a) => /\b(free|founding|no fees|first in search|shown first|just imagine|but (it'?s|you)|are you sure|just so you know|qr code|profile|alongside)\b/i.test(a.text))) {
       failures.push("Kept selling after they said no.");
     }
   }

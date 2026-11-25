@@ -24,7 +24,7 @@ Evntly's AI assistant phones Sydney event vendors **who have agreed to a call**,
 
 | Item | Price | A$ |
 |---|---|---|
-| Retell (voice infra 5.5¢ + voice 1.5–4¢ + Claude 4.5 Haiku 2.5¢) | 9.5–12¢/min | 0.15–0.19/min |
+| Retell (voice infra 5.5¢ + ElevenLabs voice ~4¢ + Claude 5.5 Haiku, price not listed on Retell's page; Claude 4.5 Haiku is 2.5¢) | ≈12–14¢/min | ≈0.19–0.22/min |
 | Twilio SIP to an AU mobile | 7.1¢/min | 0.11/min |
 | **Call total** | **≈17–19¢/min** | **≈A$0.26–0.30/min** |
 | Twilio AU **local** number (voice; SMS support not stated) | US$2.50/mo | 3.90/mo |
@@ -126,6 +126,21 @@ Admin → Phone agent (Sai, MFA)                Retell AI (voice, LLM, AU number
 | Simulator and scenarios | `src/lib/phone-agent/simulator.ts`, `tests/fixtures/phone-agent-scenarios.ts` |
 
 ## Testing done
+
+### Live AI simulations on Retell (25 Nov 2026)
+
+Retell's simulation testing played each vendor persona (its own AI) against our real agent, with tools live against the local test database. Latest run's transcripts: [retell-simulation-report.md](retell-simulation-report.md) (the three-scenario check of the call-id fix; the final 12-scenario transcripts were overwritten by it); script: `scripts/phone-agent/retell-simulations.ts`.
+
+| Round | Agent model | Retell grading | Our rule checks | What changed after |
+|---|---|---|---|---|
+| 1 | claude-4.5-haiku | 9/12 | 5/12 | Tool requests were over our size limit (fixed); turns too long; outcome missing after callbacks; a small re-pitch after a no; personas tightened |
+| 2 | claude-4.5-haiku | 11/12 | 9/12 | Never claim to know their account; answer "are you a robot?" first |
+| A/B | claude-5.5-haiku vs gpt-4.1-mini (pricing and demand) | 2/2 each | — | GPT most concise and cheapest but skipped the email read-back; Claude 5.5 most careful |
+| Final | **claude-5.5-haiku** | **12/12** | **11/12** (one 46-word turn vs our 45 limit) | — |
+
+Bugs these runs found and fixed: request size limit (413), a failed SMS still being recorded as "link sent" (so the email retry wouldn't actually send), and playground/simulation calls all sharing one call id (now kept apart). The agent now only offers channels that work (email until the Twilio number exists).
+
+### Offline
 
 - **13 simulated conversations** (`tests/unit/phone-agent-scenarios.test.ts`, report: [simulation-report.md](simulation-report.md)): interested, busy, pricing, customer demand, already registered, uninterested, asks for a human, do-not-contact, assisted onboarding, registration help (with a mis-heard email), "are you a robot?", human requested outside Sai's hours (Sunday callback refused, Saturday booked), and a guardrail case (link without a yes is refused). Each runs through the real tool path and migration, and every agent line is checked against the rules. All pass.
   These conversations are scripted reference calls, not a live model's words. `scripts/phone-agent/simulate-live.ts` runs the same personas with a real model playing both sides (needs `ANTHROPIC_API_KEY`; about US$0.30 for the full set). It hasn't been run yet.

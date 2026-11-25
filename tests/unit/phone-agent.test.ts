@@ -117,6 +117,20 @@ describe("runTool", () => {
     expect(sent).toHaveLength(1);
     expect(JSON.stringify(r.result)).not.toContain("+61411222333");
   });
+  it("a link that fails to send is un-recorded so a retry really sends", async () => {
+    const calls: string[] = [];
+    const rpc = async (_fn: string, a: Record<string, unknown>) => {
+      calls.push(String(a.p_tool));
+      return a.p_tool === "send_registration_link"
+        ? { data: { ok: true, send: { channel: "sms", to: "+61411222333", campaign: "aicall-abcdefghij" } }, error: null }
+        : { data: { ok: true }, error: null };
+    };
+    const r = await runTool({ rpc, sendLink: async () => ({ ok: false, error: "no sms" }) }, call, "send_registration_link", { channel: "sms", consent_confirmed: true, consent_quote: "yes text me" });
+    expect(calls).toEqual(["send_registration_link", "link_send_failed"]);
+    expect(r).toMatchObject({ ok: false, result: { error: expect.stringMatching(/text couldn't be sent.*email/) } });
+    // The agent can't call the server-only action itself.
+    expect((await runTool({ rpc, sendLink: async () => ({ ok: true }) }, call, "link_send_failed", {})).status).toBe(400);
+  });
   it("database rule messages go back to the agent", async () => {
     const rpc = async () => ({ data: null, error: { message: "Ask for permission to send the link first." } });
     const r = await runTool({ rpc, sendLink: async () => ({ ok: true }) }, call, "send_registration_link", { channel: "sms", consent_confirmed: false, consent_quote: "hm" });
@@ -137,5 +151,29 @@ describe("daily report", () => {
     expect(lines).toMatch(/3 calls, 2 answered, 1 interested/);
     expect(lines).toMatch(/spend A\$6\.40 of A\$50\.00; cost per registration A\$3\.20, per completed listing A\$6\.40/);
     expect(lines).toMatch(/4\.2\/5 from 4 reviewed calls, median response 0\.9s/);
+  });
+});
+
+describe("rule check details", () => {
+  it("understands curly apostrophes in negations", () => {
+    const t: TranscriptEntry[] = [
+      { who: "agent", text: opening({ mode: "pilot", vendorName: "X", category: "dj" }) },
+      { who: "vendor", text: "Will I get bookings?" },
+      { who: "agent", text: "I understand; we can’t promise bookings yet since Evntly is new." },
+      { who: "tool", name: "record_outcome", args: {}, ok: true, result: {} },
+    ];
+    expect(checkPolicy(t).failures).toEqual([]);
+  });
+});
+
+describe("playground calls", () => {
+  it("separate simulated conversations that all share call_id 'playground'", async () => {
+    const { playgroundId } = await import("@/lib/phone-agent/server");
+    const a = playgroundId("sim1", [{ content: "Hi, it's Evntly's AI assistant" }, { content: "Who's this?" }]);
+    const a2 = playgroundId("sim1", [{ content: "Hi, it's Evntly's AI assistant" }, { content: "Who's this?" }, { content: "later turn" }]);
+    const b = playgroundId("sim2", [{ content: "Hi, it's Evntly's AI assistant" }, { content: "Who's this?" }]);
+    expect(a).toBe(a2);
+    expect(a).not.toBe(b);
+    expect(a).toMatch(/^playground-[0-9a-f]{20}$/);
   });
 });
