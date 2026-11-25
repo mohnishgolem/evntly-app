@@ -77,6 +77,10 @@ as $$
     )::date as day
   ),
   test_users as (select id from public.internal_test_user_ids() as t(id)),
+  admin_browsers as (
+    select distinct v.visitor_id from public.page_views v
+    where v.visitor_id is not null and v.user_id::text in (select u.id::text from public.users u where u.role = 'admin')
+  ),
   syd as (select 'Australia/Sydney'::text as tz),
   vendors as (
     select u.id::text as id, (u.created_at at time zone (select tz from syd))::date as reg_day
@@ -132,7 +136,10 @@ as $$
     (select count(*)::int from public.vendor_prospects p where (p.created_at at time zone (select tz from syd))::date = d.day),
     (select count(distinct e.prospect_id)::int from public.vendor_prospect_events e where e.action = 'contacted' and (e.created_at at time zone (select tz from syd))::date = d.day),
     (select count(distinct e.prospect_id)::int from public.vendor_prospect_events e where e.action = 'replied' and (e.created_at at time zone (select tz from syd))::date = d.day),
-    (select count(*)::int from public.vendor_listing_drafts v where (v.created_at at time zone (select tz from syd))::date = d.day),
+    (select count(*)::int from public.vendor_listing_drafts v
+      where (v.created_at at time zone (select tz from syd))::date = d.day
+        and (v.claimed_by is null or v.claimed_by::text not in (select id from test_users))
+        and (v.visitor_id is null or v.visitor_id not in (select visitor_id from admin_browsers))),
     (select count(*)::int from vendors v where v.reg_day = d.day),
     (select count(*)::int from listings l where l.approved_day = d.day),
     (select count(*)::int from completed c where c.day = d.day),

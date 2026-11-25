@@ -157,6 +157,8 @@ as $$
     select d.* from public.vendor_listing_drafts d, since
     where d.created_at >= since.t
       and (d.claimed_by is null or d.claimed_by::text not in (select id from test_users))
+      -- Drafts started from an admin's browser (our own smoke tests) don't count.
+      and (d.visitor_id is null or d.visitor_id not in (select visitor_id from admin_browsers))
   ),
   listings as (
     select sp.id, sp.status,

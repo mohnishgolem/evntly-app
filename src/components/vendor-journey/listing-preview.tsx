@@ -34,7 +34,7 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
 
       <div className={cn("space-y-4", compact ? "p-4" : "p-5")}>
         <header>
-          <h3 className={cn("text-[20px] leading-tight font-bold", !name && "text-muted-foreground/70")}>{name || "Your business name"}</h3>
+          <h2 className={cn("text-[20px] leading-tight font-bold", !name && "text-muted-foreground")}>{name || "Your business name"}</h2>
           <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[15px] text-muted-foreground">
             <span>{draft.serviceType ? categoryLabel(draft.serviceType) : "Your category"}</span>
             <span aria-hidden>·</span>
@@ -44,7 +44,7 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
             </span>
           </p>
           <p className="mt-2 text-[17px] font-semibold">
-            {draft.pricingModel === "quote" ? "Custom quotes" : price ? price[0].toUpperCase() + price.slice(1) : <span className="text-muted-foreground/70">Your starting price</span>}
+            {draft.pricingModel === "quote" ? "Custom quotes" : price ? price[0].toUpperCase() + price.slice(1) : <span className="text-muted-foreground">Your starting price</span>}
           </p>
         </header>
 
@@ -59,7 +59,7 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
         )}
 
         <section>
-          <h4 className="text-sm font-semibold">About</h4>
+          <h3 className="text-sm font-semibold">About</h3>
           {paragraphs.length ? (
             paragraphs.map((p, i) => (
               <p key={i} className="mt-1.5 text-[15px] leading-relaxed whitespace-pre-line text-foreground/85">
@@ -67,12 +67,12 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
               </p>
             ))
           ) : (
-            <p className="mt-1.5 text-[15px] text-muted-foreground/70">A few lines about your business and style.</p>
+            <p className="mt-1.5 text-[15px] text-muted-foreground">A few lines about your business and style.</p>
           )}
         </section>
 
         <section>
-          <h4 className="text-sm font-semibold">Packages</h4>
+          <h3 className="text-sm font-semibold">Packages</h3>
           {packages.length ? (
             <ul className="mt-2 space-y-2">
               {packages.map((p) => (
@@ -93,7 +93,7 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
               ))}
             </ul>
           ) : (
-            <p className="mt-1.5 text-[15px] text-muted-foreground/70">Your first package, with your price.</p>
+            <p className="mt-1.5 text-[15px] text-muted-foreground">Your first package, with your price.</p>
           )}
         </section>
 

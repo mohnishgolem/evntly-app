@@ -71,6 +71,8 @@ it("measures the journey to approved vendors with a genuine enquiry, for admins 
   await db.exec(`insert into public.vendor_listing_drafts (token_hash, claimed_by, claimed_at, provider_id) values ('${sha("a")}', '${A}', now(), '${pa}'), ('${sha("b")}', '${B}', now(), '${pb}'), ('${sha("c")}', null, null, null)`);
   await db.exec(`insert into public.vendor_listing_drafts (token_hash, origin, email, created_by, permission_note, permission_at, claim_opened_at)
     values ('${sha("d")}', 'assisted', 'jo@x.com', '${ADMIN}', 'DM reply: yes, go ahead', now(), now())`);
+  // A draft from the admin's own browser (smoke test) doesn't count.
+  await db.exec(`insert into public.vendor_listing_drafts (token_hash, visitor_id) values ('${sha("admin-smoke")}', 'admin-browser')`);
   // Admin's own test enquiry must not count; the customer's does.
   await db.exec(`insert into public.quote_requests (vendor_id, client_user_id) values ('${pa}', '${ADMIN}')`);
 
