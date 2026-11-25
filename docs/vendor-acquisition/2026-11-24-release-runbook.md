@@ -79,3 +79,17 @@
 - Regenerate Supabase types so `vendor_listing_drafts` / `acquisition_spend` are typed.
 - Change the automated "no listing yet" reminder link to `/become-a-vendor/start`.
 - Customer-side source tracking (see customer strategy, gap 1).
+
+## Release log — 25 Nov 2026 (Sydney)
+
+| Time | Step | Result |
+|---|---|---|
+| 11:02 | Row counts recorded; Sai confirmed today's Supabase backup | page_views 1765, funnel_events 141, service_providers 27, bookings 0, events 10, users 37, quote_requests 6, packages 11, photos 98, applications 16, cron jobs 10 |
+| ~11:03 | Applied `vendor_listing_drafts` (recorded in Supabase as `20261125000326`) | table with RLS on and no client grants; purge job scheduled (cron 10 → 11); helpers not callable by anon/authenticated; all row counts unchanged |
+| ~11:04 | Applied `growth_dashboard` | admin view returns 30 days; totals match the verified funnel (16 vendor registrations, 12 approved, 8 completed, 0 genuine enquiries) |
+| 11:04 | Merged #97 (`a7edb66`) after all CI checks passed on `03e15a0` | Vercel production deployment `dpl_29buMvb4wi3Y5p48B9No5dtyvLpj`; rollback target `dpl_Gond17Csqay1NyGkpUZG9f2yrYFG` |
+| ~11:06 | Live: `/become-a-vendor` 200 | |
+| ~11:07 | Production smoke (headless, read-only, nothing saved) | 21/22: pages, guessed links refused, save/admin pages need sign-in, existing pages 200, no page errors; the 1 "failure" was the builder's no-op save call after question 1 (server saves nothing until question 2) — confirmed 0 drafts, 0 new events |
+| ~11:08 | Runtime errors since deploy | none (baseline 24 h before: none) |
+
+Next: 48-hour watch, then merge #98.
