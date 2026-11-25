@@ -238,7 +238,9 @@ export default async function BecomeAVendorPage({ searchParams }: { searchParams
               with your permission, and send you a private link to check it. You change anything you like and approve it before
               it&apos;s saved. It&apos;s free.
             </p>
-            <p className="mt-4 text-sm text-muted-foreground">Prefer to talk? Email hello@evntlyapp.com or message @evntly.au on Instagram.</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Prefer to talk? <Link href="/become-a-vendor/call" className="font-medium underline underline-offset-2">Request a call</Link>, email hello@evntlyapp.com or message @evntly.au on Instagram.
+            </p>
           </div>
           <div className="rounded-card bg-background p-5 sm:p-6">
             <WaitlistForm assisted submitLabel="Ask for free setup help" />

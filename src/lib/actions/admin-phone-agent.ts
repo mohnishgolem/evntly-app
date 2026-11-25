@@ -134,3 +134,28 @@ export async function completePhoneFollowup(form: FormData) {
   const { error } = await rpc("admin_phone_followup_done", { p_id: Number(str(form, "id")), p_status: str(form, "status") || "done" });
   done(error ? error.message : "Updated.");
 }
+
+/** An Instagram / Facebook / email reply that says yes to a call: recorded with the quote. */
+export async function recordSocialCallRequest(form: FormData) {
+  const rpc = await adminRpc();
+  const phone = toE164(str(form, "phone"));
+  if (!phone) done("Enter an Australian phone number.");
+  const quote = str(form, "evidence");
+  if (quote.length < 20) done("Paste what they wrote, with the date (at least 20 characters).");
+  const { error } = await rpc("admin_phone_request_callback", {
+    p_phone: phone,
+    p_business_name: str(form, "business_name"),
+    p_contact_name: str(form, "contact_name") || null,
+    p_category: str(form, "category") || null,
+    p_email: str(form, "email") || null,
+    p_source: str(form, "source") || "instagram",
+    p_consent_text: quote,
+  });
+  done(error ? error.message : "Call request and consent recorded. Do the Do Not Call Register check, then call from Pilot.");
+}
+
+export async function setCallRequestStatus(form: FormData) {
+  const rpc = await adminRpc();
+  const { error } = await rpc("admin_phone_request_status", { p_id: Number(str(form, "id")), p_status: str(form, "status") });
+  done(error ? error.message : "Updated.");
+}

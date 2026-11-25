@@ -37,6 +37,14 @@ describe("conversation rules catch violations", () => {
     expect(fails([agent(open), vendor("Take me off your list"), tool("opt_out"), agent("Done."), agent("But the listing is free!"), tool("end_call")])).toMatch(/Kept talking|Pitched/);
     expect(fails([agent(open), vendor("Take me off your list"), tool("opt_out"), agent("Done, sorry to bother you.")])).toMatch(/Didn't end the call/);
   });
+  it("short turns, no repeated pitch, no selling after a no", () => {
+    const long = Array(70).fill("word").join(" ");
+    expect(fails([agent(open), vendor("ok"), agent(long), record])).toMatch(/Turn too long/);
+    expect(fails([agent("Hi, it's Evntly's AI assistant calling about listing your business, and I want to tell you everything about everything we offer to vendors in Sydney today and tomorrow and next week too, plus all the extra things we are planning to build over the coming months for you ok?"), vendor("ok"), record])).toMatch(/Opening is/);
+    const pitch = "customers send their date suburb guest count and budget so you can quote properly";
+    expect(fails([agent(open), vendor("ok"), agent(pitch), vendor("hmm"), agent("Like I said, " + pitch), record])).toMatch(/Repeats itself/);
+    expect(fails([agent(open), vendor("Not interested, thanks."), agent("But it's free, and Founding Vendors are shown first!"), record])).toMatch(/Kept selling/);
+  });
   it("outcome must be recorded", () => {
     expect(fails([agent(open), vendor("Sure"), agent("Bye"), tool("end_call")])).toMatch(/record the outcome/);
   });
@@ -113,5 +121,21 @@ describe("runTool", () => {
     const rpc = async () => ({ data: null, error: { message: "Ask for permission to send the link first." } });
     const r = await runTool({ rpc, sendLink: async () => ({ ok: true }) }, call, "send_registration_link", { channel: "sms", consent_confirmed: false, consent_quote: "hm" });
     expect(r).toMatchObject({ ok: false, result: { error: "Ask for permission to send the link first." } });
+  });
+});
+
+describe("daily report", () => {
+  it("adds phone agent lines only once it's been used", async () => {
+    const { phoneAgentLines } = await import("@/lib/acquisition/report");
+    expect(phoneAgentLines(null)).toEqual([]);
+    expect(phoneAgentLines({ day: {}, total: { calls: 0 }, budgetCents: 5000 })).toEqual([]);
+    const lines = phoneAgentLines({
+      day: { calls: 3, connected: 2, interested: 1, links_sent: 1 },
+      total: { calls: 8, pilot_calls: 5, registrations: 2, listings_completed: 1, cost_aud_cents: 640, reviewed_calls: 4, avg_quality_x10: 42, latency_p50_ms: 900 },
+      budgetCents: 5000,
+    }).join("\n");
+    expect(lines).toMatch(/3 calls, 2 answered, 1 interested/);
+    expect(lines).toMatch(/spend A\$6\.40 of A\$50\.00; cost per registration A\$3\.20, per completed listing A\$6\.40/);
+    expect(lines).toMatch(/4\.2\/5 from 4 reviewed calls, median response 0\.9s/);
   });
 });

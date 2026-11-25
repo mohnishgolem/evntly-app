@@ -47,6 +47,9 @@ create table if not exists public.phone_agent_settings (
   max_attempts_per_prospect integer not null default 2 check (max_attempts_per_prospect between 1 and 3),
   daily_call_cap integer not null default 10 check (daily_call_cap between 0 and 100),
   budget_aud_cents integer not null default 5000 check (budget_aud_cents between 0 and 100000),
+  -- Worst-case cost of one call still in progress (max length × rate), held
+  -- against the budget until its real cost arrives, so calls can't overshoot it.
+  max_call_cost_aud_cents integer not null default 200 check (max_call_cost_aud_cents between 50 and 2000),
   usd_to_aud numeric(6, 4) not null default 1.55 check (usd_to_aud between 1 and 3),
   recording_enabled boolean not null default false,
   recording_review_note text check (recording_review_note is null or char_length(recording_review_note) between 20 and 1000),
@@ -154,6 +157,8 @@ create table if not exists public.phone_calls (
   ended_at timestamptz,
   duration_seconds integer check (duration_seconds is null or duration_seconds >= 0),
   disconnection_reason text check (disconnection_reason is null or char_length(disconnection_reason) <= 80),
+  -- Median end-to-end response latency reported by the provider (conversation quality).
+  latency_p50_ms integer check (latency_p50_ms is null or latency_p50_ms >= 0),
   outcome text check (outcome is null or outcome in (
     'interested', 'link_sent', 'assisted_requested', 'callback_booked', 'transferred', 'busy_call_later',
     'not_interested', 'already_registered', 'opted_out', 'voicemail', 'no_answer', 'wrong_number', 'other')),
@@ -300,12 +305,19 @@ begin
   end if;
   if exists (select 1 from public.phone_calls c where c.phone_e164 = p_phone and c.status in ('dialing', 'in_progress') and c.created_at > now() - interval '30 minutes') then
     r := array_append(r, 'A call to this number is already in progress.');
+  -- One call at a time, so spend can't run ahead of the budget.
+  elsif exists (select 1 from public.phone_calls c where c.status in ('dialing', 'in_progress') and c.created_at > now() - interval '15 minutes') then
+    r := array_append(r, 'Another call is in progress; wait for it to finish.');
   end if;
   if (select count(*) from public.phone_calls c where (c.created_at at time zone 'Australia/Sydney')::date = (now() at time zone 'Australia/Sydney')::date) >= s.daily_call_cap then
     r := array_append(r, 'Daily call cap reached.');
   end if;
-  select coalesce(sum(cost_aud_cents), 0) into spent from public.phone_calls;
-  if spent >= s.budget_aud_cents then r := array_append(r, 'Testing budget used up.'); end if;
+  -- Ended calls at their real cost; calls without a cost yet at the worst case.
+  select coalesce(sum(coalesce(cost_aud_cents, case when status = 'failed' then 0 else s.max_call_cost_aud_cents end)), 0)
+    into spent from public.phone_calls;
+  if spent + s.max_call_cost_aud_cents > s.budget_aud_cents then
+    r := array_append(r, format('Testing budget would be exceeded (A$%s of A$%s committed).', to_char(spent / 100.0, 'FM990.00'), to_char(s.budget_aud_cents / 100.0, 'FM990.00')));
+  end if;
 
   if p_prospect_id is null then
     if s.mode = 'pilot' then r := array_append(r, 'Pilot calls must be to a prospect.'); end if;
@@ -388,6 +400,7 @@ begin
     pilot_max_calls = coalesce((p ->> 'pilot_max_calls')::int, pilot_max_calls),
     daily_call_cap = coalesce((p ->> 'daily_call_cap')::int, daily_call_cap),
     budget_aud_cents = coalesce((p ->> 'budget_aud_cents')::int, budget_aud_cents),
+    max_call_cost_aud_cents = coalesce((p ->> 'max_call_cost_aud_cents')::int, max_call_cost_aud_cents),
     recording_enabled = coalesce((p ->> 'recording_enabled')::boolean, recording_enabled),
     recording_review_note = case when p ? 'recording_review_note' then nullif(p ->> 'recording_review_note', '') else recording_review_note end,
     updated_by = auth.uid(), updated_at = now()
@@ -468,7 +481,7 @@ grant execute on function public.admin_phone_suppress(text, text) to authenticat
 
 -- Start a call: re-checks every rule, then creates the call row. The server
 -- then asks the voice provider to dial and records its call id.
-create or replace function public.admin_phone_start_call(p_prospect_id uuid, p_phone text)
+create or replace function public.phone_start_call(p_prospect_id uuid, p_phone text, p_actor uuid)
 returns table (call_id uuid, ref text, vendor_name text, contact_first_name text, category text, mode text)
 language plpgsql
 security definer
@@ -480,7 +493,6 @@ declare
   p public.vendor_prospects;
   c public.phone_calls;
 begin
-  if not public.is_admin() then raise exception 'Not authorized.' using errcode = '42501'; end if;
   perform pg_advisory_xact_lock(hashtext('phone_agent_start'));
   blockers := public.phone_call_blockers(p_prospect_id, p_phone, public.phone_now());
   if array_length(blockers, 1) > 0 then
@@ -490,15 +502,53 @@ begin
   if p_prospect_id is not null then select * into p from public.vendor_prospects where id = p_prospect_id; end if;
   insert into public.phone_calls (mode, prospect_id, phone_e164, vendor_name, category, requested_by)
   values (case when p_prospect_id is null then 'prototype' else 'pilot' end, p_prospect_id, p_phone,
-          coalesce(p.business_name, 'Evntly prototype test'), coalesce(p.category, 'photographer'), auth.uid())
+          coalesce(p.business_name, 'Evntly prototype test'), coalesce(p.category, 'photographer'), p_actor)
   returning * into c;
   insert into public.phone_call_events (call_id, actor, actor_user_id, action, detail)
-  values (c.id, 'admin', auth.uid(), 'start', jsonb_build_object('mode', c.mode));
+  values (c.id, case when p_actor is null then 'system' else 'admin' end, p_actor, 'start', jsonb_build_object('mode', c.mode));
   return query select c.id, c.ref, c.vendor_name, c.contact_first_name, c.category, c.mode;
+end;
+$$;
+revoke all on function public.phone_start_call(uuid, text, uuid) from public, anon, authenticated;
+grant execute on function public.phone_start_call(uuid, text, uuid) to service_role;
+
+-- Admin → Phone agent (signed-in admin with MFA). The service role (local
+-- prototype script) calls phone_start_call directly; the rules are the same.
+create or replace function public.admin_phone_start_call(p_prospect_id uuid, p_phone text)
+returns table (call_id uuid, ref text, vendor_name text, contact_first_name text, category text, mode text)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then raise exception 'Not authorized.' using errcode = '42501'; end if;
+  return query select * from public.phone_start_call(p_prospect_id, p_phone, auth.uid());
 end;
 $$;
 revoke all on function public.admin_phone_start_call(uuid, text) from public, anon;
 grant execute on function public.admin_phone_start_call(uuid, text) to authenticated;
+
+
+create or replace function public.phone_call_dialed(p_call_id uuid, p_provider_call_id text, p_error text, p_actor uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.phone_calls
+    set provider_call_id = coalesce(p_provider_call_id, provider_call_id),
+        status = case when p_error is not null then 'failed' else status end,
+        disconnection_reason = case when p_error is not null then left(p_error, 80) else disconnection_reason end,
+        updated_at = now()
+    where id = p_call_id;
+  insert into public.phone_call_events (call_id, actor, actor_user_id, action, detail)
+  values (p_call_id, case when p_actor is null then 'system' else 'admin' end, p_actor, case when p_error is null then 'dialed' else 'dial_failed' end,
+          jsonb_build_object('provider_call_id', p_provider_call_id, 'error', left(p_error, 300)));
+end;
+$$;
+revoke all on function public.phone_call_dialed(uuid, text, text, uuid) from public, anon, authenticated;
+grant execute on function public.phone_call_dialed(uuid, text, text, uuid) to service_role;
 
 create or replace function public.admin_phone_call_dialed(p_call_id uuid, p_provider_call_id text, p_error text default null)
 returns void
@@ -508,19 +558,12 @@ set search_path = ''
 as $$
 begin
   if not public.is_admin() then raise exception 'Not authorized.' using errcode = '42501'; end if;
-  update public.phone_calls
-    set provider_call_id = coalesce(p_provider_call_id, provider_call_id),
-        status = case when p_error is not null then 'failed' else status end,
-        disconnection_reason = case when p_error is not null then left(p_error, 80) else disconnection_reason end,
-        updated_at = now()
-    where id = p_call_id;
-  insert into public.phone_call_events (call_id, actor, actor_user_id, action, detail)
-  values (p_call_id, 'admin', auth.uid(), case when p_error is null then 'dialed' else 'dial_failed' end,
-          jsonb_build_object('provider_call_id', p_provider_call_id, 'error', left(p_error, 300)));
+  perform public.phone_call_dialed(p_call_id, p_provider_call_id, p_error, auth.uid());
 end;
 $$;
 revoke all on function public.admin_phone_call_dialed(uuid, text, text) from public, anon;
 grant execute on function public.admin_phone_call_dialed(uuid, text, text) to authenticated;
+
 
 create or replace function public.admin_phone_review_call(p_call_id uuid, p_score smallint, p_note text default null)
 returns void
@@ -770,6 +813,7 @@ begin
       ended_at = coalesce(ended_at, to_timestamp(nullif(p_payload ->> 'end_timestamp', '')::bigint / 1000.0), now()),
       duration_seconds = coalesce(nullif(p_payload ->> 'duration_seconds', '')::numeric::int, duration_seconds),
       disconnection_reason = coalesce(left(p_payload ->> 'disconnection_reason', 80), disconnection_reason),
+      latency_p50_ms = coalesce(nullif(p_payload ->> 'latency_p50_ms', '')::numeric::int, latency_p50_ms),
       outcome = coalesce(outcome, case
         when p_payload ->> 'disconnection_reason' in ('voicemail_reached', 'machine_detected') then 'voicemail'
         when p_payload ->> 'disconnection_reason' in ('dial_no_answer', 'dial_busy', 'dial_failed', 'error_no_audio_received') then 'no_answer'
@@ -849,12 +893,161 @@ $$;
 revoke all on function public.phone_agent_sms_stop(text, text) from public, anon, authenticated;
 grant execute on function public.phone_agent_sms_stop(text, text) to service_role;
 
+-- Browser test calls from the Retell dashboard ("Test Audio") carry no call
+-- reference of ours. In PROTOTYPE mode only, the first signed request for such
+-- a web call creates a prototype call row (logged against Sai's own number)
+-- so its tools and outcome are recorded like a real call.
+create or replace function public.phone_agent_web_test_call(p_provider_call_id text, p_vendor_name text, p_category text)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  s public.phone_agent_settings;
+  existing text;
+  new_ref text;
+begin
+  select ref into existing from public.phone_calls where provider_call_id = p_provider_call_id;
+  if existing is not null then return existing; end if;
+  select * into s from public.phone_agent_settings where id;
+  if s.mode <> 'prototype' or array_length(s.prototype_numbers, 1) is null then
+    raise exception 'Browser test calls only work in prototype mode.' using errcode = 'P0001';
+  end if;
+  insert into public.phone_calls (mode, phone_e164, vendor_name, category, provider_call_id, status, started_at)
+  values ('prototype', s.prototype_numbers[1], left(coalesce(nullif(p_vendor_name, ''), 'Browser test'), 160),
+          left(coalesce(nullif(p_category, ''), 'photographer'), 40), p_provider_call_id, 'in_progress', now())
+  returning ref into new_ref;
+  insert into public.phone_call_events (call_id, actor, action, detail)
+  select id, 'system', 'web_test_call', '{}'::jsonb from public.phone_calls where ref = new_ref;
+  return new_ref;
+end;
+$$;
+revoke all on function public.phone_agent_web_test_call(text, text, text) from public, anon, authenticated;
+grant execute on function public.phone_agent_web_test_call(text, text, text) to service_role;
+
+-- "Request a call" from the vendor journey (or recorded from an Instagram /
+-- Facebook / email reply). The person's own express consent, with the exact
+-- wording they agreed to, is stored as a phone_consents row. Sai (or the
+-- pilot) calls them from Admin → Phone agent; nothing dials automatically.
+create table if not exists public.phone_call_requests (
+  id bigserial primary key,
+  prospect_id uuid references public.vendor_prospects (id) on delete set null,
+  phone_e164 text not null check (phone_e164 ~ '^\+61[2-478][0-9]{8}$'),
+  contact_name text check (contact_name is null or char_length(contact_name) <= 80),
+  business_name text not null check (char_length(btrim(business_name)) between 1 and 160),
+  category text check (category is null or char_length(category) <= 40),
+  email text check (email is null or (char_length(email) <= 254 and email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$')),
+  preferred_time text check (preferred_time is null or preferred_time in ('morning', 'afternoon', 'any')),
+  source text not null check (source in ('website', 'instagram', 'facebook', 'email', 'other')),
+  consent_text text not null check (char_length(consent_text) between 20 and 600),
+  status text not null default 'open' check (status in ('open', 'called', 'closed')),
+  created_at timestamptz not null default now()
+);
+create index if not exists phone_call_requests_open_idx on public.phone_call_requests (created_at) where status = 'open';
+alter table public.phone_call_requests enable row level security;
+revoke all on public.phone_call_requests from public, anon, authenticated;
+revoke all on sequence public.phone_call_requests_id_seq from public, anon, authenticated;
+grant select on public.phone_call_requests to authenticated;
+drop policy if exists phone_call_requests_admin_read on public.phone_call_requests;
+create policy phone_call_requests_admin_read on public.phone_call_requests for select to authenticated using ((select public.is_admin()));
+
+-- From the website form (service role, after rate limiting) or an admin
+-- recording a DM reply. Links to an existing prospect by email, phone or
+-- business name, else adds one. Suppressed numbers are accepted silently
+-- (no call will ever be placed) so the form can't be used to probe the list.
+create or replace function public.phone_request_callback(
+  p_phone text, p_business_name text, p_contact_name text, p_category text, p_email text,
+  p_preferred_time text, p_source text, p_consent_text text
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  pid uuid;
+  em text := nullif(lower(btrim(coalesce(p_email, ''))), '');
+  nm text := btrim(coalesce(p_business_name, ''));
+  req_id bigint;
+begin
+  if p_phone is null or p_phone !~ '^\+61[2-478][0-9]{8}$' then raise exception 'Enter an Australian phone number.' using errcode = '22023'; end if;
+  if nm = '' then raise exception 'Enter your business name.' using errcode = '22023'; end if;
+  if exists (select 1 from public.phone_call_requests r where r.phone_e164 = p_phone and r.created_at > now() - interval '1 day') then
+    return null; -- already asked today
+  end if;
+
+  select id into pid from public.vendor_prospects p
+    where (em is not null and p.email_normalized = em) or p.phone = p_phone or p.business_name_normalized = lower(nm)
+    order by (p.email_normalized = em) desc nulls last limit 1;
+  if pid is null then
+    insert into public.vendor_prospects (business_name, category, email, phone, source_url, lead_quality, notes)
+    values (left(nm, 160), left(nullif(p_category, ''), 40), em, p_phone, 'callback_request:' || p_source, 'A',
+            'Asked for a call (' || p_source || ')')
+    returning id into pid;
+    insert into public.vendor_prospect_events (prospect_id, action, to_stage, note)
+    values (pid, 'imported', 'discovered', 'Requested a call (' || p_source || ')');
+  else
+    update public.vendor_prospects set phone = coalesce(phone, p_phone), email = coalesce(email, em), updated_at = now()
+      where id = pid and not do_not_contact
+        and (em is null or email is not null or not exists (select 1 from public.vendor_prospects o where o.email_normalized = em));
+  end if;
+
+  insert into public.phone_call_requests (prospect_id, phone_e164, contact_name, business_name, category, email, preferred_time, source, consent_text)
+  values (pid, p_phone, left(nullif(btrim(p_contact_name), ''), 80), left(nm, 160), left(nullif(p_category, ''), 40), em,
+          coalesce(nullif(p_preferred_time, ''), 'any'), p_source, left(p_consent_text, 600))
+  returning id into req_id;
+  insert into public.phone_consents (prospect_id, phone_e164, kind, basis, evidence)
+  values (pid, p_phone, 'call',
+          case when p_source = 'website' then 'express_web_form' else 'express_dm_reply' end,
+          left(format('Request %s via %s on %s: "%s"', req_id, p_source,
+                      to_char(now() at time zone 'Australia/Sydney', 'DD Mon YYYY HH24:MI'), p_consent_text), 1000));
+  insert into public.vendor_prospect_events (prospect_id, action, note)
+  values (pid, 'replied', 'Asked for a call from the AI assistant (' || p_source || ')');
+  return req_id;
+end;
+$$;
+revoke all on function public.phone_request_callback(text, text, text, text, text, text, text, text) from public, anon, authenticated;
+grant execute on function public.phone_request_callback(text, text, text, text, text, text, text, text) to service_role;
+
+create or replace function public.admin_phone_request_callback(
+  p_phone text, p_business_name text, p_contact_name text, p_category text, p_email text, p_source text, p_consent_text text
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then raise exception 'Not authorized.' using errcode = '42501'; end if;
+  if p_source not in ('instagram', 'facebook', 'email', 'other') then raise exception 'Unknown source.' using errcode = '22023'; end if;
+  return public.phone_request_callback(p_phone, p_business_name, p_contact_name, p_category, p_email, 'any', p_source, p_consent_text);
+end;
+$$;
+revoke all on function public.admin_phone_request_callback(text, text, text, text, text, text, text) from public, anon;
+grant execute on function public.admin_phone_request_callback(text, text, text, text, text, text, text) to authenticated;
+
+create or replace function public.admin_phone_request_status(p_id bigint, p_status text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then raise exception 'Not authorized.' using errcode = '42501'; end if;
+  if p_status not in ('open', 'called', 'closed') then raise exception 'Unknown status.' using errcode = '22023'; end if;
+  update public.phone_call_requests set status = p_status where id = p_id;
+end;
+$$;
+revoke all on function public.admin_phone_request_status(bigint, text) from public, anon;
+grant execute on function public.admin_phone_request_status(bigint, text) to authenticated;
+
 -- Pilot results for Admin → Growth and Admin → Phone agent --------------------------
 -- Registrations / listings resulting from calls: a vendor account created after
 -- the call whose email is the prospect's or the one the link was emailed to,
 -- or a founding application / listing draft carrying the call's campaign tag
 -- (aicall-<ref>). Test/internal accounts excluded.
-create or replace function public.admin_phone_agent_summary()
+create or replace function public.phone_agent_measures(p_since timestamptz default null)
 returns table (measure text, value bigint)
 language sql
 stable
@@ -862,7 +1055,7 @@ security definer
 set search_path to ''
 as $$
   with test_users as (select id from public.internal_test_user_ids() as t(id)),
-  calls as (select * from public.phone_calls),
+  calls as (select * from public.phone_calls where p_since is null or created_at >= p_since),
   emails as (
     select c.id as call_id, c.created_at, lower(x.email) as email
     from calls c
@@ -898,7 +1091,7 @@ as $$
     union all select 'interested', (select count(*) from calls where interest in ('high', 'medium') or outcome in ('interested', 'link_sent', 'assisted_requested', 'callback_booked', 'transferred'))
     union all select 'links_sent', (select count(*) from calls where link_sent_at is not null)
     union all select 'assisted_requested', (select count(*) from calls where assisted_requested_at is not null)
-    union all select 'callbacks', (select count(*) from public.phone_followups where kind = 'callback')
+    union all select 'callbacks', (select count(*) from public.phone_followups f where f.kind = 'callback' and f.call_id in (select id from calls))
     union all select 'transfers', (select count(*) from calls where transferred_at is not null)
     union all select 'opted_out', (select count(*) from calls where opted_out_at is not null)
     union all select 'registrations', (select count(*) from registered)
@@ -907,8 +1100,23 @@ as $$
     union all select 'cost_aud_cents', (select coalesce(sum(cost_aud_cents), 0) from calls)
     union all select 'avg_quality_x10', (select coalesce(round(avg(quality_score) * 10), 0)::bigint from calls where quality_score is not null)
     union all select 'reviewed_calls', (select count(*) from calls where quality_score is not null)
-  ) m
-  where public.is_admin();
+    union all select 'latency_p50_ms', (select coalesce(round(avg(latency_p50_ms)), 0)::bigint from calls where latency_p50_ms is not null)
+    union all select 'call_requests', (select count(*) from public.phone_call_requests r where p_since is null or r.created_at >= p_since)
+    union all select 'call_requests_open', (select count(*) from public.phone_call_requests where status = 'open')
+  ) m;
+$$;
+revoke all on function public.phone_agent_measures(timestamptz) from public, anon, authenticated;
+grant execute on function public.phone_agent_measures(timestamptz) to service_role;
+
+-- Admin view (all time). The daily report calls phone_agent_measures(now() - 1 day) with the service role.
+create or replace function public.admin_phone_agent_summary()
+returns table (measure text, value bigint)
+language sql
+stable
+security definer
+set search_path to ''
+as $$
+  select m.measure, m.value from public.phone_agent_measures(null) m where public.is_admin();
 $$;
 revoke all on function public.admin_phone_agent_summary() from public, anon;
 grant execute on function public.admin_phone_agent_summary() to authenticated;

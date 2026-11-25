@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { phoneAgentConfig } from "@/lib/phone-agent/config";
 import { sendRegistrationLink } from "@/lib/phone-agent/send-link";
-import { agentRpc, callIds } from "@/lib/phone-agent/server";
+import { agentRpc, resolveCall } from "@/lib/phone-agent/server";
 import { verifyRetellSignature } from "@/lib/phone-agent/signature";
 import { runTool } from "@/lib/phone-agent/tools";
 
@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "bad json" }, { status: 400 });
   }
-  const ids = callIds(body);
   const rpc = agentRpc();
-  if (!ids) return NextResponse.json({ error: "unknown call" }, { status: 400 });
   if (!rpc) return NextResponse.json({ error: "not configured" }, { status: 503 });
+  const ids = await resolveCall(rpc, body);
+  if (!ids) return NextResponse.json({ error: "unknown call" }, { status: 400 });
 
   const name = typeof body.name === "string" ? body.name : "";
   const out = await runTool({ rpc, sendLink: sendRegistrationLink }, ids, name, body.args);

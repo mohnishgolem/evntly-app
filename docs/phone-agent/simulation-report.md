@@ -9,32 +9,34 @@ These scripts test the rules and integrations; the wording a live model produces
 
 | # | Scenario | Mode | Outcome | Interest | Est. length | Est. cost (A$) | Checks |
 |---|---|---|---|---|---|---|---|
-| 01 | Interested vendor | pilot | link_sent | high | 1m 33s | 0.40 | ✅ pass |
-| 02 | Busy vendor | pilot | callback_booked | medium | 0m 44s | 0.19 | ✅ pass |
-| 03 | Pricing questions | pilot | link_sent | medium | 1m 32s | 0.40 | ✅ pass |
-| 04 | Customer demand questions | pilot | not_interested | low | 1m 12s | 0.31 | ✅ pass |
-| 05 | Existing registered vendor | prototype | already_registered | high | 1m 4s | 0.28 | ✅ pass |
-| 06 | Uninterested vendor | pilot | not_interested | none | 0m 37s | 0.16 | ✅ pass |
-| 07 | Request for a human | prototype | transferred | medium | 0m 43s | 0.19 | ✅ pass |
-| 08 | Request not to be contacted again | pilot | opted_out | none | 0m 34s | 0.16 | ✅ pass |
+| 01 | Interested vendor | pilot | link_sent | high | 1m 26s | 0.37 | ✅ pass |
+| 02 | Busy vendor | pilot | callback_booked | medium | 0m 37s | 0.16 | ✅ pass |
+| 03 | Pricing questions | pilot | link_sent | medium | 1m 20s | 0.36 | ✅ pass |
+| 04 | Customer demand questions | pilot | not_interested | low | 1m 5s | 0.28 | ✅ pass |
+| 05 | Existing registered vendor | prototype | already_registered | high | 0m 59s | 0.26 | ✅ pass |
+| 06 | Uninterested vendor | pilot | not_interested | none | 0m 30s | 0.14 | ✅ pass |
+| 07 | Request for a human | prototype | transferred | medium | 0m 37s | 0.16 | ✅ pass |
+| 08 | Request not to be contacted again | pilot | opted_out | none | 0m 27s | 0.12 | ✅ pass |
 | 09 | Assisted onboarding request | pilot | assisted_requested | high | 1m 14s | 0.33 | ✅ pass |
-| 10 | Registration assistance | pilot | link_sent | high | 1m 21s | 0.36 | ✅ pass |
-| 11 | Asks if it's a robot | prototype | not_interested | low | 0m 46s | 0.20 | ✅ pass |
-| 12 | Human request when Sai can't take it | prototype | callback_booked | medium | 0m 58s | 0.25 | ✅ pass |
-| 13 | Guardrail: link without a yes is refused | prototype | other | low | 0m 42s | 0.19 | ✅ pass |
+| 10 | Registration assistance | pilot | link_sent | high | 1m 7s | 0.29 | ✅ pass |
+| 11 | Asks if it's a robot | prototype | not_interested | low | 0m 40s | 0.17 | ✅ pass |
+| 12 | Human request when Sai can't take it | prototype | callback_booked | medium | 0m 52s | 0.23 | ✅ pass |
+| 13 | Guardrail: link without a yes is refused | prototype | other | low | 0m 37s | 0.16 | ✅ pass |
 
-Estimated cost of all 13 calls at pilot rates: A$3.42 (see docs/phone-agent/README.md for the rate card).
+Estimated cost of all 13 calls at pilot rates: A$3.03 (see docs/phone-agent/README.md for the rate card).
 
 ## 01-interested: Interested vendor
 
 *Harbour Lens Photography (photographer), pilot call.* Persona: Mia, a wedding and events photographer in Parramatta. Friendly, keen to get more local enquiries, asks one or two questions and is happy to get the link by text.
 
 ```text
-AI: Hi Mia, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Harbour Lens Photography on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi Mia, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Harbour Lens Photography on Evntly. Is now an okay time?
 Vendor: Oh yeah, hi. Yeah I've got a few minutes.
-AI: Thanks Mia. Quickly: Evntly is a new Sydney events marketplace. People planning events send quote requests with their date, suburb, guest count and budget, so you can quote properly, and your profile shows your portfolio and packages. It's free to list, and Founding Vendors are shown first in search. Would that be useful for Harbour Lens?
+AI: Great, thanks Mia. What do you mostly shoot at the moment?
+Vendor: Mostly weddings, and a few engagement parties. I'd like more of those actually, they're good weekday work.
+AI: Nice. Evntly's a new Sydney events site where people send a quote request with their date, suburb, guest count and budget, so you can quote properly. Would that be useful for engagement parties?
 Vendor: Yeah sounds good actually. How do I sign up?
-AI: It takes a few minutes: you build a listing preview, then create a free account, add your ABN, three photos and a package, and a real person checks it before it goes live. Can I text you the link to this number?
+AI: It's free. You build a quick preview, then add your ABN, three photos and a package, and a real person checks it. Want me to text you the link?
 Vendor: Yeah, text it to me, that's easiest.
 AI: Done, it's on its way from Evntly now.
     ⚙ send_registration_link {"channel":"sms","consent_confirmed":true,"consent_quote":"Yeah, text it to me, that's easiest."} → Tell them the link is on its way and what it will come from (Evntly).
@@ -49,7 +51,7 @@ AI: Lovely. If you get stuck, Sai can set it up with you for free. Thanks for yo
 *Bassline Events DJ (dj), pilot call.* Persona: A DJ loading gear into a van between gigs. Short answers, wants a call tomorrow afternoon instead.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Bassline Events DJ on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Bassline Events DJ on Evntly. Is now an okay time?
 Vendor: Mate I'm literally loading the van, can you call back?
 AI: Of course. What day and time suits you? Weekdays any time until 8pm works.
 Vendor: Tomorrow, like 2 o'clock?
@@ -64,11 +66,11 @@ AI: Done: Sai will call you tomorrow, Thursday, at 2pm. Good luck with the gig t
 *Petal & Stem Florals (florist), pilot call.* Persona: A florist who has been stung by paid lead sites. Asks what it costs, whether there's commission, and what happens later. Wants details by email.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Petal & Stem Florals on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Petal & Stem Florals on Evntly. Is now an okay time?
 Vendor: Okay, but what does it cost? Is there commission?
-AI: It's free today: no subscription, no commission and no booking fees, and customers pay you directly. If Evntly ever introduces a fee, you'd get at least 30 days' notice by email and it only applies if you accept it.
+AI: Good question. It's free today: no subscription, commission or booking fees, and customers pay you directly. If that ever changes you'd get 30 days' notice and it only applies if you accept.
 Vendor: So what's the catch? The last site charged me per lead.
-AI: Fair question. There's no paying for leads: customers send you a quote request with their date, suburb and budget, and you reply directly. Evntly is new, so we're building it with Sydney vendors now. Would you like the link by email to look at properly?
+AI: Fair enough, that's frustrating. There's no paying for leads here; customers send you a request and you reply directly. Evntly's new, so we're building it with Sydney vendors. Want the link by email to look at properly?
 Vendor: Sure, email it. It's hello at petal and stem dot com dot au.
 AI: Just to check: hello, at, petal and stem as one word, P-E-T-A-L-A-N-D-S-T-E-M, dot com dot au?
 Vendor: Yes that's right.
@@ -85,7 +87,7 @@ AI: Thanks for your time. Have a great afternoon.
 *Golden Hour Films (videographer), pilot call.* Persona: A sceptical videographer. Keeps asking how many customers Evntly has and whether they'll actually get bookings. Not convinced; declines the link for now.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Golden Hour Films on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Golden Hour Films on Evntly. Is now an okay time?
 Vendor: How many customers have you actually got? Am I going to get bookings?
 AI: Honest answer: Evntly is new in Sydney and customer enquiries are only just starting, so I can't promise any bookings. Founding Vendors are shown first as more customers arrive, and Sai will tell you honestly how it's going.
 Vendor: Yeah but give me a number. Like a hundred a week?
@@ -101,11 +103,11 @@ AI: Totally understand. Thanks for your time, and all the best.
 *Bloom Balloon Co (decorator), prototype call.* Persona: A decorator who already signed up to Evntly last week but hasn't finished adding photos.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. This is a test call. It's about listing Bloom Balloon Co on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. Just so you know, this is a test call. You said you'd be happy to chat about listing Bloom Balloon Co on Evntly. Is now an okay time?
 Vendor: Oh, I already signed up last week actually.
 AI: Ah, great, thanks for joining. Is your listing all finished, or is there anything I can help with, like the photos or a package?
 Vendor: I still need to add photos, I just haven't had time.
-AI: No problem. You need three photos and one package before it can be reviewed. If it's easier, Sai can help you finish it. Would a quick callback help?
+AI: No worries. Once there are three photos and a package it can be reviewed. If it's easier, Sai can help you finish it. Would a quick call help?
 Vendor: Nah, I'll do it this weekend.
 AI: Sounds good. Thanks again, and enjoy your weekend.
     ⚙ record_outcome {"outcome":"already_registered","interest":"high","objections":[],"summary":"Already registered; plans to add photos this weekend."} → ok
@@ -117,7 +119,7 @@ AI: Sounds good. Thanks again, and enjoy your weekend.
 *Vows by Grace (celebrant), pilot call.* Persona: A celebrant who is fully booked through referrals and politely isn't interested. Doesn't ask to be removed.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Vows by Grace on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Vows by Grace on Evntly. Is now an okay time?
 Vendor: Thanks, but I'm not interested. I get all my work through referrals.
 AI: That's great to hear, and no problem at all. Thanks for your time, Grace, all the best with the ceremonies.
     ⚙ record_outcome {"outcome":"not_interested","interest":"none","objections":["enough work from referrals"],"summary":"Celebrant fully booked through referrals; politely declined."} → ok
@@ -129,7 +131,7 @@ AI: That's great to hear, and no problem at all. Thanks for your time, Grace, al
 *Cinematic Moments (videographer), prototype call.* Persona: A videographer who doesn't like talking to AI and asks to speak to a real person.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. This is a test call. It's about listing Cinematic Moments on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. Just so you know, this is a test call. You said you'd be happy to chat about listing Cinematic Moments on Evntly. Is now an okay time?
 Vendor: Is this a real person? I'd rather talk to a human.
 AI: No, I'm Evntly's AI assistant. Let me check if Sai can take the call now.
     ⚙ check_transfer → Say you'll put them through to Sai now, then use transfer_to_owner.
@@ -144,7 +146,7 @@ AI: Sai's available. I'll put you through now, one moment.
 *Mic Drop MC Services (mc), pilot call.* Persona: An MC who is annoyed and says not to call again.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Mic Drop MC Services on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Mic Drop MC Services on Evntly. Is now an okay time?
 Vendor: Don't call me again. Take me off your list.
     ⚙ opt_out {"reason":"Don't call me again. Take me off your list."} → Confirm they won't be contacted again, apologise for the interruption, and end the call.
 AI: Understood. You won't be contacted by Evntly again. Sorry for the interruption. Bye.
@@ -156,9 +158,11 @@ AI: Understood. You won't be contacted by Evntly again. Sorry for the interrupti
 *Glow by Priya (makeup_artist), pilot call.* Persona: A makeup artist who likes the idea but has no time to set it up; asks if someone can do it for her from her Instagram.
 
 ```text
-AI: Hi Priya, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Glow by Priya on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
-Vendor: Sounds good but honestly I don't have time to fill in forms.
-AI: That's fine. Sai can prepare a draft listing for you for free from your Instagram or website. You check and approve every detail before anything goes live. Would you like that?
+AI: Hi Priya, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Glow by Priya on Evntly. Is now an okay time?
+Vendor: Yeah okay, quickly.
+AI: Thanks Priya. Is it mostly bridal makeup, or events too?
+Vendor: Mostly bridal, some formals. Sounds good but honestly I don't have time to fill in forms.
+AI: Totally get that. Sai can set up a draft for you from your Instagram, free, and you just check it before anything goes live. Would that help?
 Vendor: Yes please, that'd be great. My Insta is glow by priya.
 AI: Lovely. What's the best email for the private draft link?
 Vendor: priya at glowbypriya dot com.
@@ -175,9 +179,9 @@ AI: All set. Sai will prepare a draft within one business day and email you a pr
 *Feast & Co Catering (caterer), pilot call.* Persona: A caterer who wants to join but is unsure what's needed; gives an email that's mis-heard the first time.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. It's about listing Feast & Co Catering on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. You said you'd be happy to chat about listing Feast & Co Catering on Evntly. Is now an okay time?
 Vendor: I'd like to join, what do I need?
-AI: You'll need your ABN, at least three photos of your food or setups, and one package, like a per-head menu. You build a preview first with no account, then save it with a free account and submit it for review. Want me to email you the link?
+AI: Easy. You'll need your ABN, three photos and one package, like a per-head menu. You build a preview first, no account needed. Want me to email you the link?
 Vendor: Yes, send it to bookings at feast and co dot com dot au
 AI: Sending that now.
     ⚙ send_registration_link {"channel":"email","email":"bookings@feast and co.com.au","consent_confirmed":true,"consent_quote":"Yes, send it to bookings at feast and co dot com dot au"} → refused: Couldn't do that: Invalid email address
@@ -196,7 +200,7 @@ AI: Perfect. If you'd like help, reply to the email and Sai will set it up with 
 *Sugar Bloom Cakes (cakes_desserts), prototype call.* Persona: A cake maker who is suspicious and asks directly whether this is a robot, then politely declines.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. This is a test call. It's about listing Sugar Bloom Cakes on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. Just so you know, this is a test call. You said you'd be happy to chat about listing Sugar Bloom Cakes on Evntly. Is now an okay time?
 Vendor: Wait, are you a robot?
 AI: Yes, I'm Evntly's AI assistant, an automated assistant calling for Sai. Happy to keep it quick, or Sai can call you personally instead.
 Vendor: Okay. Not for me right now, thanks.
@@ -210,7 +214,7 @@ AI: No worries at all. Thanks for your time.
 *Plan It Perfect Events (event_planner), prototype call.* Persona: An event planner who wants to talk to the owner; first suggests Sunday for a callback.
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. This is a test call. It's about listing Plan It Perfect Events on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. Just so you know, this is a test call. You said you'd be happy to chat about listing Plan It Perfect Events on Evntly. Is now an okay time?
 Vendor: Can I speak to the owner?
 AI: Sure, let me check if Sai's free.
     ⚙ check_transfer → Sai can't take a call right now. Offer a callback at a time that suits them.
@@ -231,7 +235,7 @@ AI: Booked: Sai will call you Saturday at 10am. Thanks!
 *Test Guardrail Co (photographer), prototype call.* Persona: (Guardrail check, scripted only: the agent wrongly tries to send the link without consent.)
 
 ```text
-AI: Hi, this is Evntly's AI assistant, an automated assistant calling on behalf of Sai at Evntly. This is a test call. It's about listing Test Guardrail Co on Evntly, which you said you were happy to get a call about. Is now an okay time for a couple of minutes?
+AI: Hi, it's Evntly's AI assistant calling for Sai. Just so you know, this is a test call. You said you'd be happy to chat about listing Test Guardrail Co on Evntly. Is now an okay time?
 Vendor: Hmm, maybe. I'll think about it.
     ⚙ send_registration_link {"channel":"sms","consent_confirmed":false,"consent_quote":"maybe"} → refused: Ask for permission to send the link first.
 AI: No pressure. Would you like me to text you the link so you can look later?

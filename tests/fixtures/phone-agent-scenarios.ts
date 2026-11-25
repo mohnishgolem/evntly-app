@@ -51,9 +51,11 @@ export const SCENARIOS: Scenario[] = [
     persona: "Mia, a wedding and events photographer in Parramatta. Friendly, keen to get more local enquiries, asks one or two questions and is happy to get the link by text.",
     script: [
       { vendor: "Oh yeah, hi. Yeah I've got a few minutes." },
-      { agent: "Thanks Mia. Quickly: Evntly is a new Sydney events marketplace. People planning events send quote requests with their date, suburb, guest count and budget, so you can quote properly, and your profile shows your portfolio and packages. It's free to list, and Founding Vendors are shown first in search. Would that be useful for Harbour Lens?" },
+      { agent: "Great, thanks Mia. What do you mostly shoot at the moment?" },
+      { vendor: "Mostly weddings, and a few engagement parties. I'd like more of those actually, they're good weekday work." },
+      { agent: "Nice. Evntly's a new Sydney events site where people send a quote request with their date, suburb, guest count and budget, so you can quote properly. Would that be useful for engagement parties?" },
       { vendor: "Yeah sounds good actually. How do I sign up?" },
-      { agent: "It takes a few minutes: you build a listing preview, then create a free account, add your ABN, three photos and a package, and a real person checks it before it goes live. Can I text you the link to this number?" },
+      { agent: "It's free. You build a quick preview, then add your ABN, three photos and a package, and a real person checks it. Want me to text you the link?" },
       { vendor: "Yeah, text it to me, that's easiest." },
       {
         agent: "Done, it's on its way from Evntly now.",
@@ -106,9 +108,9 @@ export const SCENARIOS: Scenario[] = [
     persona: "A florist who has been stung by paid lead sites. Asks what it costs, whether there's commission, and what happens later. Wants details by email.",
     script: [
       { vendor: "Okay, but what does it cost? Is there commission?" },
-      { agent: "It's free today: no subscription, no commission and no booking fees, and customers pay you directly. If Evntly ever introduces a fee, you'd get at least 30 days' notice by email and it only applies if you accept it." },
+      { agent: "Good question. It's free today: no subscription, commission or booking fees, and customers pay you directly. If that ever changes you'd get 30 days' notice and it only applies if you accept." },
       { vendor: "So what's the catch? The last site charged me per lead." },
-      { agent: "Fair question. There's no paying for leads: customers send you a quote request with their date, suburb and budget, and you reply directly. Evntly is new, so we're building it with Sydney vendors now. Would you like the link by email to look at properly?" },
+      { agent: "Fair enough, that's frustrating. There's no paying for leads here; customers send you a request and you reply directly. Evntly's new, so we're building it with Sydney vendors. Want the link by email to look at properly?" },
       { vendor: "Sure, email it. It's hello at petal and stem dot com dot au." },
       { agent: "Just to check: hello, at, petal and stem as one word, P-E-T-A-L-A-N-D-S-T-E-M, dot com dot au?" },
       { vendor: "Yes that's right." },
@@ -163,7 +165,7 @@ export const SCENARIOS: Scenario[] = [
       { vendor: "Oh, I already signed up last week actually." },
       { agent: "Ah, great, thanks for joining. Is your listing all finished, or is there anything I can help with, like the photos or a package?" },
       { vendor: "I still need to add photos, I just haven't had time." },
-      { agent: "No problem. You need three photos and one package before it can be reviewed. If it's easier, Sai can help you finish it. Would a quick callback help?" },
+      { agent: "No worries. Once there are three photos and a package it can be reviewed. If it's easier, Sai can help you finish it. Would a quick call help?" },
       { vendor: "Nah, I'll do it this weekend." },
       {
         agent: "Sounds good. Thanks again, and enjoy your weekend.",
@@ -247,8 +249,10 @@ export const SCENARIOS: Scenario[] = [
     firstName: "Priya",
     persona: "A makeup artist who likes the idea but has no time to set it up; asks if someone can do it for her from her Instagram.",
     script: [
-      { vendor: "Sounds good but honestly I don't have time to fill in forms." },
-      { agent: "That's fine. Sai can prepare a draft listing for you for free from your Instagram or website. You check and approve every detail before anything goes live. Would you like that?" },
+      { vendor: "Yeah okay, quickly." },
+      { agent: "Thanks Priya. Is it mostly bridal makeup, or events too?" },
+      { vendor: "Mostly bridal, some formals. Sounds good but honestly I don't have time to fill in forms." },
+      { agent: "Totally get that. Sai can set up a draft for you from your Instagram, free, and you just check it before anything goes live. Would that help?" },
       { vendor: "Yes please, that'd be great. My Insta is glow by priya." },
       { agent: "Lovely. What's the best email for the private draft link?" },
       { vendor: "priya at glowbypriya dot com." },
@@ -278,7 +282,7 @@ export const SCENARIOS: Scenario[] = [
     persona: "A caterer who wants to join but is unsure what's needed; gives an email that's mis-heard the first time.",
     script: [
       { vendor: "I'd like to join, what do I need?" },
-      { agent: "You'll need your ABN, at least three photos of your food or setups, and one package, like a per-head menu. You build a preview first with no account, then save it with a free account and submit it for review. Want me to email you the link?" },
+      { agent: "Easy. You'll need your ABN, three photos and one package, like a per-head menu. You build a preview first, no account needed. Want me to email you the link?" },
       { vendor: "Yes, send it to bookings at feast and co dot com dot au" },
       {
         agent: "Sending that now.",

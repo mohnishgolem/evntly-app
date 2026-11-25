@@ -7,7 +7,25 @@ import type { BetaAdminData } from "@/lib/data/admin-founding";
 
 const DAY_MS = 86_400_000;
 
-export function buildDailyReport(beta: Pick<BetaAdminData, "stats" | "rows">, acq: Pick<AcquisitionMetrics, "kpis" | "followUpsDue" | "forecast">, now = new Date()) {
+/** AI phone agent measures (phone_agent_measures), last 24 hours and all time. */
+export type PhoneAgentReport = { day: Record<string, number>; total: Record<string, number>; budgetCents: number };
+
+/** Two or three plain lines on the phone agent, or nothing if it hasn't been used. */
+export function phoneAgentLines(p: PhoneAgentReport | null): string[] {
+  if (!p || !p.total.calls) return [];
+  const d = p.day;
+  const t = p.total;
+  const aud = (c: number) => `A$${(c / 100).toFixed(2)}`;
+  const per = (n: number) => (n > 0 && t.cost_aud_cents > 0 ? aud(t.cost_aud_cents / n) : "—");
+  const lines = [
+    `AI phone agent, last 24 hours: ${d.calls ?? 0} calls, ${d.connected ?? 0} answered, ${d.interested ?? 0} interested, ${d.links_sent ?? 0} links sent, ${d.assisted_requested ?? 0} assisted set-ups, ${d.callbacks ?? 0} callbacks, ${d.opted_out ?? 0} opt-outs.`,
+    `AI phone agent, all time: ${t.calls} calls (${t.pilot_calls ?? 0} to vendors), ${t.registrations ?? 0} registrations, ${t.listings_completed ?? 0} completed listings; spend ${aud(t.cost_aud_cents ?? 0)} of ${aud(p.budgetCents)}; cost per registration ${per(t.registrations ?? 0)}, per completed listing ${per(t.listings_completed ?? 0)}.`,
+  ];
+  if (t.reviewed_calls) lines.push(`Call quality: ${(t.avg_quality_x10 / 10).toFixed(1)}/5 from ${t.reviewed_calls} reviewed calls${t.latency_p50_ms ? `, median response ${(t.latency_p50_ms / 1000).toFixed(1)}s` : ""}.`);
+  return lines;
+}
+
+export function buildDailyReport(beta: Pick<BetaAdminData, "stats" | "rows">, acq: Pick<AcquisitionMetrics, "kpis" | "followUpsDue" | "forecast">, now = new Date(), phone: PhoneAgentReport | null = null) {
   const { stats, rows } = beta;
   const { kpis, followUpsDue, forecast } = acq;
   const since = now.getTime() - DAY_MS;
@@ -25,6 +43,7 @@ export function buildDailyReport(beta: Pick<BetaAdminData, "stats" | "rows">, ac
     stats.remindersDue && `${stats.remindersDue} waitlist reminder${stats.remindersDue === 1 ? "" : "s"} due`,
     stats.eligibleToInvite && `${stats.eligibleToInvite} waitlist contact${stats.eligibleToInvite === 1 ? "" : "s"} eligible to invite`,
     stats.newFeedback && `${stats.newFeedback} new beta feedback item${stats.newFeedback === 1 ? "" : "s"}`,
+    phone?.total.call_requests_open && `${phone.total.call_requests_open} vendor${phone.total.call_requests_open === 1 ? "" : "s"} asked for a call from the AI assistant`,
   ].filter((a): a is string => !!a);
 
   const lines = [
@@ -33,6 +52,7 @@ export function buildDailyReport(beta: Pick<BetaAdminData, "stats" | "rows">, ac
     `Pipeline: ${kpis.verifiedProspects} verified prospects, ${kpis.contacted} contacted, ${kpis.responses} replied, ${kpis.interested} interested; ${kpis.registered} registered, ${kpis.profilesCompleted} profiles complete, ${kpis.active} active.`,
     `Incomplete profiles: ${stats.incompleteProfiles}.`,
     `Email health: ${stats.delivered} delivered, ${stats.bounced} bounced, ${stats.complained} spam reports, ${stats.unsubscribed} unsubscribed.`,
+    ...phoneAgentLines(phone),
     forecast.weeksToGoal === null
       ? "Forecast: no approvals in the last 4 weeks yet, so there's no rate to project from."
       : `Forecast: ${forecast.perWeek} approvals a week over the last 4 weeks, so roughly ${forecast.weeksToGoal} weeks to ${stats.goal} at this pace (an estimate, not a promise).`,

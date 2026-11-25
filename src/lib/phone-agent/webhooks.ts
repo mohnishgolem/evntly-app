@@ -11,6 +11,7 @@ export type RetellCall = {
   transcript?: string;
   call_cost?: { combined_cost?: number };
   call_analysis?: { call_summary?: string };
+  latency?: { e2e?: { p50?: number } };
 };
 
 /** Retell call object → the payload phone_agent_call_event() expects. */
@@ -22,6 +23,7 @@ export function payloadFor(call: RetellCall) {
     disconnection_reason: call.disconnection_reason ?? null,
     // Retell reports combined_cost in US cents.
     cost_usd_cents: typeof call.call_cost?.combined_cost === "number" ? Math.round(call.call_cost.combined_cost) : null,
+    latency_p50_ms: typeof call.latency?.e2e?.p50 === "number" ? Math.round(call.latency.e2e.p50) : null,
     summary: call.call_analysis?.call_summary ?? null,
     transcript: call.transcript ?? null,
   };

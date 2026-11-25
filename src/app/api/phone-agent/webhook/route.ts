@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { phoneAgentConfig } from "@/lib/phone-agent/config";
-import { agentRpc, callIds } from "@/lib/phone-agent/server";
+import { agentRpc, resolveCall } from "@/lib/phone-agent/server";
 import { verifyRetellSignature } from "@/lib/phone-agent/signature";
 import { payloadFor, type RetellCall } from "@/lib/phone-agent/webhooks";
 
@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "bad json" }, { status: 400 });
   }
-  const ids = callIds(body);
-  // Calls we didn't start (e.g. a vendor calling our number back) aren't ours to log here.
-  if (!ids || typeof body.event !== "string") return NextResponse.json({ ignored: true });
   const rpc = agentRpc();
   if (!rpc) return NextResponse.json({ error: "not configured" }, { status: 503 });
+  // Calls we didn't start (e.g. a vendor calling our number back) aren't ours to log here.
+  const ids = typeof body.event === "string" ? await resolveCall(rpc, body) : null;
+  if (!ids) return NextResponse.json({ ignored: true });
 
   const { error } = await rpc("phone_agent_call_event", {
     p_ref: ids.ref,

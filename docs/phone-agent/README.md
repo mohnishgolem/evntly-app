@@ -1,7 +1,7 @@
 # Evntly AI phone recruitment agent
 
-Status (25 Nov 2026): **built and tested offline; not connected, nothing purchased, nothing deployed.**
-Going live needs Sai's approval for each step in [Going live](#going-live-each-step-needs-sais-approval).
+Status (25 Nov 2026): **prototype approved (A$50 including setup). Built, tested offline and against the local Supabase stack; Retell not yet connected, nothing purchased, nothing deployed, no production migration.**
+Draft PR: mohnishgolem/evntly-app#101. Setup steps for Sai: [SETUP.md](SETUP.md).
 
 ## What it does
 
@@ -17,6 +17,25 @@ Evntly's AI assistant phones Sydney event vendors **who have agreed to a call**,
 - records the outcome, which updates the vendor outreach tracker, the growth dashboard and the acquisition spend.
 
 ## Provider choice: Retell AI + an Australian Twilio number
+
+**Is Twilio needed? Yes.** Retell only sells US and Canadian numbers. It can call Australia from a US number (US$0.10/min), but then the caller ID would be American, which fails the Australian caller ID and return-call requirements (Standard s14). An Australian number has to come from a carrier over SIP (Retell has guides for Twilio, Telnyx and Vonage). Telnyx didn't publish Australian prices we could verify, so Twilio stays the choice.
+
+**Costs (USD, official pages, Oct–Nov 2026; ≈A$ at 1.55):**
+
+| Item | Price | A$ |
+|---|---|---|
+| Retell (voice infra 5.5¢ + voice 1.5–4¢ + Claude 4.5 Haiku 2.5¢) | 9.5–12¢/min | 0.15–0.19/min |
+| Twilio SIP to an AU mobile | 7.1¢/min | 0.11/min |
+| **Call total** | **≈17–19¢/min** | **≈A$0.26–0.30/min** |
+| Twilio AU **local** number (voice; SMS support not stated) | US$2.50/mo | 3.90/mo |
+| Twilio AU **mobile** number (voice + SMS + STOP replies) | US$8.25/mo | 12.80/mo |
+| SMS to an AU mobile (our text is 2 segments) | 2 × 5.15¢ | 0.16 per link |
+| Inbound return calls (to us, then transferred to Sai) | 0.6¢ + Retell + onward call | ≈0.30/min |
+| Retell browser tests | same per-minute rate, from the free US$10 credit | 0 cash |
+
+Recommendation: do all prototype testing in the browser on Retell's free credit, then buy **one AU mobile number** (voice + SMS) for the phone prototype and pilot. Expected cash spend: about A$13 for the number for one month + about A$10–15 of calls and SMS, well inside A$50.
+
+
 
 Per-minute cost of a call to an Australian mobile, in USD, from each provider's official pricing page (read 25 Nov 2026):
 
@@ -48,17 +67,32 @@ Not legal advice. Items marked **verify** couldn't be read from the official sou
 | Rule | Source | Enforced by |
 |---|---|---|
 | Calling hours: weekdays 9am–8pm, Saturday 9am–5pm, never Sunday or a national public holiday, in the recipient's local time | Telemarketing and Research Calls Industry Standard 2017, s8 | `phone_legal_window_ok()` on every call start and every callback time; national holidays table (weekday in-lieu days blocked too). Our own window is narrower: Mon–Fri 10:00–16:30 |
-| At the start of the call: who's calling (business), on whose behalf, and the purpose. A given name isn't required for a synthetic voice | Standard s9(2) | Fixed opening line (`BEGIN_MESSAGE`); policy check on every simulated call |
+| At the start of the call: who's calling (business), on whose behalf, and the purpose. A given name isn't required for a synthetic voice. Recorded/synthetic-voice calls must give a way to ask for the s9(4) details during the call | Standard s9(2), s12; the DNCR Act's "voice call" includes recorded or synthetic voices | Short fixed opening (`BEGIN_MESSAGE`); the agent gives the legal entity, ABN, our number and website on request and can transfer to Sai or book a call. Policy check on every simulated call |
 | On request: contact details, and who handles complaints | Standard s9(4), s11, s12 | Prompt rule 12: our number (the caller ID) and evntly.au; Sai handles questions |
 | End the call immediately when asked | Standard s13(1)(b) | `opt_out` tool, then `end_call`; policy check fails a call that keeps talking |
 | Caller ID shown, and the number must take return calls for 30 days | Standard s14 | We call from our own AU number. **To do at setup:** forward inbound calls on that number to Sai's phone |
 | Do Not Call Register: wash numbers in the last 30 days, or have consent. Business numbers can't be registered, but a sole trader's mainly private mobile can | DNCR Act 2006; donotcall.gov.au | A pilot call needs a DNCR check under 30 days old **and** express consent. Registered numbers go straight onto the permanent suppression list. Quick check is free for under 10 numbers (subscription type A: free up to 500 numbers a year) |
 | A published number isn't consent. Express consent with no stated period lasts 3 months | DNCR guidance on consent | `admin_phone_record_consent` only accepts express consent (written, web form, DM reply) with quoted evidence; it expires after 3 months |
-| SMS/email: consent, identify the sender, a working unsubscribe actioned within 5 working days | Spam Act 2003 (**verify**: the ACMA page timed out) | The link is sent only after a recorded yes on the call; SMS says "Evntly" and "Reply STOP"; STOP replies suppress the number immediately (`/api/phone-agent/sms`); the email says reply "stop" |
-| Recording a private conversation needs every party's consent | Surveillance Devices Act 2007 (NSW) s7 (**verify**: legislation.nsw.gov.au refused access) | **Recording off by default.** Retell's sensitive data storage is opted out; transcripts are discarded unless recording is on (needs a recorded legal-review note) **and** the person agreed on the call |
+| SMS/email: consent first (express is best practice; you must be able to prove it: who, when, how); identify the sender by legal name or name + ABN with contact details valid for 30 days; an unsubscribe that's clear, free, works for 30 days and is honoured within 5 working days; you can't send an electronic message to *ask* for consent | ACMA [Avoid sending spam](https://www.acma.gov.au/avoid-sending-spam) and [consent expectations](https://www.acma.gov.au/articles/2024-06/consent-expectations-businesses-using-direct-marketing) (read 25 Nov 2026) | The link is sent only after a recorded yes on the call (quote, time, call ref). The SMS names "Evntly (ABN 49 193 658 959)", comes from our own number (an alphanumeric sender can't receive STOP) and says "Reply STOP"; STOP suppresses the number immediately. The email names the legal entity and says reply "unsubscribe". The web callback form's consent box is unticked and its exact wording is stored |
+| A party to a private conversation must not record it with a listening device unless all principal parties consent (expressly or impliedly), or one party consents and it's reasonably necessary to protect their lawful interests / not for publishing | Surveillance Devices Act 2007 (NSW) s7(1)(b), s7(3) (read 25 Nov 2026) | **No recording.** At Retell: `data_storage_setting: basic_attributes_only` (no audio or transcript kept, metadata only) and `data_storage_retention_days: 30`. In our database: transcripts are dropped unless recording is switched on (needs a recorded legal-review note) **and** the person agreed on the call |
 | Don't impersonate a human; no false or misleading claims | Australian Consumer Law s18 / s29 | Prompt rules; automated checks for human claims, guarantees and demand numbers |
 
 Opt-outs are permanent: `phone_suppression` rows can't be updated or deleted (trigger), and opting out also marks the prospect do-not-contact in the outreach tracker. Prototype calls to Sai's own phone are the only exception: an opt-out there is recorded, but his own number isn't blocked.
+
+### Needs professional legal advice before calling vendors outside the prototype
+
+1. **Is a call to a business owner's number a "telemarketing call" under the Standard?** It defines the call recipient as "an individual" and keys calling hours to a "residential address". We follow it in full anyway (hours, identification, termination, caller ID), but the scope affects other duties.
+2. **Asking for consent by Instagram/Facebook DM.** ACMA says you can't send an electronic message to ask for consent, because that is itself a marketing message. Our existing outreach DMs rely on conspicuously published business contacts (inferred consent). Check whether a DM that offers a call is covered, or whether consent should only come from vendors who message us first or use the website form.
+3. **Is live speech processing by the AI a "listening device" use under the NSW Act** (audio is transcribed in real time but not stored)? We keep no recordings or transcripts at Retell, but get a view on whether announcing the AI and having the vendor's express consent to the call is enough.
+4. **Cross-border processing.** Retell and its speech/LLM providers process call audio outside Australia (Retell doesn't state its data location; it says it runs on AWS outside the EU). Australian Privacy Principle 8 and our privacy policy need to cover this; see below.
+5. **Consent evidence and duration.** Express consent to a call expires after 3 months in our system (the DNCR guidance default). Confirm that's appropriate, and that a web form tick plus stored wording is sufficient proof.
+
+### Privacy and third parties
+
+- **Retell AI** (voice platform): SOC 2 Type 1 and 2, GDPR and HIPAA programmes; a self-signable DPA at click-agreements.retellai.com, with zero data retention agreements with its LLM, speech and voice subprocessors. **Sign the DPA before the pilot.** Data location isn't stated (assume the US).
+- **Twilio** (Australian number, SMS): carrier for the call and SMS; keeps standard call detail records.
+- **Our database** keeps outcome, summary, consent evidence and suppression, never audio. Transcripts only with recording switched on, which it isn't.
+- **Privacy policy:** before calling vendors, add that Evntly may contact vendors who request it by phone using an AI assistant, that call audio is processed by overseas providers (Retell AI and its subprocessors) to run the conversation and isn't recorded, and how to opt out. Draft wording is in SETUP.md, step 9.
 
 ## How it fits together
 

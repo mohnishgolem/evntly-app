@@ -11,6 +11,8 @@ import { formatAu, maskPhone } from "@/lib/phone-agent/phone";
 import { costPer, rate } from "@/lib/growth";
 import {
   completePhoneFollowup,
+  recordSocialCallRequest,
+  setCallRequestStatus,
   recordDncrCheck,
   recordPhoneConsent,
   reviewPhoneCall,
@@ -42,6 +44,7 @@ type Call = {
 };
 type Followup = { id: number; call_id: string; kind: string; due_at: string | null; email: string | null; notes: string | null };
 type Prospect = { id: string; business_name: string; category: string | null; phone: string | null; stage: string };
+type CallRequest = { id: number; prospect_id: string | null; phone_e164: string; contact_name: string | null; business_name: string; category: string | null; preferred_time: string | null; source: string; status: string; created_at: string };
 type Rpc = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
 type Table = { from: (t: string) => { select: (c: string) => { order: (c: string, o: { ascending: boolean }) => { limit: (n: number) => Promise<{ data: unknown[] | null; error: unknown }> } } } };
 
@@ -58,13 +61,14 @@ async function load() {
   const supabase = await createClient();
   const rpc = supabase.rpc.bind(supabase) as unknown as Rpc;
   const db = supabase as unknown as Table;
-  const [settings, summary, calls, followups, prospects, suppressed] = await Promise.all([
+  const [settings, summary, calls, followups, prospects, suppressed, requests] = await Promise.all([
     db.from("phone_agent_settings").select("*").order("id", { ascending: true }).limit(1),
     rpc("admin_phone_agent_summary"),
     db.from("phone_calls").select("id, ref, mode, prospect_id, phone_e164, vendor_name, category, status, created_at, duration_seconds, outcome, interest, objections, summary, link_channel, cost_aud_cents, quality_score").order("created_at", { ascending: false }).limit(50),
     db.from("phone_followups").select("id, call_id, kind, due_at, email, notes, status").order("due_at", { ascending: true }).limit(100),
     db.from("vendor_prospects").select("id, business_name, category, phone, stage, do_not_contact").order("updated_at", { ascending: false }).limit(200),
     db.from("phone_suppression").select("phone_e164").order("created_at", { ascending: false }).limit(1000),
+    db.from("phone_call_requests").select("id, prospect_id, phone_e164, contact_name, business_name, category, preferred_time, source, status, created_at").order("created_at", { ascending: false }).limit(100),
   ]);
   const s = (settings.data?.[0] ?? null) as Settings | null;
   const prototypeBlockers = s?.prototype_numbers?.[0]
@@ -78,6 +82,9 @@ async function load() {
     followups: ((followups.data ?? []) as (Followup & { status: string })[]).filter((f) => f.status === "open"),
     prospects: ((prospects.data ?? []) as (Prospect & { do_not_contact: boolean })[]).filter((p) => !p.do_not_contact),
     suppressedCount: (suppressed.data ?? []).length,
+    requests: ((requests.data ?? []) as CallRequest[]).filter((r) => r.status === "open"),
+    // Pilot priority: interested but not yet registered (stage "interested"), then replied.
+    candidates: ((prospects.data ?? []) as (Prospect & { do_not_contact: boolean })[]).filter((p) => !p.do_not_contact && p.stage === "interested"),
     prototypeBlockers,
   };
 }
@@ -86,7 +93,7 @@ export default async function AdminPhoneAgentPage({ searchParams }: { searchPara
   const { needsEnrol } = await requireAdminPage("/admin/phone-agent");
   if (needsEnrol) return <AdminMfaRequired />;
   const { msg } = await searchParams;
-  const { notMigrated, s, summary, calls, followups, prospects, suppressedCount, prototypeBlockers } = await load();
+  const { notMigrated, s, summary, calls, followups, prospects, suppressedCount, prototypeBlockers, requests, candidates } = await load();
   const cfg = phoneAgentConfig();
   const missing = missingConfig(cfg);
   const m = (k: string) => summary[k] ?? 0;
@@ -167,11 +174,63 @@ export default async function AdminPhoneAgentPage({ searchParams }: { searchPara
           <Metric k="Cost per registration" v={costPer(spent, m("registrations"))} />
           <Metric k="Cost per completed listing" v={costPer(spent, m("listings_completed"))} />
           <Metric k="Conversation quality (your reviews)" v={m("reviewed_calls") ? `${(m("avg_quality_x10") / 10).toFixed(1)} / 5 (${m("reviewed_calls")} reviewed)` : "—"} />
+          <Metric k="Response latency (median)" v={m("latency_p50_ms") ? `${(m("latency_p50_ms") / 1000).toFixed(1)}s` : "—"} />
+          <Metric k="Call requests (open)" v={`${m("call_requests")} (${m("call_requests_open")})`} />
         </dl>
         <p className="mt-2 text-xs text-muted-foreground">
           Registrations: a vendor account created after the call with the vendor&apos;s or the emailed address, or a sign-up through the call&apos;s link (?c=aicall-…). Test accounts excluded. Costs also appear in{" "}
           <Link href="/admin/growth" className="underline">Growth</Link> as &ldquo;AI phone calls&rdquo; spend.
         </p>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="mb-1 text-lg font-semibold">Call requests and pilot candidates</h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          People who asked for a call (consent recorded) come first. Interested prospects below still need to say yes to a call before they can be called.
+        </p>
+        {requests.length === 0 && candidates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">None yet.</p>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {requests.map((r) => (
+              <li key={`r${r.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border p-3">
+                <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs">asked for a call</span>
+                <span className="font-semibold">{r.business_name}</span>
+                {r.contact_name && <span>{r.contact_name}</span>}
+                <span className="text-muted-foreground">{r.category ? categoryLabel(r.category) : ""}</span>
+                <span className="text-muted-foreground">{formatAu(r.phone_e164)}</span>
+                <span className="text-muted-foreground">{r.source} · {r.preferred_time} · {fmt(r.created_at)}</span>
+                <form action={setCallRequestStatus} className="ml-auto flex gap-1">
+                  <input type="hidden" name="id" value={r.id} />
+                  <Button size="sm" variant="outline" name="status" value="called">Called</Button>
+                  <Button size="sm" variant="ghost" name="status" value="closed">Close</Button>
+                </form>
+              </li>
+            ))}
+            {candidates.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-x-3 rounded-xl border border-dashed border-border p-3">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">interested, no call consent yet</span>
+                <span className="font-semibold">{p.business_name}</span>
+                <span className="text-muted-foreground">{p.category ? categoryLabel(p.category) : ""}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form action={recordSocialCallRequest} className="mt-4 grid gap-2 rounded-2xl border border-border p-4 sm:grid-cols-3">
+          <h3 className="font-semibold sm:col-span-3">They said yes to a call on Instagram, Facebook or email</h3>
+          <Input name="business_name" placeholder="Business name" className="h-10 rounded-xl" aria-label="Business name" required />
+          <Input name="contact_name" placeholder="First name (optional)" className="h-10 rounded-xl" aria-label="First name" />
+          <Input name="phone" placeholder="Their number" className="h-10 rounded-xl" aria-label="Their number" required />
+          <select name="source" className="h-10 rounded-xl border border-input bg-background px-3 text-sm" aria-label="Where">
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="email">Email</option>
+          </select>
+          <Input name="email" placeholder="Email (optional)" className="h-10 rounded-xl" aria-label="Email" />
+          <Input name="category" placeholder="Category, e.g. photographer" className="h-10 rounded-xl" aria-label="Category" />
+          <Input name="evidence" placeholder='Their words + date, e.g. IG 3 Dec: "yes, happy for your AI assistant to call"' className="h-10 rounded-xl sm:col-span-2" aria-label="Their words" required minLength={20} />
+          <Button type="submit" variant="outline">Record request</Button>
+        </form>
       </section>
 
       {followups.length > 0 && (

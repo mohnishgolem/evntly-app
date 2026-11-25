@@ -203,6 +203,6 @@ describe("acquisition report cron route", () => {
     expect(emails[0].body).toMatchObject({ to: "admin@evntlyapp.com" });
     expect((emails[0].body as { subject: string }).subject).toMatch(/0\/200 approved/);
     // Read-only against the database: no inserts, updates or RPC writes.
-    expect(calls.filter((c) => c.url.includes("supabase.co") && c.method !== "GET" && !c.url.includes("/rpc/founding_vendor_places"))).toEqual([]);
+    expect(calls.filter((c) => c.url.includes("supabase.co") && c.method !== "GET" && !c.url.includes("/rpc/founding_vendor_places") && !c.url.includes("/rpc/phone_agent_measures"))).toEqual([]);
   });
 });

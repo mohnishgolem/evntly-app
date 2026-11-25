@@ -6,8 +6,9 @@
 //
 //   ANTHROPIC_API_KEY=... npx vite-node --config vitest.config.mts scripts/phone-agent/simulate-live.ts [scenario-id ...]
 //
-// PHONE_SIM_AGENT_MODEL (default claude-opus-5-5) plays the agent. Set it to
-// claude-haiku-4-5 to mirror the model the Retell agent runs (claude-4.5-haiku).
+// PHONE_SIM_AGENT_MODEL plays the agent. The default, claude-haiku-4-5, is the
+// same model the Retell agent runs ("claude-4.5-haiku"), so the test matches
+// what vendors will hear. Set claude-opus-5-5 to compare with a stronger model.
 // The vendor is played by claude-haiku-5-5.
 import Anthropic from "@anthropic-ai/sdk";
 import { writeFileSync } from "node:fs";
@@ -18,7 +19,7 @@ import { checkPolicy, renderTranscript, runConversation, type AgentEngine, type 
 import { TOOL_DEFS } from "@/lib/phone-agent/tools";
 
 const client = new Anthropic();
-const AGENT_MODEL = process.env.PHONE_SIM_AGENT_MODEL ?? "claude-opus-5-5";
+const AGENT_MODEL = process.env.PHONE_SIM_AGENT_MODEL ?? "claude-haiku-4-5";
 const VENDOR_MODEL = "claude-haiku-5-5";
 
 const tools: Anthropic.Beta.BetaTool[] = [
@@ -39,7 +40,8 @@ function agentEngine(system: string, begin: string): AgentEngine {
       system,
       tools,
       messages,
-      output_config: { effort: "low" },
+      // Haiku 4.5 takes no effort setting; newer models answer faster at low effort.
+      ...(AGENT_MODEL === "claude-haiku-4-5" ? {} : { output_config: { effort: "low" } }),
       // Server-side refusal fallback (the API re-runs a declined request on a fallback model).
       ...(AGENT_MODEL === "claude-opus-5-5" ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" } : {}),
     } as Anthropic.Beta.MessageCreateParamsNonStreaming);

@@ -63,6 +63,9 @@ export const RATE_LIMITS = {
   listingAssistIp: { max: 15, windowSeconds: 60 * 60 },
   listingDraftEmailIp: { max: 5, windowSeconds: 60 * 60 },
   listingDraftEmail: { max: 3, windowSeconds: 24 * 60 * 60 },
+  // "Request a call" from the AI assistant: per IP and per phone number.
+  callRequestIp: { max: 5, windowSeconds: 60 * 60 },
+  callRequestPhone: { max: 2, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 
 export const RATE_LIMIT_ERROR = "Too many attempts. Please wait a few minutes and try again.";

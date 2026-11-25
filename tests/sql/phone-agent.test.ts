@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 import { readMigration, setupDb } from "./supabase-stub";
-import { phoneMigrations, setClock, svc, VENDOR, WED_11AM } from "./phone-agent-db";
+import { phoneMigrations, SAI as SAI_NUMBER, setClock, svc, VENDOR, WED_11AM } from "./phone-agent-db";
 
 // 20261202090000_phone_agent, offline in PGlite. Never against production.
-const SAI = "+61400000001";
+const SAI = SAI_NUMBER;
 
 it("calling rules: off by default, prototype allow-list, consent + DNCR + hours for pilot", { timeout: 60_000 }, async () => {
   const { db, as, err, ADMIN, A } = await setupDb(phoneMigrations);
@@ -56,6 +56,10 @@ it("calling rules: off by default, prototype allow-list, consent + DNCR + hours 
   await tool("opt_out", {});
   expect((await db.query("select count(*)::int n from public.phone_suppression")).rows[0].n).toBe(0);
   expect((await db.query("select outcome from public.phone_calls where id = $1", [call.call_id])).rows[0].outcome).toBe("opted_out");
+  // While it's still in progress, no other call can start (one at a time, budget held).
+  expect((await blockers(null, "+61400000009")).join(" ")).toMatch(/Another call is in progress|prototype numbers/);
+  await svc(db, "select public.phone_agent_call_event($1, 'prov_1', 'call_ended', $2::jsonb)", [call.ref, JSON.stringify({ duration_seconds: 40, cost_usd_cents: 12, latency_p50_ms: 820 })]);
+  expect((await db.query("select latency_p50_ms from public.phone_calls where id = $1", [call.call_id])).rows[0].latency_p50_ms).toBe(820);
 
   // Pilot: a real prospect needs express consent, a DNCR check and to not be registered.
   await settings({ mode: "pilot" });
@@ -107,11 +111,11 @@ it("calling rules: off by default, prototype allow-list, consent + DNCR + hours 
   expect(prospect.email).toBe("hi@harbourlens.com.au");
   expect(prospect.contacted_at && prospect.replied_at).toBeTruthy();
   const spend = (await db.query("select count(*)::int n, sum(amount_cents)::int c from public.acquisition_spend where channel = 'ai_phone'")).rows[0];
-  expect(spend).toEqual({ n: 1, c: 81 });
+  expect(spend).toEqual({ n: 2, c: 100 }); // prototype call (19c) + pilot call (81c)
   // The growth dashboard counts prospect events by real day; the call ended "now".
   const today = (await as(ADMIN, () => db.query("select * from public.admin_growth_daily(1)"))).rows[0];
   expect(today).toMatchObject({ vendors_contacted: 1, replies: 1 });
-  expect(Number(today.spend_cents)).toBe(81);
+  expect(Number(today.spend_cents)).toBe(100);
 
   // Registration resulting from the call: account with the emailed address after the call.
   const NEWV = "00000000-0000-0000-0000-0000000000e1";
@@ -121,12 +125,53 @@ it("calling rules: off by default, prototype allow-list, consent + DNCR + hours 
   await db.query("insert into public.portfolio_items (provider_id) values ($1), ($1), ($1)", [sp]);
   await db.query("insert into public.vendor_packages (provider_id) values ($1)", [sp]);
   const summary = Object.fromEntries((await as(ADMIN, () => db.query("select * from public.admin_phone_agent_summary()"))).rows.map((r) => [r.measure, Number(r.value)]));
-  expect(summary).toMatchObject({ calls: 2, pilot_calls: 1, prototype_calls: 1, links_sent: 1, registrations: 1, listings_completed: 1, cost_aud_cents: 81 });
+  expect(summary).toMatchObject({ calls: 2, pilot_calls: 1, prototype_calls: 1, links_sent: 1, registrations: 1, listings_completed: 1, cost_aud_cents: 100 });
   expect((await as(A, () => db.query("select * from public.admin_phone_agent_summary()"))).rows).toHaveLength(0);
   expect((await as(A, () => db.query("select * from public.phone_calls"))).rows).toHaveLength(0);
 
   // Second attempt the same day is blocked; attempt limit holds.
   expect((await blockers(harbour, VENDOR)).join(" ")).toMatch(/Already called in the last day/);
+});
+
+it("budget holds the worst case for calls in progress; callback requests record consent", { timeout: 60_000 }, async () => {
+  const { db, as, err, ADMIN } = await setupDb(phoneMigrations);
+  await db.exec(setClock(WED_11AM));
+  await as(ADMIN, () => db.query("select public.admin_phone_update_settings($1::jsonb)", [JSON.stringify({ mode: "prototype", prototype_numbers: [SAI], budget_aud_cents: 500, max_call_cost_aud_cents: 200 })]));
+  // A$4.20 already spent: another call (worst case A$2) would pass A$5.
+  await db.exec(`insert into public.phone_calls (mode, phone_e164, status, cost_aud_cents) values ('prototype', '+61400000001', 'ended', 420)`);
+  expect((await as(ADMIN, () => db.query("select public.admin_phone_call_blockers(null, $1) b", [SAI]))).rows[0].b.join(" ")).toMatch(/budget would be exceeded \(A\$4\.20 of A\$5\.00/);
+  await as(ADMIN, () => db.query("select public.admin_phone_update_settings($1::jsonb)", [JSON.stringify({ budget_aud_cents: 700 })]));
+  expect((await as(ADMIN, () => db.query("select public.admin_phone_call_blockers(null, $1) b", [SAI]))).rows[0].b).toEqual([]);
+
+  // Website callback request: creates the prospect, the request and an express consent with the exact wording.
+  const consent = "I agree to a phone call from Evntly's AI assistant about listing my business.";
+  const id = (await svc(db, "select public.phone_request_callback($1,$2,$3,$4,$5,$6,'website',$7) id", [VENDOR, "Sparkle Events", "Jo", "decorator", "Jo@Sparkle.com.au", "morning", consent])).rows[0].id;
+  expect(id).toBeTruthy();
+  const pr = (await db.query("select id, email, phone from public.vendor_prospects where business_name = 'Sparkle Events'")).rows[0];
+  expect(pr).toMatchObject({ email: "jo@sparkle.com.au", phone: VENDOR });
+  const c = (await db.query("select kind, basis, evidence from public.phone_consents where prospect_id = $1", [pr.id])).rows[0];
+  expect(c).toMatchObject({ kind: "call", basis: "express_web_form" });
+  expect(c.evidence).toContain(consent);
+  // Same number again the same day: ignored. Not callable by anon/authenticated directly.
+  expect((await svc(db, "select public.phone_request_callback($1,'Sparkle Events',null,null,null,null,'website',$2) id", [VENDOR, consent])).rows[0].id).toBeNull();
+  expect(await as("anon", () => err(db.query("select public.phone_request_callback($1,'x',null,null,null,null,'website',$2)", [VENDOR, consent])))).toMatch(/permission denied/);
+  // Admin records an Instagram reply the same way.
+  await as(ADMIN, () => db.query("select public.admin_phone_request_callback('+61422333444', 'Beat Lab DJs', 'Max', 'dj', null, 'instagram', 'IG DM 2 Dec: yes, happy for your AI assistant to call me')"));
+  expect((await db.query("select basis from public.phone_consents where phone_e164 = '+61422333444'")).rows[0].basis).toBe("express_dm_reply");
+  const summary = Object.fromEntries((await as(ADMIN, () => db.query("select * from public.admin_phone_agent_summary()"))).rows.map((r) => [r.measure, Number(r.value)]));
+  expect(summary).toMatchObject({ call_requests: 2, call_requests_open: 2 });
+});
+
+it("browser test calls: prototype mode only, one row per call", { timeout: 60_000 }, async () => {
+  const { db, as, err, ADMIN } = await setupDb(phoneMigrations);
+  expect(await err(svc(db, "select public.phone_agent_web_test_call('web_1', 'Test DJ', 'dj')"))).toMatch(/prototype mode/);
+  await as(ADMIN, () => db.query("select public.admin_phone_update_settings($1::jsonb)", [JSON.stringify({ mode: "prototype", prototype_numbers: [SAI] })]));
+  const a = (await svc(db, "select public.phone_agent_web_test_call('web_1', 'Test DJ', 'dj') r")).rows[0].r;
+  const b = (await svc(db, "select public.phone_agent_web_test_call('web_1', 'Other', 'mc') r")).rows[0].r;
+  expect(a).toBe(b);
+  expect((await db.query("select mode, phone_e164, vendor_name, category from public.phone_calls")).rows).toEqual([{ mode: "prototype", phone_e164: SAI, vendor_name: "Test DJ", category: "dj" }]);
+  await as(ADMIN, () => db.query(`select public.admin_phone_update_settings('{"mode":"pilot"}'::jsonb)`));
+  expect(await err(svc(db, "select public.phone_agent_web_test_call('web_2', 'x', 'dj')"))).toMatch(/prototype mode/);
 });
 
 it("opt-out is permanent and stops every later call", { timeout: 60_000 }, async () => {
