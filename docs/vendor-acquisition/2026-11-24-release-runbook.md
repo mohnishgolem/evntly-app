@@ -9,7 +9,7 @@
 | CI on #97 (test-and-build, SAST, secret scan, dependency audit, Vercel preview) | ✅ green | `gh pr checks 97` |
 | Unit + SQL tests | ✅ 125 files, all pass | `npx vitest run` |
 | Typecheck, lint, production build | ✅ | `tsc`, `eslint`, isolated `next build` |
-| Migration on a **real** Postgres/Supabase | ⏳ waiting for the schema-only dump (`~/evntly-schema.sql`); branch spend declined | see "Real-database test" below |
+| Migration on a **real** Postgres/Supabase | ✅ 25 Nov: production schema (schema-only dump, 0 rows) loaded into local Supabase (Postgres 17, Auth, PostgREST, pg_cron, Mailpit). Both migrations apply in a transaction; both rollbacks restore the exact original state (64 tables / 103 policies / 158 functions / original checks); re-apply is idempotent | `tests/e2e/real-supabase/` |
 | Migration compatible with production data (read-only) | ✅ every existing `page_views.kind` and `funnel_events.event` is allowed by the new checks; no name clashes; `pg_cron` + `pgcrypto` present; no existing rows modified | read-only SELECTs, 24 Nov |
 | RLS / access (offline PGlite) | ✅ drafts + test-account helper service-role only; anon/vendor/admin-role direct access denied; funnel + dashboard admin+MFA only; spend log admin+MFA only | `tests/sql/vendor-listing-drafts.test.ts`, `growth-dashboard.test.ts` |
 | Claim-link security, token expiry | ✅ hash-only storage, guessed/old/rotated links refused, expired/claimed/revoked unusable, assisted drafts savable only by the owner's verified email, noindex + no-referrer | unit + E2E |
@@ -21,9 +21,31 @@
 | Visual match with the coral design system | ✅ existing tokens only; light + dark screenshots in `screenshots/after/` | |
 | Analytics separation | ✅ guest drafts (self vs assisted, admin browsers excluded) → verified accounts → listings → approved → completed → genuine enquiries (real customer → real vendor, not self, not demo, not test) → confirmed bookings | SQL tests |
 
-**Do not release until the real-database row above is ✅.**
+**All pre-release checks are ✅.**
 
-## Real-database test (once `~/evntly-schema.sql` exists)
+### Real-database results (25 Nov)
+- **Access probes, 39/39** through real PostgREST with real Auth users: guests, vendors and admins
+  (with or without two-factor) can't read, create or change drafts or list internal accounts; the
+  journey funnel, growth dashboard and spend log work only for admins with two-factor; the database
+  itself refuses an assisted draft without recorded permission, a draft over 32 KB and an unhashed
+  token. Existing guards still hold: a vendor can't create someone else's listing, and a role can't be
+  changed to admin through the API.
+- **Journey, 32/32** with real sign-ups and real email codes: draft survives a refresh; after email
+  verification the vendor lands on their draft; on a **different device** the same verified email finds
+  it; invalid ABN keeps Save disabled; the saved listing is a **private draft** (not visible to the public
+  API) with normalised ABN, the vendor's priced package, the agreement recorded and a founding place
+  started; another person's verified account can't save an assisted draft, the owner's can (and their
+  "add my photos" opens a setup request); claim links stop working once used; expired links are refused;
+  the purge job is scheduled and deletes drafts 30 days past expiry; the real `check_rate_limit` stops
+  the 4th link email to one address; a vendor with no draft still gets the classic 5-step form; the
+  funnel and dashboard count the real activity, show 0 enquiries (none invented), and exclude QA-named
+  accounts.
+- **Prerequisites confirmed in production:** `pg_cron` and `pgcrypto` are installed; the bookings
+  no-overlap constraint shows `btree_gist` is too. The migration needs `pg_cron` to exist.
+- Note: the database password was reset on 25 Nov to take the dump. Nothing in this repo or Vercel
+  uses it (the app uses API keys); update any outside tool that did.
+
+## How the real-database test was run (repeatable)
 1. Load the dump into the local Supabase stack (OrbStack, `scratchpad/localsb`, real Postgres 17 + Auth + PostgREST + pg_cron + Mailpit).
 2. Apply `20261130090000`, then `20261130100000`; then both rollbacks; then both again (idempotence).
 3. Probe as `anon`, a vendor JWT and an admin JWT through PostgREST: drafts/spend/helper not readable or writable; RPCs return nothing without admin+MFA.

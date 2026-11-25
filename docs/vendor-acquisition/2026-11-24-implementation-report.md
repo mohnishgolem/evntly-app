@@ -47,6 +47,7 @@ Read with: [conversion analysis](2026-11-24-conversion-analysis.md) · [founder-
 | `npx tsc --noEmit`, `npx eslint src tests` | clean |
 | `next build` (isolated, no `.env.local`) | succeeds |
 | New E2E: `tests/e2e/vendor-journey.mjs` (phone 390×844 + desktop) | **60/60 passed** |
+| Real database (local Supabase with production's schema): `tests/e2e/real-supabase/` | **39/39** access probes, **32/32** journey checks with real sign-up emails (25 Nov) |
 | Existing E2E: `tests/e2e/signed-in.mjs` (customer: tab bar, planner card, saved, event board, messages, quotes, sign-out) | **all passed** |
 
 **Bugs the tests caught and fixed:** an over-long pasted bio was discarded instead of trimmed; the landing
