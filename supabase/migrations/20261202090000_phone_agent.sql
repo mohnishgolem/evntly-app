@@ -693,6 +693,19 @@ begin
       'campaign', 'aicall-' || c.ref),
       'say', 'Tell them the link is on its way and what it will come from (Evntly).');
 
+  -- Our server reports the link couldn't be delivered (never callable by the
+  -- agent: runTool only accepts the agent's own tool names). Undo the record
+  -- so a retry by another channel is sent, and withdraw that channel's consent row.
+  when 'link_send_failed' then
+    update public.phone_consents set withdrawn_at = now()
+      where call_id = c.id and kind in ('sms_link', 'email_link') and withdrawn_at is null
+        and kind = case when c.link_channel = 'email' then 'email_link' else 'sms_link' end;
+    update public.phone_calls pc
+      set link_sent_at = null, link_channel = null, link_to = null,
+          outcome = case when pc.outcome = 'link_sent' then 'interested' else pc.outcome end, updated_at = now()
+      where pc.id = c.id;
+    result := jsonb_build_object('ok', true);
+
   -- Our team prepares a draft listing for them to check and claim.
   when 'request_assisted_listing' then
     if coalesce((p_args ->> 'permission_confirmed')::boolean, false) is not true then
