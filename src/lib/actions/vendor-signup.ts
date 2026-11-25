@@ -4,11 +4,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { geocodeSuburb, isInAustralia } from "@/lib/geocode";
 import { isValidAbn, normalizeAbn } from "@/lib/abn";
-import { isLaunchCategory, isVendorCategory } from "@/lib/config";
-import { VENDOR_DOCUMENTS } from "@/lib/legal/versions";
-import { friendlyLegalError } from "@/lib/legal/status";
+import { isVendorCategory } from "@/lib/config";
 import { pricingColumns } from "@/lib/pricing-model";
 import { FINISH_PATH } from "@/lib/listing-completion";
+import { createVendorListing } from "@/lib/vendor-listing-create";
 
 export type VendorSignupDraft = {
   businessName: string;
@@ -58,71 +57,15 @@ export async function submitVendorListing(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user?.email) {
     return { error: "You need to be logged in to list a business." };
   }
 
-  // New listings can only join a category that's live in the launch market.
-  if (!isLaunchCategory(draft.serviceType)) {
-    return { error: "Pick one of the listed categories." };
-  }
-
-  // Vendor Service Agreement s3: a valid ABN is required to list.
-  const abn = normalizeAbn(draft.abn);
-  if (!abn || !isValidAbn(abn)) {
-    return { error: "Enter a valid 11-digit ABN. You can check it at abr.business.gov.au." };
-  }
-  if (agreement.acceptedVendorAgreement !== true) {
-    return { error: "Please agree to the Vendor Service Agreement to submit your listing." };
-  }
-  const pricing = pricingColumns(draft);
-  if ("error" in pricing) return { error: pricing.error };
-
-  const { data: existing } = await supabase
-    .rpc("my_service_providers")
-    .select("id")
-    .limit(1)
-    .maybeSingle();
-
-  if (existing) {
-    redirect("/vendor-dashboard");
-  }
-
-  // Recorded (server timestamp, append-only) before the listing exists; the
-  // database refuses new listings without it.
-  const { error: legalError } = await supabase.rpc("record_legal_acceptance", {
-    p_documents: [...VENDOR_DOCUMENTS],
-    p_context: "vendor_onboarding",
-  });
-  if (legalError) return { error: "We couldn't record your agreement. Please try again." };
-
-  const coordinates = await resolveCoordinates(draft);
-  const { error } = await supabase.from("service_providers").insert({
-    owner_email: user.email,
-    name: draft.businessName,
-    bio: draft.bio || null,
-    service_type: draft.serviceType,
-    ...pricing,
-    city: draft.city || null,
-    ...coordinates,
-    // "which locations do you service" — the specific ask from the call
-    locations_serviced: draft.locationsServiced,
-    event_types: draft.eventTypes,
-    phone: draft.phone || null,
-    abn,
-    gst_registered: !!draft.gstRegistered,
-    // Forced to "draft" by the database for vendors; set here to match.
-    status: "draft",
-    available: true,
-  });
-
-  if (error) return { error: friendlyLegalError(error.message) };
-
-  // Keep nav routing in sync: a customer account that creates a listing
-  // (not just one that signed up as "I'm a vendor") still needs isVendor
-  // checks in the header to send them to /vendor-dashboard.
-  await supabase.from("users").update({ role: "vendor" }).eq("id", user.id);
+  // Same checks as always (category, ABN, agreement, one listing per
+  // account, saved as a draft): see createVendorListing.
+  const result = await createVendorListing(supabase, user, draft, agreement);
+  if ("error" in result) return { error: result.error };
+  if ("existing" in result) redirect("/vendor-dashboard");
 
   // The listing is saved as a draft (the database sets status 'draft'). It
   // goes to review only from the finish page, once it has photos and a

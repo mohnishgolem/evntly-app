@@ -25,7 +25,8 @@ known internal test account ids ("saim").
 Duplicates: one row per lower-cased email (best stage wins).
 Same rules in three places — keep in sync, tests pin them:
 `sql/verified_vendors.sql`, `supabase/migrations/20261120090000_admin_verified_vendor_funnel.sql` (+ `20261121090000_verified_funnel_account_test_rules.sql`),
-`src/lib/acquisition/test-accounts.ts`.
+`src/lib/acquisition/test-accounts.ts`, and (once applied) the `test_users` CTE in
+`admin_vendor_journey_funnel()` (`supabase/migrations/20261130090000_vendor_listing_drafts.sql`).
 
 ## How to run
 

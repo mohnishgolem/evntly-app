@@ -10,6 +10,9 @@ export const PAGE_VIEW_KINDS = [
   "founding_claim",
   // Needs migration 20261127090000_vendor_onboarding_reminders.
   "vendor_finish",
+  // Need migration 20261130090000_vendor_listing_drafts.
+  "vendor_landing",
+  "vendor_builder",
 ] as const;
 export type PageViewKind = (typeof PAGE_VIEW_KINDS)[number];
 
@@ -19,6 +22,8 @@ export function pageViewFor(pathname: string): { kind: PageViewKind; vendorId?: 
   if (pathname === "/plan") return { kind: "plan" };
   if (pathname === "/vendor-signup") return { kind: "vendor_signup" };
   if (pathname === "/founding-vendors") return { kind: "founding" };
+  if (pathname === "/become-a-vendor") return { kind: "vendor_landing" };
+  if (pathname === "/become-a-vendor/start") return { kind: "vendor_builder" };
   if (pathname === "/founding-vendors/claim") return { kind: "founding_claim" };
   if (pathname === "/vendor-dashboard/finish") return { kind: "vendor_finish" };
   if (pathname === "/bundles" || pathname.startsWith("/bundles/")) return { kind: "bundles" };

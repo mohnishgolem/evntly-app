@@ -6,7 +6,7 @@ import { isBotUserAgent, PAGE_VIEW_KINDS, parseSourceParams, type PageViewKind }
 import { campaignFromParams, foundingCookieWrites, sourceFromParams } from "@/lib/founding/sources";
 import { isShareSource, SHARE_PREPARED_ACTIONS, type SharePreparedAction } from "@/lib/share-profile";
 import { recordSharePrepared } from "@/lib/share-funnel";
-import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
+import { CLIENT_FUNNEL_EVENTS, foundingSourceFromCookie, funnelDetail, isFunnelEvent, recordFunnelEvent } from "@/lib/funnel-events";
 import { CLIENT_PLANNER_EVENTS, GUEST_PLANNER_EVENTS, isPlannerEvent, plannerDetail, recordPlannerEvent } from "@/lib/planner/analytics";
 
 // Anonymous page-view counts for the admin funnel (see <PageViewTracker>).
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const raw = await request.text();
   if (!raw || raw.length > 512) return done;
-  let body: { kind?: unknown; event?: unknown; visitorId?: unknown; vendorId?: unknown; params?: unknown; share?: unknown; planner?: unknown };
+  let body: { kind?: unknown; event?: unknown; detail?: unknown; visitorId?: unknown; vendorId?: unknown; params?: unknown; share?: unknown; planner?: unknown };
   try {
     body = JSON.parse(raw);
   } catch {
@@ -81,17 +81,19 @@ export async function POST(request: NextRequest) {
     const visitorId = typeof body.visitorId === "string" ? body.visitorId : "";
     if (!isFunnelEvent(body.event) || !CLIENT_FUNNEL_EVENTS.includes(body.event) || !/^[A-Za-z0-9-]{8,64}$/.test(visitorId)) return done;
     if (!(await checkRateLimit("pageViewIp", clientIpFrom(request.headers)))) return done;
+    // Vendor journey steps carry a short code (which builder step, which CTA).
+    const detail = body.event === "builder_step" || body.event === "vendor_cta" ? funnelDetail(body.detail) : null;
     // The page's own link tags win over the cookie (as for page views): in
     // Facebook's in-app browser the cookie saved on the ad's landing page may
     // be missing by the time the visitor taps Claim.
     const params = parseSourceParams(body.params);
     const source = params ? sourceFromParams(params) : null;
     if (!source) {
-      await recordFunnelEvent(body.event, { visitorId });
+      await recordFunnelEvent(body.event, { visitorId, detail });
       return done;
     }
     const campaign = campaignFromParams(params!);
-    await recordFunnelEvent(body.event, { visitorId, source, campaign });
+    await recordFunnelEvent(body.event, { visitorId, source, campaign, detail });
     // Save them now if this browser has no source yet, so the later
     // server-side steps (account created, email confirmed) are credited too.
     // Same first-party cookies <SourceCookie> writes; nothing ad-related.
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
   // cookie may still hold an earlier visit's source. Without tags, the cookie
   // (the same one funnel events use) carries the source between pages.
   let source: string | null = null;
-  if (kind === "founding" || kind === "founding_claim") {
+  if (kind === "founding" || kind === "founding_claim" || kind === "vendor_landing" || kind === "vendor_builder") {
     const params = parseSourceParams(body.params);
     source = (params && sourceFromParams(params)) || (await foundingSourceFromCookie());
   } else if (kind === "vendor") {

@@ -61,6 +61,22 @@ export function trackFunnelEvent(event: "claim_click" | "signup_view" | "signup_
   sendTrack({ event, visitorId, ...(params ? { params } : {}) });
 }
 
+export type VendorJourneyEvent = "vendor_cta" | "calculator_used" | "builder_started" | "builder_step" | "builder_preview" | "save_clicked";
+const VENDOR_ONCE = new Set<VendorJourneyEvent>(["calculator_used", "builder_started", "builder_preview"]);
+
+/**
+ * Vendor journey steps (/become-a-vendor). `detail` is a short code such as
+ * the builder step id. One-off steps count once per browser session.
+ */
+export function trackVendorJourney(event: VendorJourneyEvent, detail?: string) {
+  const visitorId = analyticsVisitorId();
+  if (!visitorId) return;
+  if (VENDOR_ONCE.has(event) && !firstInSession(`vj_${event}`)) return;
+  if (event === "builder_step" && detail && !firstInSession(`vj_step_${detail}`)) return;
+  const params = funnelParamsFrom(window.location.search);
+  sendTrack({ event, visitorId, ...(detail ? { detail } : {}), ...(params ? { params } : {}) });
+}
+
 /** Planner events from the browser (opened, suggestion tapped). Same opt-outs as page views. */
 export function trackPlanner(event: "planner_opened" | "recommendation_clicked", eventId: string, detail?: string) {
   const visitorId = analyticsVisitorId();

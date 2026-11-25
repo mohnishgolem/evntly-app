@@ -25,6 +25,11 @@ type Notification = {
   // Optional quoted block, e.g. a message preview or a vendor's pitch.
   quote?: string | null;
   cta: { label: string; path: string };
+  /**
+   * Replaces the "you have an account" footer, for emails to people who
+   * don't have one yet (e.g. a link to their own unsaved listing draft).
+   */
+  footer?: string;
 };
 
 let client: Resend | null = null;
@@ -48,7 +53,7 @@ function truncate(value: string, max = 280) {
   return value.length > max ? `${value.slice(0, max - 1).trimEnd()}…` : value;
 }
 
-function renderHtml({ heading, lines, quote, cta }: Omit<Notification, "category">) {
+function renderHtml({ heading, lines, quote, cta, footer }: Omit<Notification, "category">) {
   const url = `${SITE_URL}${cta.path}`;
   const paragraphs = lines
     .map((line) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#3a3a3c;">${escapeHtml(line)}</p>`)
@@ -70,13 +75,17 @@ function renderHtml({ heading, lines, quote, cta }: Omit<Notification, "category
           <a href="${url}" style="display:inline-block;margin-top:6px;padding:12px 22px;background:#e8604a;color:#ffffff;text-decoration:none;border-radius:999px;font-size:15px;font-weight:600;">${escapeHtml(cta.label)}</a>
         </td></tr>
       </table>
-      <p style="margin:16px 0 0;font-size:12px;color:#8e8e93;">You're getting this because you have an account on Evntly. <a href="${SITE_URL}${PREFS_PATH}" style="color:#8e8e93;">Choose which emails you get</a></p>
+      <p style="margin:16px 0 0;font-size:12px;color:#8e8e93;">${
+        footer
+          ? escapeHtml(footer)
+          : `You're getting this because you have an account on Evntly. <a href="${SITE_URL}${PREFS_PATH}" style="color:#8e8e93;">Choose which emails you get</a>`
+      }</p>
     </td></tr>
   </table>
 </body></html>`;
 }
 
-function renderText({ heading, lines, quote, cta }: Omit<Notification, "category">) {
+function renderText({ heading, lines, quote, cta, footer }: Omit<Notification, "category">) {
   return [
     heading,
     "",
@@ -85,7 +94,7 @@ function renderText({ heading, lines, quote, cta }: Omit<Notification, "category
     "",
     `${cta.label}: ${SITE_URL}${cta.path}`,
     "",
-    `Choose which emails you get: ${SITE_URL}${PREFS_PATH}`,
+    footer ?? `Choose which emails you get: ${SITE_URL}${PREFS_PATH}`,
   ].join("\n");
 }
 
