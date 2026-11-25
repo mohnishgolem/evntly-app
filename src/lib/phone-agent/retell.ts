@@ -1,4 +1,4 @@
-import { BEGIN_MESSAGE, SYSTEM_PROMPT, type CallVariables, retellDynamicVariables } from "@/lib/phone-agent/prompt";
+import { BEGIN_MESSAGE, SYSTEM_PROMPT, type CallVariables, callVariables, retellDynamicVariables } from "@/lib/phone-agent/prompt";
 import { TOOL_DEFS } from "@/lib/phone-agent/tools";
 
 // Retell AI REST calls (https://docs.retellai.com/api-references). Only our
@@ -48,6 +48,12 @@ export function retellLlmConfig(opts: { toolUrl: string; ownerTransferNumber: st
     start_speaker: "agent",
     general_prompt: SYSTEM_PROMPT,
     begin_message: BEGIN_MESSAGE,
+    // Used when a call doesn't set them (the dashboard's Test Audio): a
+    // prototype call about a made-up photography business.
+    default_dynamic_variables: retellDynamicVariables(callVariables({
+      ref: "browsertest", mode: "prototype", vendorName: "Harbour Lens Photography", category: "photographer",
+      ownerName: "Sai", callbackNumber: "this number", recordingOn: false,
+    })),
     general_tools: [
       ...TOOL_DEFS.map((t) => ({
         type: "custom",

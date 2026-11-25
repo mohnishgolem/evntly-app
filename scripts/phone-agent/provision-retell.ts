@@ -10,7 +10,7 @@
 //     RETELL_API_KEY            Retell API key with webhook signing
 //     PHONE_AGENT_PUBLIC_URL    where Retell sends tool calls/webhooks (the local tunnel for testing)
 //     RETELL_VOICE_ID           chosen voice (see scripts/phone-agent/voices.ts)
-//     OWNER_TRANSFER_NUMBER     Sai's mobile, +614…
+//     OWNER_TRANSFER_NUMBER     Sai's mobile, +614… (optional: without it there's no live transfer)
 //     RETELL_LLM_ID / RETELL_AGENT_ID   if set, those are UPDATED instead of creating new ones
 //     RETELL_MODEL              default claude-4.5-haiku
 //     --inbound                 also create the return-call agent (needs the AU number first)
@@ -21,7 +21,8 @@ const apply = process.argv.includes("--apply");
 const inbound = process.argv.includes("--inbound");
 const env = process.env;
 const base = (env.PHONE_AGENT_PUBLIC_URL ?? "https://evntly.au").replace(/\/+$/, "");
-const owner = env.OWNER_TRANSFER_NUMBER ?? "+61400000000";
+// No transfer tool until Sai's number is set (the agent offers a callback instead).
+const owner = env.OWNER_TRANSFER_NUMBER || null;
 const llm = retellLlmConfig({ toolUrl: `${base}/api/phone-agent/tool`, ownerTransferNumber: owner, model: env.RETELL_MODEL });
 const agentFor = (llmId: string) =>
   retellAgentConfig({ llmId, webhookUrl: `${base}/api/phone-agent/webhook`, voiceId: env.RETELL_VOICE_ID ?? "<choose a voice>" });
@@ -44,7 +45,7 @@ async function main() {
     console.log("Dry run: wrote docs/phone-agent/retell-agent.json. Nothing was sent to Retell.");
     return;
   }
-  for (const k of ["RETELL_API_KEY", "RETELL_VOICE_ID", "OWNER_TRANSFER_NUMBER", "PHONE_AGENT_PUBLIC_URL"]) {
+  for (const k of ["RETELL_API_KEY", "RETELL_VOICE_ID", "PHONE_AGENT_PUBLIC_URL"]) {
     if (!env[k]) throw new Error(`Set ${k}.`);
   }
   const llmId = env.RETELL_LLM_ID
@@ -56,6 +57,7 @@ async function main() {
   console.log(`Outbound agent ready: RETELL_LLM_ID=${llmId} RETELL_AGENT_ID=${agentId}`);
 
   if (inbound) {
+    if (!owner) throw new Error("Set OWNER_TRANSFER_NUMBER for the return-call agent.");
     const inLlm = await call("POST", "/create-retell-llm", retellInboundLlmConfig({ ownerName: "Sai", ownerNumber: owner, model: env.RETELL_MODEL }));
     const inAgent = await call("POST", "/create-agent", {
       ...agentFor(inLlm.llm_id),
