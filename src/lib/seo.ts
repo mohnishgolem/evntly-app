@@ -13,6 +13,15 @@ import {
 export const INSTAGRAM_URL = "https://www.instagram.com/evntly.au/";
 export const CONTACT_EMAIL = "hello@evntlyapp.com";
 
+// The root src/app/opengraph-image.png, used as the fallback link preview.
+const DEFAULT_SHARE_IMAGE = {
+  url: `${SITE_URL}/opengraph-image.png`,
+  width: 1200,
+  height: 630,
+  alt: "Evntly",
+  type: "image/png",
+};
+
 /**
  * Title, description, canonical and matching Open Graph / Twitter tags for a
  * public page. Next.js merges metadata shallowly, so a page that sets only a
@@ -40,8 +49,12 @@ export function pageMetadata({
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: shareTitle, description, url, type, siteName: "Evntly", locale: "en_AU" },
-    twitter: { card: "summary_large_image", title: shareTitle, description },
+    // A page-level openGraph replaces the root one, and the root
+    // opengraph-image.png only reaches pages in its own segment, so without
+    // this every other page previewed with a blank image (Instagram DMs showed
+    // a spinner). A segment's own opengraph-image file still takes priority.
+    openGraph: { title: shareTitle, description, url, type, siteName: "Evntly", locale: "en_AU", images: [DEFAULT_SHARE_IMAGE] },
+    twitter: { card: "summary_large_image", title: shareTitle, description, images: [DEFAULT_SHARE_IMAGE.url] },
   };
 }
 
