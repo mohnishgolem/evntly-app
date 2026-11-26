@@ -12,7 +12,7 @@ export function AdminMfaRequired() {
       </p>
       <Link
         href="/profile/security"
-        className="inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+        className="inline-flex rounded-xl bg-primary-strong px-4 py-2.5 text-sm font-medium text-primary-foreground"
       >
         Set up two-factor authentication
       </Link>

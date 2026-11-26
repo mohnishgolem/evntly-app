@@ -62,7 +62,7 @@ function NavRail({ title, nav, unread, leads }: { title: string; nav: NavSetName
                   <span className="relative">
                     <Icon className="size-6" strokeWidth={active ? 2.2 : 1.75} aria-hidden />
                     {count > 0 && (
-                      <span className="absolute -top-1 -right-2.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground">
+                      <span className="absolute -top-1 -right-2.5 min-w-[18px] rounded-full bg-primary-strong px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground">
                         {count > 99 ? "99+" : count}
                         <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                       </span>

@@ -35,7 +35,7 @@ const MAX_ITEMS = 6;
 function CountDot({ count, label }: { count: number; label: string }) {
   if (count <= 0) return null;
   return (
-    <span className="absolute top-1 right-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground ring-2 ring-background">
+    <span className="absolute top-1 right-0.5 min-w-[18px] rounded-full bg-primary-strong px-1 text-center text-[11px] leading-[18px] font-semibold text-primary-foreground ring-2 ring-background">
       {count > 99 ? "99+" : count}
       <span className="sr-only"> {label}</span>
     </span>

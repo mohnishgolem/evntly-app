@@ -43,6 +43,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-strong-hover: var(--primary-strong-hover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -447,6 +449,21 @@
      4.5:1 on the canvas (coral #e8604a is ~3.2:1). */
   --primary-text: #c2412c;
   --success-text: #0d7148;
+
+  /* Coral under white text (buttons, badges, chat bubbles, counts). The
+     accent --primary (#e8604a) is only 3.39:1 with white, so text sits on
+     the lightest same-hue coral that reaches WCAG AA 4.5:1 (#cd4a35, 4.54:1;
+     one step lighter fails). Hover darkens to the existing #c2412c (5.14:1).
+     --primary stays the accent for bars, dots, switches and icons (3:1).
+     Same values in dark mode; tests/unit/coral-contrast.test.ts checks them. */
+  --primary-strong: #cd4a35;
+  --primary-strong-hover: #c2412c;
+  /* Depth on text-bearing coral: the top is the fill itself (no white sheen,
+     which would drop the label below 4.5:1), shading slightly darker below.
+     The 1px top highlight in --shadow-coral keeps the lit edge. */
+  --sheen-coral: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 100%);
+  --gradient-coral-strong: linear-gradient(180deg, #cd4a35 0%, #c2412c 100%);
+  --gradient-coral-strong-hover: linear-gradient(180deg, #c2412c 0%, #b53c27 100%);
   --warning-text: #7f5000;
   --destructive-text: #b3142a;
 
@@ -511,10 +528,11 @@
   --radius-sheet: var(--radius-sheet);
 }
 
-/* Coral primary action: gradient, top highlight, coloured shadow. */
+/* Coral primary action: gradient, top highlight, coloured shadow. Uses the
+   strong coral so the white label passes AA at every stop. */
 @utility btn-coral {
-  background-image: var(--gradient-coral);
-  background-color: var(--primary);
+  background-image: var(--gradient-coral-strong);
+  background-color: var(--primary-strong);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-coral);
   transition:
@@ -522,7 +540,7 @@
     box-shadow var(--duration-quick) var(--ease-standard),
     filter var(--duration-quick) var(--ease-standard);
   &:hover {
-    background-image: var(--gradient-coral-hover);
+    background-image: var(--gradient-coral-strong-hover);
   }
   &:active {
     transform: scale(var(--press-scale)) translateY(1px);

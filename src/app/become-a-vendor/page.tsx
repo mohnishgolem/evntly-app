@@ -179,7 +179,7 @@ export default async function BecomeAVendorPage({ searchParams }: { searchParams
           {STEPS.map((s, i) => (
             <li key={s.title} className="surface-raised rounded-card p-5">
               <span className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-full [background:var(--gradient-coral)] font-bold text-primary-foreground tabular-nums">{i + 1}</span>
+                <span className="flex size-10 items-center justify-center rounded-full [background:var(--gradient-coral-strong)] font-bold text-primary-foreground tabular-nums">{i + 1}</span>
                 <s.icon className="size-5 text-primary" aria-hidden />
               </span>
               <h3 className="mt-4 text-[17px] font-semibold">{s.title}</h3>

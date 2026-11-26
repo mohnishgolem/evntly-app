@@ -179,7 +179,7 @@ export function NavDrawer({
                 <Link
                   href="/signup"
                   onClick={close}
-                  className="flex h-12 items-center justify-center rounded-full bg-primary text-[17px] font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-12 items-center justify-center rounded-full bg-primary-strong text-[17px] font-semibold text-primary-foreground outline-none transition-colors hover:bg-primary-strong-hover focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Sign up
                 </Link>

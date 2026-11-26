@@ -38,7 +38,8 @@ export default function GlobalError({
           <p style={{ color: "#a1a1aa", marginBottom: 24 }}>We&apos;ve been notified. Please try again.</p>
           <button
             onClick={() => retry()}
-            style={{ padding: "10px 20px", borderRadius: 999, border: 0, background: "#e8604a", color: "#fff", fontSize: 15 }}
+            /* #cd4a35 is --primary-strong (globals.css isn't loaded here): white text at 4.54:1. */
+            style={{ padding: "10px 20px", borderRadius: 999, border: 0, background: "#cd4a35", color: "#fff", fontSize: 15 }}
           >
             Try again
           </button>

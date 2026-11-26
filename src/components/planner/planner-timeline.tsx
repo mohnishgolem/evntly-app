@@ -95,7 +95,7 @@ function Marker({ group }: { group: TimelineGroup }) {
       <span
         className={cn(
           "mt-1 flex size-9 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums",
-          group.isEventDay ? "bg-[image:var(--gradient-coral)] text-white shadow-[var(--shadow-coral)]" : "surface-pressed",
+          group.isEventDay ? "bg-[image:var(--gradient-coral-strong)] text-white shadow-[var(--shadow-coral)]" : "surface-pressed",
           group.isPast && !group.isEventDay && "text-muted-foreground",
         )}
       >

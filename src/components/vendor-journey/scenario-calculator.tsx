@@ -73,7 +73,7 @@ export function ScenarioCalculator() {
                 }}
                 className={
                   bookings === n
-                    ? "min-h-11 rounded-full [background:var(--gradient-coral)] font-semibold text-primary-foreground"
+                    ? "min-h-11 rounded-full [background:var(--gradient-coral-strong)] font-semibold text-primary-foreground"
                     : "btn-raised min-h-11 rounded-full font-medium"
                 }
               >

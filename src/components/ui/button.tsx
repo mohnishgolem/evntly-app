@@ -7,10 +7,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Coral with depth: a light-to-dark sheen over whatever background is set
-        // (so colour overrides still work) and a soft coral shadow.
+        // Coral with depth: a sheen that only darkens, over whatever background is
+        // set (so colour overrides still work), and a soft coral shadow. The
+        // strong coral keeps the white label at WCAG AA (4.5:1) at every point.
         default:
-          "bg-primary bg-[image:linear-gradient(180deg,rgba(255,255,255,0.16),rgba(0,0,0,0.06))] text-primary-foreground shadow-[var(--shadow-coral)] hover:bg-primary-hover active:shadow-none",
+          "bg-primary-strong bg-[image:var(--sheen-coral)] text-primary-foreground shadow-[var(--shadow-coral)] hover:bg-primary-strong-hover active:shadow-none",
         // Neutral control raised off the surface (secondary actions on consumer pages).
         raised: "btn-raised text-foreground",
         outline:
