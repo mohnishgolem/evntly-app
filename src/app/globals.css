@@ -45,6 +45,7 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-strong: var(--primary-strong);
   --color-primary-strong-hover: var(--primary-strong-hover);
+  --color-focus-ring: var(--focus-ring);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -464,6 +465,11 @@
   --sheen-coral: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 100%);
   --gradient-coral-strong: linear-gradient(180deg, #cd4a35 0%, #c2412c 100%);
   --gradient-coral-strong-hover: linear-gradient(180deg, #c2412c 0%, #b53c27 100%);
+  /* Keyboard focus ring on buttons: opaque so it reaches 3:1 against the
+     page, canvas, surfaces and the charcoal drawer (the old ring-ring/50 is
+     20% coral, ~1.3:1 on white). Drawn with a 2px offset so it stays
+     distinct from a coral fill. */
+  --focus-ring: var(--primary-strong);
   --warning-text: #7f5000;
   --destructive-text: #b3142a;
 
@@ -500,6 +506,9 @@
 .dark {
   --primary-text: #f2836d;
   --success-text: #4ade9a;
+  /* The brand coral is 5.6:1 on the dark page; it stays brighter on dark
+     surfaces than the strong coral. */
+  --focus-ring: var(--primary);
   --warning-text: #f7c56b;
   --destructive-text: #ff8b8b;
   --canvas: #0b0b0e;

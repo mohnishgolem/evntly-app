@@ -138,6 +138,14 @@ describe.each(MODES)("white text on coral passes AA in %s mode", (mode) => {
     expect(contrastRatio(text(), color(mode, "--primary"))).toBeGreaterThanOrEqual(AA_NON_TEXT);
     expect(contrastRatio(color(mode, "--background"), color(mode, "--highlight"))).toBeGreaterThanOrEqual(AA_NON_TEXT);
   });
+
+  it("focus ring meets 3:1 against the page, surfaces and the drawer", () => {
+    const ring = color(mode, "--focus-ring");
+    for (const bg of ["--background", "--canvas", "--surface"]) {
+      expect(contrastRatio(ring, color(mode, bg)), bg).toBeGreaterThanOrEqual(AA_NON_TEXT);
+    }
+    expect(contrastRatio(ring, "#1c1c1f"), "drawer").toBeGreaterThanOrEqual(AA_NON_TEXT);
+  });
 });
 
 // The options considered (A: darker fill for text, B: dark text, C: large
@@ -202,6 +210,17 @@ describe("components put text on the strong coral, not the accent", () => {
     expect(def).toContain("bg-[image:var(--sheen-coral)]");
     expect(def).toContain("hover:bg-primary-strong-hover");
     expect(def).not.toMatch(/rgba\(255,\s*255,\s*255/);
+  });
+
+  it("Button focus uses the opaque focus ring with an offset", () => {
+    expect(button).toContain("focus-visible:ring-focus-ring");
+    expect(button).toContain("focus-visible:ring-offset-2");
+    expect(button).not.toContain("focus-visible:ring-ring/50");
+  });
+
+  it("old 20%-alpha ring fails 3:1 on white (why the focus ring changed)", () => {
+    const old = composite({ ...color("light", "--primary"), a: 0.2 }, parseColor("#ffffff"));
+    expect(contrastRatio(old, "#ffffff")).toBeLessThan(AA_NON_TEXT);
   });
 
   it("btn-coral paints the strong gradients", () => {
