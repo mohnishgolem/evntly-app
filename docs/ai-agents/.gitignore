@@ -1,0 +1,8 @@
+# This repository is public. Keep real vendor data, business metrics and
+# personal plans out of it (same reason outreach/ is ignored).
+pilot/
+test-results/
+REPORT.md
+agents/sydney-job-search.md
+agents/personal-finance.md
+agents/au-legal-research.md

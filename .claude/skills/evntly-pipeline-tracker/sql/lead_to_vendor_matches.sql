@@ -7,7 +7,7 @@ with vendors as (
     (select count(*) from public.portfolio_items pi where pi.provider_id = sp.id) as photos,
     (select count(*) from public.vendor_packages vp where vp.provider_id = sp.id and vp.active) as packages
   from public.users u
-  join auth.users au on au.id::text = u.id::text
+  join agent_read.auth_users au on au.id::text = u.id::text
   left join public.service_providers sp on sp.owner_user_id::text = u.id::text
   where u.role = 'vendor'
     and split_part(lower(u.email), '@', 2) <> 'evntlyapp.com'

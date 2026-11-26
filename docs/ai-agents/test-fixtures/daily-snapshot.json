@@ -1,0 +1,11 @@
+{
+  "_note": "SYNTHETIC. Invented numbers for agent tests only.",
+  "date": "2026-11-26",
+  "goal": {"approved_vendors_target": 200, "deadline": "2026-11-30", "completed_listings_target": 20},
+  "verified": {"vendor_accounts_total": 31, "vendor_accounts_yesterday": 2, "completed_listings_total": 9, "completed_listings_yesterday": 1, "pending_review": 3},
+  "outreach_yesterday": {"instagram_dm_sent": 12, "email_sent": 0, "facebook_group_posts": 3, "human_replies": 4, "interested": 2},
+  "customer_side": {"enquiries_7d": 5, "bookings_7d": 0, "enquiries_unanswered_over_24h": 2},
+  "meta_ads": {"status": "paused", "spend_to_date_aud": 412.30, "budget_cap_aud": 1000},
+  "engineering": {"open_prs": ["#98 listing onboarding v2 (awaiting 48h go/no-go)"], "prod_errors_24h": 1, "failing_ci": 0},
+  "personal": {"bills_due_7d": 2, "job_applications_in_progress": 3}
+}

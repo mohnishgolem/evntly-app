@@ -12,7 +12,7 @@ with vendors as (
       and (select count(*) from public.portfolio_items pi where pi.provider_id = sp.id) >= 3
       and (select count(*) from public.vendor_packages vp where vp.provider_id = sp.id and vp.active) >= 1 as is_completed
   from public.users u
-  join auth.users au on au.id::text = u.id::text
+  join agent_read.auth_users au on au.id::text = u.id::text
   left join public.service_providers sp on sp.owner_user_id::text = u.id::text
   left join public.beta_applications ba on ba.user_id::text = u.id::text
   where (u.role = 'vendor' or sp.id is not null or ba.id is not null)

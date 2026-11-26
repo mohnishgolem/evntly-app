@@ -1,0 +1,8 @@
+provider,category,plan,monthly_aud,contract_end,usage_note
+TestEnergy Co,electricity,Standard Flex,148.00,none,"~11 kWh/day, Ausgrid area, no solar"
+TestTel Mobile,mobile,Unlimited 120GB,65.00,2027-02-01,"uses ~18GB/month"
+TestNet NBN,internet,NBN 250,99.00,none,"two people, mostly streaming and video calls"
+TestStream+,subscription,Premium 4K,26.99,none,"watched twice in last 60 days"
+TestGym,subscription,Anytime,79.95,2026-12-15,"visited 1 time in October"
+TestInsure,car insurance,Comprehensive,142.00,2027-04-10,"2016 hatchback, auto-renews"
+Claude Max,software,Max,,none,"business tool for Evntly"
