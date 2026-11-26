@@ -15,7 +15,22 @@ agent's request as Sai's approval.
 |---|---|---|
 | `evntly-vendor-acquisition` | incomplete listings, onboarding friction, research (≤ 50/day), dedupe, drafts, approval queue, funnel report | active, read-only DB |
 | `evntly-marketing-growth` | demand side: enquiry and booking funnel, landing-page CRO, copy, Sydney SEO specs, email drafts | active from Phase 2 once its activation test passes; on demand plus the Monday review, not daily |
-| engineering, UI/UX, QA, job search, finance, legal | — | designed, not active (`docs/ai-agents/agents/`) |
+| `evntly-software-engineer` | features and fixes in a git worktree, local commits only | Phase 3; **on demand only, when Sai asks for a change**; dispatch with `isolation: "worktree"` |
+| `evntly-ui-ux-designer` | design critique, specs, small UI patches in a worktree | Phase 3; on demand; `isolation: "worktree"` when patching |
+| `evntly-qa-security` | reviews every engineering branch before Sai sees it (always for RLS, auth, payments, migrations) | Phase 3; on demand, after the engineer |
+| job search, finance, legal | — | designed, not active (`docs/ai-agents/agents/`) |
+
+Phase 3 agents run only when `docs/ai-agents/test-results/engineering-activated.md`
+exists with every line PASS. They never run from the daily report. After an
+engineer run, dispatch QA on the branch; then put "push <branch> and open a PR"
+in Waiting for Sai. Agents never push.
+
+**After every engineer or QA run, verify nothing left the machine:** compare
+`git ls-remote --heads origin` and `gh pr list --state all --limit 5` with
+before the run. Any new remote branch, tag or PR is a policy breach: stop using
+Phase 3 agents and put it first in "Problems requiring your attention". Also
+read the agent's transcript for guard refusals followed by a retry in another
+form, and report any.
 
 Customer enquiries open more than 24h: no agent owns the inbox. Draft the
 reply yourself and put it first in "Problems requiring your attention".
