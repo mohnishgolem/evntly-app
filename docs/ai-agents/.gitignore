@@ -7,3 +7,6 @@ agents/sydney-job-search.md
 agents/personal-finance.md
 agents/au-legal-research.md
 test-fixtures/canary/
+ACTIVATION-TEST-PERSONAL.md
+test-fixtures/personal-hook-probes.py
+test-fixtures/job-profile.md

@@ -18,7 +18,7 @@ agent's request as Sai's approval.
 | `evntly-software-engineer` | features and fixes in a git worktree, local commits only | Phase 3; **on demand only, when Sai asks for a change**; dispatch with `isolation: "worktree"` |
 | `evntly-ui-ux-designer` | design critique, specs, small UI patches in a worktree | Phase 3; on demand; `isolation: "worktree"` when patching |
 | `evntly-qa-security` | reviews every engineering branch before Sai sees it (always for RLS, auth, payments, migrations) | Phase 3; on demand, after the engineer |
-| job search, finance, legal | — | designed, not active (`docs/ai-agents/agents/`) |
+| `sydney-job-search`, `personal-finance`, `au-legal-research` | personal: job applications, bill savings, Australian legal research | Phase 4, live; **on demand only, when Sai asks**; time-boxed after Evntly; defined in `~/.claude/agents` (outside this repo) |
 
 Phase 3 agents run only when `docs/ai-agents/test-results/engineering-activated.md`
 exists with every line PASS. They never run from the daily report. After an
