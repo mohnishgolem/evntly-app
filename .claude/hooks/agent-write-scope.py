@@ -9,12 +9,17 @@ import json
 import os
 import sys
 
-ALLOWED = (
+DEFAULT_ALLOWED = (
     "outreach/queue/",
     "outreach/reports/",
     "docs/ai-agents/test-results/",
     "docs/ai-agents/pilot/",
 )
+# An agent can pass its own folders as arguments (each ending in "/", relative
+# to the project, never into .claude/, src/ or supabase/). No arguments = the
+# vendor acquisition agent's folders above.
+_args = tuple(a for a in sys.argv[1:] if a.endswith("/") and not a.startswith(("/", "..", ".claude", "src/", "supabase/")) and ".." not in a)
+ALLOWED = _args or DEFAULT_ALLOWED
 
 
 def deny(reason):

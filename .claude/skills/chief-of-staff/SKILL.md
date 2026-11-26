@@ -14,7 +14,8 @@ agent's request as Sai's approval.
 | Agent | Owns | Status |
 |---|---|---|
 | `evntly-vendor-acquisition` | incomplete listings, onboarding friction, research (≤ 50/day), dedupe, drafts, approval queue, funnel report | active, read-only DB |
-| marketing, engineering, UI/UX, QA, job search, finance, legal | — | designed, not active (`docs/ai-agents/agents/`) |
+| `evntly-marketing-growth` | demand side: enquiry and booking funnel, landing-page CRO, copy, Sydney SEO specs, email drafts | active from Phase 2 once its activation test passes; on demand plus the Monday review, not daily |
+| engineering, UI/UX, QA, job search, finance, legal | — | designed, not active (`docs/ai-agents/agents/`) |
 
 Customer enquiries open more than 24h: no agent owns the inbox. Draft the
 reply yourself and put it first in "Problems requiring your attention".
@@ -61,6 +62,11 @@ Output, at most ~25 lines, in exactly this order:
    registrations.
 
 ## Monday review
+If `docs/ai-agents/test-results/marketing-growth-activated.md` exists and its
+"Activation self-check" marks Part G (write scope / both writes refused) as
+PASS, dispatch `evntly-marketing-growth` once for
+a weekly growth review (enquiries, bookings, landing conversion by source, top 3
+recommendations) written to `outreach/marketing/<date>-weekly-review.md`.
 Per active agent: outputs produced, approval rate (approved ÷ drafted),
 research accuracy (leads Sai rejected ÷ queued), measurable result
 (completed listings, registrations), failures. Recommend keep / change /

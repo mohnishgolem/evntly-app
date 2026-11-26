@@ -189,6 +189,18 @@ Rollback: revert the agent file and revoke the token.
 
 ---
 
+## Phase 2 marketing grants (26 Nov 2026, Sai approved "apply grants")
+
+Migration `20261130120000_agent_readonly_marketing_grants` is **applied to
+production**; rollback in `supabase/rollbacks/`. It was tested first on local QA
+in a rolled-back transaction.
+
+| Check (production) | Result |
+|---|---|
+| Readable as `evntly_agent_ro` | `quote_requests` status, event type and date, origin, share source, vendor and client ids, booking id, expiry, budget band, guests; `bookings` status, escrow, service, date, provider and client ids, value, commission; `page_views` kind, vendor, source, visitor id; `funnel_events` event, source, campaign, visitor id (110 column grants in total) |
+| Still denied | `quote_requests.client_email`, `details`, `location`; `bookings.client_email`, `event_address`, Stripe ids; `funnel_events.detail`; `page_views.user_id`; any INSERT |
+| KPI queries through the connector | all run, about 0.5–1.7 s each; a client email query is refused by the database |
+
 ## B. Status (26 Nov 2026, Sai approved "apply + connector")
 
 | Step | State |
