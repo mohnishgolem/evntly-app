@@ -23,6 +23,7 @@ import {
   type ShareFormat,
   type SharePhoto,
 } from "@/lib/share-profile";
+import { stickyBarOffset } from "@/lib/sticky-bar";
 import { cn } from "@/lib/utils";
 import { analyticsVisitorId, sendTrack } from "@/lib/track-client";
 
@@ -463,7 +464,8 @@ export function ShareProfile({ vendorId, name, category, events, founding, photo
         data-testid="share-action-bar"
         className={cn(
           "glass-material fixed inset-x-0 z-30 m-0 space-y-2 border-t border-border/60 px-4 pt-3 md:hidden",
-          hasTabBar ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))] pb-3" : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          stickyBarOffset(hasTabBar),
+          hasTabBar && "pb-3"
         )}
       >
         <div className="mx-auto max-w-md space-y-2">

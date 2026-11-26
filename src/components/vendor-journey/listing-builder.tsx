@@ -216,7 +216,7 @@ function Builder({
 
       {/* Phones: one thumb-reach bar. */}
       {!isReview && (
-        <div className="frost fixed inset-x-0 bottom-[var(--tabbar-height,0px)] z-30 border-t border-border/60 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [--frost-bg:color-mix(in_oklab,var(--background)_92%,transparent)]">
+        <div className="frost fixed inset-x-0 bottom-[calc(var(--tabbar-height,0px)+var(--consent-h,0px))] z-30 border-t border-border/60 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [--frost-bg:color-mix(in_oklab,var(--background)_92%,transparent)]">
           <div className="mx-auto flex max-w-6xl gap-3">
             <Button
               type="button"

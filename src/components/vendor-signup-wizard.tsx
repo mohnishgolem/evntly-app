@@ -409,7 +409,7 @@ function WizardForm({ saved, persist }: { saved: SavedDraft | null; persist: boo
       </div>
 
       {/* Phones: Back / Continue stay in reach above the tab bar. */}
-      <div className="frost sticky bottom-[calc(var(--tabbar-height)+0.5rem)] z-20 mt-4 flex gap-3 rounded-full p-1.5 shadow-[var(--shadow-float)] [--frost-bg:color-mix(in_oklab,var(--background)_88%,transparent)] md:static md:bottom-auto md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:[--frost-bg:transparent]">
+      <div className="frost sticky bottom-[calc(var(--tabbar-height)+var(--consent-h,0px)+0.5rem)] z-20 mt-4 flex gap-3 rounded-full p-1.5 shadow-[var(--shadow-float)] [--frost-bg:color-mix(in_oklab,var(--background)_88%,transparent)] md:static md:bottom-auto md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:[--frost-bg:transparent]">
         {step > 0 && (
           <Button variant="raised" size="lg" onClick={() => setStep((s) => s - 1)}>
             Back

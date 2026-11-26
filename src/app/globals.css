@@ -616,6 +616,15 @@
   --tabbar-height: calc(3.5rem + max(0.5rem, env(safe-area-inset-bottom)));
 }
 
+/* Where the phone ad-consent card floats: just above the tab bar, or just
+   above the home indicator on pages that render none (admins). */
+:root {
+  --consent-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+:root:has([data-phone-tabbar]) {
+  --consent-bottom: calc(var(--tabbar-height) + 0.5rem);
+}
+
 /* Frosted controls over photos and the page (card save/share, the photo
    viewer's buttons, sticky bars). Same rule as .glass-material: the blur is a
    background layer, so icons and labels stay sharp. Tint with --frost-bg,
