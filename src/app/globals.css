@@ -486,7 +486,6 @@
 
   /* Gradients */
   --gradient-coral: linear-gradient(180deg, #f07a63 0%, #e8604a 52%, #dc5540 100%);
-  --gradient-coral-hover: linear-gradient(180deg, #f3846e 0%, #ec6a54 52%, #e05a45 100%);
   --gradient-raised: linear-gradient(180deg, #ffffff 0%, #f6f5f3 100%);
   --gradient-tile: radial-gradient(120% 90% at 30% 15%, #ffffff 0%, #f6f4f1 60%, #eeebe6 100%);
 

@@ -218,6 +218,38 @@ describe("components put text on the strong coral, not the accent", () => {
     expect(button).not.toContain("focus-visible:ring-ring/50");
   });
 
+  // A translucent ring colour (ring-x/NN) that can apply while the button is
+  // focused replaces the shared ring-focus-ring (tailwind-merge drops the
+  // base class, and dark: rules come later in the CSS). Only allowed when the
+  // class is explicitly scoped away from focus with not-focus-visible:.
+  function translucentFocusRings(source: string) {
+    const block = source.match(/const buttonVariants = cva\(([\s\S]*?)\n\s*size:/)?.[1] ?? "";
+    return [...block.matchAll(/"([^"]*)"/g)]
+      .flatMap((m) => m[1].split(/\s+/))
+      .filter((cls) => {
+        const parts = cls.split(":");
+        const utility = parts.pop() ?? "";
+        return /^ring-[a-z-]+\/\d+$/.test(utility) && !parts.includes("not-focus-visible");
+      });
+  }
+
+  it("no variant overrides the focus ring with a translucent ring colour", () => {
+    expect(translucentFocusRings(button)).toEqual([]);
+  });
+
+  it("the check catches the old destructive and aria-invalid overrides", () => {
+    const old = `const buttonVariants = cva(
+  "focus-visible:ring-focus-ring aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+  { variants: { variant: { destructive: "focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40" },
+      size: {} } })`;
+    expect(translucentFocusRings(old)).toEqual([
+      "aria-invalid:ring-destructive/20",
+      "dark:aria-invalid:ring-destructive/40",
+      "focus-visible:ring-destructive/20",
+      "dark:focus-visible:ring-destructive/40",
+    ]);
+  });
+
   it("old 20%-alpha ring fails 3:1 on white (why the focus ring changed)", () => {
     const old = composite({ ...color("light", "--primary"), a: 0.2 }, parseColor("#ffffff"));
     expect(contrastRatio(old, "#ffffff")).toBeLessThan(AA_NON_TEXT);
