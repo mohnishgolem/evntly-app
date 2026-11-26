@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { consentOffsetVars, stickyBarOffset } from "@/lib/sticky-bar";
 
@@ -33,5 +35,20 @@ describe("consentOffsetVars", () => {
 
   it("wider screens: the card is a bottom bar, nothing floats above it", () => {
     expect(consentOffsetVars(false, 96)).toEqual({ "--consent-h": "0px", "--consent-top": "0px" });
+  });
+});
+
+describe("--consent-bottom (globals.css)", () => {
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8").replace(/\s+/g, " ");
+
+  it("defaults to just above the tab bar, so browsers without :has() and the streaming tab bar keep the old spot", () => {
+    expect(css).toContain(":root { --consent-bottom: calc(var(--tabbar-height) + 0.5rem); }");
+  });
+
+  it("drops to the home indicator only when the page has no tab bar", () => {
+    expect(css).toContain(
+      ":root:not(:has([data-phone-tabbar])) { --consent-bottom: max(0.5rem, env(safe-area-inset-bottom)); }"
+    );
+    expect(css).not.toMatch(/:root:has\(\[data-phone-tabbar\]\)/);
   });
 });

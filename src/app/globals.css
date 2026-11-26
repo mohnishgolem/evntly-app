@@ -617,12 +617,14 @@
 }
 
 /* Where the phone ad-consent card floats: just above the tab bar, or just
-   above the home indicator on pages that render none (admins). */
+   above the home indicator on pages that render none (admins). The tab-bar
+   spot is the default: browsers without :has() drop the exception and keep
+   it, and the card doesn't jump while the tab bar streams in (Suspense). */
 :root {
-  --consent-bottom: max(0.5rem, env(safe-area-inset-bottom));
-}
-:root:has([data-phone-tabbar]) {
   --consent-bottom: calc(var(--tabbar-height) + 0.5rem);
+}
+:root:not(:has([data-phone-tabbar])) {
+  --consent-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
 /* Frosted controls over photos and the page (card save/share, the photo
