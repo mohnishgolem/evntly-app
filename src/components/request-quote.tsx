@@ -13,6 +13,7 @@ import { useSheetSide } from "@/lib/use-sheet-side";
 import { requestQuote, type QuoteRequestDraft } from "@/lib/actions/quotes";
 import { BOOK_INTENT_COOKIE, bookIntentPath } from "@/lib/booking-intent";
 import { EVENT_TYPES } from "@/lib/config";
+import { stickyBarOffset } from "@/lib/sticky-bar";
 import { cn } from "@/lib/utils";
 import type { ShareSource } from "@/lib/share-profile";
 
@@ -248,9 +249,7 @@ export function BookVendor({
           // m-0: the vendor page wraps this in space-y-2, whose 8px margin
           // lifted the fixed bar off the tab bar and left a see-through gap.
           "glass-material fixed inset-x-0 z-30 m-0 border-t border-border/60 px-4 py-3 md:hidden print:hidden",
-          hasTabBar
-            ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]"
-            : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          stickyBarOffset(hasTabBar)
         )}
       >
         <div className="mx-auto flex max-w-md items-center gap-3">

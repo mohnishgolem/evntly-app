@@ -11,6 +11,7 @@ import { landingVariant } from "@/lib/founding/landing-variants";
 import { categoryLabel } from "@/lib/config";
 import { getCurrentUser } from "@/lib/data/user";
 import { hasPhoneTabBar, navRole } from "@/lib/nav";
+import { stickyBarOffset } from "@/lib/sticky-bar";
 import { cn } from "@/lib/utils";
 import { campaignFromParams, CLAIM_PATH, referralFromParams, sourceFromParams, withAutoClaim } from "@/lib/founding/sources";
 import { LAUNCH_CITY } from "@/lib/config";
@@ -335,9 +336,7 @@ function StickyClaim({ href, hasTabBar }: { href: string; hasTabBar: boolean }) 
       <div
         className={cn(
           "glass-material fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden print:hidden",
-          hasTabBar
-            ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]"
-            : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          stickyBarOffset(hasTabBar)
         )}
       >
         <Button size="lg" className="w-full" nativeButton={false} render={<ClaimLink href={href}>{CLAIM_LABEL}</ClaimLink>} />

@@ -10,6 +10,7 @@ import { VendorCta } from "@/components/vendor-journey/vendor-cta";
 import { getFoundingPlaces, getLiveVendorCount, getProofListings, type ProofListing } from "@/lib/data/founding";
 import { getCurrentUser } from "@/lib/data/user";
 import { hasPhoneTabBar, navRole } from "@/lib/nav";
+import { stickyBarOffset } from "@/lib/sticky-bar";
 import { categoryLabel, LAUNCH_CITY } from "@/lib/config";
 import { campaignFromParams, referralFromParams, sourceFromParams } from "@/lib/founding/sources";
 import { pageMetadata } from "@/lib/seo";
@@ -282,7 +283,7 @@ export default async function BecomeAVendorPage({ searchParams }: { searchParams
       <div
         className={cn(
           "frost fixed inset-x-0 z-30 border-t border-border/60 px-4 py-3 sm:hidden [--frost-bg:color-mix(in_oklab,var(--background)_92%,transparent)]",
-          hasTabBar ? "bottom-[calc(var(--tabbar-height)+var(--consent-h,0px))]" : "bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          stickyBarOffset(hasTabBar)
         )}
       >
         <Button size="lg" className="w-full" nativeButton={false} render={<VendorCta href={START} where="sticky">Start your free listing</VendorCta>} />

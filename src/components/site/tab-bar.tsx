@@ -27,6 +27,7 @@ export function TabBar({
       <div aria-hidden className="h-[calc(var(--tabbar-height)+var(--consent-h,0px))] md:hidden print:hidden" />
       <nav
         aria-label="Main"
+        data-phone-tabbar
         className="glass-material glass-edge-top fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden print:hidden"
       >
         <ul className={cn("mx-auto grid h-14 max-w-md", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
