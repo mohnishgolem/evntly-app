@@ -188,7 +188,7 @@ export function MessageThread({
                   <div
                     className={cn(
                       "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm",
-                      isSelf ? "bg-primary text-primary-foreground" : "bg-secondary",
+                      isSelf ? "bg-primary-strong text-primary-foreground" : "bg-secondary",
                       m.attachment_file_uri && "mt-1"
                     )}
                   >
@@ -344,7 +344,7 @@ function MessageAttachment({
       rel="noreferrer"
       className={cn(
         "flex max-w-[80%] items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm",
-        isSelf ? "bg-primary text-primary-foreground" : "bg-secondary"
+        isSelf ? "bg-primary-strong text-primary-foreground" : "bg-secondary"
       )}
     >
       <FileText className="size-4 shrink-0" />

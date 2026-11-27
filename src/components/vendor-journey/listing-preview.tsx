@@ -97,7 +97,7 @@ export function ListingPreview({ draft, className, compact = false }: { draft: L
           )}
         </section>
 
-        <div className="flex items-center justify-center gap-2 rounded-full [background:var(--gradient-coral)] px-4 py-3 text-[15px] font-semibold text-primary-foreground opacity-90" aria-hidden>
+        <div className="flex items-center justify-center gap-2 rounded-full [background:var(--gradient-coral-strong)] px-4 py-3 text-[15px] font-semibold text-primary-foreground opacity-90" aria-hidden>
           <MessageCircle className="size-4" /> Request a quote
         </div>
         <p className="text-center text-xs text-muted-foreground">Customers send you their event details. You reply with a quote.</p>

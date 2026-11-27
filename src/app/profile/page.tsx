@@ -76,7 +76,7 @@ export default async function ProfilePage() {
       <h1 className="mb-6 text-[28px] font-bold tracking-tight">Profile</h1>
 
       <div className="mb-6 flex flex-col items-center rounded-2xl bg-secondary px-4 py-8 text-center">
-        <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground">
+        <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-primary-strong text-xl font-semibold text-primary-foreground">
           {initial}
         </div>
         <p className="text-lg font-semibold">{session.displayName || "Your account"}</p>

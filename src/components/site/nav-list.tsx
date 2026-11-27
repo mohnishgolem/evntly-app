@@ -62,7 +62,7 @@ export function NavList({
               <Icon className={cn("shrink-0", v.icon, active && v.activeIcon)} strokeWidth={1.75} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{item.label}</span>
               {count > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-foreground">
+                <span className="rounded-full bg-primary-strong px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-foreground">
                   {count > 99 ? "99+" : count}
                   <span className="sr-only">{item.badge === "leads" ? " new" : " unread"}</span>
                 </span>

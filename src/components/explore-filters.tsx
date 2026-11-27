@@ -109,7 +109,7 @@ export function ExploreFilters() {
             <SlidersHorizontal className="size-4" aria-hidden />
             <span className="hidden sm:inline">Filters</span>
             {activeCount > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground tabular-nums">
+              <span className="flex size-5 items-center justify-center rounded-full bg-primary-strong text-xs text-primary-foreground tabular-nums">
                 {activeCount}
               </span>
             )}

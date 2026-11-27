@@ -3,14 +3,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:not-focus-visible:ring-3 aria-invalid:not-focus-visible:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:not-focus-visible:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        // Coral with depth: a light-to-dark sheen over whatever background is set
-        // (so colour overrides still work) and a soft coral shadow.
+        // Coral with depth: a sheen that only darkens, over whatever background is
+        // set (so colour overrides still work), and a soft coral shadow. The
+        // strong coral keeps the white label at WCAG AA (4.5:1) at every point.
         default:
-          "bg-primary bg-[image:linear-gradient(180deg,rgba(255,255,255,0.16),rgba(0,0,0,0.06))] text-primary-foreground shadow-[var(--shadow-coral)] hover:bg-primary-hover active:shadow-none",
+          "bg-primary-strong bg-[image:var(--sheen-coral)] text-primary-foreground shadow-[var(--shadow-coral)] hover:bg-primary-strong-hover active:shadow-none",
         // Neutral control raised off the surface (secondary actions on consumer pages).
         raised: "btn-raised text-foreground",
         outline:
@@ -20,7 +21,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
-          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-destructive/10 text-destructive-text hover:bg-destructive/20 focus-visible:border-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30",
         link: "text-primary-text underline-offset-4 hover:underline",
       },
       size: {

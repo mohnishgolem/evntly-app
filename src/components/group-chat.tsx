@@ -58,7 +58,7 @@ export function GroupChat({
                 <div
                   className={cn(
                     "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm",
-                    isSelf ? "bg-primary text-primary-foreground" : "bg-secondary"
+                    isSelf ? "bg-primary-strong text-primary-foreground" : "bg-secondary"
                   )}
                 >
                   {m.content}
