@@ -11,7 +11,7 @@ with v as (
     (select count(*) from public.vendor_packages vp where vp.provider_id = sp.id and vp.active) as packages,
     exists (select 1 from public.listing_setup_requests r where r.provider_id = sp.id and r.status <> 'closed') as asked_for_setup_help
   from public.users u
-  join auth.users au on au.id::text = u.id::text
+  join agent_read.auth_users au on au.id::text = u.id::text
   left join public.service_providers sp on sp.owner_user_id::text = u.id::text
   left join public.beta_applications ba on ba.user_id::text = u.id::text
   where (u.role = 'vendor' or sp.id is not null or ba.id is not null)

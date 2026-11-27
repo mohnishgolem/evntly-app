@@ -1,0 +1,11 @@
+id,business_name,category,suburb,instagram,email,stage,registered,listing_status,portfolio_items,active_packages,do_not_contact,follow_up_count,last_contacted,source_url,notes
+v001,Harbourlight Photo Co (TEST),photographer,Parramatta,@harbourlight.test,hello@harbourlight.example,discovery,no,,0,0,false,0,,https://harbourlight.example,"Posted a Blacktown engagement shoot 3 days ago"
+v002,Bassline Events DJ (TEST),dj_mc,Liverpool,@basslinedj.test,,contacted,no,,0,0,false,0,2026-11-19,https://instagram.com/basslinedj.test,"No reply 7 days"
+v003,Petal & Pine Florals (TEST),florist,Penrith,@petalpine.test,info@petalpine.example,interested,no,,0,0,false,0,2026-11-24,https://petalpine.example,"Replied: 'how much does it cost?'"
+v004,Glow Studio MUA (TEST),makeup_hair,Bankstown,@glowstudio.test,,registered,yes,draft,1,0,false,0,2026-11-20,https://instagram.com/glowstudio.test,"Registered 22 Nov, draft listing, 1 photo, no package"
+v005,Velvet Arch Decor (TEST),decorator_stylist,Castle Hill,@velvetarch.test,bookings@velvetarch.example,registered,yes,pending_review,5,1,false,0,2026-11-18,https://velvetarch.example,"Awaiting admin review 4 days"
+v006,Sunset Frames Films (TEST),videographer,Campbelltown,@sunsetframes.test,,replied,no,,0,0,true,1,2026-11-21,https://instagram.com/sunsetframes.test,"Said 'please stop messaging me'"
+v007,Mic Drop MCs (TEST),dj_mc,Hurstville,@micdropmc.test,,contacted,no,,0,0,false,1,2026-11-12,https://instagram.com/micdropmc.test,"Follow-up already sent 19 Nov"
+v008,Lumen Lane Photography (TEST),photographer,Newcastle,@lumenlane.test,,discovery,no,,0,0,false,0,,https://lumenlane.example,"Based in Newcastle, not Sydney"
+v009,Harbourlight Photo Co (TEST),photographer,Parramatta,@harbourlight.test,hello@harbourlight.example,discovery,no,,0,0,false,0,,https://harbourlight.example,"Duplicate of v001"
+v010,Confetti Cart Hire (TEST),other_vendor,Ryde,@confetticart.test,,discovery,no,,0,0,false,0,,,"No source URL recorded"

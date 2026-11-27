@@ -1,0 +1,58 @@
+#!/bin/bash
+# Read-only SQL for Evntly's scheduled reports. Fails closed.
+#
+#   .claude/bin/ro-sql preflight          -> checks Keychain, token, role; exit 0 only if read-only
+#   .claude/bin/ro-sql file.sql           -> runs one file
+#   echo "select ..." | .claude/bin/ro-sql -   -> runs SQL from stdin
+#
+# Uses the scoped "Database: Read" token in the macOS Keychain (service
+# evntly-supabase-agent-ro) against Supabase's read-only query endpoint, and
+# refuses to run unless the session is supabase_read_only_user with
+# transaction_read_only = on. Every query also passes the same text guard the
+# agent uses. Never falls back to any other credential. Never prints the token.
+set -u
+REF=pzeosxtdulveuywhmkfe
+URL="https://api.supabase.com/v1/projects/$REF/database/query/read-only"
+DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+GUARD="$DIR/.claude/hooks/readonly-sql-guard.py"
+
+fail() { echo "RO-SQL FAILED: $*" >&2; exit 2; }
+
+TOKEN=$(security find-generic-password -s evntly-supabase-agent-ro -w 2>/dev/null) \
+  || fail "Keychain item evntly-supabase-agent-ro is missing or access was denied."
+[ -n "$TOKEN" ] || fail "Keychain token is empty."
+
+post() { # stdin: SQL -> stdout: JSON
+  python3 -I -c 'import json,sys; print(json.dumps({"query": sys.stdin.read()}))' \
+  | curl -sS --max-time 60 -w '\n%{http_code}' -H "Authorization: Bearer $TOKEN" \
+      -H 'Content-Type: application/json' -X POST "$URL" -d @-
+}
+
+check_role() {
+  resp=$(echo "select current_user as u, current_setting('transaction_read_only') as ro" | post) \
+    || fail "network error reaching Supabase."
+  code=${resp##*$'\n'}; body=${resp%$'\n'*}
+  [ "$code" = "201" ] || [ "$code" = "200" ] || fail "role check returned HTTP $code (token expired or revoked?)."
+  echo "$body" | python3 -I -c '
+import json,sys
+r=json.load(sys.stdin)[0]
+sys.exit(0 if r.get("u")=="supabase_read_only_user" and r.get("ro")=="on" else 1)' \
+    || fail "connection is not read-only (got: $body). Refusing to run."
+}
+
+check_role
+if [ "${1:-}" = "preflight" ]; then echo "RO-SQL PREFLIGHT OK: supabase_read_only_user, transaction_read_only=on"; exit 0; fi
+
+case "${1:-}" in
+  -) SQL=$(cat) ;;
+  "") fail "usage: ro-sql preflight | ro-sql file.sql | ro-sql -" ;;
+  *) [ -f "$1" ] || fail "no such file: $1"; SQL=$(cat "$1") ;;
+esac
+
+verdict=$(python3 -I -c 'import json,sys; print(json.dumps({"tool_input":{"query":sys.stdin.read()}}))' <<<"$SQL" | python3 -I "$GUARD")
+[ -z "$verdict" ] || fail "guard refused: $(echo "$verdict" | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["permissionDecisionReason"])')"
+
+resp=$(printf '%s' "$SQL" | post) || fail "network error."
+code=${resp##*$'\n'}; body=${resp%$'\n'*}
+[ "$code" = "201" ] || [ "$code" = "200" ] || fail "query returned HTTP $code: $(echo "$body" | head -c 400)"
+echo "$body"

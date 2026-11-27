@@ -56,7 +56,7 @@ with vendors as (
       or u.id::text in ('75ff584a-0dc5-41cc-b69e-566f4bd731fa') -- "saim", internal test vendor
     )                                      as is_test
   from public.users u
-  join auth.users au on au.id::text = u.id::text
+  join agent_read.auth_users au on au.id::text = u.id::text
   left join public.service_providers sp on sp.owner_user_id::text = u.id::text
   left join public.beta_applications ba on ba.user_id::text = u.id::text
   where u.role = 'vendor' or sp.id is not null or ba.id is not null
