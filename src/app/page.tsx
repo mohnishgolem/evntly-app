@@ -149,7 +149,7 @@ export default function HomePage() {
               </h2>
               <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-white/75">{FEE_SUMMARY}</p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" nativeButton={false} render={<Link href="/founding-vendors">List your business</Link>} />
+                <Button size="lg" nativeButton={false} render={<Link href="/become-a-vendor">List your business</Link>} />
                 <Button
                   size="lg"
                   variant="outline"

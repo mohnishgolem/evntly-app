@@ -103,7 +103,7 @@ export default async function HowItWorksPage() {
         <p className="mt-2 max-w-2xl text-[17px] text-muted-foreground">Listing on Evntly is currently free — no subscription, commission or booking fees.</p>
         <StepList steps={vendorSteps} />
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button size="lg" nativeButton={false} render={<Link href="/vendor-signup">List your business</Link>} />
+          <Button size="lg" nativeButton={false} render={<Link href="/become-a-vendor">List your business</Link>} />
           <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/help/vendors">Read the vendor guide</Link>} />
         </div>
       </section>
