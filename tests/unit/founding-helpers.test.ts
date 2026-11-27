@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { campaignFromParams, campaignLink, FOUNDING_GOAL, foundingCookieWrites, foundingShareLink, isFoundingPath, isReferralCode, referralFromParams, referralLink, sourceFromParams } from "@/lib/founding/sources";
+import { campaignFromParams, campaignLink, FOUNDING_GOAL, foundingCookieWrites, foundingShareLink, isFoundingPath, isFoundingSource, isReferralCode, referralFromParams, referralLink, sourceFromParams, sourceLabel } from "@/lib/founding/sources";
 import { formatSydney, formatSydneyDay, planBatches, planProblem, sydneyToUtc } from "@/lib/founding/schedule";
 import { parseConsentDate, parseCsv, parseWaitlistCsv, toCsv } from "@/lib/founding/csv";
 import { claimUrl, inviteHeaders, renderInviteEmail, renderReminderEmail, INVITE_SUBJECT, REMINDER_SUBJECT } from "@/lib/founding/invite-email";
@@ -59,12 +59,75 @@ describe("founding sources (UTM)", () => {
   });
 
   it("share links round-trip to their source", () => {
-    for (const s of ["instagram_bio", "instagram_story", "instagram_dm", "waitlist_email", "direct_outreach", "meta_ads"] as const) {
+    for (const s of ["instagram_bio", "instagram_story", "instagram_dm", "waitlist_email", "direct_outreach", "meta_ads", "facebook_group", "facebook_dm", "email_outreach"] as const) {
       const url = new URL(foundingShareLink(s));
       expect(url.pathname).toBe("/founding-vendors");
       expect(url.searchParams.get("utm_campaign")).toBe("founding_vendors");
       expect(sourceFromParams(Object.fromEntries(url.searchParams))).toBe(s);
     }
+  });
+
+  describe("Facebook groups, Facebook DMs and email outreach", () => {
+    it.each(["facebook_group", "facebook_dm", "email_outreach"])("%s is a founding source with a label", (value) => {
+      expect(isFoundingSource(value)).toBe(true);
+      expect(sourceLabel(value)).not.toBe(value);
+    });
+
+    it("labels them for the admin dashboard", () => {
+      expect(sourceLabel("facebook_group")).toBe("Facebook groups");
+      expect(sourceLabel("facebook_dm")).toBe("Facebook DMs");
+      expect(sourceLabel("email_outreach")).toBe("Email outreach");
+    });
+
+    it("keeps waitlist_email exactly as it was", () => {
+      expect(isFoundingSource("waitlist_email")).toBe(true);
+      expect(sourceLabel("waitlist_email")).toBe("Waitlist email");
+      expect(sourceFromParams({ src: "waitlist_email" })).toBe("waitlist_email");
+      expect(sourceFromParams({ utm_source: "waitlist", utm_medium: "email" })).toBe("waitlist_email");
+      expect(sourceFromParams({ utm_source: "newsletter", utm_medium: "email" })).toBe("waitlist_email");
+    });
+
+    it.each(["email", "facebook", "fb", "facebook_groups", ""])("%j alone is not a stored source value", (value) => {
+      expect(isFoundingSource(value)).toBe(false);
+    });
+
+    it.each([
+      // The links Sai has already sent.
+      [{ src: "facebook_group", utm_content: "sydney-wedding-vendors" }, "facebook_group"],
+      [{ src: "facebook_dm" }, "facebook_dm"],
+      [{ src: "email" }, "email_outreach"],
+      [{ src: " Email " }, "email_outreach"],
+      [{ src: "email_outreach" }, "email_outreach"],
+      // Organic Facebook UTM tags.
+      [{ utm_source: "facebook", utm_medium: "group" }, "facebook_group"],
+      [{ utm_source: "fb", utm_medium: "groups" }, "facebook_group"],
+      [{ utm_source: "Facebook", utm_medium: "Group" }, "facebook_group"],
+      [{ utm_source: "facebook", utm_medium: "dm" }, "facebook_dm"],
+      [{ utm_source: "fb", utm_medium: "dms" }, "facebook_dm"],
+      [{ utm_source: "facebook", utm_medium: "messenger" }, "facebook_dm"],
+      [{ utm_source: "outreach", utm_medium: "email" }, "email_outreach"],
+      // Organic Facebook without a known medium is still direct.
+      [{ utm_source: "facebook", utm_medium: "social" }, "direct"],
+      [{ utm_source: "fb" }, "direct"],
+      // Paid Facebook stays meta_ads, whatever else is tagged.
+      [{ utm_source: "facebook", utm_medium: "paid" }, "meta_ads"],
+      [{ utm_source: "fb", utm_medium: "cpc" }, "meta_ads"],
+      [{ utm_source: "facebook", utm_medium: "paid_social", utm_content: "group" }, "meta_ads"],
+      [{ src: "meta_ads" }, "meta_ads"],
+    ])("%j → %s", (params, expected) => {
+      expect(sourceFromParams(params)).toBe(expected);
+    });
+
+    it("an explicit src still wins over UTM tags", () => {
+      expect(sourceFromParams({ src: "facebook_group", utm_source: "facebook", utm_medium: "paid" })).toBe("facebook_group");
+      expect(sourceFromParams({ src: "email", utm_source: "waitlist", utm_medium: "email" })).toBe("email_outreach");
+    });
+
+    it("campaign links for the new sources keep their tag", () => {
+      const params = Object.fromEntries(new URL(campaignLink("facebook_group", "fb-group-1127")).searchParams);
+      expect(sourceFromParams(params)).toBe("facebook_group");
+      expect(campaignFromParams(params)).toBe("fb-group-1127");
+    });
   });
 
   it("referral links carry a valid code and count as the referral source", () => {

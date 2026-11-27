@@ -9,6 +9,10 @@ export const FOUNDING_SOURCES = [
   { value: "waitlist_email", label: "Waitlist email", utm: { source: "waitlist", medium: "email" } },
   { value: "direct_outreach", label: "Direct outreach", utm: { source: "outreach", medium: "direct" } },
   { value: "meta_ads", label: "Meta ads (paid)", utm: { source: "meta", medium: "paid" } },
+  // Needs migration 20261201090000_founding_facebook_email_sources (CHECK constraints).
+  { value: "facebook_group", label: "Facebook groups", utm: { source: "facebook", medium: "group" } },
+  { value: "facebook_dm", label: "Facebook DMs", utm: { source: "facebook", medium: "dm" } },
+  { value: "email_outreach", label: "Email outreach", utm: { source: "outreach", medium: "email" } },
   { value: "referral", label: "Vendor referral", utm: null },
   { value: "direct", label: "Direct / other", utm: null },
 ] as const;
@@ -88,10 +92,18 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 const PAID_MEDIUMS = new Set(["paid", "paid_social", "paidsocial", "cpc", "ppc", "ad", "ads", "boost"]);
 
+/** Short ?src= values already used in sent links, mapped to their source. */
+const SRC_ALIASES = new Map<string, FoundingSource>([
+  // Outreach emails went out with ?src=email; the waitlist invite has its own source.
+  ["email", "email_outreach"],
+]);
+
 /** Maps ?utm_source=&utm_medium= (or ?src=<source>) to a known source, else null. */
 export function sourceFromParams(params: Params): FoundingSource | null {
   const src = first(params.src);
   if (isFoundingSource(src)) return src;
+  const alias = SRC_ALIASES.get(src);
+  if (alias) return alias;
   if (referralFromParams(params)) return "referral";
   const source = first(params.utm_source);
   const medium = first(params.utm_medium);
@@ -104,6 +116,13 @@ export function sourceFromParams(params: Params): FoundingSource | null {
     if (medium === "dm" || medium === "dms") return "instagram_dm";
     return "instagram_bio";
   }
+  // Organic Facebook: group posts and Messenger replies. Other organic
+  // Facebook links stay "direct".
+  if (source === "facebook" || source === "fb") {
+    if (medium === "group" || medium === "groups") return "facebook_group";
+    if (medium === "dm" || medium === "dms" || medium === "messenger") return "facebook_dm";
+  }
+  if (source === "outreach" && medium === "email") return "email_outreach";
   if (source === "waitlist" || (medium === "email" && source !== "outreach")) return "waitlist_email";
   if (source === "outreach") return "direct_outreach";
   return "direct";

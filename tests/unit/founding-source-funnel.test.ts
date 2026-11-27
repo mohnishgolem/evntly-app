@@ -33,4 +33,16 @@ describe("founding vendor funnel by source", () => {
     expect(sources).toContain("meta_ads");
     expect(sources).toContain("instagram_dm");
   });
+
+  it("gives Facebook groups, Facebook DMs and email outreach their own rows", () => {
+    const rows = sourceFunnel([
+      { source: "facebook_group", status: "submitted", onboardingPercent: 60 },
+      { source: "facebook_dm", status: "approved", onboardingPercent: 100 },
+      { source: "email_outreach", status: "started", onboardingPercent: null },
+    ]);
+    expect(row(rows, "facebook_group")).toMatchObject({ label: "Facebook groups", applications: 1, submitted: 1 });
+    expect(row(rows, "facebook_dm")).toMatchObject({ label: "Facebook DMs", applications: 1, approved: 1, complete: 1 });
+    expect(row(rows, "email_outreach")).toMatchObject({ label: "Email outreach", applications: 1, submitted: 0 });
+    expect(row(rows, "direct").applications).toBe(0);
+  });
 });
