@@ -20,7 +20,7 @@ Read-only except for writing the local report and refreshing the Desk snapshot.
      up to 20 emails, all stuck vendors nudged once, applications reviewed same day.
 3. Conversion by channel (last 7 / 30 days): first messages sent (queue logs),
    replies, verified registrations, completed — per channel
-   (instagram_dm, direct_outreach email/fb, waitlist, meta_ads, instagram_bio, direct/unattributed).
+   (instagram_dm, facebook_group, facebook_dm, email_outreach, direct_outreach (older email/fb links), waitlist, meta_ads, instagram_bio, direct/unattributed).
 4. Queue: top 15 from `evntly-pipeline-tracker/sql/priority_queue.sql`.
 5. Stuck vendors: `incomplete_listings.sql` grouped by stage.
 6. Waiting for Sai: drafts `awaiting_approval` (queue files + Desk), applications

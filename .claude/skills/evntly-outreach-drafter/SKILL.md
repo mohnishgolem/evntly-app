@@ -26,8 +26,8 @@ not do-not-contact, not already a vendor) — or a list Sai gives.
      `evntlyapp.com/founding-vendors?cat=<cat>&src=instagram_dm`.
    - `email_draft`: create a **Gmail draft** (never send) from Sai, subject
      ≤ 6 words, ≤ 110 words, sender identity, why we're writing (their published
-     business address), opt-out line, link with `src=direct_outreach&utm_content=email`.
-   - Facebook: only if Sai says FB message requests are open again; Sai sends from his own profile; `src=direct_outreach&utm_content=fb`.
+     business address), opt-out line, link with `src=email_outreach&utm_content=<tag>`.
+   - Facebook: only if Sai says FB message requests are open again; Sai sends from his own profile; `src=facebook_dm&utm_content=<tag>` (Facebook group posts and comment replies use `src=facebook_group`).
    - `call_list`: a 3-line call note, not a script.
 4. Only promise what's live (check `src/lib/config.ts`, `/founding-vendors`): free
    listing, Founding badge, first-in-search placement, IG shoutout once approved

@@ -19,7 +19,7 @@ Subject: Free Sydney listing for <business>
 >
 > I'm Sai, founder of Evntly (evntlyapp.com), a new Sydney marketplace where people book vendors for birthdays, engagements and corporate events. I came across <business> via <where: your website's contact page> and liked <detail>.
 >
-> We're giving our first 200 Sydney vendors a free Founding listing, a Founding badge and a feature on our Instagram once their listing is live. Setting up takes about 10 minutes: evntlyapp.com/founding-vendors?cat=<cat>&src=direct_outreach&utm_content=email
+> We're giving our first 200 Sydney vendors a free Founding listing, a Founding badge and a feature on our Instagram once their listing is live. Setting up takes about 10 minutes: evntlyapp.com/founding-vendors?cat=<cat>&src=email_outreach&utm_content=email
 >
 > If it's not for you, just reply "no thanks" and I won't email again.
 >
